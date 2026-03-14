@@ -1,0 +1,65 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using SplashSphere.Infrastructure.Auth;
+
+namespace SplashSphere.Infrastructure.Authentication;
+
+/// <summary>
+/// Registers the Clerk JWT Bearer authentication scheme for production.
+/// <para>
+/// <see cref="JwtBearerEvents.OnTokenValidated"/> populates <see cref="TenantContext"/>
+/// from the validated JWT claims so every request has its <c>ClerkUserId</c>,
+/// <c>TenantId</c>, and <c>Role</c> available for downstream handlers and global query filters.
+/// </para>
+/// </summary>
+public static class ClerkJwtSetup
+{
+    public static IServiceCollection AddClerkJwtAuthentication(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = configuration["Clerk:Authority"];
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer   = true,
+                    ValidIssuer      = configuration["Clerk:Authority"],
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    NameClaimType    = "sub",
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = ctx =>
+                    {
+                        var tenantCtx = ctx.HttpContext.RequestServices
+                            .GetRequiredService<TenantContext>();
+
+                        var claims = ctx.Principal!.Claims;
+
+                        tenantCtx.ClerkUserId = claims
+                            .First(c => c.Type == "sub").Value;
+
+                        // org_id is absent for users who haven't completed onboarding.
+                        tenantCtx.TenantId = claims
+                            .FirstOrDefault(c => c.Type == "org_id")?.Value
+                            ?? string.Empty;
+
+                        tenantCtx.Role = claims
+                            .FirstOrDefault(c => c.Type == "org_role")?.Value;
+
+                        return Task.CompletedTask;
+                    },
+                };
+            });
+
+        return services;
+    }
+}

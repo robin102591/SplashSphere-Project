@@ -7,41 +7,43 @@ using SplashSphere.API.Endpoints;
 using SplashSphere.API.Infrastructure;
 using SplashSphere.Application;
 using SplashSphere.Infrastructure;
+using SplashSphere.Infrastructure.Authentication;
+using SplashSphere.Infrastructure.Hubs;
 using SplashSphere.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
+// ── Serilog ───────────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .WriteTo.Console());
 
-// Application + Infrastructure
+// ── Application + Infrastructure ─────────────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// In Development, override auth with a pass-through handler so every request
-// is auto-authenticated as the seed tenant — no Clerk token needed.
+// ── Dev-only: override auth with pass-through handler ─────────────────────────
+// Auto-authenticates every request as the seed tenant so no Clerk token is needed.
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddAuthentication(DevAuthHandler.SchemeName)
         .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });
 }
 
-// OpenAPI
+// ── OpenAPI ───────────────────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
 
-// ProblemDetails + exception handling
+// ── ProblemDetails + exception handling ──────────────────────────────────────
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// CORS
+// ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(
-            builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [])
+                builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [])
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -50,32 +52,46 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAuthorization();
 
+// ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// ── Dev-only: OpenAPI, Scalar, migrations, seed ───────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 
-    // Auto-migrate and seed
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
     await DataSeeder.SeedAsync(app.Services);
 }
 
+// ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
+
+// Resolves internal UserId from ClerkUserId; enforces onboarding gate for
+// tenantless users (see TenantResolutionMiddleware for allowed-path list).
+app.UseMiddleware<TenantResolutionMiddleware>();
+
 app.UseAuthorization();
 
-// Hangfire Dashboard (dev only)
+// ── Hangfire dashboard (dev only) ─────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 
-// ── Endpoints ────────────────────────────────────────────────────────────────
+// ── SignalR hub ───────────────────────────────────────────────────────────────
+app.MapHub<NotificationHub>("/hubs/notifications");
+
+// ── API endpoints ─────────────────────────────────────────────────────────────
+app.MapAuthEndpoints();
+app.MapOnboardingEndpoints();
+app.MapWebhookEndpoints();
+
 app.MapBranchEndpoints();
 app.MapVehicleTypeEndpoints();
 app.MapSizeEndpoints();
