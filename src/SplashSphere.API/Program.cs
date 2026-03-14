@@ -78,5 +78,6 @@ app.MapServiceEndpoints();
 app.MapPackageEndpoints();
 app.MapCustomerEndpoints();
 app.MapCarEndpoints();
+app.MapEmployeeEndpoints();
 
 app.Run();
