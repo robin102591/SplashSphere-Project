@@ -1,4 +1,5 @@
 using Hangfire;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
@@ -18,6 +19,14 @@ builder.Host.UseSerilog((ctx, lc) => lc
 // Application + Infrastructure
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// In Development, override auth with a pass-through handler so every request
+// is auto-authenticated as the seed tenant — no Clerk token needed.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAuthentication(DevAuthHandler.SchemeName)
+        .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });
+}
 
 // OpenAPI
 builder.Services.AddOpenApi();
@@ -80,5 +89,6 @@ app.MapCustomerEndpoints();
 app.MapCarEndpoints();
 app.MapEmployeeEndpoints();
 app.MapMerchandiseEndpoints();
+app.MapQueueEndpoints();
 
 app.Run();

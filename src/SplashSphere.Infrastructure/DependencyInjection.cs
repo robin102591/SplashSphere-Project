@@ -11,6 +11,7 @@ using SplashSphere.Infrastructure.Auth;
 using SplashSphere.Infrastructure.Persistence;
 using SplashSphere.Infrastructure.Persistence.Interceptors;
 using SplashSphere.Infrastructure.Persistence.Repositories;
+using SplashSphere.Infrastructure.Services;
 
 namespace SplashSphere.Infrastructure;
 
@@ -32,6 +33,10 @@ public static class DependencyInjection
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IServicePricingRepository, ServicePricingRepository>();
         services.AddScoped<IServiceCommissionRepository, ServiceCommissionRepository>();
+
+        // Domain event publisher & background jobs
+        services.AddScoped<IEventPublisher, EventPublisher>();
+        services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
         // Tenant Context
         services.AddScoped<TenantContext>();
