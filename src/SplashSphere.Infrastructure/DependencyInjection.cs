@@ -10,6 +10,7 @@ using SplashSphere.Infrastructure.Authentication;
 using SplashSphere.Infrastructure.Persistence;
 using SplashSphere.Infrastructure.Persistence.Interceptors;
 using SplashSphere.Infrastructure.Persistence.Repositories;
+using SplashSphere.Infrastructure.Jobs;
 using SplashSphere.Infrastructure.Services;
 
 namespace SplashSphere.Infrastructure;
@@ -48,6 +49,12 @@ public static class DependencyInjection
 
         // ── Clerk backend API (organization management) ───────────────────────
         services.AddScoped<IClerkOrganizationService, ClerkOrganizationService>();
+
+        // ── Background job services ───────────────────────────────────────────
+        services.AddTransient<PayrollJobService>();
+        services.AddTransient<InventoryJobService>();
+        services.AddTransient<TransactionJobService>();
+        services.AddTransient<QueueJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────────
         services.AddHangfire(config => config

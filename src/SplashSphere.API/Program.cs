@@ -9,6 +9,7 @@ using SplashSphere.Application;
 using SplashSphere.Infrastructure;
 using SplashSphere.Infrastructure.Authentication;
 using SplashSphere.Infrastructure.Hubs;
+using SplashSphere.Infrastructure.Jobs;
 using SplashSphere.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,6 +84,9 @@ app.UseAuthorization();
 // ── Hangfire dashboard (dev only) ─────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
+
+// ── Recurring jobs (Manila timezone) ─────────────────────────────────────────
+app.UseRecurringJobs();
 
 // ── SignalR hub ───────────────────────────────────────────────────────────────
 app.MapHub<NotificationHub>("/hubs/notifications");
