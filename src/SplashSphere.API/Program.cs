@@ -89,7 +89,7 @@ if (app.Environment.IsDevelopment())
 app.UseRecurringJobs();
 
 // ── SignalR hub ───────────────────────────────────────────────────────────────
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<SplashSphereHub>("/hubs/notifications");
 
 // ── API endpoints ─────────────────────────────────────────────────────────────
 app.MapAuthEndpoints();
