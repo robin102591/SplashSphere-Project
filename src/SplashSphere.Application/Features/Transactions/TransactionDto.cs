@@ -2,22 +2,7 @@ using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.Application.Features.Transactions;
 
-public sealed record TransactionSummaryDto(
-    string Id,
-    string TransactionNumber,
-    string BranchId,
-    string BranchName,
-    string CarId,
-    string PlateNumber,
-    string? CustomerId,
-    string? CustomerName,
-    TransactionStatus Status,
-    decimal TotalAmount,
-    decimal DiscountAmount,
-    decimal TaxAmount,
-    decimal FinalAmount,
-    string CashierName,
-    DateTime CreatedAt);
+// ── Full transaction detail ───────────────────────────────────────────────────
 
 public sealed record TransactionDetailDto(
     string Id,
@@ -47,6 +32,8 @@ public sealed record TransactionDetailDto(
     IReadOnlyList<TransactionMerchandiseLineDto> Merchandise,
     IReadOnlyList<TransactionEmployeeSummaryDto> Employees,
     IReadOnlyList<PaymentDto> Payments);
+
+// ── Line items ────────────────────────────────────────────────────────────────
 
 public sealed record TransactionServiceLineDto(
     string Id,
@@ -78,6 +65,8 @@ public sealed record TransactionMerchandiseLineDto(
     decimal UnitPrice,
     decimal LineTotal);
 
+// ── Employee summaries & assignments ─────────────────────────────────────────
+
 public sealed record TransactionEmployeeSummaryDto(
     string Id,
     string EmployeeId,
@@ -95,6 +84,8 @@ public sealed record PackageAssignmentDto(
     string EmployeeId,
     string EmployeeName,
     decimal CommissionAmount);
+
+// ── Payments ──────────────────────────────────────────────────────────────────
 
 public sealed record PaymentDto(
     string Id,
