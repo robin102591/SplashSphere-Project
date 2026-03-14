@@ -1,0 +1,642 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
+using SplashSphere.Infrastructure.Auth;
+
+namespace SplashSphere.Infrastructure.Persistence;
+
+/// <summary>
+/// Development-only seed data for SparkleWash Philippines.
+/// Idempotent: a no-op if the seed tenant row already exists.
+/// Call via <c>DataSeeder.SeedAsync(app.Services)</c> inside
+/// <c>if (app.Environment.IsDevelopment())</c> in Program.cs.
+/// </summary>
+public static class DataSeeder
+{
+    // ── Tenant ────────────────────────────────────────────────────────────────
+    private const string Ten = "org_sparklwash_dev";
+
+    // ── Branches ──────────────────────────────────────────────────────────────
+    private const string BrMkt = "branch-makati";
+    private const string BrBgc = "branch-bgc";
+
+    // ── Users (system logins — one cashier per branch) ────────────────────────
+    private const string UsrMkt = "usr-cashier-mkt";
+    private const string UsrBgc = "usr-cashier-bgc";
+
+    // ── Vehicle Types ─────────────────────────────────────────────────────────
+    private const string VtSedan = "vtype-sedan";
+    private const string VtSuv   = "vtype-suv";
+    private const string VtVan   = "vtype-van";
+    private const string VtTruck = "vtype-truck";
+    private const string VtMoto  = "vtype-moto";
+
+    // ── Sizes ─────────────────────────────────────────────────────────────────
+    private const string SzSm = "size-small";
+    private const string SzMd = "size-medium";
+    private const string SzLg = "size-large";
+    private const string SzXl = "size-xl";
+
+    // ── Makes ─────────────────────────────────────────────────────────────────
+    private const string MkToyota    = "make-toyota";
+    private const string MkHonda     = "make-honda";
+    private const string MkMitsu     = "make-mitsubishi";
+    private const string MkNissan    = "make-nissan";
+    private const string MkSuzuki    = "make-suzuki";
+
+    // ── Models ────────────────────────────────────────────────────────────────
+    private const string MdVios      = "model-toyota-vios";
+    private const string MdCorolla   = "model-toyota-corolla";
+    private const string MdFortuner  = "model-toyota-fortuner";
+    private const string MdHilux     = "model-toyota-hilux";
+    private const string MdInnova    = "model-toyota-innova";
+    private const string MdCity      = "model-honda-city";
+    private const string MdCivic     = "model-honda-civic";
+    private const string MdCrv       = "model-honda-crv";
+    private const string MdJazz      = "model-honda-jazz";
+    private const string MdMirage    = "model-mit-mirage";
+    private const string MdMontero   = "model-mit-montero";
+    private const string MdStrada    = "model-mit-strada";
+    private const string MdAlmera    = "model-nissan-almera";
+    private const string MdTerra     = "model-nissan-terra";
+    private const string MdNavara    = "model-nissan-navara";
+    private const string MdSwift     = "model-suzuki-swift";
+    private const string MdErtiga    = "model-suzuki-ertiga";
+    private const string MdJimny     = "model-suzuki-jimny";
+
+    // ── Service Categories ────────────────────────────────────────────────────
+    private const string CatExt  = "cat-exterior";
+    private const string CatInt  = "cat-interior";
+    private const string CatPrem = "cat-premium";
+
+    // ── Merchandise Category ──────────────────────────────────────────────────
+    private const string CatMerch = "cat-carcare";
+
+    // ── Services ──────────────────────────────────────────────────────────────
+    private const string SvcBasic  = "svc-basic-wash";
+    private const string SvcPrem   = "svc-premium-wash";
+    private const string SvcExpr   = "svc-express-wash";
+    private const string SvcEng    = "svc-engine-bay";
+    private const string SvcUnder  = "svc-undercarriage";
+    private const string SvcVacuum = "svc-interior-vacuum";
+    private const string SvcDash   = "svc-dashboard-wipe";
+    private const string SvcFull   = "svc-full-interior";
+    private const string SvcWax    = "svc-wax-polish";
+    private const string SvcDetail = "svc-complete-detail";
+
+    // ── Employees ─────────────────────────────────────────────────────────────
+    private const string EMaria  = "emp-mkt-001"; // Commission
+    private const string EJuan   = "emp-mkt-002"; // Commission
+    private const string EPedro  = "emp-mkt-003"; // Commission
+    private const string EAna    = "emp-mkt-004"; // Daily (cashier)
+    private const string ECarlos = "emp-bgc-001"; // Commission
+    private const string ERosa   = "emp-bgc-002"; // Commission
+    private const string EMiguel = "emp-bgc-003"; // Commission
+    private const string EElena  = "emp-bgc-004"; // Daily (cashier)
+
+    // ── Merchandise ───────────────────────────────────────────────────────────
+    private const string MAir   = "merch-airfresh";
+    private const string MCloth = "merch-microfiber";
+    private const string MShine = "merch-dashshine";
+    private const string MTire  = "merch-tireblack";
+
+    // ── Customers ─────────────────────────────────────────────────────────────
+    private const string CJose    = "cust-jose-santos";
+    private const string CMaria   = "cust-maria-cruz";
+    private const string CRoberto = "cust-roberto-reyes";
+    private const string CCarmela = "cust-carmela-mendoza";
+
+    // ── Cars ──────────────────────────────────────────────────────────────────
+    private const string CarVios    = "car-vios-abc1234";
+    private const string CarCrv     = "car-crv-xyz5678";
+    private const string CarStrada  = "car-strada-def9012";
+    private const string CarFortu   = "car-fortuner-ghi3456";
+    private const string CarCity    = "car-city-jkl7890";
+    private const string CarTerra   = "car-terra-mno1234";
+    private const string CarSwift   = "car-swift-pqr5678";
+    private const string CarMontero = "car-montero-stu9012";
+
+    // ── Transactions (≤ 26 chars — ULID slot) ────────────────────────────────
+    private const string T01 = "SEEDMKT20260307001";
+    private const string T02 = "SEEDMKT20260308001";
+    private const string T03 = "SEEDMKT20260309001";
+    private const string T04 = "SEEDMKT20260310001";
+    private const string T05 = "SEEDMKT20260311001";
+    private const string T06 = "SEEDMKT20260312001";
+    private const string T07 = "SEEDBGC20260307001";
+    private const string T08 = "SEEDBGC20260308001";
+    private const string T09 = "SEEDBGC20260309001";
+    private const string T10 = "SEEDBGC20260310001";
+    private const string T11 = "SEEDBGC20260311001";
+    private const string T12 = "SEEDBGC20260312001";
+
+    // =========================================================================
+
+    public static async Task SeedAsync(IServiceProvider serviceProvider)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        // Idempotency guard — Tenants has no global query filter so this always works
+        if (await ctx.Tenants.AnyAsync(t => t.Id == Ten))
+            return;
+
+        // Set TenantContext so global filters evaluate correctly for any reads
+        // performed by EF Core internals during this scope
+        scope.ServiceProvider.GetRequiredService<TenantContext>().TenantId = Ten;
+
+        // Batch 1 — root / master data (no FK dependencies on later batches)
+        AddMasterData(ctx);
+        await ctx.SaveChangesAsync();
+
+        // Batch 2 — catalogue, matrices, employees, merchandise, cars, customers
+        AddCatalogue(ctx);
+        AddPricingMatrices(ctx);
+        AddEmployeesAndMerchandise(ctx);
+        AddCustomersAndCars(ctx);
+        await ctx.SaveChangesAsync();
+
+        // Batch 3 — transactions and all child records
+        AddTransactions(ctx);
+        await ctx.SaveChangesAsync();
+    }
+
+    // ── Master data ───────────────────────────────────────────────────────────
+
+    private static void AddMasterData(ApplicationDbContext ctx)
+    {
+        ctx.Add(new Tenant("org_sparklwash_dev",
+            name: "SparkleWash Philippines",
+            email: "admin@sparklewash.ph",
+            contactNumber: "+63 917 123 4567",
+            address: "Mandaluyong City, Metro Manila, Philippines") { Id = Ten });
+
+        ctx.Add(new Branch(Ten, "Makati Branch", "MKT", "7849 Makati Ave, Makati City", "+63 2 8123 4567") { Id = BrMkt });
+        ctx.Add(new Branch(Ten, "BGC Branch",    "BGC", "26th St, Bonifacio Global City, Taguig", "+63 2 8987 6543") { Id = BrBgc });
+
+        // System users (POS cashier logins — one per branch)
+        ctx.Add(new User("clerk_mkt_cashier_seed", "cashier-mkt@sparklewash.ph", "Ana",   "Lim")
+            { Id = UsrMkt, TenantId = Ten });
+        ctx.Add(new User("clerk_bgc_cashier_seed", "cashier-bgc@sparklewash.ph", "Elena", "Cruz")
+            { Id = UsrBgc, TenantId = Ten });
+
+        // Vehicle types
+        ctx.Add(new VehicleType(Ten, "Sedan")      { Id = VtSedan });
+        ctx.Add(new VehicleType(Ten, "SUV")        { Id = VtSuv   });
+        ctx.Add(new VehicleType(Ten, "Van")        { Id = VtVan   });
+        ctx.Add(new VehicleType(Ten, "Truck")      { Id = VtTruck });
+        ctx.Add(new VehicleType(Ten, "Motorcycle") { Id = VtMoto  });
+
+        // Sizes
+        ctx.Add(new Size(Ten, "Small")  { Id = SzSm });
+        ctx.Add(new Size(Ten, "Medium") { Id = SzMd });
+        ctx.Add(new Size(Ten, "Large")  { Id = SzLg });
+        ctx.Add(new Size(Ten, "XL")     { Id = SzXl });
+
+        // Makes
+        ctx.Add(new Make(Ten, "Toyota")    { Id = MkToyota });
+        ctx.Add(new Make(Ten, "Honda")     { Id = MkHonda  });
+        ctx.Add(new Make(Ten, "Mitsubishi") { Id = MkMitsu });
+        ctx.Add(new Make(Ten, "Nissan")    { Id = MkNissan });
+        ctx.Add(new Make(Ten, "Suzuki")    { Id = MkSuzuki });
+
+        // Models — Toyota
+        ctx.Add(new Model(Ten, MkToyota, "Vios")          { Id = MdVios     });
+        ctx.Add(new Model(Ten, MkToyota, "Corolla Altis") { Id = MdCorolla  });
+        ctx.Add(new Model(Ten, MkToyota, "Fortuner")      { Id = MdFortuner });
+        ctx.Add(new Model(Ten, MkToyota, "Hilux")         { Id = MdHilux    });
+        ctx.Add(new Model(Ten, MkToyota, "Innova")        { Id = MdInnova   });
+        // Models — Honda
+        ctx.Add(new Model(Ten, MkHonda, "City")  { Id = MdCity  });
+        ctx.Add(new Model(Ten, MkHonda, "Civic") { Id = MdCivic });
+        ctx.Add(new Model(Ten, MkHonda, "CR-V")  { Id = MdCrv   });
+        ctx.Add(new Model(Ten, MkHonda, "Jazz")  { Id = MdJazz  });
+        // Models — Mitsubishi
+        ctx.Add(new Model(Ten, MkMitsu, "Mirage")        { Id = MdMirage  });
+        ctx.Add(new Model(Ten, MkMitsu, "Montero Sport") { Id = MdMontero });
+        ctx.Add(new Model(Ten, MkMitsu, "Strada")        { Id = MdStrada  });
+        // Models — Nissan
+        ctx.Add(new Model(Ten, MkNissan, "Almera") { Id = MdAlmera });
+        ctx.Add(new Model(Ten, MkNissan, "Terra")  { Id = MdTerra  });
+        ctx.Add(new Model(Ten, MkNissan, "Navara") { Id = MdNavara });
+        // Models — Suzuki
+        ctx.Add(new Model(Ten, MkSuzuki, "Swift")  { Id = MdSwift  });
+        ctx.Add(new Model(Ten, MkSuzuki, "Ertiga") { Id = MdErtiga });
+        ctx.Add(new Model(Ten, MkSuzuki, "Jimny")  { Id = MdJimny  });
+    }
+
+    // ── Service & merchandise catalogue ──────────────────────────────────────
+
+    private static void AddCatalogue(ApplicationDbContext ctx)
+    {
+        ctx.Add(new ServiceCategory(Ten, "Exterior",  "Exterior cleaning and washing services") { Id = CatExt  });
+        ctx.Add(new ServiceCategory(Ten, "Interior",  "Interior cleaning and detailing services") { Id = CatInt });
+        ctx.Add(new ServiceCategory(Ten, "Premium",   "Premium detailing and full-service packages") { Id = CatPrem });
+        ctx.Add(new MerchandiseCategory(Ten, "Car Care Products", "Retail car care and accessories") { Id = CatMerch });
+
+        // 10 services across 3 categories
+        ctx.Add(new Service(Ten, CatExt,  "Basic Exterior Wash",   150m,  "Standard exterior hand wash") { Id = SvcBasic  });
+        ctx.Add(new Service(Ten, CatExt,  "Premium Exterior Wash", 280m,  "Premium exterior wash with rinse and dry") { Id = SvcPrem   });
+        ctx.Add(new Service(Ten, CatExt,  "Express Wash",          120m,  "Quick exterior rinse — ideal for light dust") { Id = SvcExpr   });
+        ctx.Add(new Service(Ten, CatExt,  "Engine Bay Cleaning",   450m,  "Thorough engine compartment degreasing") { Id = SvcEng    });
+        ctx.Add(new Service(Ten, CatExt,  "Undercarriage Wash",    180m,  "High-pressure undercarriage rinse") { Id = SvcUnder  });
+        ctx.Add(new Service(Ten, CatInt,  "Interior Vacuum",       150m,  "Full cabin vacuum including seats and mats") { Id = SvcVacuum });
+        ctx.Add(new Service(Ten, CatInt,  "Dashboard Wipe",        100m,  "Dashboard, console and door panel wipe-down") { Id = SvcDash   });
+        ctx.Add(new Service(Ten, CatInt,  "Full Interior Clean",   380m,  "Complete interior vacuum, wipe and shampoo") { Id = SvcFull   });
+        ctx.Add(new Service(Ten, CatPrem, "Wax & Polish",          550m,  "Hand wax application and machine polish") { Id = SvcWax    });
+        ctx.Add(new Service(Ten, CatPrem, "Complete Detail",      1200m,  "Full exterior + interior detail package") { Id = SvcDetail });
+    }
+
+    // ── Pricing & commission matrices ─────────────────────────────────────────
+
+    private static void AddPricingMatrices(ApplicationDbContext ctx)
+    {
+        // ── Basic Exterior Wash — FULL 20-row pricing matrix ──────────────────
+        ctx.AddRange(
+            P(SvcBasic, VtSedan, SzSm,  150m), P(SvcBasic, VtSedan, SzMd, 180m),
+            P(SvcBasic, VtSedan, SzLg,  200m), P(SvcBasic, VtSedan, SzXl, 220m),
+            P(SvcBasic, VtSuv,   SzSm,  180m), P(SvcBasic, VtSuv,   SzMd, 220m),
+            P(SvcBasic, VtSuv,   SzLg,  260m), P(SvcBasic, VtSuv,   SzXl, 300m),
+            P(SvcBasic, VtVan,   SzSm,  200m), P(SvcBasic, VtVan,   SzMd, 230m),
+            P(SvcBasic, VtVan,   SzLg,  270m), P(SvcBasic, VtVan,   SzXl, 310m),
+            P(SvcBasic, VtTruck, SzSm,  200m), P(SvcBasic, VtTruck, SzMd, 240m),
+            P(SvcBasic, VtTruck, SzLg,  280m), P(SvcBasic, VtTruck, SzXl, 320m),
+            P(SvcBasic, VtMoto,  SzSm,  100m), P(SvcBasic, VtMoto,  SzMd, 120m),
+            P(SvcBasic, VtMoto,  SzLg,  140m), P(SvcBasic, VtMoto,  SzXl, 160m));
+
+        // ── Basic Exterior Wash — FULL 20-row commission matrix (15%) ─────────
+        ctx.AddRange(
+            Pct(SvcBasic, VtSedan, SzSm, 15m), Pct(SvcBasic, VtSedan, SzMd, 15m),
+            Pct(SvcBasic, VtSedan, SzLg, 15m), Pct(SvcBasic, VtSedan, SzXl, 15m),
+            Pct(SvcBasic, VtSuv,   SzSm, 15m), Pct(SvcBasic, VtSuv,   SzMd, 15m),
+            Pct(SvcBasic, VtSuv,   SzLg, 15m), Pct(SvcBasic, VtSuv,   SzXl, 15m),
+            Pct(SvcBasic, VtVan,   SzSm, 15m), Pct(SvcBasic, VtVan,   SzMd, 15m),
+            Pct(SvcBasic, VtVan,   SzLg, 15m), Pct(SvcBasic, VtVan,   SzXl, 15m),
+            Pct(SvcBasic, VtTruck, SzSm, 15m), Pct(SvcBasic, VtTruck, SzMd, 15m),
+            Pct(SvcBasic, VtTruck, SzLg, 15m), Pct(SvcBasic, VtTruck, SzXl, 15m),
+            Pct(SvcBasic, VtMoto,  SzSm, 15m), Pct(SvcBasic, VtMoto,  SzMd, 15m),
+            Pct(SvcBasic, VtMoto,  SzLg, 15m), Pct(SvcBasic, VtMoto,  SzXl, 15m));
+
+        // ── Express Wash — partial pricing matrix ─────────────────────────────
+        ctx.AddRange(
+            P(SvcExpr, VtSedan, SzSm,  120m), P(SvcExpr, VtSedan, SzMd, 140m),
+            P(SvcExpr, VtSedan, SzLg,  160m), P(SvcExpr, VtSedan, SzXl, 180m),
+            P(SvcExpr, VtSuv,   SzSm,  150m), P(SvcExpr, VtSuv,   SzMd, 180m),
+            P(SvcExpr, VtSuv,   SzLg,  210m), P(SvcExpr, VtSuv,   SzXl, 240m),
+            P(SvcExpr, VtTruck, SzLg,  220m),
+            P(SvcExpr, VtMoto,  SzSm,   80m));
+
+        // ── Express Wash — commission (10%) ───────────────────────────────────
+        ctx.AddRange(
+            Pct(SvcExpr, VtSedan, SzSm, 10m), Pct(SvcExpr, VtSedan, SzMd, 10m),
+            Pct(SvcExpr, VtSedan, SzLg, 10m), Pct(SvcExpr, VtSedan, SzXl, 10m),
+            Pct(SvcExpr, VtSuv,   SzSm, 10m), Pct(SvcExpr, VtSuv,   SzMd, 10m),
+            Pct(SvcExpr, VtSuv,   SzLg, 10m), Pct(SvcExpr, VtSuv,   SzXl, 10m),
+            Pct(SvcExpr, VtTruck, SzLg, 10m),
+            Pct(SvcExpr, VtMoto,  SzSm, 10m));
+
+        // ── Premium Exterior Wash — partial pricing matrix ────────────────────
+        ctx.AddRange(
+            P(SvcPrem, VtSedan, SzSm,  280m), P(SvcPrem, VtSedan, SzMd,  320m),
+            P(SvcPrem, VtSuv,   SzSm,  330m), P(SvcPrem, VtSuv,   SzMd,  380m),
+            P(SvcPrem, VtSuv,   SzLg,  430m), P(SvcPrem, VtSuv,   SzXl,  480m),
+            P(SvcPrem, VtVan,   SzLg,  430m), P(SvcPrem, VtTruck, SzLg,  430m),
+            P(SvcPrem, VtMoto,  SzSm,  200m));
+
+        // ── Premium Exterior Wash — commission (15%) ──────────────────────────
+        ctx.AddRange(
+            Pct(SvcPrem, VtSedan, SzSm, 15m), Pct(SvcPrem, VtSedan, SzMd, 15m),
+            Pct(SvcPrem, VtSuv,   SzSm, 15m), Pct(SvcPrem, VtSuv,   SzMd, 15m),
+            Pct(SvcPrem, VtSuv,   SzLg, 15m), Pct(SvcPrem, VtSuv,   SzXl, 15m),
+            Pct(SvcPrem, VtVan,   SzLg, 15m), Pct(SvcPrem, VtTruck, SzLg, 15m),
+            Pct(SvcPrem, VtMoto,  SzSm, 15m));
+
+        // ── Other services — targeted entries for seed transaction combos ─────
+        // Interior Vacuum
+        ctx.AddRange(P(SvcVacuum, VtSedan, SzSm, 150m), P(SvcVacuum, VtSuv, SzLg, 150m));
+        ctx.AddRange(Pct(SvcVacuum, VtSedan, SzSm, 10m), Pct(SvcVacuum, VtSuv, SzLg, 10m));
+
+        // Dashboard Wipe (pricing only — no commission; low-skill admin task)
+        ctx.AddRange(P(SvcDash, VtSedan, SzSm, 100m), P(SvcDash, VtSuv, SzLg, 100m));
+
+        // Undercarriage Wash
+        ctx.AddRange(
+            P(SvcUnder, VtTruck, SzLg, 210m), P(SvcUnder, VtSuv, SzLg, 200m),
+            P(SvcUnder, VtSedan, SzSm, 150m));
+        ctx.AddRange(
+            Pct(SvcUnder, VtTruck, SzLg, 10m), Pct(SvcUnder, VtSuv, SzLg, 10m),
+            Pct(SvcUnder, VtSedan, SzSm, 10m));
+
+        // Full Interior Clean
+        ctx.AddRange(P(SvcFull, VtSuv, SzLg, 400m), P(SvcFull, VtSedan, SzSm, 380m));
+        ctx.AddRange(Pct(SvcFull, VtSuv, SzLg, 15m), Pct(SvcFull, VtSedan, SzSm, 15m));
+
+        // Wax & Polish
+        ctx.AddRange(P(SvcWax, VtSedan, SzSm, 600m), P(SvcWax, VtSuv, SzLg, 700m));
+        ctx.AddRange(Pct(SvcWax, VtSedan, SzSm, 15m), Pct(SvcWax, VtSuv, SzLg, 15m));
+
+        // Complete Detail
+        ctx.AddRange(P(SvcDetail, VtSuv, SzLg, 1300m), P(SvcDetail, VtSedan, SzSm, 1200m));
+        ctx.AddRange(Pct(SvcDetail, VtSuv, SzLg, 15m), Pct(SvcDetail, VtSedan, SzSm, 15m));
+
+        // Engine Bay Cleaning
+        ctx.AddRange(
+            P(SvcEng, VtSedan, SzSm, 400m), P(SvcEng, VtSuv, SzLg, 500m),
+            P(SvcEng, VtTruck, SzLg, 550m));
+        ctx.AddRange(
+            Pct(SvcEng, VtSedan, SzSm, 10m), Pct(SvcEng, VtSuv, SzLg, 10m),
+            Pct(SvcEng, VtTruck, SzLg, 10m));
+    }
+
+    // ── Employees & merchandise ───────────────────────────────────────────────
+
+    private static void AddEmployeesAndMerchandise(ApplicationDbContext ctx)
+    {
+        var hired24 = new DateOnly(2024, 1, 15);
+        var hired24b = new DateOnly(2024, 6, 1);
+
+        // Makati — 3 commission-type washers + 1 daily-rate cashier
+        ctx.Add(new Employee(Ten, BrMkt, "Maria",  "Santos",   EmployeeType.Commission, hiredDate: hired24)  { Id = EMaria  });
+        ctx.Add(new Employee(Ten, BrMkt, "Juan",   "dela Cruz", EmployeeType.Commission, hiredDate: hired24)  { Id = EJuan   });
+        ctx.Add(new Employee(Ten, BrMkt, "Pedro",  "Reyes",    EmployeeType.Commission, hiredDate: new DateOnly(2024, 3, 1)) { Id = EPedro  });
+        ctx.Add(new Employee(Ten, BrMkt, "Ana",    "Lim",      EmployeeType.Daily, dailyRate: 600m, hiredDate: hired24)  { Id = EAna    });
+
+        // BGC — 3 commission-type washers + 1 daily-rate cashier
+        ctx.Add(new Employee(Ten, BrBgc, "Carlos", "Mendoza",  EmployeeType.Commission, hiredDate: hired24b) { Id = ECarlos });
+        ctx.Add(new Employee(Ten, BrBgc, "Rosa",   "Garcia",   EmployeeType.Commission, hiredDate: hired24b) { Id = ERosa   });
+        ctx.Add(new Employee(Ten, BrBgc, "Miguel", "Torres",   EmployeeType.Commission, hiredDate: new DateOnly(2024, 8, 15)) { Id = EMiguel });
+        ctx.Add(new Employee(Ten, BrBgc, "Elena",  "Cruz",     EmployeeType.Daily, dailyRate: 650m, hiredDate: hired24b) { Id = EElena  });
+
+        // Merchandise category + 4 SKUs
+        ctx.Add(new Merchandise(Ten, "Car Air Freshener",      "AF-001", 80m,  stockQuantity: 50,  lowStockThreshold: 10, categoryId: CatMerch, costPrice: 40m)  { Id = MAir   });
+        ctx.Add(new Merchandise(Ten, "Microfiber Cloth",       "MC-001", 120m, stockQuantity: 100, lowStockThreshold: 20, categoryId: CatMerch, costPrice: 60m)  { Id = MCloth });
+        ctx.Add(new Merchandise(Ten, "Dashboard Shine Spray",  "DS-001", 150m, stockQuantity: 30,  lowStockThreshold: 5,  categoryId: CatMerch, costPrice: 75m)  { Id = MShine });
+        ctx.Add(new Merchandise(Ten, "Tire Black Spray",       "TB-001", 100m, stockQuantity: 40,  lowStockThreshold: 8,  categoryId: CatMerch, costPrice: 50m)  { Id = MTire  });
+    }
+
+    // ── Customers & cars ──────────────────────────────────────────────────────
+
+    private static void AddCustomersAndCars(ApplicationDbContext ctx)
+    {
+        ctx.Add(new Customer(Ten, "Jose",    "Santos",  email: "jose.santos@email.com",  contactNumber: "+63 917 100 0001") { Id = CJose    });
+        ctx.Add(new Customer(Ten, "Maria",   "Cruz",    email: "maria.cruz@email.com",   contactNumber: "+63 917 100 0002") { Id = CMaria   });
+        ctx.Add(new Customer(Ten, "Roberto", "Reyes",   email: "roberto.reyes@email.com",contactNumber: "+63 917 100 0003") { Id = CRoberto });
+        ctx.Add(new Customer(Ten, "Carmela", "Mendoza", email: "carmela.m@email.com",    contactNumber: "+63 917 100 0004") { Id = CCarmela });
+
+        // Cars — registered vehicles (some walk-in, no customer FK)
+        ctx.Add(new Car(Ten, VtSedan, SzSm, "ABC 1234", CJose,    MkToyota, MdVios,    "Red",    2020) { Id = CarVios    });
+        ctx.Add(new Car(Ten, VtSuv,   SzLg, "XYZ 5678", CMaria,   MkHonda,  MdCrv,     "Silver", 2022) { Id = CarCrv     });
+        ctx.Add(new Car(Ten, VtTruck, SzLg, "DEF 9012", null,      MkMitsu,  MdStrada,  "Black",  2021) { Id = CarStrada  });
+        ctx.Add(new Car(Ten, VtSuv,   SzXl, "GHI 3456", CRoberto, MkToyota, MdFortuner,"White",  2023) { Id = CarFortu   });
+        ctx.Add(new Car(Ten, VtSedan, SzSm, "JKL 7890", null,      MkHonda,  MdCity,    "Blue",   2019) { Id = CarCity    });
+        ctx.Add(new Car(Ten, VtSuv,   SzLg, "MNO 1234", null,      MkNissan, MdTerra,   "Gray",   2022) { Id = CarTerra   });
+        ctx.Add(new Car(Ten, VtSedan, SzSm, "PQR 5678", CCarmela, MkSuzuki, MdSwift,   "Red",    2021) { Id = CarSwift   });
+        ctx.Add(new Car(Ten, VtSuv,   SzXl, "STU 9012", null,      MkMitsu,  MdMontero, "White",  2020) { Id = CarMontero });
+    }
+
+    // ── Sample transactions ───────────────────────────────────────────────────
+
+    private static void AddTransactions(ApplicationDbContext ctx)
+    {
+        var now = DateTime.UtcNow;
+
+        // ── TXN 01  MKT | Sedan Small | Jose's Vios | Completed ───────────────
+        // Services: Basic Wash (150) + Interior Vacuum (150)
+        // Employees: Maria, Juan (2-way split on each service)
+        {
+            var txn = Txn(T01, BrMkt, UsrMkt, CarVios, CJose,
+                "MKT-20260307-0001", 300m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t01-1", T01, SvcBasic, VtSedan, SzSm, 150m, 22.50m);
+            var ts2 = Ts("ts-t01-2", T01, SvcVacuum, VtSedan, SzSm, 150m, 15.00m);
+            ctx.AddRange(txn, ts1, ts2);
+            ctx.AddRange(
+                Sea("sea-t01-1", ts1.Id, EMaria, 11.25m),
+                Sea("sea-t01-2", ts1.Id, EJuan,  11.25m),
+                Sea("sea-t01-3", ts2.Id, EMaria,  7.50m),
+                Sea("sea-t01-4", ts2.Id, EJuan,   7.50m));
+            ctx.AddRange(
+                Te("te-t01-maria", T01, EMaria, 18.75m),
+                Te("te-t01-juan",  T01, EJuan,  18.75m));
+            ctx.Add(Pay("pay-t01", T01, PaymentMethod.Cash, 300m));
+        }
+
+        // ── TXN 02  MKT | SUV Large | Maria Cruz's CR-V | Completed ──────────
+        // Services: Premium Wash (430) — 2 employees
+        {
+            var txn = Txn(T02, BrMkt, UsrMkt, CarCrv, CMaria,
+                "MKT-20260308-0001", 430m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t02-1", T02, SvcPrem, VtSuv, SzLg, 430m, 64.50m);
+            ctx.AddRange(txn, ts1);
+            ctx.AddRange(
+                Sea("sea-t02-1", ts1.Id, EPedro, 32.25m),
+                Sea("sea-t02-2", ts1.Id, EMaria, 32.25m));
+            ctx.AddRange(
+                Te("te-t02-pedro", T02, EPedro, 32.25m),
+                Te("te-t02-maria", T02, EMaria, 32.25m));
+            ctx.Add(Pay("pay-t02", T02, PaymentMethod.GCash, 430m));
+        }
+
+        // ── TXN 03  MKT | Truck Large | Walk-in Strada | Completed ───────────
+        // Services: Basic Wash (280) + Undercarriage (210) — 3 employees
+        {
+            var txn = Txn(T03, BrMkt, UsrMkt, CarStrada, null,
+                "MKT-20260309-0001", 490m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t03-1", T03, SvcBasic, VtTruck, SzLg, 280m, 42.00m);
+            var ts2 = Ts("ts-t03-2", T03, SvcUnder, VtTruck, SzLg, 210m, 21.00m);
+            ctx.AddRange(txn, ts1, ts2);
+            ctx.AddRange(
+                Sea("sea-t03-1", ts1.Id, EMaria, 14.00m),
+                Sea("sea-t03-2", ts1.Id, EJuan,  14.00m),
+                Sea("sea-t03-3", ts1.Id, EPedro, 14.00m),
+                Sea("sea-t03-4", ts2.Id, EMaria,  7.00m),
+                Sea("sea-t03-5", ts2.Id, EJuan,   7.00m),
+                Sea("sea-t03-6", ts2.Id, EPedro,  7.00m));
+            ctx.AddRange(
+                Te("te-t03-maria", T03, EMaria, 21.00m),
+                Te("te-t03-juan",  T03, EJuan,  21.00m),
+                Te("te-t03-pedro", T03, EPedro, 21.00m));
+            ctx.Add(Pay("pay-t03", T03, PaymentMethod.Cash, 490m));
+        }
+
+        // ── TXN 04  MKT | SUV XL | Roberto's Fortuner | Completed ───────────
+        // Services: Express Wash (240) + merchandise: Air Freshener (80) — 1 employee
+        {
+            var txn = Txn(T04, BrMkt, UsrMkt, CarFortu, CRoberto,
+                "MKT-20260310-0001", 320m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t04-1", T04, SvcExpr, VtSuv, SzXl, 240m, 24.00m);
+            ctx.AddRange(txn, ts1);
+            ctx.Add(new TransactionMerchandise(Ten, T04, MAir, quantity: 1, unitPrice: 80m) { Id = "tm-t04-air" });
+            ctx.Add(Sea("sea-t04-1", ts1.Id, EMaria, 24.00m));
+            ctx.Add(Te("te-t04-maria", T04, EMaria, 24.00m));
+            ctx.Add(Pay("pay-t04", T04, PaymentMethod.Cash, 320m));
+        }
+
+        // ── TXN 05  MKT | Sedan Small | Walk-in City | Completed ─────────────
+        // Services: Basic Wash (150) — 2 employees
+        {
+            var txn = Txn(T05, BrMkt, UsrMkt, CarCity, null,
+                "MKT-20260311-0001", 150m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t05-1", T05, SvcBasic, VtSedan, SzSm, 150m, 22.50m);
+            ctx.AddRange(txn, ts1);
+            ctx.AddRange(
+                Sea("sea-t05-1", ts1.Id, EJuan,  11.25m),
+                Sea("sea-t05-2", ts1.Id, EPedro, 11.25m));
+            ctx.AddRange(
+                Te("te-t05-juan",  T05, EJuan,  11.25m),
+                Te("te-t05-pedro", T05, EPedro, 11.25m));
+            ctx.Add(Pay("pay-t05", T05, PaymentMethod.Cash, 150m));
+        }
+
+        // ── TXN 06  MKT | SUV Large | Walk-in Terra | InProgress ─────────────
+        // Services: Full Interior (400) + Undercarriage (200) — 2 employees, no payment yet
+        {
+            var txn = Txn(T06, BrMkt, UsrMkt, CarTerra, null,
+                "MKT-20260312-0001", 600m, TransactionStatus.InProgress);
+            var ts1 = Ts("ts-t06-1", T06, SvcFull,  VtSuv, SzLg, 400m, 60.00m);
+            var ts2 = Ts("ts-t06-2", T06, SvcUnder, VtSuv, SzLg, 200m, 20.00m);
+            ctx.AddRange(txn, ts1, ts2);
+            ctx.AddRange(
+                Sea("sea-t06-1", ts1.Id, EMaria, 30.00m),
+                Sea("sea-t06-2", ts1.Id, EJuan,  30.00m),
+                Sea("sea-t06-3", ts2.Id, EMaria, 10.00m),
+                Sea("sea-t06-4", ts2.Id, EJuan,  10.00m));
+            ctx.AddRange(
+                Te("te-t06-maria", T06, EMaria, 40.00m),
+                Te("te-t06-juan",  T06, EJuan,  40.00m));
+        }
+
+        // ── TXN 07  BGC | Sedan Small | Carmela's Swift | Completed ──────────
+        // Services: Basic Wash (150) — 2 employees
+        {
+            var txn = Txn(T07, BrBgc, UsrBgc, CarSwift, CCarmela,
+                "BGC-20260307-0001", 150m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t07-1", T07, SvcBasic, VtSedan, SzSm, 150m, 22.50m);
+            ctx.AddRange(txn, ts1);
+            ctx.AddRange(
+                Sea("sea-t07-1", ts1.Id, ECarlos, 11.25m),
+                Sea("sea-t07-2", ts1.Id, ERosa,   11.25m));
+            ctx.AddRange(
+                Te("te-t07-carlos", T07, ECarlos, 11.25m),
+                Te("te-t07-rosa",   T07, ERosa,   11.25m));
+            ctx.Add(Pay("pay-t07", T07, PaymentMethod.Cash, 150m));
+        }
+
+        // ── TXN 08  BGC | SUV XL | Walk-in Montero | Completed ───────────────
+        // Services: Express Wash (240) — 1 employee
+        {
+            var txn = Txn(T08, BrBgc, UsrBgc, CarMontero, null,
+                "BGC-20260308-0001", 240m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t08-1", T08, SvcExpr, VtSuv, SzXl, 240m, 24.00m);
+            ctx.AddRange(txn, ts1);
+            ctx.Add(Sea("sea-t08-1", ts1.Id, EMiguel, 24.00m));
+            ctx.Add(Te("te-t08-miguel", T08, EMiguel, 24.00m));
+            ctx.Add(Pay("pay-t08", T08, PaymentMethod.GCash, 240m));
+        }
+
+        // ── TXN 09  BGC | Sedan Small | Jose Santos | Completed ──────────────
+        // Services: Basic Wash (150) + Wax & Polish (600) — 3 employees
+        {
+            var txn = Txn(T09, BrBgc, UsrBgc, CarVios, CJose,
+                "BGC-20260309-0001", 750m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t09-1", T09, SvcBasic, VtSedan, SzSm, 150m,  22.50m);
+            var ts2 = Ts("ts-t09-2", T09, SvcWax,   VtSedan, SzSm, 600m,  90.00m);
+            ctx.AddRange(txn, ts1, ts2);
+            ctx.AddRange(
+                Sea("sea-t09-1", ts1.Id, ECarlos,  7.50m),
+                Sea("sea-t09-2", ts1.Id, ERosa,    7.50m),
+                Sea("sea-t09-3", ts1.Id, EMiguel,  7.50m),
+                Sea("sea-t09-4", ts2.Id, ECarlos, 30.00m),
+                Sea("sea-t09-5", ts2.Id, ERosa,   30.00m),
+                Sea("sea-t09-6", ts2.Id, EMiguel, 30.00m));
+            ctx.AddRange(
+                Te("te-t09-carlos", T09, ECarlos, 37.50m),
+                Te("te-t09-rosa",   T09, ERosa,   37.50m),
+                Te("te-t09-miguel", T09, EMiguel, 37.50m));
+            ctx.Add(Pay("pay-t09", T09, PaymentMethod.Cash, 750m));
+        }
+
+        // ── TXN 10  BGC | Sedan Small | Carmela's Swift | Completed ──────────
+        // Services: Basic Wash (150) + Dashboard Wipe (100) + Microfiber Cloth (120) — 1 employee
+        {
+            var txn = Txn(T10, BrBgc, UsrBgc, CarSwift, CCarmela,
+                "BGC-20260310-0001", 370m, TransactionStatus.Completed, completedAt: now);
+            var ts1 = Ts("ts-t10-1", T10, SvcBasic, VtSedan, SzSm, 150m, 22.50m);
+            var ts2 = Ts("ts-t10-2", T10, SvcDash,  VtSedan, SzSm, 100m,  0.00m); // no commission
+            ctx.AddRange(txn, ts1, ts2);
+            ctx.Add(new TransactionMerchandise(Ten, T10, MCloth, quantity: 1, unitPrice: 120m) { Id = "tm-t10-cloth" });
+            ctx.Add(Sea("sea-t10-1", ts1.Id, ECarlos, 22.50m));
+            ctx.Add(Te("te-t10-carlos", T10, ECarlos, 22.50m));
+            ctx.Add(Pay("pay-t10", T10, PaymentMethod.Cash, 370m));
+        }
+
+        // ── TXN 11  BGC | Sedan Small | Walk-in | Cancelled ──────────────────
+        // Services: Basic Wash (150) — 1 employee — no payment
+        {
+            var txn = Txn(T11, BrBgc, UsrBgc, CarCity, null,
+                "BGC-20260311-0001", 150m, TransactionStatus.Cancelled, cancelledAt: now);
+            var ts1 = Ts("ts-t11-1", T11, SvcBasic, VtSedan, SzSm, 150m, 22.50m);
+            ctx.AddRange(txn, ts1);
+            ctx.Add(Sea("sea-t11-1", ts1.Id, ERosa, 22.50m));
+            ctx.Add(Te("te-t11-rosa", T11, ERosa, 22.50m));
+        }
+
+        // ── TXN 12  BGC | SUV Large | Maria Cruz's CR-V | Pending ────────────
+        // Services: Complete Detail (1300) — 2 employees — awaiting payment
+        {
+            var txn = Txn(T12, BrBgc, UsrBgc, CarCrv, CMaria,
+                "BGC-20260312-0001", 1300m, TransactionStatus.Pending);
+            var ts1 = Ts("ts-t12-1", T12, SvcDetail, VtSuv, SzLg, 1300m, 195.00m);
+            ctx.AddRange(txn, ts1);
+            ctx.AddRange(
+                Sea("sea-t12-1", ts1.Id, ERosa,   97.50m),
+                Sea("sea-t12-2", ts1.Id, EMiguel, 97.50m));
+            ctx.AddRange(
+                Te("te-t12-rosa",   T12, ERosa,   97.50m),
+                Te("te-t12-miguel", T12, EMiguel, 97.50m));
+        }
+    }
+
+    // ── Factory helpers ───────────────────────────────────────────────────────
+
+    private static Transaction Txn(
+        string id, string branchId, string cashierId, string carId, string? customerId,
+        string txnNumber, decimal total, TransactionStatus status,
+        DateTime? completedAt = null, DateTime? cancelledAt = null) =>
+        new(id, Ten, branchId, cashierId, carId, customerId)
+        {
+            TransactionNumber = txnNumber,
+            TotalAmount       = total,
+            DiscountAmount    = 0m,
+            TaxAmount         = 0m,
+            FinalAmount       = total,
+            Status            = status,
+            CompletedAt       = completedAt,
+            CancelledAt       = cancelledAt,
+        };
+
+    private static TransactionService Ts(
+        string id, string txnId, string svcId, string vtId, string szId,
+        decimal unitPrice, decimal totalCommission) =>
+        new(Ten, txnId, svcId, vtId, szId, unitPrice, totalCommission) { Id = id };
+
+    private static ServiceEmployeeAssignment Sea(
+        string id, string tsId, string empId, decimal commission) =>
+        new(Ten, tsId, empId, commission) { Id = id };
+
+    private static TransactionEmployee Te(
+        string id, string txnId, string empId, decimal totalCommission) =>
+        new(Ten, txnId, empId, totalCommission) { Id = id };
+
+    private static Payment Pay(
+        string id, string txnId, PaymentMethod method, decimal amount) =>
+        new(Ten, txnId, method, amount) { Id = id };
+
+    private static ServicePricing P(
+        string svcId, string vtId, string szId, decimal price) =>
+        new(Ten, svcId, vtId, szId, price);
+
+    private static ServiceCommission Pct(
+        string svcId, string vtId, string szId, decimal rate) =>
+        new(Ten, svcId, vtId, szId, CommissionType.Percentage, null, rate);
+}

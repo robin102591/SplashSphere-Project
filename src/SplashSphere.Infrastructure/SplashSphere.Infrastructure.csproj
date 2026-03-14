@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplashSphere.Application\SplashSphere.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Clerk.BackendAPI" Version="0.*" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.*" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.*" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.*" />
+    <PackageReference Include="Serilog" Version="4.*" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.*" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.*" />
+    <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.*" />
+    <PackageReference Include="Ulid" Version="1.*" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

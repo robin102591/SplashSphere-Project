@@ -1,0 +1,42 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.coverage
+publish/
+
+# EF Core Migrations (keep folder, ignore auto-generated)
+# src/SplashSphere.Infrastructure/Persistence/Migrations/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+.next/
+.turbo/
+dist/
+out/
+.pnpm-store/
+
+# Logs
+logs/
+*.log
+
+# Docker
+.docker/
+
+# JetBrains
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store

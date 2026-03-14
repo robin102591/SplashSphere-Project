@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude -name \"*.prisma\" -o -name \"schema.prisma\" 2>/dev/null | head -5)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && dotnet ef --version 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && dotnet ef migrations add AddQueueManagement --project src/SplashSphere.Infrastructure --startup-project src/SplashSphere.API --output-dir Persistence/Migrations 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && dotnet ef migrations remove --project src/SplashSphere.Infrastructure --startup-project src/SplashSphere.API 2>&1)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && dotnet ef migrations add AddQueueManagement --project src/SplashSphere.Infrastructure --startup-project src/SplashSphere.API --output-dir Persistence/Migrations 2>&1)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && dotnet ef migrations add InitialCreate \\\\\n  --project src/SplashSphere.Infrastructure \\\\\n  --startup-project src/SplashSphere.API \\\\\n  --output-dir Persistence/Migrations 2>&1)",
+      "Bash(grep -n \"public.*\\(.*\\)$\" src/SplashSphere.Domain/Entities/VehicleType.cs src/SplashSphere.Domain/Entities/Size.cs src/SplashSphere.Domain/Entities/Make.cs src/SplashSphere.Domain/Entities/Model.cs src/SplashSphere.Domain/Entities/ServiceCategory.cs src/SplashSphere.Domain/Entities/MerchandiseCategory.cs 2>&1)"
+    ]
+  }
+}

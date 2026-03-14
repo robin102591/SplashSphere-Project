@@ -1,0 +1,6 @@
+@SplashSphere.API_HostAddress = http://localhost:5221
+
+GET {{SplashSphere.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
