@@ -74,5 +74,6 @@ app.MapMakeEndpoints();
 app.MapModelEndpoints();
 app.MapServiceCategoryEndpoints();
 app.MapMerchandiseCategoryEndpoints();
+app.MapServiceEndpoints();
 
 app.Run();
