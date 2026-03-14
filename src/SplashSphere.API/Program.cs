@@ -79,5 +79,6 @@ app.MapPackageEndpoints();
 app.MapCustomerEndpoints();
 app.MapCarEndpoints();
 app.MapEmployeeEndpoints();
+app.MapMerchandiseEndpoints();
 
 app.Run();
