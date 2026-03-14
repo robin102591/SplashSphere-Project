@@ -108,5 +108,8 @@ app.MapMerchandiseEndpoints();
 app.MapQueueEndpoints();
 app.MapTransactionEndpoints();
 app.MapPayrollEndpoints();
+app.MapPricingModifierEndpoints();
+app.MapDashboardEndpoints();
+app.MapReportEndpoints();
 
 app.Run();
