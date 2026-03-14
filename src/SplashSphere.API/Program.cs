@@ -91,5 +91,6 @@ app.MapEmployeeEndpoints();
 app.MapMerchandiseEndpoints();
 app.MapQueueEndpoints();
 app.MapTransactionEndpoints();
+app.MapPayrollEndpoints();
 
 app.Run();
