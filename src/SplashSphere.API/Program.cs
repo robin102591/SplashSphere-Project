@@ -90,5 +90,6 @@ app.MapCarEndpoints();
 app.MapEmployeeEndpoints();
 app.MapMerchandiseEndpoints();
 app.MapQueueEndpoints();
+app.MapTransactionEndpoints();
 
 app.Run();
