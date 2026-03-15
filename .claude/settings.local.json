@@ -42,7 +42,11 @@
       "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1)",
       "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1; echo \"Exit code: $?\")",
       "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\" -type f -name \"*.tsx\" -o -name \"*.ts\" | head -50)",
-      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin\" && npx -y pnpm exec tsc --noEmit 2>&1)"
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin\" && npx -y pnpm exec tsc --noEmit 2>&1)",
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" -type f -name \"*.ts\" -path \"*/packages/types/*\" 2>/dev/null | head -20)",
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude/src/SplashSphere.Application/Features/Employees\" -type f -name \"*.cs\" 2>/dev/null | sort)",
+      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/src/SplashSphere.Application/Features/Employees -name \"*.cs\" 2>/dev/null | head -20)",
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\employees\" 2>/dev/null || echo \"NOT FOUND\")"
     ]
   }
 }

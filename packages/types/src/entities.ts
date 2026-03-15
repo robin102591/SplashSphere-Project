@@ -310,6 +310,27 @@ export interface Employee {
   updatedAt: string;
 }
 
+export interface EmployeeCommissionDto {
+  transactionId: string;
+  transactionNumber: string;
+  /** YYYY-MM-DD */
+  transactionDate: string;
+  branchName: string;
+  totalCommission: number;
+}
+
+export interface AttendanceDto {
+  id: string;
+  employeeId: string;
+  employeeFullName: string;
+  branchName: string;
+  /** YYYY-MM-DD */
+  date: string;
+  timeIn: string;
+  timeOut: string | null;
+  notes: string | null;
+}
+
 // ── Queue ─────────────────────────────────────────────────────────────────────
 
 export interface QueueEntry {
