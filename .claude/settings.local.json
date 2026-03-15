@@ -40,7 +40,9 @@
       "Bash(npx create-next-app@latest apps/pos --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes 2>&1)",
       "Bash(npx -y pnpm install 2>&1)",
       "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1)",
-      "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1; echo \"Exit code: $?\")"
+      "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1; echo \"Exit code: $?\")",
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\" -type f -name \"*.tsx\" -o -name \"*.ts\" | head -50)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin\" && npx -y pnpm exec tsc --noEmit 2>&1)"
     ]
   }
 }
