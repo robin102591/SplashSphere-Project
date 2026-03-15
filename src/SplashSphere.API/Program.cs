@@ -71,8 +71,9 @@ if (app.Environment.IsDevelopment())
 // ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
 app.UseCors();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseAuthentication();
 
 // Resolves internal UserId from ClerkUserId; enforces onboarding gate for
