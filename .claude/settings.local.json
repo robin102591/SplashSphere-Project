@@ -46,7 +46,8 @@
       "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" -type f -name \"*.ts\" -path \"*/packages/types/*\" 2>/dev/null | head -20)",
       "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude/src/SplashSphere.Application/Features/Employees\" -type f -name \"*.cs\" 2>/dev/null | sort)",
       "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/src/SplashSphere.Application/Features/Employees -name \"*.cs\" 2>/dev/null | head -20)",
-      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\employees\" 2>/dev/null || echo \"NOT FOUND\")"
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\employees\" 2>/dev/null || echo \"NOT FOUND\")",
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\payroll\" -type f 2>/dev/null || echo \"NOT FOUND\")"
     ]
   }
 }
