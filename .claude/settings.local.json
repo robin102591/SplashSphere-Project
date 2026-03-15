@@ -10,7 +10,12 @@
       "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && dotnet ef migrations add AddQueueManagement --project src/SplashSphere.Infrastructure --startup-project src/SplashSphere.API --output-dir Persistence/Migrations 2>&1)",
       "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && dotnet ef migrations add InitialCreate \\\\\n  --project src/SplashSphere.Infrastructure \\\\\n  --startup-project src/SplashSphere.API \\\\\n  --output-dir Persistence/Migrations 2>&1)",
       "Bash(grep -n \"public.*\\(.*\\)$\" src/SplashSphere.Domain/Entities/VehicleType.cs src/SplashSphere.Domain/Entities/Size.cs src/SplashSphere.Domain/Entities/Make.cs src/SplashSphere.Domain/Entities/Model.cs src/SplashSphere.Domain/Entities/ServiceCategory.cs src/SplashSphere.Domain/Entities/MerchandiseCategory.cs 2>&1)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && pnpm install 2>&1 && pnpm typecheck 2>&1)",
+      "Bash(where node:*)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && npm install 2>&1 && ./node_modules/.bin/tsc --noEmit 2>&1)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && ./node_modules/.bin/tsc --noEmit 2>&1)"
     ]
   }
 }
