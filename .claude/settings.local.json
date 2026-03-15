@@ -36,7 +36,11 @@
       "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm add --filter @splashsphere/admin @base-ui/react 2>&1)",
       "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin\" && npm install babel-plugin-react-compiler 2>&1)",
       "Bash(where pnpm:*)",
-      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && npx -y pnpm add -D babel-plugin-react-compiler --filter @splashsphere/admin 2>&1)"
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && npx -y pnpm add -D babel-plugin-react-compiler --filter @splashsphere/admin 2>&1)",
+      "Bash(npx create-next-app@latest apps/pos --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes 2>&1)",
+      "Bash(npx -y pnpm install 2>&1)",
+      "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1)",
+      "Bash(cd /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos && npx pnpm exec tsc --noEmit 2>&1; echo \"Exit code: $?\")"
     ]
   }
 }
