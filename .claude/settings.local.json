@@ -15,7 +15,28 @@
       "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && pnpm install 2>&1 && pnpm typecheck 2>&1)",
       "Bash(where node:*)",
       "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && npm install 2>&1 && ./node_modules/.bin/tsc --noEmit 2>&1)",
-      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && ./node_modules/.bin/tsc --noEmit 2>&1)"
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/packages/types\" && ./node_modules/.bin/tsc --noEmit 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx create-next-app@latest apps/admin --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && pnpm install 2>&1)",
+      "Bash(which npm:*)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm install 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest init --defaults 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add button input label card form select textarea badge avatar dropdown-menu sidebar separator sheet dialog alert-dialog table tabs progress toast sonner --yes 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add button input label card form select textarea badge avatar dropdown-menu sidebar separator sheet dialog alert-dialog table tabs progress sonner --yes 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add button input label card form select textarea badge avatar dropdown-menu sidebar separator sheet dialog alert-dialog table tabs progress sonner --yes --pm pnpm 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add --help 2>&1 | head -30)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm add --filter @splashsphere/admin sonner next-themes @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select @radix-ui/react-dialog @radix-ui/react-alert-dialog @radix-ui/react-tabs @radix-ui/react-progress @radix-ui/react-avatar @radix-ui/react-dropdown-menu @radix-ui/react-separator @radix-ui/react-sheet @radix-ui/react-checkbox @radix-ui/react-radio-group @radix-ui/react-switch tw-animate-css 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm add --filter @splashsphere/admin sonner next-themes @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select @radix-ui/react-dialog @radix-ui/react-alert-dialog @radix-ui/react-tabs @radix-ui/react-progress @radix-ui/react-avatar @radix-ui/react-dropdown-menu @radix-ui/react-separator @radix-ui/react-checkbox @radix-ui/react-radio-group @radix-ui/react-switch tw-animate-css vaul cmdk 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add button input label card form select textarea badge avatar dropdown-menu sidebar separator sheet dialog alert-dialog table tabs progress sonner --yes --overwrite 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest --version 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add form --yes --overwrite 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx shadcn@latest add form --yes 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm install --no-frozen-lockfile 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\" && npx pnpm add --filter @splashsphere/admin @base-ui/react 2>&1)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin\" && npm install babel-plugin-react-compiler 2>&1)",
+      "Bash(where pnpm:*)",
+      "Bash(cd \"C:/PROJECTS/carwash/SplashSphere-Claude\" && npx -y pnpm add -D babel-plugin-react-compiler --filter @splashsphere/admin 2>&1)"
     ]
   }
 }
