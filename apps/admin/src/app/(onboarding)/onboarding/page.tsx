@@ -23,10 +23,14 @@ const businessSchema = z.object({
 type BusinessValues = z.infer<typeof businessSchema>
 
 const branchSchema = z.object({
-  firstBranchName: z.string().min(2, 'Branch name is required'),
-  firstBranchAddress: z.string().min(5, 'Branch address is required'),
-  firstBranchCity: z.string().min(2, 'City is required'),
-  firstBranchContactNumber: z.string().min(7, 'Contact number is required'),
+  branchName: z.string().min(2, 'Branch name is required'),
+  branchCode: z
+    .string()
+    .min(2, 'Branch code is required')
+    .max(10, 'Max 10 characters')
+    .regex(/^[A-Z0-9]+$/, 'Uppercase letters and numbers only'),
+  branchAddress: z.string().min(5, 'Branch address is required'),
+  branchContactNumber: z.string().min(7, 'Contact number is required'),
 })
 type BranchValues = z.infer<typeof branchSchema>
 
@@ -53,10 +57,10 @@ export default function OnboardingPage() {
     address: '',
   })
   const [branchData, setBranchData] = useState<BranchValues>({
-    firstBranchName: '',
-    firstBranchAddress: '',
-    firstBranchCity: '',
-    firstBranchContactNumber: '',
+    branchName: '',
+    branchCode: '',
+    branchAddress: '',
+    branchContactNumber: '',
   })
 
   const businessForm = useForm<BusinessValues>({
@@ -182,31 +186,44 @@ export default function OnboardingPage() {
           <CardContent>
             <form id="branch-form" onSubmit={branchForm.handleSubmit(onBranchNext)} className="space-y-4">
               <div className="space-y-1">
-                <Label htmlFor="firstBranchName">Branch name</Label>
-                <Input id="firstBranchName" placeholder="Main Branch" {...branchForm.register('firstBranchName')} />
-                {branchForm.formState.errors.firstBranchName && (
-                  <p className="text-xs text-destructive">{branchForm.formState.errors.firstBranchName.message}</p>
+                <Label htmlFor="branchName">Branch name</Label>
+                <Input id="branchName" placeholder="Main Branch" {...branchForm.register('branchName')} />
+                {branchForm.formState.errors.branchName && (
+                  <p className="text-xs text-destructive">{branchForm.formState.errors.branchName.message}</p>
                 )}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="firstBranchAddress">Branch address</Label>
-                <Input id="firstBranchAddress" placeholder="123 Main St" {...branchForm.register('firstBranchAddress')} />
-                {branchForm.formState.errors.firstBranchAddress && (
-                  <p className="text-xs text-destructive">{branchForm.formState.errors.firstBranchAddress.message}</p>
+                <Label htmlFor="branchCode">Branch code</Label>
+                <Input
+                  id="branchCode"
+                  placeholder="MKT"
+                  className="uppercase"
+                  {...branchForm.register('branchCode', {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.toUpperCase()
+                      branchForm.setValue('branchCode', e.target.value)
+                    },
+                  })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Short code used in transaction numbers, e.g. MKT-20240101-001
+                </p>
+                {branchForm.formState.errors.branchCode && (
+                  <p className="text-xs text-destructive">{branchForm.formState.errors.branchCode.message}</p>
                 )}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="firstBranchCity">City</Label>
-                <Input id="firstBranchCity" placeholder="Makati City" {...branchForm.register('firstBranchCity')} />
-                {branchForm.formState.errors.firstBranchCity && (
-                  <p className="text-xs text-destructive">{branchForm.formState.errors.firstBranchCity.message}</p>
+                <Label htmlFor="branchAddress">Branch address</Label>
+                <Input id="branchAddress" placeholder="123 Main St, Makati City" {...branchForm.register('branchAddress')} />
+                {branchForm.formState.errors.branchAddress && (
+                  <p className="text-xs text-destructive">{branchForm.formState.errors.branchAddress.message}</p>
                 )}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="firstBranchContactNumber">Branch contact</Label>
-                <Input id="firstBranchContactNumber" placeholder="+63 917 123 4567" {...branchForm.register('firstBranchContactNumber')} />
-                {branchForm.formState.errors.firstBranchContactNumber && (
-                  <p className="text-xs text-destructive">{branchForm.formState.errors.firstBranchContactNumber.message}</p>
+                <Label htmlFor="branchContactNumber">Branch contact</Label>
+                <Input id="branchContactNumber" placeholder="+63 917 123 4567" {...branchForm.register('branchContactNumber')} />
+                {branchForm.formState.errors.branchContactNumber && (
+                  <p className="text-xs text-destructive">{branchForm.formState.errors.branchContactNumber.message}</p>
                 )}
               </div>
             </form>
@@ -233,9 +250,10 @@ export default function OnboardingPage() {
             </div>
             <div className="rounded-lg border p-4 space-y-2">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">First Branch</p>
-              <p className="font-medium">{branchData.firstBranchName}</p>
-              <p className="text-sm text-muted-foreground">{branchData.firstBranchAddress}, {branchData.firstBranchCity}</p>
-              <p className="text-sm text-muted-foreground">{branchData.firstBranchContactNumber}</p>
+              <p className="font-medium">{branchData.branchName}</p>
+              <p className="text-xs font-mono text-muted-foreground">{branchData.branchCode}</p>
+              <p className="text-sm text-muted-foreground">{branchData.branchAddress}</p>
+              <p className="text-sm text-muted-foreground">{branchData.branchContactNumber}</p>
             </div>
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
           </CardContent>

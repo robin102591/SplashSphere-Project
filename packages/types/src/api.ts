@@ -67,10 +67,10 @@ export interface CreateOnboardingRequest {
   businessEmail: string;
   contactNumber: string;
   address: string;
-  firstBranchName: string;
-  firstBranchAddress: string;
-  firstBranchCity: string;
-  firstBranchContactNumber: string;
+  branchName: string;
+  branchCode: string;
+  branchAddress: string;
+  branchContactNumber: string;
 }
 
 export interface CreateOnboardingResponse {
