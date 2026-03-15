@@ -19,7 +19,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { useService, useUpdateService, useToggleServiceStatus } from '@/hooks/use-services'
+import {
+  useService,
+  useUpdateService,
+  useToggleServiceStatus,
+  useUpsertServicePricing,
+  useUpsertServiceCommissions,
+} from '@/hooks/use-services'
 import { useVehicleTypes } from '@/hooks/use-vehicle-types'
 import { useSizes } from '@/hooks/use-sizes'
 import { useServiceCategories } from '@/hooks/use-service-categories'
@@ -209,6 +215,8 @@ export default function ServiceDetailPage({
   const { data: vehicleTypes = [], isLoading: vtLoading } = useVehicleTypes()
   const { data: sizes = [], isLoading: sizeLoading } = useSizes()
   const { mutate: toggleStatus, isPending: isToggling } = useToggleServiceStatus()
+  const { mutateAsync: upsertPricing, isPending: isPricingSaving } = useUpsertServicePricing(id)
+  const { mutateAsync: upsertCommissions, isPending: isCommissionSaving } = useUpsertServiceCommissions(id)
 
   const matrixLoading = vtLoading || sizeLoading
 
@@ -330,11 +338,12 @@ export default function ServiceDetailPage({
 
         <TabsContent value="pricing" className="mt-6">
           <PricingMatrixEditor
-            serviceId={id}
             vehicleTypes={vehicleTypes}
             sizes={sizes}
             initialRows={service.pricing}
             basePrice={service.basePrice}
+            onSave={upsertPricing}
+            isSaving={isPricingSaving}
             isLoading={matrixLoading}
           />
         </TabsContent>

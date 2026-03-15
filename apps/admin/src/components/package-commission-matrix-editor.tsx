@@ -3,76 +3,45 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { VehicleType, Size } from '@splashsphere/types'
+import type { VehicleType, Size, PackageCommissionRow } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
+import type { PackageCommissionRowPayload } from '@/hooks/use-packages'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface PricingRow {
-  vehicleTypeId: string
-  sizeId: string
-  price: number
-}
-
-// Compatible with both ServicePricingRow and PackagePricingRow
-type PricingRowInput = {
-  vehicleTypeId: string
-  sizeId: string
-  price: number
-}
-
-// matrix state: key = `${vehicleTypeId}|${sizeId}`, value = price as string
-type PricingMatrix = Record<string, string>
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// matrix state: key = `${vehicleTypeId}|${sizeId}`, value = rate as string
+type CommissionMatrix = Record<string, string>
 
 function matrixKey(vtId: string, sizeId: string) {
   return `${vtId}|${sizeId}`
 }
 
-function buildInitialMatrix(rows: readonly PricingRowInput[]): PricingMatrix {
-  const matrix: PricingMatrix = {}
+function buildInitialMatrix(rows: readonly PackageCommissionRow[]): CommissionMatrix {
+  const matrix: CommissionMatrix = {}
   for (const row of rows) {
-    matrix[matrixKey(row.vehicleTypeId, row.sizeId)] = String(row.price)
+    matrix[matrixKey(row.vehicleTypeId, row.sizeId)] = String(row.percentageRate)
   }
   return matrix
 }
 
-function formatPHP(value: string): string {
-  const n = parseFloat(value)
-  if (isNaN(n)) return ''
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-  }).format(n)
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-interface PricingMatrixEditorProps {
+interface PackageCommissionMatrixEditorProps {
   vehicleTypes: VehicleType[]
   sizes: Size[]
-  initialRows: readonly PricingRowInput[]
-  basePrice: number
-  /** Called with only the non-empty cells when the user clicks Save. */
-  onSave: (rows: PricingRow[]) => Promise<void>
+  initialRows: readonly PackageCommissionRow[]
+  onSave: (rows: PackageCommissionRowPayload[]) => Promise<void>
   isSaving: boolean
   isLoading?: boolean
 }
 
-export function PricingMatrixEditor({
+export function PackageCommissionMatrixEditor({
   vehicleTypes,
   sizes,
   initialRows,
-  basePrice,
   onSave,
   isSaving,
   isLoading,
-}: PricingMatrixEditorProps) {
-  const [matrix, setMatrix] = useState<PricingMatrix>(() =>
+}: PackageCommissionMatrixEditorProps) {
+  const [matrix, setMatrix] = useState<CommissionMatrix>(() =>
     buildInitialMatrix(initialRows)
   )
   const [isDirty, setIsDirty] = useState(false)
@@ -94,17 +63,17 @@ export function PricingMatrixEditor({
     const rows = vehicleTypes.flatMap((vt) =>
       sizes.flatMap((s) => {
         const raw = matrix[matrixKey(vt.id, s.id)] ?? ''
-        const price = parseFloat(raw)
-        if (!raw || isNaN(price) || price < 0) return []
-        return [{ vehicleTypeId: vt.id, sizeId: s.id, price }]
+        const rate = parseFloat(raw)
+        if (!raw || isNaN(rate) || rate <= 0 || rate > 100) return []
+        return [{ vehicleTypeId: vt.id, sizeId: s.id, percentageRate: rate }]
       })
     )
     try {
       await onSave(rows)
-      toast.success('Pricing matrix saved')
+      toast.success('Commission matrix saved')
       setIsDirty(false)
     } catch {
-      toast.error('Failed to save pricing matrix')
+      toast.error('Failed to save commission matrix')
     }
   }
 
@@ -122,12 +91,12 @@ export function PricingMatrixEditor({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Base price (fallback for empty cells):{' '}
-          <span className="font-medium text-foreground">{formatPHP(String(basePrice))}</span>
+          Package commissions are always percentage-based and split equally among assigned
+          employees.
         </p>
         <Button size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
           <Save className="mr-2 h-3.5 w-3.5" />
-          {isSaving ? 'Saving…' : 'Save Pricing'}
+          {isSaving ? 'Saving…' : 'Save Commissions'}
         </Button>
       </div>
 
@@ -161,22 +130,23 @@ export function PricingMatrixEditor({
                   return (
                     <td key={s.id} className="px-2 py-1.5">
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
-                          ₱
-                        </span>
                         <input
                           type="number"
                           min="0"
+                          max="100"
                           step="0.01"
                           value={val}
-                          placeholder={String(basePrice)}
+                          placeholder="0"
                           onChange={(e) => setCell(vt.id, s.id, e.target.value)}
                           className={cn(
-                            'w-full pl-6 pr-2 py-1.5 rounded-md border text-right text-sm',
+                            'w-full pl-2 pr-7 py-1.5 rounded-md border text-right text-sm',
                             'bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
                             val ? 'border-input' : 'border-dashed border-muted-foreground/30'
                           )}
                         />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
+                          %
+                        </span>
                       </div>
                     </td>
                   )
@@ -188,8 +158,8 @@ export function PricingMatrixEditor({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Leave a cell empty to use the base price for that combination. Changes are not saved until
-        you click &ldquo;Save Pricing&rdquo;.
+        Enter percentage rates (0–100). Leave a cell empty to assign ₱0 commission for that
+        combination.
       </p>
     </div>
   )
