@@ -52,8 +52,8 @@ public sealed class AddToQueueCommandHandler(
 
         // ── Generate queue number ─────────────────────────────────────────────
         var localToday = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
-        var todayStart = localToday.ToDateTime(TimeOnly.MinValue);
-        var todayEnd   = localToday.ToDateTime(TimeOnly.MaxValue);
+        var todayStart = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var todayEnd   = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var todayCount = await context.QueueEntries
             .CountAsync(q => q.BranchId == request.BranchId
