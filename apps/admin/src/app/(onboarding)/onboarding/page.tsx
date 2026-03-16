@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useOrganizationList } from '@clerk/nextjs'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -46,6 +46,7 @@ const STEP_PROGRESS: Record<Step, number> = {
 export default function OnboardingPage() {
   const router = useRouter()
   const { getToken } = useAuth()
+  const { setActive } = useOrganizationList()
   const [step, setStep] = useState<Step>('welcome')
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -89,7 +90,15 @@ export default function OnboardingPage() {
     try {
       const token = await getToken()
       const payload: CreateOnboardingRequest = { ...businessData, ...branchData }
-      await apiClient.post('/onboarding', payload, token ?? undefined)
+      const { tenantId } = await apiClient.post<{ tenantId: string }>(
+        '/onboarding',
+        payload,
+        token ?? undefined
+      )
+      // Activate the newly created Clerk org so org_id is included in the JWT
+      if (setActive) {
+        await setActive({ organization: tenantId })
+      }
       router.push('/dashboard')
     } catch (err: unknown) {
       const apiErr = err as { detail?: string; title?: string }

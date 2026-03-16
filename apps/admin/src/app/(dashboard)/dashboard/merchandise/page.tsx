@@ -1,13 +1,305 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus, Package, AlertTriangle, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
+import { useMerchandiseList, useCreateMerchandise } from '@/hooks/use-merchandise'
+import type { CreateMerchandiseValues } from '@/hooks/use-merchandise'
+import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+
+// ── Create dialog ─────────────────────────────────────────────────────────────
+
+const createSchema = z.object({
+  name: z.string().min(1, 'Required'),
+  sku: z.string().min(1, 'SKU is required'),
+  price: z.coerce.number().positive('Must be positive'),
+  stockQuantity: z.coerce.number().int().min(0, 'Must be 0 or more'),
+  lowStockThreshold: z.coerce.number().int().min(0, 'Must be 0 or more'),
+  description: z.string().optional(),
+  costPrice: z.coerce.number().positive('Must be positive').optional().or(z.literal('')),
+})
+type CreateFormValues = z.infer<typeof createSchema>
+
+function CreateMerchandiseDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+}) {
+  const router = useRouter()
+  const { mutateAsync: create } = useCreateMerchandise()
+  const { register, handleSubmit, reset, formState } = useForm<CreateFormValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { stockQuantity: 0, lowStockThreshold: 5 },
+  })
+
+  const onSubmit = async (values: CreateFormValues) => {
+    try {
+      const payload: CreateMerchandiseValues = {
+        name: values.name,
+        sku: values.sku,
+        price: values.price,
+        stockQuantity: values.stockQuantity,
+        lowStockThreshold: values.lowStockThreshold,
+        description: values.description || undefined,
+        costPrice: values.costPrice ? Number(values.costPrice) : undefined,
+      }
+      const { id } = await create(payload)
+      toast.success('Item created')
+      reset()
+      onOpenChange(false)
+      router.push(`/dashboard/merchandise/${id}`)
+    } catch {
+      toast.error('Failed to create item')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>New Merchandise</DialogTitle>
+          <DialogDescription>Add a new item to the inventory.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input placeholder="Microfiber Cloth" {...register('name')} />
+            {formState.errors.name && (
+              <p className="text-xs text-destructive">{formState.errors.name.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>SKU</Label>
+            <Input placeholder="MFC-001" {...register('sku')} />
+            {formState.errors.sku && (
+              <p className="text-xs text-destructive">{formState.errors.sku.message}</p>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Selling price (₱)</Label>
+              <Input type="number" step="0.01" placeholder="250.00" {...register('price')} />
+              {formState.errors.price && (
+                <p className="text-xs text-destructive">{formState.errors.price.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cost price (₱, optional)</Label>
+              <Input type="number" step="0.01" placeholder="150.00" {...register('costPrice')} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Opening stock</Label>
+              <Input type="number" {...register('stockQuantity')} />
+              {formState.errors.stockQuantity && (
+                <p className="text-xs text-destructive">{formState.errors.stockQuantity.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Low stock alert at</Label>
+              <Input type="number" {...register('lowStockThreshold')} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Description (optional)</Label>
+            <Input placeholder="Brief description…" {...register('description')} />
+          </div>
+          <div className="flex justify-end pt-1">
+            <Button type="submit" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? 'Saving…' : 'Create Item'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function MerchandisePage() {
+  const router = useRouter()
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [lowStockOnly, setLowStockOnly] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const { data, isLoading, isError } = useMerchandiseList({
+    search: debouncedSearch,
+    lowStockOnly: lowStockOnly || undefined,
+    pageSize: 100,
+  })
+  const items = data ? [...data.items] : []
+  const lowStockCount = items.filter((i) => i.isLowStock).length
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    clearTimeout((handleSearchChange as { _t?: ReturnType<typeof setTimeout> })._t)
+    ;(handleSearchChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(
+      () => setDebouncedSearch(value),
+      300
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Merchandise</h1>
-        <p className="text-muted-foreground">Manage merchandise inventory and stock levels</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Merchandise</h1>
+          <p className="text-muted-foreground">Manage inventory and stock levels</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Item
+        </Button>
       </div>
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">Merchandise management coming soon</p>
+
+      {/* Low-stock alert banner */}
+      {!isLoading && lowStockCount > 0 && !lowStockOnly && (
+        <button
+          onClick={() => setLowStockOnly(true)}
+          className="w-full flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 text-left hover:bg-amber-100 transition-colors"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>{lowStockCount} item{lowStockCount !== 1 ? 's' : ''}</strong> below low-stock
+            threshold — click to filter
+          </span>
+        </button>
+      )}
+
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search by name or SKU…"
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </div>
+        <Button
+          variant={lowStockOnly ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setLowStockOnly(!lowStockOnly)}
+        >
+          <AlertTriangle className="mr-2 h-3.5 w-3.5" />
+          Low stock only
+        </Button>
       </div>
+
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      )}
+
+      {isError && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          Failed to load merchandise.
+        </div>
+      )}
+
+      {!isLoading && !isError && items.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
+          <Package className="h-10 w-10 text-muted-foreground/40" />
+          <div>
+            <p className="font-medium">No items found</p>
+            <p className="text-sm text-muted-foreground">
+              {lowStockOnly ? 'No low-stock items' : 'Add your first merchandise item'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && items.length > 0 && (
+        <div className="rounded-lg border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">Item</th>
+                <th className="px-4 py-3 text-left font-medium">SKU</th>
+                <th className="px-4 py-3 text-right font-medium">Price</th>
+                <th className="px-4 py-3 text-center font-medium">Stock</th>
+                <th className="px-4 py-3 text-left font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {items.map((item) => (
+                <tr
+                  key={item.id}
+                  className={cn(
+                    'hover:bg-muted/40 cursor-pointer transition-colors',
+                    item.isLowStock && 'bg-amber-50/60 hover:bg-amber-50'
+                  )}
+                  onClick={() => router.push(`/dashboard/merchandise/${item.id}`)}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {item.isLowStock && (
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      )}
+                      <span className="font-medium">{item.name}</span>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">
+                        {item.description}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{php.format(item.price)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={cn(
+                        'tabular-nums font-medium',
+                        item.isLowStock && 'text-amber-600'
+                      )}
+                    >
+                      {item.stockQuantity}
+                    </span>
+                    <span className="text-muted-foreground text-xs"> / {item.lowStockThreshold}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {item.isLowStock ? (
+                      <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">
+                        Low Stock
+                      </Badge>
+                    ) : item.isActive ? (
+                      <Badge className="bg-green-500/15 text-green-700 border-green-200">
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactive</Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <CreateMerchandiseDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }

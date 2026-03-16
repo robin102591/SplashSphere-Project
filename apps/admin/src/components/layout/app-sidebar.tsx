@@ -48,7 +48,8 @@ const navGroups = [
     label: 'People',
     items: [
       { label: 'Employees', href: '/dashboard/employees', icon: Users },
-      { label: 'Customers', href: '/dashboard/customers', icon: Car },
+      { label: 'Customers', href: '/dashboard/customers', icon: Users },
+      { label: 'Vehicles', href: '/dashboard/vehicles', icon: Car },
     ],
   },
   {
