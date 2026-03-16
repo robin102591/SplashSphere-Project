@@ -95,6 +95,56 @@ export function useUpdateCar(id: string) {
   })
 }
 
+// ── Makes & Models CRUD ────────────────────────────────────────────────────────
+
+export function useCreateMake() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const token = await getToken()
+      return apiClient.post<Make>('/makes', { name }, token ?? undefined)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['makes'] }),
+  })
+}
+
+export function useToggleMake() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken()
+      return apiClient.patch<void>(`/makes/${id}/status`, {}, token ?? undefined)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['makes'] }),
+  })
+}
+
+export function useCreateModel() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { makeId: string; name: string }) => {
+      const token = await getToken()
+      return apiClient.post<VehicleModel>('/models', data, token ?? undefined)
+    },
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['models', vars.makeId] }),
+  })
+}
+
+export function useToggleModel() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, makeId }: { id: string; makeId: string }) => {
+      const token = await getToken()
+      return apiClient.patch<void>(`/models/${id}/status`, {}, token ?? undefined)
+    },
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['models', vars.makeId] }),
+  })
+}
+
 // ── Reference data for car forms ──────────────────────────────────────────────
 
 export function useMakes() {

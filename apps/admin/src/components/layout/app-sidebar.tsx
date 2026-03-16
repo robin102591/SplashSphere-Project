@@ -63,8 +63,6 @@ const navGroups = [
   {
     label: 'Configuration',
     items: [
-      { label: 'Pricing Modifiers', href: '/dashboard/pricing-modifiers', icon: Settings },
-      { label: 'Vehicle Types', href: '/dashboard/vehicle-types', icon: Car },
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
