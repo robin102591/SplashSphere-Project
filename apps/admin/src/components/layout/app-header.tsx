@@ -14,6 +14,7 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Building2, LogOut, Settings, User } from 'lucide-react'
+import { ConnectionStatusBadge } from '@/components/connection-status'
 
 export function AppHeader() {
   const { user } = useUser()
@@ -45,7 +46,8 @@ export function AppHeader() {
         </div>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-3">
+        <ConnectionStatusBadge className="hidden sm:flex" />
         {/* Profile dropdown — custom, NOT UserButton */}
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">

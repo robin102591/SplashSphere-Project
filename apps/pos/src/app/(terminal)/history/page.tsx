@@ -3,13 +3,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, X, CheckCircle2, Clock, Wrench, XCircle, RotateCcw, ChevronRight } from 'lucide-react'
 import type { TransactionSummary } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
+import { useSignalREvent } from '@/lib/signalr-context'
 import { cn } from '@/lib/utils'
+import type { TransactionUpdatedPayload } from '@splashsphere/types'
 
 const BRANCH_KEY = 'pos-branch-id'
 
@@ -39,6 +41,7 @@ function fmtTime(iso: string) {
 
 export default function HistoryPage() {
   const { getToken } = useAuth()
+  const queryClient = useQueryClient()
   const [branchId, setBranchId] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
@@ -51,6 +54,11 @@ export default function HistoryPage() {
 
   // Reset page when filters change
   const resetPage = useCallback(() => setPage(1), [])
+
+  // Invalidate when any transaction changes in real time
+  useSignalREvent<TransactionUpdatedPayload>('TransactionUpdated', () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] })
+  })
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['transactions', branchId, date, statusFilter, search, page],

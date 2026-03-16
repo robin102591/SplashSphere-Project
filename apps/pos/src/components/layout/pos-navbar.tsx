@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { ConnectionStatusDot } from '@/components/connection-status'
 
 const navItems = [
   { label: 'Home', href: '/home', icon: Home },
@@ -50,6 +51,7 @@ export function PosNavbar() {
           {organization && (
             <span className="text-xs text-gray-400 hidden sm:block">{organization.name}</span>
           )}
+          <ConnectionStatusDot className="hidden sm:inline-block" />
         </div>
 
         {/* Nav */}

@@ -12,6 +12,9 @@ import {
 import { useDashboardSummary } from '@/hooks/use-dashboard'
 import { useRevenueReport, useServicePopularityReport } from '@/hooks/use-reports'
 import { useBranches } from '@/hooks/use-branches'
+import { useQueryClient } from '@tanstack/react-query'
+import { useSignalREvent } from '@/lib/signalr-context'
+import type { DashboardMetricsUpdatedPayload } from '@splashsphere/types'
 
 const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
 
@@ -52,8 +55,14 @@ function KpiCard({
 }
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient()
   const [branchId, setBranchId] = useState<string>('')
   const { from, to } = useMemo(() => defaultRange(), [])
+
+  // Refresh KPIs when any transaction or queue change is broadcast
+  useSignalREvent<DashboardMetricsUpdatedPayload>('DashboardMetricsUpdated', () => {
+    queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+  })
 
   const { data: branches = [] } = useBranches()
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(branchId || undefined)

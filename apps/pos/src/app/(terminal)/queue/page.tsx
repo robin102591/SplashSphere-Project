@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Plus, Clock, PhoneCall, AlertTriangle, Timer,
-  Wifi, WifiOff, Wrench, Eye, RefreshCw,
+  Wrench, Eye, RefreshCw,
 } from 'lucide-react'
 import type { QueueEntry, Branch, ServiceSummary } from '@splashsphere/types'
 import type { PagedResult, QueueUpdatedPayload } from '@splashsphere/types'
 import { QueueStatus, QueuePriority } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
-import { createHubConnection } from '@/lib/signalr'
+import { useSignalREvent } from '@/lib/signalr-context'
+import { ConnectionStatusDot } from '@/components/connection-status'
 
 // ── Priority config ────────────────────────────────────────────────────────────
 
@@ -256,7 +257,6 @@ export default function QueuePage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [branchId, setBranchId] = useState('')
-  const [connected, setConnected] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   // Restore persisted branch selection
@@ -304,37 +304,10 @@ export default function QueuePage() {
   })
   const serviceNames = new Map(services.map(s => [s.id, s.name]))
 
-  // SignalR — authenticated, listens for QueueUpdated
-  useEffect(() => {
-    let stopped = false
-    let conn: ReturnType<typeof createHubConnection> | null = null
-
-    async function start() {
-      const token = await getToken()
-      if (stopped) return
-      conn = createHubConnection(token ?? undefined)
-      conn.onclose(() => { if (!stopped) setConnected(false) })
-      conn.onreconnecting(() => setConnected(false))
-      conn.onreconnected(() => setConnected(true))
-      try {
-        await conn.start()
-        if (!stopped) setConnected(true)
-        conn.on('QueueUpdated', (_payload: QueueUpdatedPayload) => {
-          void queryClient.invalidateQueries({ queryKey: ['queue'] })
-        })
-      } catch {
-        if (!stopped) setConnected(false)
-      }
-    }
-
-    void start()
-    return () => {
-      stopped = true
-      setConnected(false)
-      conn?.stop()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Real-time queue updates via shared SignalR context
+  useSignalREvent<QueueUpdatedPayload>('QueueUpdated', () => {
+    void queryClient.invalidateQueries({ queryKey: ['queue'] })
+  })
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -405,11 +378,7 @@ export default function QueuePage() {
           </div>
           <div className="flex items-center gap-1.5">
             {isFetching && <RefreshCw className="h-3.5 w-3.5 text-gray-600 animate-spin" />}
-            {connected ? (
-              <Wifi className="h-3.5 w-3.5 text-green-500" />
-            ) : (
-              <WifiOff className="h-3.5 w-3.5 text-gray-600" />
-            )}
+            <ConnectionStatusDot />
           </div>
         </div>
 

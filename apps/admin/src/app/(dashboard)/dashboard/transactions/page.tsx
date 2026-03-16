@@ -9,8 +9,11 @@ import { Input } from '@/components/ui/input'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { useTransactions } from '@/hooks/use-transactions'
+import { useTransactions, transactionKeys } from '@/hooks/use-transactions'
 import { useBranches } from '@/hooks/use-branches'
+import { useQueryClient } from '@tanstack/react-query'
+import { useSignalREvent } from '@/lib/signalr-context'
+import type { TransactionUpdatedPayload } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import type { TransactionSummary } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
@@ -71,7 +74,13 @@ function TransactionRow({ tx }: { tx: TransactionSummary }) {
 
 export default function TransactionsPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [branchId, setBranchId] = useState<string>('')
+
+  // Refresh list when any transaction status changes
+  useSignalREvent<TransactionUpdatedPayload>('TransactionUpdated', () => {
+    queryClient.invalidateQueries({ queryKey: transactionKeys.all })
+  })
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')

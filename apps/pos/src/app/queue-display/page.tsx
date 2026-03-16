@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Droplets, Wifi, WifiOff, Users } from 'lucide-react'
+import { Droplets, Users } from 'lucide-react'
+import { StatusBadge, type ConnectionState } from '@/components/connection-status'
 import type { QueueDisplayUpdatedPayload, QueueDisplayEntry } from '@splashsphere/types'
 import { QueuePriority } from '@splashsphere/types'
 import { createHubConnection } from '@/lib/signalr'
@@ -92,7 +93,7 @@ function ServiceRow({ entry, index }: { entry: QueueDisplayEntry; index: number 
 function QueueDisplayContent() {
   const searchParams = useSearchParams()
   const branchId = searchParams.get('branchId') ?? ''
-  const [connected, setConnected] = useState(false)
+  const [connState, setConnState] = useState<ConnectionState>('connecting')
   const [displayData, setDisplayData] = useState<QueueDisplayUpdatedPayload | null>(null)
   const serviceScrollRef = useRef<HTMLDivElement>(null)
 
@@ -131,19 +132,19 @@ function QueueDisplayContent() {
     }
 
     const conn = createHubConnection() // public — no token
-    conn.onclose(() => setConnected(false))
-    conn.onreconnecting(() => setConnected(false))
-    conn.onreconnected(() => setConnected(true))
+    conn.onclose(() => setConnState('disconnected'))
+    conn.onreconnecting(() => setConnState('reconnecting'))
+    conn.onreconnected(() => setConnState('connected'))
 
     try {
       await conn.start()
-      setConnected(true)
+      setConnState('connected')
       await conn.invoke('JoinQueueDisplay', branchId)
       conn.on('QueueDisplayUpdated', (payload: QueueDisplayUpdatedPayload) => {
         setDisplayData(payload)
       })
     } catch {
-      setConnected(false)
+      setConnState('disconnected')
     }
 
     return () => { conn.stop() }
@@ -192,16 +193,7 @@ function QueueDisplayContent() {
           </div>
 
           {/* Connection */}
-          <div className="flex items-center gap-2">
-            {connected ? (
-              <Wifi className="h-5 w-5 text-green-500" />
-            ) : (
-              <WifiOff className="h-5 w-5 text-red-500 animate-pulse" />
-            )}
-            <span className={`text-sm font-medium ${connected ? 'text-green-500' : 'text-red-400'}`}>
-              {connected ? 'Live' : 'Reconnecting…'}
-            </span>
-          </div>
+          <StatusBadge state={connState} className="text-base" />
 
           <Clock />
         </div>
