@@ -3,7 +3,7 @@
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Branch } from '@splashsphere/types'
+import type { Branch, PagedResult } from '@splashsphere/types'
 
 export const branchKeys = {
   all: ['branches'] as const,
@@ -16,7 +16,8 @@ export function useBranches() {
     queryKey: branchKeys.all,
     queryFn: async () => {
       const token = await getToken()
-      return apiClient.get<Branch[]>('/branches', token ?? undefined)
+      const result = await apiClient.get<PagedResult<Branch>>('/branches', token ?? undefined)
+      return result.items as Branch[]
     },
   })
 }

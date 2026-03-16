@@ -194,10 +194,11 @@ export function useEmployeesByBranch(branchId: string) {
     queryKey: ['employees', { branchId }],
     queryFn: async () => {
       const token = await getToken()
-      return apiClient.get<Employee[]>(
-        `/employees?branchId=${encodeURIComponent(branchId)}`,
+      const result = await apiClient.get<PagedResult<Employee>>(
+        `/employees?branchId=${encodeURIComponent(branchId)}&pageSize=100`,
         token ?? undefined
       )
+      return result.items as Employee[]
     },
     enabled: !!branchId,
   })

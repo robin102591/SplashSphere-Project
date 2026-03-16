@@ -47,7 +47,11 @@
       "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude/src/SplashSphere.Application/Features/Employees\" -type f -name \"*.cs\" 2>/dev/null | sort)",
       "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/src/SplashSphere.Application/Features/Employees -name \"*.cs\" 2>/dev/null | head -20)",
       "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\employees\" 2>/dev/null || echo \"NOT FOUND\")",
-      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\payroll\" -type f 2>/dev/null || echo \"NOT FOUND\")"
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\payroll\" -type f 2>/dev/null || echo \"NOT FOUND\")",
+      "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\" -type d -name \"vehicles\" 2>/dev/null)",
+      "Bash(ls -la \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\"\" | grep -E \"^d \")",
+      "WebSearch",
+      "WebFetch(domain:clerk.com)"
     ]
   }
 }
