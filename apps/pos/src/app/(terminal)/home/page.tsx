@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
@@ -12,9 +12,8 @@ import type { DailySummary, QueueStats, TransactionSummary } from '@splashsphere
 import type { PagedResult } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
+import { useBranch } from '@/lib/branch-context'
 import { cn } from '@/lib/utils'
-
-const BRANCH_KEY = 'pos-branch-id'
 
 const TX_STATUS: Record<number, { label: string; cls: string }> = {
   [TransactionStatus.Pending]:    { label: 'Pending',     cls: 'text-yellow-400' },
@@ -30,11 +29,7 @@ function fmt(amount: number) {
 
 export default function HomePage() {
   const { getToken } = useAuth()
-  const [branchId, setBranchId] = useState<string>('')
-
-  useEffect(() => {
-    setBranchId(localStorage.getItem(BRANCH_KEY) ?? '')
-  }, [])
+  const { branchId } = useBranch()
 
   const today = new Date().toISOString().slice(0, 10)
 

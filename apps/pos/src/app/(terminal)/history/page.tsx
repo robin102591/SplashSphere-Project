@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -10,10 +10,9 @@ import type { PagedResult } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { useSignalREvent } from '@/lib/signalr-context'
+import { useBranch } from '@/lib/branch-context'
 import { cn } from '@/lib/utils'
 import type { TransactionUpdatedPayload } from '@splashsphere/types'
-
-const BRANCH_KEY = 'pos-branch-id'
 
 const TX_STATUS: Record<number, { label: string; cls: string; icon: React.ReactNode }> = {
   [TransactionStatus.Pending]:    { label: 'Pending',     cls: 'bg-yellow-500/20 text-yellow-300', icon: <Clock className="h-3 w-3" /> },
@@ -42,15 +41,11 @@ function fmtTime(iso: string) {
 export default function HistoryPage() {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
-  const [branchId, setBranchId] = useState('')
+  const { branchId } = useBranch()
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [page, setPage] = useState(1)
-
-  useEffect(() => {
-    setBranchId(localStorage.getItem(BRANCH_KEY) ?? '')
-  }, [])
 
   // Reset page when filters change
   const resetPage = useCallback(() => setPage(1), [])

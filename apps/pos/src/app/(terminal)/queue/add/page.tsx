@@ -10,9 +10,10 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { ArrowLeft, Search, Check, Car, User, AlertCircle, RefreshCw } from 'lucide-react'
 import { QueuePriority } from '@splashsphere/types'
-import type { Car as CarType, ServiceSummary, Branch } from '@splashsphere/types'
+import type { Car as CarType, ServiceSummary } from '@splashsphere/types'
 import type { PagedResult, ApiError } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
+import { useBranch } from '@/lib/branch-context'
 
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
@@ -61,11 +62,7 @@ export default function AddToQueuePage() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // Persisted branch
-  const [branchId, setBranchId] = useState<string>(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('pos-branch-id') ?? ''
-    return ''
-  })
+  const { branchId } = useBranch()
 
   const { register, handleSubmit, setValue, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -74,19 +71,6 @@ export default function AddToQueuePage() {
 
   const selectedPriority = watch('priority')
   const plateValue = watch('plateNumber')
-
-  // ── Branches ────────────────────────────────────────────────────────────────
-
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const token = await getToken()
-      const res = await apiClient.get<PagedResult<Branch>>('/branches', token ?? undefined)
-      return res.items as Branch[]
-    },
-  })
-
-  const effectiveBranchId = branchId || branches[0]?.id
 
   // ── Services ────────────────────────────────────────────────────────────────
 
@@ -139,7 +123,7 @@ export default function AddToQueuePage() {
     try {
       const token = await getToken()
       const body = {
-        branchId: effectiveBranchId,
+        branchId: branchId,
         plateNumber: values.plateNumber.trim().toUpperCase(),
         priority: values.priority,
         carId: foundCar?.id ?? null,
@@ -154,11 +138,6 @@ export default function AddToQueuePage() {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to add to queue. Please try again.')
     }
-  }
-
-  const handleBranchChange = (id: string) => {
-    setBranchId(id)
-    localStorage.setItem('pos-branch-id', id)
   }
 
   return (
@@ -179,23 +158,6 @@ export default function AddToQueuePage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-        {/* ── Branch selector (multi-branch) ────────────────────────────── */}
-        {branches.length > 1 && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Branch</label>
-            <select
-              value={branchId}
-              onChange={e => handleBranchChange(e.target.value)}
-              className="w-full min-h-12 px-4 rounded-xl bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="">Select branch…</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
 
         {/* ── Plate number + lookup ─────────────────────────────────────── */}
         <div className="space-y-2">
@@ -356,7 +318,7 @@ export default function AddToQueuePage() {
         {/* ── Submit ────────────────────────────────────────────────────── */}
         <button
           type="submit"
-          disabled={formState.isSubmitting || !effectiveBranchId}
+          disabled={formState.isSubmitting || !branchId}
           className="w-full min-h-14 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors"
         >
           {formState.isSubmitting ? (

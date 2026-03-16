@@ -20,6 +20,7 @@ import type {
 import type { PagedResult } from '@splashsphere/types'
 
 import { apiClient } from '@/lib/api-client'
+import { useBranch } from '@/lib/branch-context'
 import {
   useTransactionStore,
   type ServiceLineItem,
@@ -316,6 +317,7 @@ function NewTransactionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const queueEntryId = searchParams.get('queueEntryId')
+  const { branchId: contextBranchId } = useBranch()
 
   // ── Store ──────────────────────────────────────────────────────────────────
   const store = useTransactionStore()
@@ -344,8 +346,7 @@ function NewTransactionContent() {
   // ── Boot ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     store.reset()
-    const saved = localStorage.getItem('pos-branch-id')
-    if (saved) store.setBranch(saved)
+    if (contextBranchId) store.setBranch(contextBranchId)
     if (queueEntryId) store.setQueueEntry(queueEntryId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

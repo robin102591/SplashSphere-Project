@@ -53,7 +53,8 @@
       "WebSearch",
       "WebFetch(domain:clerk.com)",
       "Bash(cd:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find:*)"
     ]
   }
 }

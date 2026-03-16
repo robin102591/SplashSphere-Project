@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Fingerprint, CheckCircle2, Clock, Users, LogIn, LogOut } from 'lucide-react'
 import type { Employee, AttendanceDto } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
+import { useBranch } from '@/lib/branch-context'
 import { cn } from '@/lib/utils'
-
-const BRANCH_KEY = 'pos-branch-id'
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-PH', {
@@ -19,12 +18,8 @@ function fmtTime(iso: string) {
 
 export default function AttendancePage() {
   const { getToken } = useAuth()
-  const [branchId, setBranchId] = useState('')
+  const { branchId } = useBranch()
   const queryClient = useQueryClient()
-
-  useEffect(() => {
-    setBranchId(localStorage.getItem(BRANCH_KEY) ?? '')
-  }, [])
 
   const today = new Date().toISOString().slice(0, 10)
 

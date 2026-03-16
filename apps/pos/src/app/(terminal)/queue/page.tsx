@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -9,11 +9,12 @@ import {
   Plus, Clock, PhoneCall, AlertTriangle, Timer,
   Wrench, Eye, RefreshCw,
 } from 'lucide-react'
-import type { QueueEntry, Branch, ServiceSummary } from '@splashsphere/types'
+import type { QueueEntry, ServiceSummary } from '@splashsphere/types'
 import type { PagedResult, QueueUpdatedPayload } from '@splashsphere/types'
 import { QueueStatus, QueuePriority } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { useSignalREvent } from '@/lib/signalr-context'
+import { useBranch } from '@/lib/branch-context'
 import { ConnectionStatusDot } from '@/components/connection-status'
 
 // ── Priority config ────────────────────────────────────────────────────────────
@@ -256,38 +257,23 @@ export default function QueuePage() {
   const { getToken } = useAuth()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [branchId, setBranchId] = useState('')
+  const { branchId } = useBranch()
   const [busyId, setBusyId] = useState<string | null>(null)
 
-  // Restore persisted branch selection
-  useEffect(() => {
-    const saved = localStorage.getItem('pos-branch-id')
-    if (saved) setBranchId(saved)
-  }, [])
-
-  // Branches for selector
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const token = await getToken()
-      const res = await apiClient.get<PagedResult<Branch>>('/branches', token ?? undefined)
-      return res.items as Branch[]
-    },
-  })
-
-  // Queue entries
+  // Queue entries — only fetch when a branch is selected
   const {
     data: entries = [],
     refetch,
     isFetching,
   } = useQuery({
     queryKey: ['queue', branchId],
+    enabled: !!branchId,
     queryFn: async () => {
       const token = await getToken()
-      const qs = branchId
-        ? `?branchId=${encodeURIComponent(branchId)}&pageSize=200`
-        : '?pageSize=200'
-      const res = await apiClient.get<PagedResult<QueueEntry>>(`/queue${qs}`, token ?? undefined)
+      const res = await apiClient.get<PagedResult<QueueEntry>>(
+        `/queue?branchId=${encodeURIComponent(branchId)}&pageSize=200`,
+        token ?? undefined,
+      )
       return res.items as QueueEntry[]
     },
     refetchInterval: 30_000,
@@ -341,12 +327,6 @@ export default function QueuePage() {
     router.push(`/transactions/${transactionId}`)
   }
 
-  const handleBranchChange = (id: string) => {
-    setBranchId(id)
-    localStorage.setItem('pos-branch-id', id)
-    void queryClient.invalidateQueries({ queryKey: ['queue'] })
-  }
-
   // ── Split by status (priority-sorted for waiting) ───────────────────────────
 
   const waiting = [...entries]
@@ -382,28 +362,13 @@ export default function QueuePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {branches.length > 1 && (
-            <select
-              value={branchId}
-              onChange={e => handleBranchChange(e.target.value)}
-              className="text-sm bg-gray-800 border border-gray-700 text-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All branches</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          )}
-
-          <Link
-            href="/queue/add"
-            className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Add to Queue
-          </Link>
-        </div>
+        <Link
+          href="/queue/add"
+          className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+          Add to Queue
+        </Link>
       </div>
 
       {/* ── Kanban ──────────────────────────────────────────────────────────── */}

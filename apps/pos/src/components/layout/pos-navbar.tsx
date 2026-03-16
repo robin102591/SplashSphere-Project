@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useUser, useAuth, useOrganization } from '@clerk/nextjs'
+import { useUser, useAuth } from '@clerk/nextjs'
 import {
   Home,
   LayoutGrid,
@@ -13,10 +13,12 @@ import {
   Droplets,
   LogOut,
   ChevronDown,
+  MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { ConnectionStatusDot } from '@/components/connection-status'
+import { useBranch } from '@/lib/branch-context'
 
 const navItems = [
   { label: 'Home', href: '/home', icon: Home },
@@ -32,8 +34,8 @@ export function PosNavbar() {
   const router = useRouter()
   const { user } = useUser()
   const { signOut } = useAuth()
-  const { organization } = useOrganization()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { branchId, branchName, branches, setBranchId } = useBranch()
 
   const handleSignOut = async () => {
     await signOut()
@@ -43,13 +45,30 @@ export function PosNavbar() {
   return (
     <header className="bg-gray-900 border-b border-gray-800">
       <div className="flex items-center h-14 px-4 gap-1">
-        {/* Logo + branch */}
-        <div className="flex items-center gap-2 mr-4 shrink-0">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500">
+        {/* Logo + branch selector */}
+        <div className="flex items-center gap-2 mr-3 shrink-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 shrink-0">
             <Droplets className="h-4 w-4 text-white" />
           </div>
-          {organization && (
-            <span className="text-xs text-gray-400 hidden sm:block">{organization.name}</span>
+          {branches.length > 0 && (
+            <div className="relative hidden sm:flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-lg px-2 h-8">
+              <MapPin className="h-3 w-3 text-gray-500 shrink-0" />
+              <select
+                value={branchId}
+                onChange={e => setBranchId(e.target.value)}
+                className="bg-transparent text-xs text-gray-300 focus:outline-none cursor-pointer pr-1 max-w-[120px]"
+              >
+                {branches.length > 1 && (
+                  <option value="">Select branch…</option>
+                )}
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {!branchId && (
+            <span className="hidden sm:block text-xs text-yellow-500 font-medium">No branch</span>
           )}
           <ConnectionStatusDot className="hidden sm:inline-block" />
         </div>
