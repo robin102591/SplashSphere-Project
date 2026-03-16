@@ -12,18 +12,18 @@ public sealed class GetPricingModifierByIdQueryHandler(
         GetPricingModifierByIdQuery request,
         CancellationToken cancellationToken)
     {
-        return await context.PricingModifiers
+        var m = await context.PricingModifiers
             .AsNoTracking()
             .Include(m => m.Branch)
             .Where(m => m.Id == request.Id)
-            .Select(m => new PricingModifierDto(
+            .Select(m => new
+            {
                 m.Id,
                 m.Name,
                 m.Type,
-                m.Type.ToString(),
                 m.Value,
                 m.BranchId,
-                m.Branch != null ? m.Branch.Name : null,
+                BranchName    = m.Branch != null ? m.Branch.Name : null,
                 m.StartTime,
                 m.EndTime,
                 m.ActiveDayOfWeek,
@@ -33,7 +33,29 @@ public sealed class GetPricingModifierByIdQueryHandler(
                 m.EndDate,
                 m.IsActive,
                 m.CreatedAt,
-                m.UpdatedAt))
+                m.UpdatedAt,
+            })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (m is null) return null;
+
+        return new PricingModifierDto(
+            m.Id,
+            m.Name,
+            m.Type,
+            m.Type.ToString(),
+            m.Value,
+            m.BranchId,
+            m.BranchName,
+            m.StartTime,
+            m.EndTime,
+            m.ActiveDayOfWeek,
+            m.HolidayDate,
+            m.HolidayName,
+            m.StartDate,
+            m.EndDate,
+            m.IsActive,
+            m.CreatedAt,
+            m.UpdatedAt);
     }
 }

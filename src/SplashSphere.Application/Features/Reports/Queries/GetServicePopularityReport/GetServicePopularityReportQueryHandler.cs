@@ -15,8 +15,8 @@ public sealed class GetServicePopularityReportQueryHandler(
         GetServicePopularityReportQuery request,
         CancellationToken cancellationToken)
     {
-        var fromUtc = request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
-        var toUtc   = request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var fromUtc = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
+        var toUtc   = DateTime.SpecifyKind(request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
         var top     = Math.Clamp(request.Top, 1, 100);
 
         // ── Branch name ───────────────────────────────────────────────────────

@@ -16,8 +16,8 @@ public sealed class GetRevenueReportQueryHandler(
         CancellationToken cancellationToken)
     {
         // Convert Manila calendar range to UTC window.
-        var fromUtc = request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
-        var toUtc   = request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var fromUtc = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
+        var toUtc   = DateTime.SpecifyKind(request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
 
         // ── Branch name ───────────────────────────────────────────────────────
         string? branchName = null;
@@ -87,14 +87,21 @@ public sealed class GetRevenueReportQueryHandler(
         if (request.BranchId is not null)
             paymentQuery = paymentQuery.Where(p => p.Transaction.BranchId == request.BranchId);
 
-        var byPaymentMethod = await paymentQuery
+        var byPaymentMethod = (await paymentQuery
             .GroupBy(p => p.PaymentMethod)
-            .Select(g => new RevenueByPaymentMethodDto(
-                g.Key.ToString(),
-                g.Sum(p => p.Amount),
-                g.Count()))
+            .Select(g => new
+            {
+                Method = g.Key,
+                Amount = g.Sum(p => p.Amount),
+                Count  = g.Count(),
+            })
             .OrderByDescending(x => x.Amount)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken))
+            .Select(x => new RevenueByPaymentMethodDto(
+                x.Method.ToString(),
+                x.Amount,
+                x.Count))
+            .ToList();
 
         return new RevenueReportDto(
             request.From,

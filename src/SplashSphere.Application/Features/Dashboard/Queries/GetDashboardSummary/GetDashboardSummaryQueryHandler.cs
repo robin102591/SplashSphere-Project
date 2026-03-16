@@ -20,16 +20,16 @@ public sealed class GetDashboardSummaryQueryHandler(
         var todayManila = DateOnly.FromDateTime(nowManila);
 
         // Today: midnight–midnight Manila → UTC
-        var todayStart = todayManila.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var todayStart = DateTime.SpecifyKind(todayManila.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
         var todayEnd   = todayStart.AddDays(1);
 
         // This week: Monday → Sunday (ISO week)
         var daysSinceMonday = ((int)nowManila.DayOfWeek + 6) % 7;
-        var weekStart = todayManila.AddDays(-daysSinceMonday).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var weekStart = DateTime.SpecifyKind(todayManila.AddDays(-daysSinceMonday).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
         var weekEnd   = weekStart.AddDays(7);
 
         // This month: first day of month
-        var monthStart = new DateTime(nowManila.Year, nowManila.Month, 1) - ManilaOffset;
+        var monthStart = DateTime.SpecifyKind(new DateTime(nowManila.Year, nowManila.Month, 1) - ManilaOffset, DateTimeKind.Utc);
         var monthEnd   = monthStart.AddMonths(1);
 
         // ── Base transaction predicate ────────────────────────────────────────

@@ -15,8 +15,8 @@ public sealed class GetCommissionsReportQueryHandler(
         GetCommissionsReportQuery request,
         CancellationToken cancellationToken)
     {
-        var fromUtc = request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
-        var toUtc   = request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var fromUtc = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
+        var toUtc   = DateTime.SpecifyKind(request.To.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
 
         // ── Per-employee commission aggregation ───────────────────────────────
         var teQuery = context.TransactionEmployees
@@ -32,7 +32,7 @@ public sealed class GetCommissionsReportQueryHandler(
         if (request.EmployeeId is not null)
             teQuery = teQuery.Where(te => te.EmployeeId == request.EmployeeId);
 
-        var rows = await teQuery
+        var rows = (await teQuery
             .GroupBy(te => new
             {
                 te.EmployeeId,
@@ -41,15 +41,26 @@ public sealed class GetCommissionsReportQueryHandler(
                 BranchName   = te.Employee.Branch.Name,
                 EmployeeType = te.Employee.EmployeeType,
             })
-            .Select(g => new EmployeeCommissionDto(
+            .Select(g => new
+            {
                 g.Key.EmployeeId,
-                g.Key.FirstName + " " + g.Key.LastName,
+                g.Key.FirstName,
+                g.Key.LastName,
                 g.Key.BranchName,
-                g.Key.EmployeeType.ToString(),
-                g.Sum(te => te.TotalCommission),
-                g.Count()))
+                g.Key.EmployeeType,
+                TotalCommissions = g.Sum(te => te.TotalCommission),
+                TransactionCount = g.Count(),
+            })
             .OrderByDescending(e => e.TotalCommissions)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken))
+            .Select(x => new EmployeeCommissionDto(
+                x.EmployeeId,
+                x.FirstName + " " + x.LastName,
+                x.BranchName,
+                x.EmployeeType.ToString(),
+                x.TotalCommissions,
+                x.TransactionCount))
+            .ToList();
 
         var grandTotal       = rows.Sum(r => r.TotalCommissions);
         var transactionCount = rows.Sum(r => r.TransactionCount);

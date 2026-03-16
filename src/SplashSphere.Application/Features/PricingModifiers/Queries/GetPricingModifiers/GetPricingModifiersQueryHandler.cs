@@ -27,9 +27,29 @@ public sealed class GetPricingModifiersQueryHandler(
         if (request.ActiveOnly == true)
             query = query.Where(m => m.IsActive);
 
-        return await query
+        return (await query
             .OrderBy(m => m.Type)
             .ThenBy(m => m.Name)
+            .Select(m => new
+            {
+                m.Id,
+                m.Name,
+                m.Type,
+                m.Value,
+                m.BranchId,
+                BranchName    = m.Branch != null ? m.Branch.Name : null,
+                m.StartTime,
+                m.EndTime,
+                m.ActiveDayOfWeek,
+                m.HolidayDate,
+                m.HolidayName,
+                m.StartDate,
+                m.EndDate,
+                m.IsActive,
+                m.CreatedAt,
+                m.UpdatedAt,
+            })
+            .ToListAsync(cancellationToken))
             .Select(m => new PricingModifierDto(
                 m.Id,
                 m.Name,
@@ -37,7 +57,7 @@ public sealed class GetPricingModifiersQueryHandler(
                 m.Type.ToString(),
                 m.Value,
                 m.BranchId,
-                m.Branch != null ? m.Branch.Name : null,
+                m.BranchName,
                 m.StartTime,
                 m.EndTime,
                 m.ActiveDayOfWeek,
@@ -48,6 +68,6 @@ public sealed class GetPricingModifiersQueryHandler(
                 m.IsActive,
                 m.CreatedAt,
                 m.UpdatedAt))
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 }

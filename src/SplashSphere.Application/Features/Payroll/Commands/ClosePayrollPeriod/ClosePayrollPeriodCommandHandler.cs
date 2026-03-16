@@ -35,8 +35,8 @@ public sealed class ClosePayrollPeriodCommandHandler(
 
         // ── UTC boundaries for completed-transaction lookups ──────────────────
         // PayrollPeriod dates are Manila calendar dates; transactions store UTC timestamps.
-        var periodFromUtc = period.StartDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
-        var periodToUtc   = period.EndDate.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var periodFromUtc = DateTime.SpecifyKind(period.StartDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
+        var periodToUtc   = DateTime.SpecifyKind(period.EndDate.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
 
         // ── Bulk-load per-employee aggregates (3 queries) ─────────────────────
 

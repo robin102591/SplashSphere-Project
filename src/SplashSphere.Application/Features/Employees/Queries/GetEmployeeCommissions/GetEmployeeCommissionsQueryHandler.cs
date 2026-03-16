@@ -18,14 +18,14 @@ public sealed class GetEmployeeCommissionsQueryHandler(IApplicationDbContext con
 
         if (request.From.HasValue)
         {
-            var fromUtc = request.From.Value.ToDateTime(TimeOnly.MinValue);
+            var fromUtc = DateTime.SpecifyKind(request.From.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
             query = query.Where(te => te.Transaction.CreatedAt >= fromUtc);
         }
 
         if (request.To.HasValue)
         {
             // Include the full To day.
-            var toUtc = request.To.Value.ToDateTime(TimeOnly.MaxValue);
+            var toUtc = DateTime.SpecifyKind(request.To.Value.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
             query = query.Where(te => te.Transaction.CreatedAt <= toUtc);
         }
 

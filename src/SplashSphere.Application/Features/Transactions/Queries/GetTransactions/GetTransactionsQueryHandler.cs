@@ -19,10 +19,10 @@ public sealed class GetTransactionsQueryHandler(IApplicationDbContext context)
         DateTime? toUtc   = null;
 
         if (request.DateFrom.HasValue)
-            fromUtc = request.DateFrom.Value.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+            fromUtc = DateTime.SpecifyKind(request.DateFrom.Value.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
 
         if (request.DateTo.HasValue)
-            toUtc = request.DateTo.Value.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+            toUtc = DateTime.SpecifyKind(request.DateTo.Value.AddDays(1).ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
 
         var query = context.Transactions
             .AsNoTracking()

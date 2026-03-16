@@ -216,7 +216,7 @@ public sealed class CreateTransactionCommandHandler(
 
         // ── Step 8: Generate transaction number ───────────────────────────────
         // Count existing transactions for this branch on the Manila calendar date.
-        var todayStartUtc = manilaDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var todayStartUtc = DateTime.SpecifyKind(manilaDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
         var todayEndUtc   = todayStartUtc.AddDays(1);
 
         var dailyCount = await context.Transactions

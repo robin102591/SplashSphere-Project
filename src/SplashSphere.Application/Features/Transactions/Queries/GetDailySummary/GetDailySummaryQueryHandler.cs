@@ -15,7 +15,7 @@ public sealed class GetDailySummaryQueryHandler(IApplicationDbContext context)
         CancellationToken cancellationToken)
     {
         var targetDate   = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
-        var fromUtc      = targetDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset;
+        var fromUtc      = DateTime.SpecifyKind(targetDate.ToDateTime(TimeOnly.MinValue) - ManilaOffset, DateTimeKind.Utc);
         var toUtc        = fromUtc.AddDays(1);
 
         // ── Query 1: branch name ──────────────────────────────────────────────
