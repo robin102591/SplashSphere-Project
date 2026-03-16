@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useSignIn } from '@clerk/nextjs'
+import { useState, useEffect } from 'react'
+import { useSignIn, useOrganizationList } from '@clerk/nextjs'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,7 +22,28 @@ type SignInValues = z.infer<typeof signInSchema>
 export default function SignInPage() {
   const router = useRouter()
   const { signIn, setActive, isLoaded } = useSignIn()
+  const { isLoaded: orgsLoaded, setActive: setActiveOrg, userMemberships } = useOrganizationList({
+    userMemberships: { infinite: true },
+  })
   const [serverError, setServerError] = useState<string | null>(null)
+  const [activatingOrg, setActivatingOrg] = useState(false)
+
+  // After session is created, wait for memberships to finish loading then activate the org
+  useEffect(() => {
+    if (!activatingOrg) return
+    if (!orgsLoaded) return
+    if (userMemberships.isLoading) return
+
+    const membership = userMemberships.data?.[0]
+    if (membership && setActiveOrg) {
+      setActiveOrg({ organization: membership.organization.id }).then(() => {
+        router.push('/dashboard')
+      })
+    } else {
+      // No org membership — send to onboarding
+      router.push('/onboarding')
+    }
+  }, [activatingOrg, orgsLoaded, userMemberships.isLoading, userMemberships.data])
 
   const form = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -39,7 +60,8 @@ export default function SignInPage() {
       })
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
-        router.push('/dashboard')
+        // Don't navigate yet — useEffect will activate the org then redirect
+        setActivatingOrg(true)
       }
     } catch (err: unknown) {
       const clerkError = err as { errors?: { message: string }[] }
@@ -101,8 +123,8 @@ export default function SignInPage() {
             )}
           </div>
           {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Signing in\u2026' : 'Sign in'}
+          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || activatingOrg}>
+            {activatingOrg ? 'Setting up session\u2026' : form.formState.isSubmitting ? 'Signing in\u2026' : 'Sign in'}
           </Button>
         </form>
       </CardContent>

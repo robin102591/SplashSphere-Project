@@ -26,6 +26,10 @@ public static class ClerkJwtSetup
             {
                 options.Authority = configuration["Clerk:Authority"];
 
+                // Prevent the JWT middleware from remapping standard claim names (e.g. "sub"
+                // → long URI). With this off, claims arrive exactly as they appear in the token.
+                options.MapInboundClaims = false;
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer   = true,
@@ -45,7 +49,8 @@ public static class ClerkJwtSetup
                         var claims = ctx.Principal!.Claims;
 
                         tenantCtx.ClerkUserId = claims
-                            .First(c => c.Type == "sub").Value;
+                            .FirstOrDefault(c => c.Type == "sub")?.Value
+                            ?? string.Empty;
 
                         // org_id is absent for users who haven't completed onboarding.
                         tenantCtx.TenantId = claims

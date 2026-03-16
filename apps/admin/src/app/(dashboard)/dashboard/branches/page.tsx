@@ -27,6 +27,7 @@ export default function BranchesPage() {
   }
 
   const columns = getBranchColumns({ onToggleStatus: handleToggleStatus })
+  console.log('Branches:', branches)
 
   return (
     <div className="space-y-6">
