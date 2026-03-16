@@ -51,7 +51,9 @@
       "Bash(find \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\" -type d -name \"vehicles\" 2>/dev/null)",
       "Bash(ls -la \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\"\" | grep -E \"^d \")",
       "WebSearch",
-      "WebFetch(domain:clerk.com)"
+      "WebFetch(domain:clerk.com)",
+      "Bash(cd:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

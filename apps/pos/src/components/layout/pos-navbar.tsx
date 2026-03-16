@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUser, useAuth, useOrganization } from '@clerk/nextjs'
 import {
+  Home,
   LayoutGrid,
   ListOrdered,
   Clock,
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const navItems = [
+  { label: 'Home', href: '/home', icon: Home },
   { label: 'Queue', href: '/queue', icon: ListOrdered },
   { label: 'Transaction', href: '/transactions/new', icon: LayoutGrid },
   { label: 'History', href: '/history', icon: Clock },
