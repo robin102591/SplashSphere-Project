@@ -50,18 +50,10 @@ public sealed class AddToQueueCommandHandler(
                 return Result.Failure<string>(Error.Validation("Car ID is invalid."));
         }
 
-        // ── Generate queue number ─────────────────────────────────────────────
+        // ── Compute today's date window (Manila local time) ──────────────────
         var localToday = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
         var todayStart = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var todayEnd   = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
-
-        var todayCount = await context.QueueEntries
-            .CountAsync(q => q.BranchId == request.BranchId
-                          && q.CreatedAt >= todayStart
-                          && q.CreatedAt <= todayEnd,
-                        cancellationToken);
-
-        var queueNumber = $"Q-{todayCount + 1:D3}";
 
         // ── Estimate wait time ────────────────────────────────────────────────
         // Count active WAITING entries for this branch. Each one represents roughly
@@ -80,31 +72,78 @@ public sealed class AddToQueueCommandHandler(
         if (request.PreferredServiceIds is { Count: > 0 })
             preferredServicesJson = JsonSerializer.Serialize(request.PreferredServiceIds);
 
-        // ── Create queue entry ────────────────────────────────────────────────
-        var entry = new QueueEntry(
-            tenantContext.TenantId,
-            request.BranchId,
-            queueNumber,
-            request.PlateNumber,
-            request.Priority,
-            request.CustomerId,
-            request.CarId,
-            estimatedWait,
-            preferredServicesJson,
-            request.Notes);
+        // ── Create queue entry with retry on duplicate queue number ───────────
+        // COUNT-based numbering has a race condition under concurrent requests.
+        // Instead we derive the next sequence from MAX of today's existing numbers
+        // and retry (up to 5×) if another request wins the race and causes a
+        // 23505 unique-constraint violation on (BranchId, QueueNumber, TenantId).
+        const int MaxRetries = 5;
 
-        context.QueueEntries.Add(entry);
+        for (var attempt = 0; attempt < MaxRetries; attempt++)
+        {
+            var todayNumbers = await context.QueueEntries
+                .Where(q => q.BranchId == request.BranchId
+                          && q.CreatedAt >= todayStart
+                          && q.CreatedAt <= todayEnd)
+                .Select(q => q.QueueNumber)
+                .ToListAsync(cancellationToken);
 
-        // ── Publish event (SignalR + display board will pick this up) ─────────
-        await eventPublisher.PublishAsync(new QueueEntryCreatedEvent(
-            entry.Id,
-            tenantContext.TenantId,
-            request.BranchId,
-            queueNumber,
-            entry.PlateNumber,
-            request.Priority,
-            estimatedWait), cancellationToken);
+            var maxSeq = todayNumbers
+                .Select(n => n.StartsWith("Q-") && int.TryParse(n[2..], out var s) ? s : 0)
+                .DefaultIfEmpty(0)
+                .Max();
 
-        return Result.Success(entry.Id);
+            var queueNumber = $"Q-{maxSeq + 1:D3}";
+
+            var entry = new QueueEntry(
+                tenantContext.TenantId,
+                request.BranchId,
+                queueNumber,
+                request.PlateNumber,
+                request.Priority,
+                request.CustomerId,
+                request.CarId,
+                estimatedWait,
+                preferredServicesJson,
+                request.Notes);
+
+            context.QueueEntries.Add(entry);
+
+            try
+            {
+                // Save here so we can detect the 23505 collision on this attempt.
+                // UnitOfWorkBehavior will call SaveChangesAsync again after the handler
+                // returns, but the change tracker will be empty — effectively a no-op.
+                await context.SaveChangesAsync(cancellationToken);
+
+                // ── Publish event (SignalR + display board will pick this up) ─────
+                eventPublisher.Enqueue(new QueueEntryCreatedEvent(
+                    entry.Id,
+                    tenantContext.TenantId,
+                    request.BranchId,
+                    queueNumber,
+                    entry.PlateNumber,
+                    request.Priority,
+                    estimatedWait));
+
+                return Result.Success(entry.Id);
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException?.Message.Contains("23505") == true ||
+                      ex.InnerException?.Message.Contains("duplicate key") == true)
+            {
+                // Remove the conflicting entry from the change tracker.
+                // EF Core detaches (rather than deletes) entities that are still
+                // in the Added state — i.e. were never successfully saved.
+                context.QueueEntries.Remove(entry);
+
+                if (attempt == MaxRetries - 1)
+                    return Result.Failure<string>(
+                        Error.Conflict("Queue is very busy. Please try again in a moment."));
+            }
+        }
+
+        // Unreachable — the loop always returns inside the try or on the last attempt.
+        return Result.Failure<string>(Error.Conflict("Queue number could not be generated."));
     }
 }

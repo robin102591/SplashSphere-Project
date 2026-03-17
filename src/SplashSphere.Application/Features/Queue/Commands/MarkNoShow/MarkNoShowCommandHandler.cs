@@ -33,13 +33,13 @@ public sealed class MarkNoShowCommandHandler(
         entry.Status    = QueueStatus.NoShow;
         entry.NoShowAt  = now;
 
-        await eventPublisher.PublishAsync(new QueueEntryNoShowEvent(
+        eventPublisher.Enqueue(new QueueEntryNoShowEvent(
             entry.Id,
             entry.TenantId,
             entry.BranchId,
             entry.QueueNumber,
             entry.PlateNumber,
-            now), cancellationToken);
+            now));
 
         // Auto-call the next WAITING entry in this branch.
         // UnitOfWorkBehavior will SaveChanges for the outer command; this inner

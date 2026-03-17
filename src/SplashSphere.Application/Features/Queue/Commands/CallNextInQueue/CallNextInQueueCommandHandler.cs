@@ -38,13 +38,13 @@ public sealed class CallNextInQueueCommandHandler(
         // is idempotent — it skips if the entry is no longer in Called state.
         backgroundJobs.ScheduleNoShowCheck(entry.Id, NoShowTimeout);
 
-        await eventPublisher.PublishAsync(new QueueEntryCalledEvent(
+        eventPublisher.Enqueue(new QueueEntryCalledEvent(
             entry.Id,
             entry.TenantId,
             request.BranchId,
             entry.QueueNumber,
             entry.PlateNumber,
-            now), cancellationToken);
+            now));
 
         return Result.Success<string?>(entry.Id);
     }

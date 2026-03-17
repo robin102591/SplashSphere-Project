@@ -3,12 +3,19 @@ using SplashSphere.SharedKernel.Abstractions;
 namespace SplashSphere.Application.Common.Interfaces;
 
 /// <summary>
-/// Publishes domain events to registered in-process handlers.
-/// Implemented in Infrastructure using MediatR's <c>IPublisher</c> with a
-/// <c>DomainEventNotification&lt;T&gt;</c> wrapper so the Domain layer stays
-/// free of MediatR references.
+/// Queues and publishes domain events to registered in-process handlers.
+/// <para>
+/// Use <see cref="Enqueue"/> inside command handlers so events are only
+/// dispatched <em>after</em> <c>SaveChangesAsync</c> commits — ensuring
+/// SignalR notification handlers always read consistent, already-saved data.
+/// <c>UnitOfWorkBehavior</c> calls <see cref="FlushAsync"/> after the save.
+/// </para>
 /// </summary>
 public interface IEventPublisher
 {
-    Task PublishAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default);
+    /// <summary>Adds the event to the pending queue. Does not publish immediately.</summary>
+    void Enqueue(IDomainEvent domainEvent);
+
+    /// <summary>Publishes all queued events in order. Clears the queue.</summary>
+    Task FlushAsync(CancellationToken cancellationToken = default);
 }

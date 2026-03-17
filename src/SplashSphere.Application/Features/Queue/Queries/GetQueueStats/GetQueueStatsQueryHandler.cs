@@ -15,7 +15,7 @@ public sealed class GetQueueStatsQueryHandler(IApplicationDbContext context)
         CancellationToken cancellationToken)
     {
         var localToday = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
-        var todayStartUtc = localToday.ToDateTime(TimeOnly.MinValue);
+        var todayStartUtc = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
         var entries = await context.QueueEntries
             .AsNoTracking()

@@ -67,23 +67,23 @@ public sealed class UpdateTransactionStatusCommandHandler(
         }
 
         // ── Publish events ────────────────────────────────────────────────────
-        await eventPublisher.PublishAsync(new TransactionStatusChangedEvent(
+        eventPublisher.Enqueue(new TransactionStatusChangedEvent(
             transaction.Id,
             transaction.TenantId,
             transaction.BranchId,
             previousStatus,
             request.NewStatus,
-            queueEntry?.Id), cancellationToken);
+            queueEntry?.Id));
 
         if (request.NewStatus == TransactionStatus.Completed)
         {
-            await eventPublisher.PublishAsync(new TransactionCompletedEvent(
+            eventPublisher.Enqueue(new TransactionCompletedEvent(
                 transaction.Id,
                 transaction.TenantId,
                 transaction.BranchId,
                 transaction.TransactionNumber,
                 transaction.FinalAmount,
-                queueEntry?.Id), cancellationToken);
+                queueEntry?.Id));
         }
 
         return Result.Success();

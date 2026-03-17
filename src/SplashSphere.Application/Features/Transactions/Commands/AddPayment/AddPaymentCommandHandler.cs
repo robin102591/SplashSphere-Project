@@ -74,21 +74,21 @@ public sealed class AddPaymentCommandHandler(
                 queueEntry.CompletedAt = DateTime.UtcNow;
             }
 
-            await eventPublisher.PublishAsync(new TransactionStatusChangedEvent(
+            eventPublisher.Enqueue(new TransactionStatusChangedEvent(
                 transaction.Id,
                 transaction.TenantId,
                 transaction.BranchId,
                 previousStatus,
                 TransactionStatus.Completed,
-                queueEntry?.Id), cancellationToken);
+                queueEntry?.Id));
 
-            await eventPublisher.PublishAsync(new TransactionCompletedEvent(
+            eventPublisher.Enqueue(new TransactionCompletedEvent(
                 transaction.Id,
                 transaction.TenantId,
                 transaction.BranchId,
                 transaction.TransactionNumber,
                 transaction.FinalAmount,
-                queueEntry?.Id), cancellationToken);
+                queueEntry?.Id));
         }
 
         return Result.Success(payment.Id);

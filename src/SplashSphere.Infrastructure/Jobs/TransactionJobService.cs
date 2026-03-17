@@ -88,12 +88,12 @@ public sealed class TransactionJobService(
                     queueEntry.Id, queueEntry.QueueNumber);
             }
 
-            await publisher.PublishAsync(new TransactionStatusChangedEvent(
+            publisher.Enqueue(new TransactionStatusChangedEvent(
                 tx.Id,
                 tx.TenantId,
                 tx.BranchId,
                 TransactionStatus.Pending,
-                TransactionStatus.Cancelled), ct);
+                TransactionStatus.Cancelled));
 
             logger.LogInformation(
                 "TransactionJob: Cancelled stale transaction {TxId} ({TxNumber}) for tenant {TenantId}.",
@@ -101,6 +101,7 @@ public sealed class TransactionJobService(
         }
 
         await db.SaveChangesAsync(ct);
+        await publisher.FlushAsync(ct);
 
         logger.LogInformation(
             "TransactionJob: Stale cleanup complete. Cancelled {Count} transaction(s).", stale.Count);

@@ -31,6 +31,20 @@ public sealed record QueueEntryCalledEvent(
 ) : DomainEventBase;
 
 /// <summary>
+/// Raised when a queue entry transitions to <see cref="QueueStatus.InService"/>.
+/// Consumed by: SignalR hub (broadcasts <c>QueueUpdated</c> to branch group,
+/// <c>QueueDisplayUpdated</c> to public display group).
+/// </summary>
+public sealed record QueueEntryInServiceEvent(
+    string QueueEntryId,
+    string TenantId,
+    string BranchId,
+    string QueueNumber,
+    string PlateNumber,
+    DateTime StartedAt
+) : DomainEventBase;
+
+/// <summary>
 /// Raised by the Hangfire no-show job when a customer fails to arrive within
 /// 5 minutes of being called and the entry is still in <see cref="QueueStatus.Called"/> state.
 /// Consumed by: SignalR hub (broadcasts <c>QueueUpdated</c>), auto-call-next logic.

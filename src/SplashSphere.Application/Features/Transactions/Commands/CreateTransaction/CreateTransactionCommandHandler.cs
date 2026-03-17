@@ -392,7 +392,7 @@ public sealed class CreateTransactionCommandHandler(
         }
 
         // Publish event — SignalR hub, dashboard metrics, queue board will handle it
-        await eventPublisher.PublishAsync(new TransactionCreatedEvent(
+        eventPublisher.Enqueue(new TransactionCreatedEvent(
             transaction.Id,
             tenantContext.TenantId,
             request.BranchId,
@@ -401,7 +401,7 @@ public sealed class CreateTransactionCommandHandler(
             transaction.FinalAmount,
             transaction.Status,
             transaction.CustomerId,
-            request.QueueEntryId), cancellationToken);
+            request.QueueEntryId));
 
         return Result.Success(transaction.Id);
     }

@@ -116,13 +116,13 @@ public sealed class ClosePayrollPeriodCommandHandler(
         // ── Transition period to Closed ───────────────────────────────────────
         period.Status = PayrollStatus.Closed;
 
-        await eventPublisher.PublishAsync(new PayrollPeriodClosedEvent(
+        eventPublisher.Enqueue(new PayrollPeriodClosedEvent(
             period.Id,
             tenantContext.TenantId,
             period.Year,
             period.CutOffWeek,
             period.StartDate,
-            period.EndDate), cancellationToken);
+            period.EndDate));
 
         return Result.Success();
     }

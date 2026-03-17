@@ -36,12 +36,12 @@ public sealed class ProcessPayrollPeriodCommandHandler(
 
         period.Status = PayrollStatus.Processed;
 
-        await eventPublisher.PublishAsync(new PayrollProcessedEvent(
+        eventPublisher.Enqueue(new PayrollProcessedEvent(
             period.Id,
             tenantContext.TenantId,
             period.Year,
             period.CutOffWeek,
-            totalNetPay), cancellationToken);
+            totalNetPay));
 
         return Result.Success();
     }

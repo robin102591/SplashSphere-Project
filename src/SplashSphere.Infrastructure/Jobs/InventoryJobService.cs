@@ -57,17 +57,19 @@ public sealed class InventoryJobService(
 
         foreach (var item in lowStock)
         {
-            await publisher.PublishAsync(new LowStockAlertEvent(
+            publisher.Enqueue(new LowStockAlertEvent(
                 item.Id,
                 item.TenantId,
                 item.Name,
                 item.Sku,
                 item.StockQuantity,
-                item.LowStockThreshold), ct);
+                item.LowStockThreshold));
 
             logger.LogInformation(
                 "InventoryJob: Low-stock alert published for [{Sku}] {Name} — {Stock}/{Threshold} (tenant {TenantId}).",
                 item.Sku, item.Name, item.StockQuantity, item.LowStockThreshold, item.TenantId);
         }
+
+        await publisher.FlushAsync(ct);
     }
 }
