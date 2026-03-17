@@ -54,7 +54,10 @@
       "WebFetch(domain:clerk.com)",
       "Bash(cd:*)",
       "Bash(npx tsc:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(ls:*)"
     ]
   }
 }

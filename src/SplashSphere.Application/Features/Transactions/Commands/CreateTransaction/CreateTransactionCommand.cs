@@ -7,7 +7,14 @@ namespace SplashSphere.Application.Features.Transactions.Commands.CreateTransact
 /// Creates a new POS transaction. Returns the new transaction's ULID string ID on success.
 /// </summary>
 /// <param name="BranchId">Branch where the service takes place.</param>
-/// <param name="CarId">The car being serviced.</param>
+/// <param name="CarId">
+///     The car being serviced. When null, the handler looks up a car by <paramref name="PlateNumber"/>
+///     and creates one if none exists — requires <paramref name="VehicleTypeId"/> and
+///     <paramref name="SizeId"/> to be supplied.
+/// </param>
+/// <param name="PlateNumber">Plate number used for car lookup / auto-creation when <paramref name="CarId"/> is null.</param>
+/// <param name="VehicleTypeId">Required for auto-creation when <paramref name="CarId"/> is null.</param>
+/// <param name="SizeId">Required for auto-creation when <paramref name="CarId"/> is null.</param>
 /// <param name="CustomerId">Optional registered customer (walk-ins may omit).</param>
 /// <param name="Services">Individual service line items with their assigned employees.</param>
 /// <param name="Packages">Package line items with their assigned employees.</param>
@@ -21,7 +28,10 @@ namespace SplashSphere.Application.Features.Transactions.Commands.CreateTransact
 /// </param>
 public sealed record CreateTransactionCommand(
     string BranchId,
-    string CarId,
+    string? CarId,
+    string? PlateNumber,
+    string? VehicleTypeId,
+    string? SizeId,
     string? CustomerId,
     IReadOnlyList<TransactionServiceRequest> Services,
     IReadOnlyList<TransactionPackageRequest> Packages,

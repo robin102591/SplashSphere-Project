@@ -9,6 +9,7 @@ using SplashSphere.Application.Features.Queue.Commands.StartQueueService;
 using SplashSphere.Application.Features.Queue.Queries.GetNextInQueue;
 using SplashSphere.Application.Features.Queue.Queries.GetQueue;
 using SplashSphere.Application.Features.Queue.Queries.GetQueueDisplay;
+using SplashSphere.Application.Features.Queue.Queries.GetQueueEntry;
 using SplashSphere.Application.Features.Queue.Queries.GetQueueStats;
 using SplashSphere.Domain.Enums;
 
@@ -33,6 +34,7 @@ public static class QueueEndpoints
         group.MapGet("/",              GetQueue)       .WithName("GetQueue");
         group.MapGet("/next",          GetNextInQueue) .WithName("GetNextInQueue");
         group.MapGet("/stats",         GetQueueStats)  .WithName("GetQueueStats");
+        group.MapGet("/{id}",          GetQueueEntry)  .WithName("GetQueueEntry");
         group.MapPost("/",             AddToQueue)     .WithName("AddToQueue");
         group.MapPatch("/{id}/call",   CallNext)       .WithName("CallNextInQueue");
         group.MapPatch("/{id}/start",  StartService)   .WithName("StartQueueService");
@@ -82,6 +84,15 @@ public static class QueueEndpoints
     private static async Task<IResult> GetQueueStats(
         string branchId, ISender sender, CancellationToken ct) =>
         TypedResults.Ok(await sender.Send(new GetQueueStatsQuery(branchId), ct));
+
+    // ── GET /api/v1/queue/{id} ────────────────────────────────────────────────
+
+    private static async Task<IResult> GetQueueEntry(
+        string id, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetQueueEntryQuery(id), ct);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblem();
+    }
 
     // ── POST /api/v1/queue ────────────────────────────────────────────────────
 

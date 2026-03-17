@@ -45,6 +45,9 @@ public static class TransactionEndpoints
         var command = new CreateTransactionCommand(
             body.BranchId,
             body.CarId,
+            body.PlateNumber,
+            body.VehicleTypeId,
+            body.SizeId,
             body.CustomerId,
             body.Services,
             body.Packages,
@@ -173,7 +176,10 @@ public static class TransactionEndpoints
 
     private sealed record CreateTransactionRequest(
         string BranchId,
-        string CarId,
+        string? CarId,
+        string? PlateNumber,
+        string? VehicleTypeId,
+        string? SizeId,
         string? CustomerId,
         IReadOnlyList<TransactionServiceRequest> Services,
         IReadOnlyList<TransactionPackageRequest> Packages,

@@ -9,8 +9,16 @@ public sealed class CreateTransactionCommandValidator : AbstractValidator<Create
         RuleFor(x => x.BranchId)
             .NotEmpty().WithMessage("Branch ID is required.");
 
-        RuleFor(x => x.CarId)
-            .NotEmpty().WithMessage("Car ID is required.");
+        // Either CarId is provided, or PlateNumber + VehicleTypeId + SizeId must all be present
+        // so the handler can look up or auto-create the car.
+        RuleFor(x => x)
+            .Must(x =>
+                !string.IsNullOrWhiteSpace(x.CarId) ||
+                (!string.IsNullOrWhiteSpace(x.PlateNumber) &&
+                 !string.IsNullOrWhiteSpace(x.VehicleTypeId) &&
+                 !string.IsNullOrWhiteSpace(x.SizeId)))
+            .WithMessage("Either CarId or (PlateNumber + VehicleTypeId + SizeId) must be provided.")
+            .OverridePropertyName("CarId");
 
         RuleFor(x => x.DiscountAmount)
             .GreaterThanOrEqualTo(0).WithMessage("Discount amount cannot be negative.");

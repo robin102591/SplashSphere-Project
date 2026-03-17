@@ -362,7 +362,7 @@ function NewTransactionContent() {
     enabled: !!queueEntryId,
   })
 
-  const { data: queueCar } = useQuery({
+  const { data: queueCar, isPending: isQueueCarPending } = useQuery({
     queryKey: ['car-for-tx-queue', queueEntry?.plateNumber],
     queryFn: async () => {
       const token = await getToken()
@@ -372,6 +372,7 @@ function NewTransactionContent() {
       )
     },
     enabled: !!queueEntry?.plateNumber,
+    retry: false, // 404 = car doesn't exist yet, no need to retry
   })
 
   const { data: allServices = [] } = useQuery({
@@ -468,11 +469,17 @@ function NewTransactionContent() {
 
   // ── Init from queue entry ──────────────────────────────────────────────────
 
+  // Pre-fill the plate input as soon as the queue entry loads — don't wait for the car lookup.
+  useEffect(() => {
+    if (queueEntry?.plateNumber) setLookupPlate(queueEntry.plateNumber)
+  }, [queueEntry?.plateNumber])
+
+  // Populate vehicle state once the car lookup settles (found or confirmed not found).
   useEffect(() => {
     if (!queueEntry || vehicleInitDone.current) return
-    if (queueEntry.carId && !queueCar) return
+    if (isQueueCarPending) return // still fetching — wait
+
     vehicleInitDone.current = true
-    setLookupPlate(queueEntry.plateNumber)
 
     if (queueCar) {
       useTransactionStore.getState().setVehicle({
@@ -497,7 +504,7 @@ function NewTransactionContent() {
       })
       setCarNotFound(true)
     }
-  }, [queueEntry, queueCar])
+  }, [queueEntry, queueCar, isQueueCarPending])
 
   useEffect(() => {
     if (!queueEntry || !allServices.length || servicesInitDone.current) return
@@ -650,14 +657,14 @@ function NewTransactionContent() {
         notes: notes || null,
       }
 
-      const tx = await apiClient.post<TransactionSummary>('/transactions', body, token ?? undefined)
+      const { transactionId } = await apiClient.post<{ transactionId: string }>('/transactions', body, token ?? undefined)
 
       // Add payments
       for (const p of payments) {
         try {
           await apiClient.post(
-            `/transactions/${tx.id}/payments`,
-            { method: p.method, amount: p.amount, reference: p.reference || null },
+            `/transactions/${transactionId}/payments`,
+            { paymentMethod: p.method, amount: p.amount, referenceNumber: p.reference || null },
             token ?? undefined
           )
         } catch { /* cashier can add on detail page */ }
@@ -666,14 +673,14 @@ function NewTransactionContent() {
       // Attempt status transition to Completed
       try {
         await apiClient.patch(
-          `/transactions/${tx.id}/status`,
-          { status: TransactionStatus.Completed },
+          `/transactions/${transactionId}/status`,
+          { newStatus: TransactionStatus.Completed },
           token ?? undefined
         )
       } catch { /* handle on detail page */ }
 
       store.reset()
-      router.push(`/transactions/${tx.id}`)
+      router.push(`/transactions/${transactionId}`)
     } catch (err) {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')

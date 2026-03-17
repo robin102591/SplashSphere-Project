@@ -33,12 +33,40 @@ public sealed class CreateTransactionCommandHandler(
         if (!branch.IsActive)
             return Result.Failure<string>(Error.Validation("Branch is not active."));
 
-        var car = await context.Cars
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
+        // ── Car resolution: use CarId if provided, otherwise look up by plate
+        //    and auto-create a minimal record (VehicleTypeId + SizeId required). ──────
+        Car? car;
+        if (!string.IsNullOrWhiteSpace(request.CarId))
+        {
+            car = await context.Cars
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
 
-        if (car is null)
-            return Result.Failure<string>(Error.NotFound("Car", request.CarId));
+            if (car is null)
+                return Result.Failure<string>(Error.NotFound("Car", request.CarId));
+        }
+        else
+        {
+            var plate = request.PlateNumber!.ToUpperInvariant().Trim();
+
+            car = await context.Cars
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.PlateNumber == plate, cancellationToken);
+
+            if (car is null)
+            {
+                // Auto-create a minimal walk-in car record.
+                var newCar = new Car(
+                    tenantContext.TenantId,
+                    request.VehicleTypeId!,
+                    request.SizeId!,
+                    plate,
+                    request.CustomerId);
+
+                context.Cars.Add(newCar);
+                car = newCar;
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(request.CustomerId))
         {
@@ -235,7 +263,7 @@ public sealed class CreateTransactionCommandHandler(
             tenantContext.TenantId,
             request.BranchId,
             tenantContext.UserId,
-            request.CarId,
+            car.Id,
             request.CustomerId)
         {
             TransactionNumber = transactionNumber,
@@ -384,11 +412,21 @@ public sealed class CreateTransactionCommandHandler(
 
         context.Transactions.Add(transaction);
 
+        var now = DateTime.UtcNow;
+
         if (queueEntry is not null)
         {
             queueEntry.Status        = QueueStatus.InService;
             queueEntry.TransactionId = transaction.Id;
-            queueEntry.StartedAt     = DateTime.UtcNow;
+            queueEntry.StartedAt     = now;
+
+            eventPublisher.Enqueue(new QueueEntryInServiceEvent(
+                queueEntry.Id,
+                queueEntry.TenantId,
+                queueEntry.BranchId,
+                queueEntry.QueueNumber,
+                queueEntry.PlateNumber,
+                now));
         }
 
         // Publish event — SignalR hub, dashboard metrics, queue board will handle it
