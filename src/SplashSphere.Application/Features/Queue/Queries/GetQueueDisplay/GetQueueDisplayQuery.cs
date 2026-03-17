@@ -8,4 +8,4 @@ namespace SplashSphere.Application.Features.Queue.Queries.GetQueueDisplay;
 /// Returns Called and InService entries so the TV shows whose turn it is.
 /// Plates are masked (first 3 + *** + last 2).
 /// </summary>
-public sealed record GetQueueDisplayQuery(string BranchId) : IQuery<IReadOnlyList<QueueDisplayEntryDto>>;
+public sealed record GetQueueDisplayQuery(string BranchId) : IQuery<QueueDisplaySnapshotDto>;

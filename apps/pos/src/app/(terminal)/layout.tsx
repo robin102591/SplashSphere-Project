@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { PosNavbar } from '@/components/layout/pos-navbar'
 import { SignalRProvider } from '@/lib/signalr-context'
 import { BranchProvider } from '@/lib/branch-context'
+import { BranchSignalRSync } from '@/components/branch-signalr-sync'
 
 export default async function TerminalLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -10,12 +11,13 @@ export default async function TerminalLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
-      <SignalRProvider>
-        <BranchProvider>
+      <BranchProvider>
+        <SignalRProvider>
+          <BranchSignalRSync />
           <PosNavbar />
           <main className="flex-1 overflow-auto">{children}</main>
-        </BranchProvider>
-      </SignalRProvider>
+        </SignalRProvider>
+      </BranchProvider>
     </div>
   )
 }

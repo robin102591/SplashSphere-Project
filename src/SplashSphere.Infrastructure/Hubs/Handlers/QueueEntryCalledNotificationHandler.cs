@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Events;
 using SplashSphere.Infrastructure.Services;
 
@@ -8,12 +9,13 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// <summary>
 /// Handles <see cref="QueueEntryCalledEvent"/> and broadcasts:
 /// <list type="bullet">
-///   <item><c>QueueUpdated</c> → branch group — queue board shows entry as Called.</item>
-///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV highlights the called number.</item>
+///   <item><c>QueueUpdated</c> → branch group — queue board refreshes to show entry as Called.</item>
+///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV receives full snapshot.</item>
 /// </list>
 /// </summary>
 public sealed class QueueEntryCalledNotificationHandler(
-    IHubContext<SplashSphereHub> hub)
+    IHubContext<SplashSphereHub> hub,
+    IApplicationDbContext db)
     : INotificationHandler<DomainEventNotification<QueueEntryCalledEvent>>
 {
     public async Task Handle(
@@ -22,6 +24,7 @@ public sealed class QueueEntryCalledNotificationHandler(
     {
         var e = notification.Event;
 
+        // Notify the POS queue board (branch group — requires auth)
         await hub.Clients
             .Group(SplashSphereHub.BranchGroup(e.TenantId, e.BranchId))
             .SendAsync("QueueUpdated", new QueueUpdatedPayload(
@@ -30,25 +33,14 @@ public sealed class QueueEntryCalledNotificationHandler(
                 e.QueueNumber,
                 e.PlateNumber,
                 "Called",
-                Priority: string.Empty,        // not carried on this event; client uses existing state
-                EstimatedWaitMinutes: null),
-                cancellationToken);
-
-        await hub.Clients
-            .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
-            .SendAsync("QueueDisplayUpdated", new QueueDisplayUpdatedPayload(
-                e.QueueEntryId,
-                e.BranchId,
-                e.QueueNumber,
-                MaskPlate(e.PlateNumber),
-                "Called",
                 Priority: string.Empty,
                 EstimatedWaitMinutes: null),
                 cancellationToken);
-    }
 
-    private static string MaskPlate(string plate) =>
-        plate.Length <= 3
-            ? plate
-            : $"{plate[..2]}{new string('*', plate.Length - 3)}{plate[^1]}";
+        // Send full display snapshot to public wall TV
+        var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
+        await hub.Clients
+            .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
+            .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
+    }
 }

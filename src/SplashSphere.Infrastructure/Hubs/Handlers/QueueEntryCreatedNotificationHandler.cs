@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Events;
 using SplashSphere.Infrastructure.Services;
 
@@ -9,12 +10,12 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// Handles <see cref="QueueEntryCreatedEvent"/> and broadcasts:
 /// <list type="bullet">
 ///   <item><c>QueueUpdated</c> → branch group — queue board refreshes with the new entry.</item>
-///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV shows the new arrival
-///   with a masked plate number.</item>
+///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV receives full snapshot.</item>
 /// </list>
 /// </summary>
 public sealed class QueueEntryCreatedNotificationHandler(
-    IHubContext<SplashSphereHub> hub)
+    IHubContext<SplashSphereHub> hub,
+    IApplicationDbContext db)
     : INotificationHandler<DomainEventNotification<QueueEntryCreatedEvent>>
 {
     public async Task Handle(
@@ -23,6 +24,7 @@ public sealed class QueueEntryCreatedNotificationHandler(
     {
         var e = notification.Event;
 
+        // Notify the POS queue board (branch group — requires auth)
         await hub.Clients
             .Group(SplashSphereHub.BranchGroup(e.TenantId, e.BranchId))
             .SendAsync("QueueUpdated", new QueueUpdatedPayload(
@@ -35,25 +37,10 @@ public sealed class QueueEntryCreatedNotificationHandler(
                 e.EstimatedWaitMinutes),
                 cancellationToken);
 
+        // Send full display snapshot to public wall TV
+        var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
         await hub.Clients
             .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
-            .SendAsync("QueueDisplayUpdated", new QueueDisplayUpdatedPayload(
-                e.QueueEntryId,
-                e.BranchId,
-                e.QueueNumber,
-                MaskPlate(e.PlateNumber),
-                "Waiting",
-                e.Priority.ToString(),
-                e.EstimatedWaitMinutes),
-                cancellationToken);
+            .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
     }
-
-    /// <summary>
-    /// Masks the middle characters of a plate number for the public display.
-    /// "ABC123" → "AB***3". Plates of 3 chars or fewer are returned as-is.
-    /// </summary>
-    private static string MaskPlate(string plate) =>
-        plate.Length <= 3
-            ? plate
-            : $"{plate[..2]}{new string('*', plate.Length - 3)}{plate[^1]}";
 }

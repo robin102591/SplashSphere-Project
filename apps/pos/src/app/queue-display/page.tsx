@@ -11,8 +11,10 @@ import { createHubConnection } from '@/lib/signalr'
 // ── Clock ─────────────────────────────────────────────────────────────────────
 
 function useClock() {
-  const [time, setTime] = useState(() => new Date())
+  // Initialize as null to avoid SSR/client mismatch (hydration error)
+  const [time, setTime] = useState<Date | null>(null)
   useEffect(() => {
+    setTime(new Date())
     const id = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
@@ -21,6 +23,8 @@ function useClock() {
 
 function Clock() {
   const time = useClock()
+  // Render placeholder until client-side time is available
+  if (!time) return <div className="w-48" />
   return (
     <div className="text-right tabular-nums">
       <p className="text-4xl font-black font-mono text-white">

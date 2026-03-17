@@ -35,6 +35,16 @@ public sealed record QueueDisplayEntryDto(
     QueuePriority Priority,
     int? EstimatedWaitMinutes);
 
+/// <summary>
+/// Full snapshot of the public queue display state, grouped by status.
+/// Matches the <c>QueueDisplayUpdatedPayload</c> TypeScript type.
+/// </summary>
+public sealed record QueueDisplaySnapshotDto(
+    string BranchId,
+    IReadOnlyList<QueueDisplayEntryDto> Calling,
+    IReadOnlyList<QueueDisplayEntryDto> InService,
+    int WaitingCount);
+
 public sealed record QueueStatsDto(
     int WaitingCount,
     int CalledCount,

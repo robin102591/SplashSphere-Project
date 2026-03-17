@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Events;
 using SplashSphere.Infrastructure.Services;
 
@@ -9,12 +10,12 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// Handles <see cref="QueueEntryNoShowEvent"/> and broadcasts:
 /// <list type="bullet">
 ///   <item><c>QueueUpdated</c> → branch group — queue board removes/greys out the entry.</item>
+///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV removes the no-show from "Now Calling".</item>
 /// </list>
-/// The public display does not receive a <c>QueueDisplayUpdated</c> for no-shows — the entry
-/// simply disappears from the Waiting/Called list when the board re-renders.
 /// </summary>
 public sealed class QueueEntryNoShowNotificationHandler(
-    IHubContext<SplashSphereHub> hub)
+    IHubContext<SplashSphereHub> hub,
+    IApplicationDbContext db)
     : INotificationHandler<DomainEventNotification<QueueEntryNoShowEvent>>
 {
     public async Task Handle(
@@ -34,5 +35,11 @@ public sealed class QueueEntryNoShowNotificationHandler(
                 Priority: string.Empty,
                 EstimatedWaitMinutes: null),
                 cancellationToken);
+
+        // Remove the no-show from the public display "Now Calling" section
+        var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
+        await hub.Clients
+            .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
+            .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
     }
 }

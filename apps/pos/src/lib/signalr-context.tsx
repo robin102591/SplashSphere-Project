@@ -15,6 +15,8 @@ interface SignalRContextValue {
   state: ConnectionState
   /** Register an event handler. Returns an unsubscribe function. */
   on: (event: string, handler: (...args: unknown[]) => void) => () => void
+  /** Invoke a hub method. No-ops if not connected. */
+  invoke: (method: string, ...args: unknown[]) => void
 }
 
 // ── Context ────────────────────────────────────────────────────────────────────
@@ -22,6 +24,7 @@ interface SignalRContextValue {
 const SignalRContext = createContext<SignalRContextValue>({
   state: 'disconnected',
   on: () => () => {},
+  invoke: () => {},
 })
 
 // ── Provider ───────────────────────────────────────────────────────────────────
@@ -71,8 +74,15 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const invoke = useCallback((method: string, ...args: unknown[]) => {
+    const conn = connRef.current
+    if (conn?.state === 'Connected') {
+      conn.invoke(method, ...args).catch(() => {})
+    }
+  }, [])
+
   return (
-    <SignalRContext.Provider value={{ state, on }}>
+    <SignalRContext.Provider value={{ state, on, invoke }}>
       {children}
     </SignalRContext.Provider>
   )
@@ -83,6 +93,11 @@ export function SignalRProvider({ children }: { children: React.ReactNode }) {
 /** Returns the current hub connection state. */
 export function useSignalRStatus(): ConnectionState {
   return useContext(SignalRContext).state
+}
+
+/** Returns a stable function to invoke hub methods. */
+export function useSignalRInvoke() {
+  return useContext(SignalRContext).invoke
 }
 
 /**

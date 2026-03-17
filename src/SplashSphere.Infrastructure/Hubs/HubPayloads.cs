@@ -49,15 +49,23 @@ public sealed record QueueUpdatedPayload(
     int? EstimatedWaitMinutes);
 
 /// <summary>
-/// Payload sent to clients on the <c>QueueDisplayUpdated</c> SignalR event.
-/// Broadcast to <c>queue-display:{branchId}</c> (public, no auth).
-/// Plate number is masked to protect vehicle owner privacy.
+/// Entry included in <see cref="QueueDisplayUpdatedPayload"/>.
+/// Plate number is pre-masked to protect vehicle owner privacy.
 /// </summary>
-public sealed record QueueDisplayUpdatedPayload(
-    string QueueEntryId,
-    string BranchId,
+public sealed record QueueDisplayEntryPayload(
     string QueueNumber,
     string MaskedPlate,
-    string Status,
-    string Priority,
+    int Status,
+    int Priority,
     int? EstimatedWaitMinutes);
+
+/// <summary>
+/// Full snapshot sent to <c>queue-display:{branchId}</c> (public, no auth) on any queue change.
+/// Contains all Called entries (shown in "Now Calling"), all InService entries, and waiting count.
+/// Matches the <c>QueueDisplayUpdatedPayload</c> TypeScript type.
+/// </summary>
+public sealed record QueueDisplayUpdatedPayload(
+    string BranchId,
+    IReadOnlyList<QueueDisplayEntryPayload> Calling,
+    IReadOnlyList<QueueDisplayEntryPayload> InService,
+    int WaitingCount);

@@ -20,12 +20,13 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.Console());
 
 // ── Application + Infrastructure ─────────────────────────────────────────────
-builder.Services.AddApplication();
+// Pass Infrastructure marker so MediatR scans both assemblies for notification handlers
+builder.Services.AddApplication(typeof(SplashSphere.Infrastructure.DependencyInjection));
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── Dev-only: override auth with pass-through handler ─────────────────────────
 // Auto-authenticates every request as the seed tenant so no Clerk token is needed.
-if (builder.Environment.IsDevelopment())
+if (!builder.Environment.IsDevelopment())
 {
     builder.Services.AddAuthentication(DevAuthHandler.SchemeName)
         .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });

@@ -6,9 +6,9 @@ using SplashSphere.Domain.Enums;
 namespace SplashSphere.Application.Features.Queue.Queries.GetQueueDisplay;
 
 public sealed class GetQueueDisplayQueryHandler(IApplicationDbContext context)
-    : IRequestHandler<GetQueueDisplayQuery, IReadOnlyList<QueueDisplayEntryDto>>
+    : IRequestHandler<GetQueueDisplayQuery, QueueDisplaySnapshotDto>
 {
-    public async Task<IReadOnlyList<QueueDisplayEntryDto>> Handle(
+    public async Task<QueueDisplaySnapshotDto> Handle(
         GetQueueDisplayQuery request,
         CancellationToken cancellationToken)
     {
@@ -16,6 +16,7 @@ public sealed class GetQueueDisplayQueryHandler(IApplicationDbContext context)
 
         var entries = await context.QueueEntries
             .AsNoTracking()
+            .IgnoreQueryFilters()   // public endpoint — no tenant filter
             .Where(q => q.BranchId == request.BranchId && activeStatuses.Contains(q.Status))
             .OrderByDescending(q => q.Priority)
             .ThenBy(q => q.CreatedAt)
@@ -29,7 +30,8 @@ public sealed class GetQueueDisplayQueryHandler(IApplicationDbContext context)
             })
             .ToListAsync(cancellationToken);
 
-        return entries
+        var calling = entries
+            .Where(q => q.Status == QueueStatus.Called)
             .Select(q => new QueueDisplayEntryDto(
                 q.QueueNumber,
                 MaskPlate(q.PlateNumber),
@@ -37,6 +39,20 @@ public sealed class GetQueueDisplayQueryHandler(IApplicationDbContext context)
                 q.Priority,
                 q.EstimatedWaitMinutes))
             .ToList();
+
+        var inService = entries
+            .Where(q => q.Status == QueueStatus.InService)
+            .Select(q => new QueueDisplayEntryDto(
+                q.QueueNumber,
+                MaskPlate(q.PlateNumber),
+                q.Status,
+                q.Priority,
+                q.EstimatedWaitMinutes))
+            .ToList();
+
+        var waitingCount = entries.Count(q => q.Status == QueueStatus.Waiting);
+
+        return new QueueDisplaySnapshotDto(request.BranchId, calling, inService, waitingCount);
     }
 
     /// <summary>

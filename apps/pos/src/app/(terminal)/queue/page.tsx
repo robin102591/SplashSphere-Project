@@ -301,7 +301,8 @@ export default function QueuePage() {
     setBusyId(id)
     try {
       const token = await getToken()
-      await apiClient.patch(`/queue/${id}/call`, {}, token ?? undefined)
+      // Endpoint {id} is branchId — it picks the highest-priority waiting entry automatically
+      await apiClient.patch(`/queue/${branchId}/call`, {}, token ?? undefined)
       await refetch()
     } finally {
       setBusyId(null)
