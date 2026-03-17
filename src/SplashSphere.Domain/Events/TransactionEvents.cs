@@ -46,3 +46,15 @@ public sealed record TransactionCompletedEvent(
     decimal FinalAmount,
     string? QueueEntryId = null
 ) : DomainEventBase;
+
+/// <summary>
+/// Raised after an InProgress transaction's line items (services, packages, merchandise)
+/// have been replaced via the UpdateTransactionItems command.
+/// Consumed by: SignalR hub (broadcasts <c>TransactionUpdated</c> to branch group).
+/// </summary>
+public sealed record TransactionUpdatedEvent(
+    string TransactionId,
+    string TenantId,
+    string BranchId,
+    decimal FinalAmount
+) : DomainEventBase;

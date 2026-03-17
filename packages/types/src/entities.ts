@@ -403,6 +403,7 @@ export interface TransactionServiceLine {
   id: string;
   serviceId: string;
   serviceName: string;
+  categoryName: string;
   vehicleTypeName: string;
   sizeName: string;
   unitPrice: number;
@@ -462,6 +463,8 @@ export interface TransactionSummary {
 
 export interface TransactionDetail extends TransactionSummary {
   cashierId: string;
+  vehicleTypeId: string;
+  sizeId: string;
   notes: string | null;
   completedAt: string | null;
   cancelledAt: string | null;

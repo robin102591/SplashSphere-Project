@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Search, RefreshCw, X, Plus, Minus,
   Banknote, Smartphone, CreditCard, Building2, CheckCircle2,
-  ChevronDown, ChevronUp, AlertCircle, Layers,
+  ChevronDown, ChevronUp, AlertCircle, Layers, BadgeCheck,
 } from 'lucide-react'
 
 import { PaymentMethod, TransactionStatus, EmployeeType } from '@splashsphere/types'
@@ -317,6 +317,7 @@ function NewTransactionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const queueEntryId = searchParams.get('queueEntryId')
+  const editId = searchParams.get('editId')          // edit mode — tx already exists
   const { branchId: contextBranchId } = useBranch()
 
   // ── Store ──────────────────────────────────────────────────────────────────
@@ -342,6 +343,7 @@ function NewTransactionContent() {
 
   const vehicleInitDone = useRef(false)
   const servicesInitDone = useRef(false)
+  const editInitDone = useRef(false)
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -374,6 +376,71 @@ function NewTransactionContent() {
     enabled: !!queueEntry?.plateNumber,
     retry: false, // 404 = car doesn't exist yet, no need to retry
   })
+
+  // ── Edit mode: load existing transaction ──────────────────────────────────
+
+  const { data: editTx } = useQuery({
+    queryKey: ['transaction-edit', editId],
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<import('@splashsphere/types').TransactionDetail>(`/transactions/${editId}`, token ?? undefined)
+    },
+    enabled: !!editId,
+    staleTime: 0,
+  })
+
+  // Populate store once when editTx loads
+  useEffect(() => {
+    if (!editTx || editInitDone.current) return
+    editInitDone.current = true
+
+    const s = useTransactionStore.getState()
+    s.reset()
+    if (contextBranchId) s.setBranch(contextBranchId)
+
+    s.setVehicle({
+      plateNumber: editTx.plateNumber,
+      carId: editTx.carId,
+      customerId: editTx.customerId ?? null,
+      vehicleTypeId: editTx.vehicleTypeId,
+      sizeId: editTx.sizeId,
+      vehicleTypeName: editTx.vehicleTypeName,
+      sizeName: editTx.sizeName,
+    })
+    s.setDiscount(editTx.discountAmount)
+    s.setNotes(editTx.notes ?? '')
+
+    editTx.services.forEach((svc) => {
+      s.addService({
+        serviceId: svc.serviceId,
+        serviceName: svc.serviceName,
+        categoryName: svc.categoryName,
+        unitPrice: svc.unitPrice,
+      })
+      const added = useTransactionStore.getState().services.at(-1)!
+      svc.employeeAssignments.forEach((a) =>
+        useTransactionStore.getState().toggleServiceEmployee(added.localId, a.employeeId)
+      )
+    })
+
+    editTx.packages.forEach((pkg) => {
+      s.addPackage({ packageId: pkg.packageId, packageName: pkg.packageName, unitPrice: pkg.unitPrice })
+      const added = useTransactionStore.getState().packages.at(-1)!
+      pkg.employeeAssignments.forEach((a) =>
+        useTransactionStore.getState().togglePackageEmployee(added.localId, a.employeeId)
+      )
+    })
+
+    editTx.merchandise.forEach((m) => {
+      s.addMerchandise({
+        merchandiseId: m.merchandiseId,
+        merchandiseName: m.merchandiseName,
+        unitPrice: m.unitPrice,
+        quantity: m.quantity,
+      })
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editTx])
 
   const { data: allServices = [] } = useQuery({
     queryKey: ['services-catalog'],
@@ -617,49 +684,38 @@ function NewTransactionContent() {
 
   const itemCount = services.length + packages.length + merchandise.length
 
-  const canComplete =
-    !!plateNumber &&
-    !!vehicleTypeId &&
-    !!sizeId &&
-    itemCount > 0 &&
-    estimatedTotal > 0 &&
-    totalPaid >= estimatedTotal
+  const vehicleReady = !!plateNumber && !!vehicleTypeId && !!sizeId
+  const itemsReady   = itemCount > 0 && estimatedTotal > 0
+
+  const canComplete  = vehicleReady && itemsReady && totalPaid >= estimatedTotal
+  const canPayLater  = vehicleReady && itemsReady && !editId
+  const canSaveItems = itemsReady && !!editId
+
+  // Shared body builder for create/pay-later
+  const buildCreateBody = () => ({
+    branchId: branchId || undefined,
+    carId,
+    customerId,
+    vehicleTypeId,
+    sizeId,
+    plateNumber,
+    queueEntryId,
+    services: services.map((s) => ({ serviceId: s.serviceId, employeeIds: s.employeeIds, notes: null })),
+    packages: packages.map((p) => ({ packageId: p.packageId, employeeIds: p.employeeIds, notes: null })),
+    merchandise: merchandise.map((m) => ({ merchandiseId: m.merchandiseId, quantity: m.quantity })),
+    discountAmount: discount,
+    taxAmount: 0,
+    notes: notes || null,
+  })
 
   const handleComplete = async () => {
     setIsSubmitting(true)
     setSubmitError(null)
     try {
       const token = await getToken()
-
-      const body = {
-        branchId: branchId || undefined,
-        carId,
-        customerId,
-        vehicleTypeId,
-        sizeId,
-        plateNumber,
-        queueEntryId,
-        services: services.map((s) => ({
-          serviceId: s.serviceId,
-          employeeIds: s.employeeIds,
-          notes: null,
-        })),
-        packages: packages.map((p) => ({
-          packageId: p.packageId,
-          employeeIds: p.employeeIds,
-          notes: null,
-        })),
-        merchandise: merchandise.map((m) => ({
-          merchandiseId: m.merchandiseId,
-          quantity: m.quantity,
-        })),
-        discountAmount: discount,
-        notes: notes || null,
-      }
-
-      const { transactionId } = await apiClient.post<{ transactionId: string }>('/transactions', body, token ?? undefined)
-
-      // Add payments
+      const { transactionId } = await apiClient.post<{ transactionId: string }>(
+        '/transactions', buildCreateBody(), token ?? undefined
+      )
       for (const p of payments) {
         try {
           await apiClient.post(
@@ -669,15 +725,58 @@ function NewTransactionContent() {
           )
         } catch { /* cashier can add on detail page */ }
       }
-
-      // No explicit status PATCH needed — AddPaymentCommandHandler auto-completes the
-      // transaction when the sum of payments covers FinalAmount (InProgress → Completed).
-
       store.reset()
       router.push(`/transactions/${transactionId}`)
     } catch (err) {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Pay Later — creates transaction without payments; cashier pays from detail page
+  const handlePayLater = async () => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      const token = await getToken()
+      const { transactionId } = await apiClient.post<{ transactionId: string }>(
+        '/transactions', buildCreateBody(), token ?? undefined
+      )
+      store.reset()
+      router.push(`/transactions/${transactionId}`)
+    } catch (err) {
+      const apiErr = err as ApiError
+      setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Save Changes — updates items on an existing InProgress transaction
+  const handleSaveChanges = async () => {
+    if (!editId) return
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      const token = await getToken()
+      await apiClient.patch(
+        `/transactions/${editId}/items`,
+        {
+          services: services.map((s) => ({ serviceId: s.serviceId, employeeIds: s.employeeIds })),
+          packages: packages.map((p) => ({ packageId: p.packageId, employeeIds: p.employeeIds })),
+          merchandise: merchandise.map((m) => ({ merchandiseId: m.merchandiseId, quantity: m.quantity })),
+          discountAmount: discount,
+          notes: notes || null,
+        },
+        token ?? undefined
+      )
+      store.reset()
+      router.push(`/transactions/${editId}`)
+    } catch (err) {
+      const apiErr = err as ApiError
+      setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to update transaction.')
     } finally {
       setIsSubmitting(false)
     }
@@ -711,12 +810,14 @@ function NewTransactionContent() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-base font-bold text-white leading-tight">New Transaction</h1>
+            <h1 className="text-base font-bold text-white leading-tight">
+              {editId ? 'Edit Transaction' : 'New Transaction'}
+            </h1>
             <p className="text-xs text-gray-500">
-              {queueEntryId ? (
-                <span className="text-yellow-400">
-                  From Queue · {queueEntry?.queueNumber ?? '…'}
-                </span>
+              {editId ? (
+                <span className="text-yellow-400">Editing · {editTx?.transactionNumber ?? '…'}</span>
+              ) : queueEntryId ? (
+                <span className="text-yellow-400">From Queue · {queueEntry?.queueNumber ?? '…'}</span>
               ) : (
                 'Direct walk-in'
               )}
@@ -726,66 +827,81 @@ function NewTransactionContent() {
 
         {/* Vehicle bar */}
         <div className="px-4 py-3 border-b border-gray-800 shrink-0 space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Plate number"
-              value={lookupPlate}
-              onChange={(e) => setLookupPlate(e.target.value.toUpperCase())}
-              onKeyDown={(e) => { if (e.key === 'Enter') void handlePlateLookup() }}
-              className="flex-1 min-h-11 px-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-base font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              onClick={() => void handlePlateLookup()}
-              disabled={isLookingUp || !lookupPlate.trim()}
-              className="min-h-11 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors"
-            >
-              {isLookingUp ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            </button>
-          </div>
 
-          {/* Vehicle found info */}
-          {vehicleTypeId && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/60 border border-gray-700/50">
+          {/* Edit mode: vehicle is locked, show read-only badge */}
+          {editId && vehicleTypeId && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-900/20 border border-yellow-700/40">
               <span className="text-sm font-bold text-white font-mono">{plateNumber}</span>
               <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{vehicleTypeName}</span>
               <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{sizeName}</span>
-              {customerId && <span className="text-xs text-blue-400 ml-auto">Linked customer</span>}
+              <span className="text-xs text-yellow-400 ml-auto">Vehicle locked</span>
             </div>
           )}
 
-          {/* Manual vehicle type + size (car not found) */}
-          {(carNotFound || (!vehicleTypeId && plateNumber)) && (
-            <div className="flex gap-2">
-              <select
-                value={vehicleTypeId}
-                onChange={(e) => {
-                  const vt = vehicleTypes.find((v) => v.id === e.target.value)
-                  store.setVehicleType(e.target.value, vt?.name ?? '')
-                }}
-                className="flex-1 min-h-10 px-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Vehicle type…</option>
-                {vehicleTypes.map((vt) => (
-                  <option key={vt.id} value={vt.id}>{vt.name}</option>
-                ))}
-              </select>
-              <select
-                value={sizeId}
-                onChange={(e) => {
-                  const sz = sizes.find((s) => s.id === e.target.value)
-                  store.setVehicleSize(e.target.value, sz?.name ?? '')
-                }}
-                className="flex-1 min-h-10 px-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Size…</option>
-                {sizes.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
+          {!editId && (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Plate number"
+                  value={lookupPlate}
+                  onChange={(e) => setLookupPlate(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handlePlateLookup() }}
+                  className="flex-1 min-h-11 px-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-base font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handlePlateLookup()}
+                  disabled={isLookingUp || !lookupPlate.trim()}
+                  className="min-h-11 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors"
+                >
+                  {isLookingUp ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </button>
+              </div>
+
+              {/* Vehicle found info */}
+              {vehicleTypeId && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/60 border border-gray-700/50">
+                  <span className="text-sm font-bold text-white font-mono">{plateNumber}</span>
+                  <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{vehicleTypeName}</span>
+                  <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{sizeName}</span>
+                  {customerId && <span className="text-xs text-blue-400 ml-auto">Linked customer</span>}
+                </div>
+              )}
+
+              {/* Manual vehicle type + size (car not found) */}
+              {(carNotFound || (!vehicleTypeId && plateNumber)) && (
+                <div className="flex gap-2">
+                  <select
+                    value={vehicleTypeId}
+                    onChange={(e) => {
+                      const vt = vehicleTypes.find((v) => v.id === e.target.value)
+                      store.setVehicleType(e.target.value, vt?.name ?? '')
+                    }}
+                    className="flex-1 min-h-10 px-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Vehicle type…</option>
+                    {vehicleTypes.map((vt) => (
+                      <option key={vt.id} value={vt.id}>{vt.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={sizeId}
+                    onChange={(e) => {
+                      const sz = sizes.find((s) => s.id === e.target.value)
+                      store.setVehicleSize(e.target.value, sz?.name ?? '')
+                    }}
+                    className="flex-1 min-h-10 px-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Size…</option>
+                    {sizes.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -989,8 +1105,8 @@ function NewTransactionContent() {
             </div>
           </div>
 
-          {/* Payments */}
-          <div className="px-4 py-3 space-y-2">
+          {/* Payments — hidden in edit mode (cashier pays from the detail page) */}
+          {!editId && <div className="px-4 py-3 space-y-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</p>
 
             {/* Added payment rows */}
@@ -1084,7 +1200,7 @@ function NewTransactionContent() {
                 Add
               </button>
             </div>
-          </div>
+          </div>}  {/* end !editId payment section */}
 
           {/* Notes */}
           <div className="px-4 py-2">
@@ -1105,32 +1221,60 @@ function NewTransactionContent() {
             </div>
           )}
 
-          {/* Complete button */}
-          <div className="px-4 py-3">
-            <button
-              type="button"
-              onClick={() => void handleComplete()}
-              disabled={!canComplete || isSubmitting}
-              className="w-full min-h-12 rounded-xl bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <><RefreshCw className="h-4 w-4 animate-spin" /> Processing…</>
-              ) : (
-                <><CheckCircle2 className="h-5 w-5" /> Complete Transaction</>
-              )}
-            </button>
-            {!canComplete && !isSubmitting && (
-              <p className="text-xs text-gray-600 text-center mt-1.5">
-                {!plateNumber
-                  ? 'Enter a plate number to start'
-                  : !vehicleTypeId || !sizeId
-                    ? 'Select vehicle type & size'
-                    : itemCount === 0
-                      ? 'Add at least one item to the order'
-                      : estimatedTotal === 0
-                        ? 'Items total must be greater than ₱0'
-                        : `Add ${peso(balance)} more to complete payment`}
-              </p>
+          {/* Action buttons */}
+          <div className="px-4 py-3 space-y-2">
+            {editId ? (
+              /* ── Edit mode: Save Changes ─────────────────────────────── */
+              <button
+                type="button"
+                onClick={() => void handleSaveChanges()}
+                disabled={!canSaveItems || isSubmitting}
+                className="w-full min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors flex items-center justify-center gap-2"
+              >
+                {isSubmitting
+                  ? <><RefreshCw className="h-4 w-4 animate-spin" /> Saving…</>
+                  : <><CheckCircle2 className="h-5 w-5" /> Save Changes</>}
+              </button>
+            ) : (
+              /* ── Create mode: Pay Later + Complete ───────────────────── */
+              <>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handlePayLater()}
+                    disabled={!canPayLater || isSubmitting}
+                    className="flex-1 min-h-12 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <><BadgeCheck className="h-4 w-4" /> Pay Later</>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleComplete()}
+                    disabled={!canComplete || isSubmitting}
+                    className="flex-1 min-h-12 rounded-xl bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting
+                      ? <><RefreshCw className="h-4 w-4 animate-spin" /> Processing…</>
+                      : <><CheckCircle2 className="h-5 w-5" /> Complete</>}
+                  </button>
+                </div>
+                {!canPayLater && !canComplete && !isSubmitting && (
+                  <p className="text-xs text-gray-600 text-center">
+                    {!plateNumber
+                      ? 'Enter a plate number to start'
+                      : !vehicleTypeId || !sizeId
+                        ? 'Select vehicle type & size'
+                        : itemCount === 0
+                          ? 'Add at least one item to the order'
+                          : 'Items total must be greater than ₱0'}
+                  </p>
+                )}
+                {canPayLater && !canComplete && !isSubmitting && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Add {peso(balance)} to pay now, or use Pay Later
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

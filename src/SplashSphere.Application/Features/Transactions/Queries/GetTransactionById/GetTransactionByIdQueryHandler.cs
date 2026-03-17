@@ -24,7 +24,9 @@ public sealed class GetTransactionByIdQueryHandler(IApplicationDbContext context
                 t.CarId,
                 PlateNumber     = t.Car.PlateNumber,
                 VehicleTypeName = t.Car.VehicleType.Name,
+                VehicleTypeId   = t.Car.VehicleTypeId,
                 SizeName        = t.Car.Size.Name,
+                SizeId          = t.Car.SizeId,
                 t.CustomerId,
                 CustomerName    = t.Customer != null
                     ? t.Customer.FirstName + " " + t.Customer.LastName
@@ -55,6 +57,7 @@ public sealed class GetTransactionByIdQueryHandler(IApplicationDbContext context
                 ts.Id,
                 ts.ServiceId,
                 ts.Service.Name,
+                ts.Service.Category.Name,
                 ts.VehicleType.Name,
                 ts.Size.Name,
                 ts.UnitPrice,
@@ -134,7 +137,9 @@ public sealed class GetTransactionByIdQueryHandler(IApplicationDbContext context
             tx.CarId,
             tx.PlateNumber,
             tx.VehicleTypeName,
+            tx.VehicleTypeId,
             tx.SizeName,
+            tx.SizeId,
             tx.CustomerId,
             tx.CustomerName,
             tx.Status,

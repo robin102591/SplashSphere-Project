@@ -1,14 +1,16 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Printer, Car, User2, Wrench, Package,
   ShoppingCart, Users, CreditCard, CheckCircle2,
-  XCircle, RotateCcw, Clock, BadgeCheck,
+  XCircle, RotateCcw, Clock, BadgeCheck, Edit2,
+  Banknote, Smartphone, Building2, RefreshCw, AlertCircle,
 } from 'lucide-react'
+import Link from 'next/link'
 import type { TransactionDetail } from '@splashsphere/types'
 import { TransactionStatus, PaymentMethod } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
@@ -23,6 +25,14 @@ const TX_STATUS: Record<number, { label: string; icon: React.ReactNode; cls: str
   [TransactionStatus.Cancelled]:  { label: 'Cancelled',   icon: <XCircle className="h-3.5 w-3.5" />,      cls: 'bg-red-500/20 text-red-300 border-red-500/30' },
   [TransactionStatus.Refunded]:   { label: 'Refunded',    icon: <RotateCcw className="h-3.5 w-3.5" />,    cls: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
 }
+
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: PaymentMethod.Cash,         label: 'Cash',   Icon: Banknote   },
+  { value: PaymentMethod.GCash,        label: 'GCash',  Icon: Smartphone },
+  { value: PaymentMethod.CreditCard,   label: 'Credit', Icon: CreditCard },
+  { value: PaymentMethod.DebitCard,    label: 'Debit',  Icon: CreditCard },
+  { value: PaymentMethod.BankTransfer, label: 'Bank',   Icon: Building2  },
+]
 
 const PAYMENT_LABEL: Record<number, string> = {
   [PaymentMethod.Cash]:         'Cash',
@@ -55,6 +65,15 @@ export default function TransactionDetailPage({ params }: Props) {
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
+  // ── Payment form state ─────────────────────────────────────────────────────
+  const [showPayForm, setShowPayForm] = useState(false)
+  const [payMethod, setPayMethod] = useState<PaymentMethod>(PaymentMethod.Cash)
+  const [payAmount, setPayAmount] = useState('')
+  const [payRef, setPayRef] = useState('')
+  const [payError, setPayError] = useState<string | null>(null)
+  const [isAddingPayment, setIsAddingPayment] = useState(false)
+
+  // ── Queries ────────────────────────────────────────────────────────────────
   const { data: tx, isLoading, error } = useQuery({
     queryKey: ['transaction', id],
     staleTime: 30_000,
@@ -64,10 +83,15 @@ export default function TransactionDetailPage({ params }: Props) {
     },
   })
 
+  // ── Mutations ──────────────────────────────────────────────────────────────
   const cancelMutation = useMutation({
     mutationFn: async () => {
       const token = await getToken()
-      return apiClient.patch(`/transactions/${id}/status`, { status: TransactionStatus.Cancelled }, token ?? undefined)
+      return apiClient.patch(
+        `/transactions/${id}/status`,
+        { newStatus: TransactionStatus.Cancelled },
+        token ?? undefined
+      )
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transaction', id] })
@@ -75,6 +99,31 @@ export default function TransactionDetailPage({ params }: Props) {
     },
   })
 
+  const handleAddPayment = async () => {
+    const amount = parseFloat(payAmount)
+    if (!amount || amount <= 0) return
+    setIsAddingPayment(true)
+    setPayError(null)
+    try {
+      const token = await getToken()
+      await apiClient.post(
+        `/transactions/${id}/payments`,
+        { paymentMethod: payMethod, amount, referenceNumber: payRef || null },
+        token ?? undefined
+      )
+      setPayAmount('')
+      setPayRef('')
+      setShowPayForm(false)
+      queryClient.invalidateQueries({ queryKey: ['transaction', id] })
+    } catch (err) {
+      const e = err as { detail?: string; title?: string }
+      setPayError(e?.detail ?? e?.title ?? 'Payment failed.')
+    } finally {
+      setIsAddingPayment(false)
+    }
+  }
+
+  // ── Loading / error states ─────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="p-4 max-w-2xl mx-auto space-y-4">
@@ -98,8 +147,13 @@ export default function TransactionDetailPage({ params }: Props) {
     )
   }
 
-  const status = TX_STATUS[tx.status] ?? TX_STATUS[TransactionStatus.Pending]
+  const status   = TX_STATUS[tx.status] ?? TX_STATUS[TransactionStatus.Pending]
+  const canEdit   = tx.status === TransactionStatus.InProgress
   const canCancel = tx.status === TransactionStatus.Pending || tx.status === TransactionStatus.InProgress
+
+  const alreadyPaid = tx.payments.reduce((s, p) => s + p.amount, 0)
+  const remaining   = Math.max(0, tx.finalAmount - alreadyPaid)
+  const isFullyPaid = remaining < 0.01
 
   return (
     <>
@@ -115,6 +169,15 @@ export default function TransactionDetailPage({ params }: Props) {
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
           <div className="flex items-center gap-2">
+            {canEdit && (
+              <Link
+                href={`/transactions/new?editId=${id}`}
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-blue-300 hover:bg-blue-900/20 border border-blue-800/50 transition-colors"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Items
+              </Link>
+            )}
             {canCancel && (
               <button
                 onClick={() => {
@@ -267,9 +330,9 @@ export default function TransactionDetailPage({ params }: Props) {
         )}
 
         {/* Payments */}
-        {tx.payments.length > 0 && (
-          <Section icon={<CreditCard className="h-4 w-4" />} title="Payments">
-            <div className="space-y-1.5">
+        <Section icon={<CreditCard className="h-4 w-4" />} title="Payments">
+          {tx.payments.length > 0 && (
+            <div className="space-y-1.5 mb-3">
               {tx.payments.map((p) => (
                 <div key={p.id} className="flex justify-between text-sm">
                   <div>
@@ -281,9 +344,107 @@ export default function TransactionDetailPage({ params }: Props) {
                   <span className="text-white font-medium">{fmt(p.amount)}</span>
                 </div>
               ))}
+              <div className="flex justify-between text-sm pt-1.5 border-t border-gray-700">
+                <span className="text-gray-400">Paid</span>
+                <span className={cn('font-mono font-bold', isFullyPaid ? 'text-green-400' : 'text-white')}>
+                  {fmt(alreadyPaid)}
+                </span>
+              </div>
+              {!isFullyPaid && (
+                <div className="flex justify-between text-sm text-orange-400">
+                  <span>Remaining</span>
+                  <span className="font-mono font-bold">{fmt(remaining)}</span>
+                </div>
+              )}
             </div>
-          </Section>
-        )}
+          )}
+
+          {/* Add Payment — only when InProgress and not yet fully paid */}
+          {canEdit && !isFullyPaid && (
+            <div>
+              {!showPayForm ? (
+                <button
+                  type="button"
+                  onClick={() => { setShowPayForm(true); setPayAmount(remaining.toFixed(2)) }}
+                  className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors min-h-[40px]"
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                  Add Payment
+                </button>
+              ) : (
+                <div className="space-y-2 pt-2 border-t border-gray-700">
+                  {/* Method selector */}
+                  <div className="flex gap-1">
+                    {PAYMENT_METHODS.map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setPayMethod(value)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          payMethod === value
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-gray-400 hover:text-gray-300 border border-gray-600'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Amount + ref */}
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                      placeholder={remaining.toFixed(2)}
+                      className="flex-1 min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    {payMethod !== PaymentMethod.Cash && (
+                      <input
+                        type="text"
+                        value={payRef}
+                        onChange={(e) => setPayRef(e.target.value)}
+                        placeholder="Ref #"
+                        className="w-24 min-h-10 px-2 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    )}
+                  </div>
+                  {payError && (
+                    <div className="flex items-center gap-1.5 text-xs text-red-400">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      {payError}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setShowPayForm(false); setPayError(null) }}
+                      className="flex-1 min-h-10 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleAddPayment()}
+                      disabled={isAddingPayment || !payAmount || parseFloat(payAmount) <= 0}
+                      className="flex-1 min-h-10 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {isAddingPayment
+                        ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        : <><CheckCircle2 className="h-4 w-4" /> Confirm Payment</>}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tx.payments.length === 0 && !canEdit && (
+            <p className="text-sm text-gray-500">No payments recorded.</p>
+          )}
+        </Section>
 
         {/* Totals */}
         <div className="rounded-xl bg-gray-800 border border-gray-700 p-4 space-y-2">

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.Application.Features.Transactions.Commands.AddPayment;
 using SplashSphere.Application.Features.Transactions.Commands.CreateTransaction;
+using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionItems;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionStatus;
 using SplashSphere.Application.Features.Transactions.Queries.GetDailySummary;
 using SplashSphere.Application.Features.Transactions.Queries.GetReceipt;
@@ -23,6 +24,7 @@ public static class TransactionEndpoints
         // ── Commands ──────────────────────────────────────────────────────────
         group.MapPost("/",                           CreateTransaction);
         group.MapPatch("/{id}/status",               UpdateTransactionStatus);
+        group.MapPatch("/{id}/items",                UpdateTransactionItems);
         group.MapPost("/{id}/payments",              AddPayment);
 
         // ── Queries ───────────────────────────────────────────────────────────
@@ -80,6 +82,34 @@ public static class TransactionEndpoints
             if (result.Error.Code == "NotFound")
                 return TypedResults.NotFound();
 
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.NoContent();
+    }
+
+    // ── PATCH /{id}/items ─────────────────────────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateTransactionItems(
+        string id,
+        [FromBody] UpdateTransactionItemsRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var command = new UpdateTransactionItemsCommand(
+            id,
+            body.Services,
+            body.Packages,
+            body.Merchandise,
+            body.DiscountAmount,
+            body.Notes);
+
+        var result = await sender.Send(command, ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
             return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
         }
 
@@ -192,6 +222,13 @@ public static class TransactionEndpoints
     private sealed record CreateTransactionResponse(string TransactionId);
 
     private sealed record UpdateStatusRequest(TransactionStatus NewStatus);
+
+    private sealed record UpdateTransactionItemsRequest(
+        IReadOnlyList<TransactionServiceRequest> Services,
+        IReadOnlyList<TransactionPackageRequest> Packages,
+        IReadOnlyList<TransactionMerchandiseRequest> Merchandise,
+        decimal DiscountAmount,
+        string? Notes);
 
     private sealed record AddPaymentRequest(
         PaymentMethod PaymentMethod,
