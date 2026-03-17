@@ -420,11 +420,15 @@ public sealed class CreateTransactionCommandHandler(
 
         var now = DateTime.UtcNow;
 
+        string? linkedQueueEntryId;
+
         if (queueEntry is not null)
         {
+            // Queue-first workflow: transition the existing called entry to InService.
             queueEntry.Status        = QueueStatus.InService;
             queueEntry.TransactionId = transaction.Id;
             queueEntry.StartedAt     = now;
+            linkedQueueEntryId       = queueEntry.Id;
 
             eventPublisher.Enqueue(new QueueEntryInServiceEvent(
                 queueEntry.Id,
@@ -432,6 +436,39 @@ public sealed class CreateTransactionCommandHandler(
                 queueEntry.BranchId,
                 queueEntry.QueueNumber,
                 queueEntry.PlateNumber,
+                now));
+        }
+        else
+        {
+            // Walk-in workflow: auto-create a queue entry so the vehicle appears
+            // in the InService column on the queue board.
+            var dailyQueueCount = await context.QueueEntries
+                .CountAsync(q => q.BranchId == request.BranchId
+                              && q.CreatedAt >= todayStartUtc
+                              && q.CreatedAt < todayEndUtc,
+                            cancellationToken);
+
+            var walkInEntry = new QueueEntry(
+                tenantContext.TenantId,
+                request.BranchId,
+                $"Q-{dailyQueueCount + 1:D3}",
+                car.PlateNumber,
+                customerId: request.CustomerId,
+                carId: car.Id);
+
+            walkInEntry.Status        = QueueStatus.InService;
+            walkInEntry.TransactionId = transaction.Id;
+            walkInEntry.StartedAt     = now;
+
+            context.QueueEntries.Add(walkInEntry);
+            linkedQueueEntryId = walkInEntry.Id;
+
+            eventPublisher.Enqueue(new QueueEntryInServiceEvent(
+                walkInEntry.Id,
+                walkInEntry.TenantId,
+                walkInEntry.BranchId,
+                walkInEntry.QueueNumber,
+                walkInEntry.PlateNumber,
                 now));
         }
 
@@ -445,7 +482,7 @@ public sealed class CreateTransactionCommandHandler(
             transaction.FinalAmount,
             transaction.Status,
             transaction.CustomerId,
-            request.QueueEntryId));
+            linkedQueueEntryId));
 
         return Result.Success(transaction.Id);
     }

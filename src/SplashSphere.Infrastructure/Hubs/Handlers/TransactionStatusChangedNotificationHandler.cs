@@ -55,6 +55,36 @@ public sealed class TransactionStatusChangedNotificationHandler(
                     e.TenantId,
                     e.BranchId),
                     cancellationToken);
+
+            // Propagate completion to the queue board and wall TV display.
+            if (e.QueueEntryId is not null)
+            {
+                var qe = await db.QueueEntries
+                    .AsNoTracking()
+                    .Where(q => q.Id == e.QueueEntryId)
+                    .Select(q => new { q.QueueNumber, q.PlateNumber })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (qe is not null)
+                {
+                    await hub.Clients
+                        .Group(SplashSphereHub.BranchGroup(e.TenantId, e.BranchId))
+                        .SendAsync("QueueUpdated", new QueueUpdatedPayload(
+                            e.QueueEntryId,
+                            e.BranchId,
+                            qe.QueueNumber,
+                            qe.PlateNumber,
+                            "Completed",
+                            Priority: string.Empty,
+                            EstimatedWaitMinutes: null),
+                            cancellationToken);
+
+                    var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
+                    await hub.Clients
+                        .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
+                        .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
+                }
+            }
         }
     }
 }
