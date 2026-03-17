@@ -670,14 +670,8 @@ function NewTransactionContent() {
         } catch { /* cashier can add on detail page */ }
       }
 
-      // Attempt status transition to Completed
-      try {
-        await apiClient.patch(
-          `/transactions/${transactionId}/status`,
-          { newStatus: TransactionStatus.Completed },
-          token ?? undefined
-        )
-      } catch { /* handle on detail page */ }
+      // No explicit status PATCH needed — AddPaymentCommandHandler auto-completes the
+      // transaction when the sum of payments covers FinalAmount (InProgress → Completed).
 
       store.reset()
       router.push(`/transactions/${transactionId}`)

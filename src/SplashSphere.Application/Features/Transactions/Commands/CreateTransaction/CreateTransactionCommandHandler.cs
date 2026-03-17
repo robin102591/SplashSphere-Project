@@ -410,6 +410,12 @@ public sealed class CreateTransactionCommandHandler(
 
         // ── Step 9: Persist and link queue entry ──────────────────────────────
 
+        // Service begins when the transaction is created at the POS.
+        // This supports both payment scenarios:
+        //   • Pay later (Scenario 1): stays InProgress until AddPayment auto-completes it.
+        //   • Pay now   (Scenario 2): AddPayment receives InProgress, auto-completes immediately.
+        transaction.Status = TransactionStatus.InProgress;
+
         context.Transactions.Add(transaction);
 
         var now = DateTime.UtcNow;
