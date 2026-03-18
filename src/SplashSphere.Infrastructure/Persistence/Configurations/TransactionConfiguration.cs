@@ -66,9 +66,11 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
 
         builder.Property(t => t.Notes);
 
-        // Null until status transitions to Completed / Cancelled
+        // Null until status transitions to Completed / Cancelled / Refunded
         builder.Property(t => t.CompletedAt);
         builder.Property(t => t.CancelledAt);
+        builder.Property(t => t.RefundedAt);
+        builder.Property(t => t.RefundReason).HasMaxLength(500);
 
         // ── Audit timestamps ──────────────────────────────────────────────────
         builder.Property(t => t.CreatedAt)

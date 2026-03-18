@@ -95,6 +95,12 @@ public sealed class Transaction : IAuditableEntity
     /// <summary>UTC timestamp when status transitioned to <see cref="TransactionStatus.Cancelled"/>.</summary>
     public DateTime? CancelledAt { get; set; }
 
+    /// <summary>UTC timestamp when status transitioned to <see cref="TransactionStatus.Refunded"/>.</summary>
+    public DateTime? RefundedAt { get; set; }
+
+    /// <summary>Reason recorded by the cashier at the time of refund.</summary>
+    public string? RefundReason { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

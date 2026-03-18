@@ -43,6 +43,8 @@ public sealed class GetTransactionByIdQueryHandler(IApplicationDbContext context
                 t.CreatedAt,
                 t.CompletedAt,
                 t.CancelledAt,
+                t.RefundedAt,
+                t.RefundReason,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -154,6 +156,8 @@ public sealed class GetTransactionByIdQueryHandler(IApplicationDbContext context
             tx.CreatedAt,
             tx.CompletedAt,
             tx.CancelledAt,
+            tx.RefundedAt,
+            tx.RefundReason,
             services,
             packages,
             merchandise,

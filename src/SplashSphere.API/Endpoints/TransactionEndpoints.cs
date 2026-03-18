@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.Application.Features.Transactions.Commands.AddPayment;
 using SplashSphere.Application.Features.Transactions.Commands.CreateTransaction;
+using SplashSphere.Application.Features.Transactions.Commands.RefundTransaction;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionItems;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionStatus;
 using SplashSphere.Application.Features.Transactions.Queries.GetDailySummary;
@@ -26,6 +27,7 @@ public static class TransactionEndpoints
         group.MapPatch("/{id}/status",               UpdateTransactionStatus);
         group.MapPatch("/{id}/items",                UpdateTransactionItems);
         group.MapPost("/{id}/payments",              AddPayment);
+        group.MapPost("/{id}/refund",                RefundTransaction);
 
         // ── Queries ───────────────────────────────────────────────────────────
         // daily-summary must come BEFORE /{id} to avoid route ambiguity
@@ -140,6 +142,27 @@ public static class TransactionEndpoints
             new AddPaymentResponse(result.Value!));
     }
 
+    // ── POST /{id}/refund ─────────────────────────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> RefundTransaction(
+        string id,
+        [FromBody] RefundRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new RefundTransactionCommand(id, body.Reason), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.NoContent();
+    }
+
     // ── GET / ─────────────────────────────────────────────────────────────────
 
     private static async Task<Ok<object>> GetTransactions(
@@ -236,6 +259,8 @@ public static class TransactionEndpoints
         string? ReferenceNumber);
 
     private sealed record AddPaymentResponse(string PaymentId);
+
+    private sealed record RefundRequest(string? Reason);
 
     // ── Query parameter records ────────────────────────────────────────────────
 

@@ -468,6 +468,8 @@ export interface TransactionDetail extends TransactionSummary {
   notes: string | null;
   completedAt: string | null;
   cancelledAt: string | null;
+  refundedAt: string | null;
+  refundReason: string | null;
   services: readonly TransactionServiceLine[];
   packages: readonly TransactionPackageLine[];
   merchandise: readonly TransactionMerchandiseLine[];

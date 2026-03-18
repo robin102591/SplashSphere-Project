@@ -73,6 +73,11 @@ export default function TransactionDetailPage({ params }: Props) {
   const [payError, setPayError] = useState<string | null>(null)
   const [isAddingPayment, setIsAddingPayment] = useState(false)
 
+  // ── Refund dialog state ────────────────────────────────────────────────────
+  const [showRefundDialog, setShowRefundDialog] = useState(false)
+  const [refundReason, setRefundReason] = useState('')
+  const [refundError, setRefundError] = useState<string | null>(null)
+
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: tx, isLoading, error } = useQuery({
     queryKey: ['transaction', id],
@@ -96,6 +101,28 @@ export default function TransactionDetailPage({ params }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transaction', id] })
       queryClient.invalidateQueries({ queryKey: ['transactions-recent'] })
+    },
+  })
+
+  const refundMutation = useMutation({
+    mutationFn: async (reason: string | null) => {
+      const token = await getToken()
+      return apiClient.post(
+        `/transactions/${id}/refund`,
+        { reason: reason || null },
+        token ?? undefined
+      )
+    },
+    onSuccess: () => {
+      setShowRefundDialog(false)
+      setRefundReason('')
+      setRefundError(null)
+      queryClient.invalidateQueries({ queryKey: ['transaction', id] })
+      queryClient.invalidateQueries({ queryKey: ['transactions-recent'] })
+    },
+    onError: (err: unknown) => {
+      const e = err as { detail?: string; title?: string }
+      setRefundError(e?.detail ?? e?.title ?? 'Refund failed.')
     },
   })
 
@@ -150,6 +177,7 @@ export default function TransactionDetailPage({ params }: Props) {
   const status   = TX_STATUS[tx.status] ?? TX_STATUS[TransactionStatus.Pending]
   const canEdit   = tx.status === TransactionStatus.InProgress
   const canCancel = tx.status === TransactionStatus.Pending || tx.status === TransactionStatus.InProgress
+  const canRefund = tx.status === TransactionStatus.Completed
 
   const alreadyPaid = tx.payments.reduce((s, p) => s + p.amount, 0)
   const remaining   = Math.max(0, tx.finalAmount - alreadyPaid)
@@ -188,6 +216,15 @@ export default function TransactionDetailPage({ params }: Props) {
               >
                 <XCircle className="h-4 w-4" />
                 Cancel
+              </button>
+            )}
+            {canRefund && (
+              <button
+                onClick={() => setShowRefundDialog(true)}
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-orange-400 hover:bg-orange-900/20 border border-orange-800/50 transition-colors"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Refund
               </button>
             )}
             <button
@@ -467,7 +504,70 @@ export default function TransactionDetailPage({ params }: Props) {
             <p className="text-sm text-gray-300">{tx.notes}</p>
           </div>
         )}
+
+        {/* Refund info banner */}
+        {tx.refundedAt && (
+          <div className="rounded-xl bg-orange-900/20 border border-orange-800/50 p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <RotateCcw className="h-4 w-4 text-orange-400 shrink-0" />
+              <p className="text-sm font-semibold text-orange-300">Refunded</p>
+              <span className="text-xs text-orange-500 ml-auto">{fmtDateTime(tx.refundedAt)}</span>
+            </div>
+            {tx.refundReason && (
+              <p className="text-xs text-orange-400 mt-1">Reason: {tx.refundReason}</p>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ── Refund dialog ──────────────────────────────────────────────────── */}
+      {showRefundDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-orange-400" />
+              <h2 className="text-base font-bold text-white">Refund Transaction</h2>
+            </div>
+            <p className="text-sm text-gray-400">
+              This will refund <span className="text-white font-semibold">{tx.transactionNumber}</span> ({fmt(tx.finalAmount)}).
+              Commission amounts will be deducted from the relevant payroll period if it is still open.
+            </p>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Reason <span className="text-gray-600">(optional)</span></label>
+              <textarea
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="e.g. Customer dissatisfied, duplicate charge…"
+                rows={3}
+                maxLength={500}
+                className="w-full rounded-xl bg-gray-800 border border-gray-700 text-gray-200 text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            {refundError && (
+              <div className="flex items-start gap-2 rounded-lg bg-red-900/20 border border-red-800/50 p-3">
+                <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-400">{refundError}</p>
+              </div>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => { setShowRefundDialog(false); setRefundReason(''); setRefundError(null) }}
+                disabled={refundMutation.isPending}
+                className="flex-1 min-h-[44px] rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-white hover:border-gray-500 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => refundMutation.mutate(refundReason || null)}
+                disabled={refundMutation.isPending}
+                className="flex-1 min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+              >
+                {refundMutation.isPending ? 'Processing…' : 'Confirm Refund'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Print / Receipt view ───────────────────────────────────────────── */}
       <div className="hidden print:block p-8 max-w-sm mx-auto text-black font-mono text-sm leading-relaxed">

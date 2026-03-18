@@ -48,6 +48,19 @@ public sealed record TransactionCompletedEvent(
 ) : DomainEventBase;
 
 /// <summary>
+/// Raised after a Completed transaction is refunded.
+/// Consumed by: SignalR hub (broadcasts <c>TransactionUpdated</c> to branch group),
+/// and dashboard metrics update.
+/// </summary>
+public sealed record TransactionRefundedEvent(
+    string TransactionId,
+    string TenantId,
+    string BranchId,
+    string TransactionNumber,
+    decimal FinalAmount
+) : DomainEventBase;
+
+/// <summary>
 /// Raised after an InProgress transaction's line items (services, packages, merchandise)
 /// have been replaced via the UpdateTransactionItems command.
 /// Consumed by: SignalR hub (broadcasts <c>TransactionUpdated</c> to branch group).
