@@ -32,12 +32,14 @@ public sealed class AddPaymentCommandHandler(
                 $"Cannot add a payment to a transaction with status '{transaction.Status}'."));
         }
 
-        // Guard against over-payment
-        var alreadyPaid = await context.Payments
+        // Guard against over-payment.
+        // customerOwes = FinalAmount (services) + TipAmount (employee gratuity).
+        var alreadyPaid  = await context.Payments
             .Where(p => p.TransactionId == request.TransactionId)
             .SumAsync(p => p.Amount, cancellationToken);
 
-        var remaining = transaction.FinalAmount - alreadyPaid;
+        var customerOwes = transaction.FinalAmount + transaction.TipAmount;
+        var remaining    = customerOwes - alreadyPaid;
 
         if (request.Amount > remaining + 0.01m) // 1-cent tolerance for floating-point drift
         {
@@ -55,8 +57,8 @@ public sealed class AddPaymentCommandHandler(
         context.Payments.Add(payment);
 
         // ── Auto-complete when fully paid ─────────────────────────────────────
-        var newTotal = alreadyPaid + request.Amount;
-        var isFullyPaid = newTotal >= transaction.FinalAmount - 0.01m;
+        var newTotal    = alreadyPaid + request.Amount;
+        var isFullyPaid = newTotal >= customerOwes - 0.01m;
 
         if (isFullyPaid && transaction.Status != TransactionStatus.Completed)
         {
