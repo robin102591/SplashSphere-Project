@@ -110,12 +110,12 @@ function EditCarForm({
         <div className="space-y-1.5">
           <Label>Make</Label>
           <Select
-            defaultValue={car.makeId ?? ''}
-            onValueChange={(v) => { setValue('makeId', v); setValue('modelId', '') }}
+            defaultValue={car.makeId ?? '__none__'}
+            onValueChange={(v) => { setValue('makeId', v === '__none__' ? '' : v); setValue('modelId', '') }}
           >
             <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {makes.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -123,13 +123,13 @@ function EditCarForm({
         <div className="space-y-1.5">
           <Label>Model</Label>
           <Select
-            defaultValue={car.modelId ?? ''}
+            defaultValue={car.modelId ?? '__none__'}
             disabled={!selectedMakeId || models.length === 0}
-            onValueChange={(v) => setValue('modelId', v)}
+            onValueChange={(v) => setValue('modelId', v === '__none__' ? '' : v)}
           >
             <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {models.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
             </SelectContent>
           </Select>

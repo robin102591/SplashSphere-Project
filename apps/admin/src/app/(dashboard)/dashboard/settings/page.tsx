@@ -539,10 +539,10 @@ function PricingModifiersTab() {
             </div>
             <div className="space-y-1">
               <Label>Branch <span className="text-muted-foreground">(leave blank for all)</span></Label>
-              <Select value={form.branchId} onValueChange={(v) => setForm((p) => ({ ...p, branchId: v }))}>
+              <Select value={form.branchId || '__all__'} onValueChange={(v) => setForm((p) => ({ ...p, branchId: v === '__all__' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="All branches" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All branches</SelectItem>
+                  <SelectItem value="__all__">All branches</SelectItem>
                   {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>

@@ -361,12 +361,12 @@ export default function ReportsPage() {
           <label className="text-sm text-muted-foreground">To</label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-36" />
         </div>
-        <Select value={branchId} onValueChange={(v) => { setBranchId(v); setEmployeeId('') }}>
+        <Select value={branchId || '__all__'} onValueChange={(v) => { setBranchId(v === '__all__' ? '' : v); setEmployeeId('') }}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All branches" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All branches</SelectItem>
+            <SelectItem value="__all__">All branches</SelectItem>
             {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -386,12 +386,12 @@ export default function ReportsPage() {
         <TabsContent value="commissions" className="mt-6">
           {/* Employee filter only in commissions tab */}
           <div className="flex items-center gap-3 mb-4">
-            <Select value={employeeId} onValueChange={setEmployeeId}>
+            <Select value={employeeId || '__all__'} onValueChange={(v) => setEmployeeId(v === '__all__' ? '' : v)}>
               <SelectTrigger className="w-52">
                 <SelectValue placeholder="All employees" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All employees</SelectItem>
+                <SelectItem value="__all__">All employees</SelectItem>
                 {employeesPage?.items.map((e) => (
                   <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
                 ))}

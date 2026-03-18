@@ -184,6 +184,13 @@ export default function TransactionDetailPage({ params }: Props) {
   const remaining      = Math.max(0, customerOwes - alreadyPaid)
   const isFullyPaid = remaining < 0.01
 
+  // For tip cash-out display: only the portion NOT covered by cash payments needs to be cashed out
+  const totalCashPaid = tx.payments
+    .filter((p) => p.method === PaymentMethod.Cash)
+    .reduce((s, p) => s + p.amount, 0)
+  const tipCoveredByCash = Math.min(tx.tipAmount, Math.max(0, totalCashPaid - tx.finalAmount))
+  const cashOutAmount = tx.tipAmount - tipCoveredByCash
+
   return (
     <>
       {/* ── Screen view ────────────────────────────────────────────────────── */}
@@ -511,6 +518,14 @@ export default function TransactionDetailPage({ params }: Props) {
               labelClass="text-gray-400"
               valueClass="font-mono font-bold text-white"
             />
+          )}
+          {cashOutAmount > 0 && (
+            <div className="flex items-center justify-between pt-1 border-t border-dashed border-yellow-800/40">
+              <span className="text-sm text-yellow-300 flex items-center gap-1.5">
+                <Banknote className="h-3.5 w-3.5" /> Cash out to employee
+              </span>
+              <span className="font-mono text-sm font-semibold text-yellow-300">{fmt(cashOutAmount)}</span>
+            </div>
           )}
         </div>
 

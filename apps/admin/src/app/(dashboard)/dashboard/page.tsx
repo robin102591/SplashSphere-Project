@@ -93,12 +93,12 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Overview of your car wash operations</p>
         </div>
-        <Select value={branchId} onValueChange={setBranchId}>
+        <Select value={branchId || '__all__'} onValueChange={(v) => setBranchId(v === '__all__' ? '' : v)}>
           <SelectTrigger className="w-52">
             <SelectValue placeholder="All branches" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All branches</SelectItem>
+            <SelectItem value="__all__">All branches</SelectItem>
             {branches.map((b) => (
               <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
             ))}

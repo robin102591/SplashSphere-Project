@@ -830,10 +830,17 @@ function NewTransactionContent() {
           )
         } catch { /* cashier can add on detail page */ }
       }
-      const hasNonCashPayment = payments.some((p) => p.method !== PaymentMethod.Cash)
+      // How much of the tip was covered by cash?
+      // Cash paid beyond the service total absorbs the tip first.
+      const totalCashPaid = payments
+        .filter((p) => p.method === PaymentMethod.Cash)
+        .reduce((s, p) => s + p.amount, 0)
+      const tipCoveredByCash = Math.min(tip, Math.max(0, totalCashPaid - estimatedTotal))
+      const cashOutAmount = tip - tipCoveredByCash
+
       store.reset()
-      if (tip > 0 && hasNonCashPayment) {
-        setCashOutTip({ amount: tip, transactionId })
+      if (cashOutAmount > 0) {
+        setCashOutTip({ amount: cashOutAmount, transactionId })
       } else {
         router.push(`/transactions/${transactionId}`)
       }
