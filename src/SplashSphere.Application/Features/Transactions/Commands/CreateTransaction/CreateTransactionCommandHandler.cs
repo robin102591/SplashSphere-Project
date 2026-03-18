@@ -396,6 +396,7 @@ public sealed class CreateTransactionCommandHandler(
 
         transaction.TotalAmount  = totalServiceAmount + totalPackageAmount + totalMerchandiseAmount;
         transaction.FinalAmount  = transaction.TotalAmount - request.DiscountAmount + request.TaxAmount;
+        transaction.TipAmount    = request.TipAmount;
 
         // ── Step 7: TransactionEmployee summary records ───────────────────────
 

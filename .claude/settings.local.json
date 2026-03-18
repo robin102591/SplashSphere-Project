@@ -62,7 +62,9 @@
       "Bash(wc:*)",
       "Bash(xargs -I {} basename {})",
       "Bash(dotnet ef:*)",
-      "Bash(grep -v \"^Build\\\\|^  SplashSphere\\\\|^Time\\\\|^$\")"
+      "Bash(grep -v \"^Build\\\\|^  SplashSphere\\\\|^Time\\\\|^$\")",
+      "Bash(pnpm build:*)",
+      "Bash(npx next:*)"
     ]
   }
 }

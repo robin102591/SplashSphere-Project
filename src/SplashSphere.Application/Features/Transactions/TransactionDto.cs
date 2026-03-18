@@ -22,6 +22,7 @@ public sealed record TransactionDetailDto(
     decimal DiscountAmount,
     decimal TaxAmount,
     decimal FinalAmount,
+    decimal TipAmount,
     string CashierId,
     string CashierName,
     string? Notes,

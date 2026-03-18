@@ -1,4 +1,4 @@
-using MediatR;
+using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Transactions.Commands.RefundTransaction;
@@ -16,4 +16,4 @@ namespace SplashSphere.Application.Features.Transactions.Commands.RefundTransact
 public sealed record RefundTransactionCommand(
     string TransactionId,
     string? Reason
-) : IRequest<Result>;
+) : ICommand;

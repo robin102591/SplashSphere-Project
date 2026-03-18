@@ -456,6 +456,7 @@ export interface TransactionSummary {
   discountAmount: number;
   taxAmount: number;
   finalAmount: number;
+  tipAmount: number;
   cashierName: string;
   queueEntryId: string | null;
   createdAt: string;

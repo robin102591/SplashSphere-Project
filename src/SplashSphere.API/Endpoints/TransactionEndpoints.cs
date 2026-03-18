@@ -58,6 +58,7 @@ public static class TransactionEndpoints
             body.Merchandise,
             body.DiscountAmount,
             body.TaxAmount,
+            body.TipAmount,
             body.Notes,
             body.QueueEntryId);
 
@@ -239,6 +240,7 @@ public static class TransactionEndpoints
         IReadOnlyList<TransactionMerchandiseRequest> Merchandise,
         decimal DiscountAmount,
         decimal TaxAmount,
+        decimal TipAmount,
         string? Notes,
         string? QueueEntryId);
 

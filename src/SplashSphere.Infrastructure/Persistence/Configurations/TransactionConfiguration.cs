@@ -64,6 +64,11 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
             .IsRequired()
             .HasPrecision(10, 2);
 
+        builder.Property(t => t.TipAmount)
+            .IsRequired()
+            .HasPrecision(10, 2)
+            .HasDefaultValue(0m);
+
         builder.Property(t => t.Notes);
 
         // Null until status transitions to Completed / Cancelled / Refunded

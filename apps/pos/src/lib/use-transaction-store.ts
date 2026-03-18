@@ -68,6 +68,7 @@ interface TxState {
   merchandise: MerchandiseLine[]
   // Order meta
   discountAmount: number
+  tipAmount: number
   notes: string
   // Payments
   payments: PaymentEntry[]
@@ -106,6 +107,7 @@ interface TxActions {
   removePayment(localId: string): void
   // Meta
   setDiscount(n: number): void
+  setTip(n: number): void
   setNotes(s: string): void
   reset(): void
 }
@@ -126,6 +128,7 @@ const INIT: TxState = {
   packages: [],
   merchandise: [],
   discountAmount: 0,
+  tipAmount: 0,
   notes: '',
   payments: [],
 }
@@ -214,6 +217,7 @@ export const useTransactionStore = create<TxState & TxActions>((set) => ({
     set((st) => ({ payments: st.payments.filter((p) => p.localId !== localId) })),
 
   setDiscount: (n) => set({ discountAmount: n }),
+  setTip: (n) => set({ tipAmount: n }),
   setNotes: (s) => set({ notes: s }),
   reset: () => set({ ...INIT }),
 }))

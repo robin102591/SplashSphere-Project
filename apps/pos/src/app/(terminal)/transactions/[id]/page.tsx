@@ -179,8 +179,9 @@ export default function TransactionDetailPage({ params }: Props) {
   const canCancel = tx.status === TransactionStatus.Pending || tx.status === TransactionStatus.InProgress
   const canRefund = tx.status === TransactionStatus.Completed
 
-  const alreadyPaid = tx.payments.reduce((s, p) => s + p.amount, 0)
-  const remaining   = Math.max(0, tx.finalAmount - alreadyPaid)
+  const alreadyPaid    = tx.payments.reduce((s, p) => s + p.amount, 0)
+  const customerOwes   = tx.finalAmount + tx.tipAmount
+  const remaining      = Math.max(0, customerOwes - alreadyPaid)
   const isFullyPaid = remaining < 0.01
 
   return (
@@ -495,6 +496,22 @@ export default function TransactionDetailPage({ params }: Props) {
           <div className="pt-2 border-t border-gray-700">
             <TotalRow label="Total" value={fmt(tx.finalAmount)} labelClass="font-bold text-white" valueClass="text-xl font-bold text-white" />
           </div>
+          {tx.tipAmount > 0 && (
+            <div className="flex items-center justify-between pt-1 border-t border-dashed border-gray-700">
+              <span className="text-sm text-yellow-400 flex items-center gap-1.5">
+                <Banknote className="h-3.5 w-3.5" /> Tip
+              </span>
+              <span className="font-mono text-sm font-semibold text-yellow-400">{fmt(tx.tipAmount)}</span>
+            </div>
+          )}
+          {tx.tipAmount > 0 && (
+            <TotalRow
+              label="Customer Paid"
+              value={fmt(tx.finalAmount + tx.tipAmount)}
+              labelClass="text-gray-400"
+              valueClass="font-mono font-bold text-white"
+            />
+          )}
         </div>
 
         {/* Notes */}

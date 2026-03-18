@@ -87,6 +87,15 @@ public sealed class Transaction : IAuditableEntity
     /// </summary>
     public decimal FinalAmount { get; set; }
 
+    /// <summary>
+    /// Optional tip amount paid by the customer on top of <see cref="FinalAmount"/>.
+    /// Tips are NOT business revenue — they go directly to employees.
+    /// When the tip was collected via a non-cash method (GCash, card, etc.)
+    /// the cashier must withdraw the equivalent amount from the cash register
+    /// and hand it to the employee(s). Precision (10, 2).
+    /// </summary>
+    public decimal TipAmount { get; set; }
+
     public string? Notes { get; set; }
 
     /// <summary>UTC timestamp when status transitioned to <see cref="TransactionStatus.Completed"/>.</summary>

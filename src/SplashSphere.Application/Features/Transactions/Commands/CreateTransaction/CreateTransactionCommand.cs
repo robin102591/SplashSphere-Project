@@ -38,6 +38,7 @@ public sealed record CreateTransactionCommand(
     IReadOnlyList<TransactionMerchandiseRequest> Merchandise,
     decimal DiscountAmount,
     decimal TaxAmount,
+    decimal TipAmount,
     string? Notes,
     string? QueueEntryId) : ICommand<string>;
 

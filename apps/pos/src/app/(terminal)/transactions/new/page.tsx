@@ -347,7 +347,7 @@ function NewTransactionContent() {
     branchId, plateNumber, carId, customerId,
     vehicleTypeId, sizeId, vehicleTypeName, sizeName,
     services, packages, merchandise,
-    discountAmount, notes, payments,
+    discountAmount, tipAmount, notes, payments,
   } = store
 
   // ── Local UI state ─────────────────────────────────────────────────────────
@@ -358,6 +358,8 @@ function NewTransactionContent() {
   const [carNotFound, setCarNotFound] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Cash-out alert shown after completing a non-cash transaction with a tip
+  const [cashOutTip, setCashOutTip] = useState<{ amount: number; transactionId: string } | null>(null)
   const [payMethod, setPayMethod] = useState<PaymentMethod>(PaymentMethod.Cash)
   const [payAmount, setPayAmount] = useState('')
   const [payRef, setPayRef] = useState('')
@@ -441,6 +443,7 @@ function NewTransactionContent() {
         serviceId: svc.serviceId,
         serviceName: svc.serviceName,
         categoryName: svc.categoryName,
+        basePrice: svc.unitPrice,
         unitPrice: svc.unitPrice,
       })
       const added = useTransactionStore.getState().services.at(-1)!
@@ -756,15 +759,21 @@ function NewTransactionContent() {
   const subtotal         = serviceTotal + packageTotal + merchandiseTotal
   const discount         = Math.min(discountAmount, subtotal)
   const estimatedTotal   = Math.max(0, subtotal - discount)
+  const tip              = Math.max(0, tipAmount)
+  const customerPayable  = estimatedTotal + tip
   const totalPaid        = useMemo(() => payments.reduce((s, p) => s + p.amount, 0), [payments])
-  const balance          = Math.max(0, estimatedTotal - totalPaid)
-  const change           = Math.max(0, totalPaid - estimatedTotal)
+  const balance          = Math.max(0, customerPayable - totalPaid)
+  const change           = Math.max(0, totalPaid - customerPayable)
 
   // ── Payment helpers ────────────────────────────────────────────────────────
 
   const handlePayMethodSelect = (method: PaymentMethod) => {
     setPayMethod(method)
     if (balance > 0) setPayAmount(balance.toFixed(2))
+    // When switching to non-cash, auto-fill with the full customer-payable amount if unpaid
+    if (method !== PaymentMethod.Cash && totalPaid === 0 && customerPayable > 0) {
+      setPayAmount(customerPayable.toFixed(2))
+    }
   }
 
   const handleAddPayment = () => {
@@ -782,7 +791,7 @@ function NewTransactionContent() {
   const vehicleReady = !!plateNumber && !!vehicleTypeId && !!sizeId
   const itemsReady   = itemCount > 0 && estimatedTotal > 0
 
-  const canComplete  = vehicleReady && itemsReady && totalPaid >= estimatedTotal
+  const canComplete  = vehicleReady && itemsReady && totalPaid >= customerPayable
   const canPayLater  = vehicleReady && itemsReady && !editId
   const canSaveItems = itemsReady && !!editId
 
@@ -800,6 +809,7 @@ function NewTransactionContent() {
     merchandise: merchandise.map((m) => ({ merchandiseId: m.merchandiseId, quantity: m.quantity })),
     discountAmount: discount,
     taxAmount: 0,
+    tipAmount: tip,
     notes: notes || null,
   })
 
@@ -820,8 +830,13 @@ function NewTransactionContent() {
           )
         } catch { /* cashier can add on detail page */ }
       }
+      const hasNonCashPayment = payments.some((p) => p.method !== PaymentMethod.Cash)
       store.reset()
-      router.push(`/transactions/${transactionId}`)
+      if (tip > 0 && hasNonCashPayment) {
+        setCashOutTip({ amount: tip, transactionId })
+      } else {
+        router.push(`/transactions/${transactionId}`)
+      }
     } catch (err) {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')
@@ -891,6 +906,7 @@ function NewTransactionContent() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
+    <>
     <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 3.5rem)' }}>
 
       {/* ════════════ LEFT PANEL — Catalog (60%) ════════════ */}
@@ -1197,9 +1213,32 @@ function NewTransactionContent() {
                 />
               </div>
             </div>
+            {tip > 0 && (
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>Service Total</span>
+                <span className="font-mono">{peso(estimatedTotal)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm text-gray-400">
+              <span>Tip</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600 font-mono text-xs">₱</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={tipAmount || ''}
+                  onChange={(e) =>
+                    store.setTip(Math.max(0, parseFloat(e.target.value) || 0))
+                  }
+                  placeholder="0.00"
+                  className="w-24 text-right bg-gray-800 border border-gray-700 rounded-lg px-2 py-0.5 text-sm font-mono text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
             <div className="flex justify-between font-bold text-white pt-0.5 border-t border-gray-800/60">
-              <span className="text-sm">Est. Total</span>
-              <span className="font-mono text-xl text-white">{peso(estimatedTotal)}</span>
+              <span className="text-sm">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
+              <span className="font-mono text-xl text-white">{peso(customerPayable)}</span>
             </div>
           </div>
 
@@ -1231,7 +1270,7 @@ function NewTransactionContent() {
                 })}
                 <div className="flex justify-between text-sm pt-1 border-t border-gray-800/60">
                   <span className="text-gray-400">Paid</span>
-                  <span className={`font-mono font-bold ${totalPaid >= estimatedTotal ? 'text-green-400' : 'text-white'}`}>
+                  <span className={`font-mono font-bold ${totalPaid >= customerPayable ? 'text-green-400' : 'text-white'}`}>
                     {peso(totalPaid)}
                   </span>
                 </div>
@@ -1378,6 +1417,37 @@ function NewTransactionContent() {
         </div>
       </div>
     </div>
+
+    {/* ── Cash-out alert modal ─────────────────────────────────────────────── */}
+    {cashOutTip && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div className="w-full max-w-sm bg-gray-900 border-2 border-yellow-500/60 rounded-2xl p-6 space-y-4 text-center">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-yellow-500/15 mx-auto">
+            <Banknote className="h-7 w-7 text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Cash Out Tip</h2>
+            <p className="text-sm text-gray-400 mt-1">
+              Customer paid via non-cash. Give the tip amount from the cash register to the employee(s).
+            </p>
+          </div>
+          <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 py-4">
+            <p className="text-xs text-yellow-500 uppercase tracking-wider mb-1">Amount to give</p>
+            <p className="text-4xl font-mono font-bold text-yellow-400">{peso(cashOutTip.amount)}</p>
+          </div>
+          <button
+            onClick={() => {
+              setCashOutTip(null)
+              router.push(`/transactions/${cashOutTip.transactionId}`)
+            }}
+            className="w-full min-h-[48px] rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-base transition-colors"
+          >
+            Done — Tip Given
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
