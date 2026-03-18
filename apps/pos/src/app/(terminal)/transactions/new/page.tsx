@@ -14,7 +14,7 @@ import {
 import { PaymentMethod, TransactionStatus, EmployeeType } from '@splashsphere/types'
 import type {
   Car, QueueEntry, ServiceSummary, PackageSummary, Merchandise,
-  Employee, VehicleType, Size, PackageDetail, TransactionSummary,
+  Employee, VehicleType, Size, PackageDetail, ServiceDetail, TransactionSummary,
   ApiError,
 } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
@@ -208,12 +208,17 @@ function MerchandiseOrderRow({
 function ServiceCard({
   service,
   inCart,
+  displayPrice,
   onToggle,
 }: {
   service: ServiceSummary
   inCart: boolean
+  /** Resolved price from pricing matrix; falls back to basePrice when undefined */
+  displayPrice?: number
   onToggle: () => void
 }) {
+  const price = displayPrice ?? service.basePrice
+  const isPriceFromMatrix = displayPrice !== undefined && displayPrice !== service.basePrice
   return (
     <button
       type="button"
@@ -227,8 +232,8 @@ function ServiceCard({
       <p className="text-sm font-semibold leading-tight line-clamp-2">{service.name}</p>
       <div className="flex items-end justify-between gap-1">
         <span className="text-xs text-gray-500 truncate">{service.categoryName}</span>
-        <span className={`text-xs font-mono font-semibold shrink-0 ${inCart ? 'text-blue-400' : 'text-gray-400'}`}>
-          {peso(service.basePrice)}
+        <span className={`text-xs font-mono font-semibold shrink-0 ${inCart ? 'text-blue-400' : isPriceFromMatrix ? 'text-emerald-400' : 'text-gray-400'}`}>
+          {peso(price)}
         </span>
       </div>
     </button>
@@ -238,10 +243,15 @@ function ServiceCard({
 function PackageCard({
   pkg,
   inCart,
+  displayPrice,
+  isPriceLoading,
   onToggle,
 }: {
   pkg: PackageSummary
   inCart: boolean
+  /** Resolved price from pricing matrix; null means vehicle not selected or no matrix row */
+  displayPrice?: number | null
+  isPriceLoading?: boolean
   onToggle: () => void
 }) {
   return (
@@ -258,9 +268,20 @@ function PackageCard({
         <p className="text-sm font-semibold leading-tight line-clamp-2">{pkg.name}</p>
         <Layers className="h-3.5 w-3.5 shrink-0 mt-0.5 text-purple-400" />
       </div>
-      <p className="text-xs text-gray-500">
-        {pkg.serviceCount} service{pkg.serviceCount !== 1 ? 's' : ''} · priced by vehicle
-      </p>
+      <div className="flex items-end justify-between gap-1">
+        <span className="text-xs text-gray-500">
+          {pkg.serviceCount} service{pkg.serviceCount !== 1 ? 's' : ''}
+        </span>
+        {isPriceLoading ? (
+          <span className="text-xs font-mono text-gray-600 animate-pulse">···</span>
+        ) : displayPrice != null ? (
+          <span className={`text-xs font-mono font-semibold shrink-0 ${inCart ? 'text-purple-400' : 'text-emerald-400'}`}>
+            {peso(displayPrice)}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-600 italic">pick vehicle</span>
+        )}
+      </div>
     </button>
   )
 }
@@ -348,10 +369,15 @@ function NewTransactionContent() {
   // ── Boot ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     store.reset()
-    if (contextBranchId) store.setBranch(contextBranchId)
     if (queueEntryId) store.setQueueEntry(queueEntryId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Sync branchId to store whenever the branch context resolves (async from localStorage)
+  useEffect(() => {
+    if (contextBranchId) store.setBranch(contextBranchId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextBranchId])
 
   // ── API ────────────────────────────────────────────────────────────────────
 
@@ -501,38 +527,106 @@ function NewTransactionContent() {
     },
   })
 
-  // Package pricing: one fetch per cart package (when vehicleTypeId + sizeId are known)
-  const packagePriceQueries = useQueries({
-    queries: packages.map((pkg) => ({
-      queryKey: ['pkg-price', pkg.packageId, vehicleTypeId, sizeId],
+  // ── Eager detail fetches for entire catalog (cached; vehicle type doesn't change the data) ──
+
+  const serviceDetailQueries = useQueries({
+    queries: allServices.map((svc) => ({
+      queryKey: ['service-detail', svc.id],
       queryFn: async () => {
         const token = await getToken()
-        const detail = await apiClient.get<PackageDetail>(
-          `/packages/${pkg.packageId}`,
-          token ?? undefined
-        )
-        const row = detail.pricing.find(
-          (r) => r.vehicleTypeId === vehicleTypeId && r.sizeId === sizeId
-        )
-        return { localId: pkg.localId, price: row?.price ?? 0 }
+        return apiClient.get<ServiceDetail>(`/services/${svc.id}`, token ?? undefined)
       },
-      enabled: !!vehicleTypeId && !!sizeId,
+      enabled: allServices.length > 0,
+      staleTime: 5 * 60 * 1000,
     })),
   })
 
-  // Sync resolved package prices into store
-  const priceKey = packagePriceQueries.map((q) => q.data?.price ?? '?').join(',')
+  const packageDetailQueries = useQueries({
+    queries: allPackages.map((pkg) => ({
+      queryKey: ['package-detail', pkg.id],
+      queryFn: async () => {
+        const token = await getToken()
+        return apiClient.get<PackageDetail>(`/packages/${pkg.id}`, token ?? undefined)
+      },
+      enabled: allPackages.length > 0,
+      staleTime: 5 * 60 * 1000,
+    })),
+  })
+
+  // Catalog price maps — recomputed when vehicle type/size changes (no re-fetch needed)
+  const catalogServicePrices = useMemo(() => {
+    const map = new Map<string, number>()
+    serviceDetailQueries.forEach((q, i) => {
+      const svc = allServices[i]
+      if (!svc) return
+      if (!q.data || !vehicleTypeId || !sizeId) {
+        map.set(svc.id, svc.basePrice)
+        return
+      }
+      const row = q.data.pricing.find(
+        (r) => r.vehicleTypeId === vehicleTypeId && r.sizeId === sizeId
+      )
+      map.set(svc.id, row?.price ?? svc.basePrice)
+    })
+    return map
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceDetailQueries, vehicleTypeId, sizeId])
+
+  const catalogPackagePrices = useMemo(() => {
+    const map = new Map<string, number | null>()
+    packageDetailQueries.forEach((q, i) => {
+      const pkg = allPackages[i]
+      if (!pkg) return
+      if (!q.data || !vehicleTypeId || !sizeId) {
+        map.set(pkg.id, null)
+        return
+      }
+      const row = q.data.pricing.find(
+        (r) => r.vehicleTypeId === vehicleTypeId && r.sizeId === sizeId
+      )
+      map.set(pkg.id, row?.price ?? null)
+    })
+    return map
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packageDetailQueries, vehicleTypeId, sizeId])
+
+  // Sync cart service prices from catalog detail cache when vehicle type/size changes
   useEffect(() => {
-    packagePriceQueries.forEach((q) => {
-      if (!q.data) return
-      const { localId, price } = q.data
-      const pkg = useTransactionStore.getState().packages.find((p) => p.localId === localId)
-      if (pkg && pkg.unitPrice !== price) {
-        useTransactionStore.getState().updatePackagePrice(localId, price)
+    if (!vehicleTypeId || !sizeId) return
+    const storeServices = useTransactionStore.getState().services
+    storeServices.forEach((svcItem) => {
+      const idx = allServices.findIndex((s) => s.id === svcItem.serviceId)
+      const detail = serviceDetailQueries[idx]?.data
+      if (!detail) return
+      const row = detail.pricing.find(
+        (r) => r.vehicleTypeId === vehicleTypeId && r.sizeId === sizeId
+      )
+      const price = row?.price ?? svcItem.basePrice
+      if (svcItem.unitPrice !== price) {
+        useTransactionStore.getState().updateServicePrice(svcItem.localId, price)
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceKey])
+  }, [vehicleTypeId, sizeId, serviceDetailQueries])
+
+  // Sync cart package prices from catalog detail cache when vehicle type/size changes
+  useEffect(() => {
+    if (!vehicleTypeId || !sizeId) return
+    const storePackages = useTransactionStore.getState().packages
+    storePackages.forEach((pkgItem) => {
+      const idx = allPackages.findIndex((p) => p.id === pkgItem.packageId)
+      const detail = packageDetailQueries[idx]?.data
+      if (!detail) return
+      const row = detail.pricing.find(
+        (r) => r.vehicleTypeId === vehicleTypeId && r.sizeId === sizeId
+      )
+      const price = row?.price ?? 0
+      if (pkgItem.unitPrice !== price) {
+        useTransactionStore.getState().updatePackagePrice(pkgItem.localId, price)
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicleTypeId, sizeId, packageDetailQueries])
 
   // ── Init from queue entry ──────────────────────────────────────────────────
 
@@ -585,6 +679,7 @@ function NewTransactionContent() {
           serviceId: svc.id,
           serviceName: svc.name,
           categoryName: svc.categoryName,
+          basePrice: svc.basePrice,
           unitPrice: svc.basePrice,
         })
       }
@@ -638,13 +733,13 @@ function NewTransactionContent() {
   const toggleService = (svc: ServiceSummary) => {
     const existing = services.find((s) => s.serviceId === svc.id)
     if (existing) { store.removeService(existing.localId) }
-    else { store.addService({ serviceId: svc.id, serviceName: svc.name, categoryName: svc.categoryName, unitPrice: svc.basePrice }) }
+    else { store.addService({ serviceId: svc.id, serviceName: svc.name, categoryName: svc.categoryName, basePrice: svc.basePrice, unitPrice: catalogServicePrices.get(svc.id) ?? svc.basePrice }) }
   }
 
   const togglePackage = (pkg: PackageSummary) => {
     const existing = packages.find((p) => p.packageId === pkg.id)
     if (existing) { store.removePackage(existing.localId) }
-    else { store.addPackage({ packageId: pkg.id, packageName: pkg.name, unitPrice: 0 }) }
+    else { store.addPackage({ packageId: pkg.id, packageName: pkg.name, unitPrice: catalogPackagePrices.get(pkg.id) ?? 0 }) }
   }
 
   const addMerchandise = (item: Merchandise) => {
@@ -693,7 +788,7 @@ function NewTransactionContent() {
 
   // Shared body builder for create/pay-later
   const buildCreateBody = () => ({
-    branchId: branchId || undefined,
+    branchId: contextBranchId || branchId || undefined,
     carId,
     customerId,
     vehicleTypeId,
@@ -969,6 +1064,7 @@ function NewTransactionContent() {
                     key={svc.id}
                     service={svc}
                     inCart={serviceInCart(svc.id)}
+                    displayPrice={catalogServicePrices.get(svc.id)}
                     onToggle={() => toggleService(svc)}
                   />
                 ))}
@@ -982,14 +1078,19 @@ function NewTransactionContent() {
           {activeTab === 'packages' && (
             <div className="p-3">
               <div className="grid grid-cols-3 gap-2">
-                {allPackages.map((pkg) => (
-                  <PackageCard
-                    key={pkg.id}
-                    pkg={pkg}
-                    inCart={packageInCart(pkg.id)}
-                    onToggle={() => togglePackage(pkg)}
-                  />
-                ))}
+                {allPackages.map((pkg) => {
+                  const pkgIdx = allPackages.indexOf(pkg)
+                  return (
+                    <PackageCard
+                      key={pkg.id}
+                      pkg={pkg}
+                      inCart={packageInCart(pkg.id)}
+                      displayPrice={catalogPackagePrices.get(pkg.id)}
+                      isPriceLoading={!!vehicleTypeId && !!sizeId && packageDetailQueries[pkgIdx]?.isLoading}
+                      onToggle={() => togglePackage(pkg)}
+                    />
+                  )
+                })}
                 {allPackages.length === 0 && (
                   <p className="col-span-3 text-center text-sm text-gray-600 py-8">No packages found</p>
                 )}
@@ -1049,19 +1150,16 @@ function NewTransactionContent() {
             />
           ))}
 
-          {packages.map((item) => {
-            const priceResult = packagePriceQueries.find((q) => q.data?.localId === item.localId)
-            return (
-              <ServiceOrderRow
-                key={item.localId}
-                item={item}
-                employees={employees}
-                resolvedPrice={priceResult?.data?.price}
-                onRemove={() => store.removePackage(item.localId)}
-                onToggleEmployee={(empId) => store.togglePackageEmployee(item.localId, empId)}
-              />
-            )
-          })}
+          {packages.map((item) => (
+            <ServiceOrderRow
+              key={item.localId}
+              item={item}
+              employees={employees}
+              resolvedPrice={catalogPackagePrices.get(item.packageId) ?? undefined}
+              onRemove={() => store.removePackage(item.localId)}
+              onToggleEmployee={(empId) => store.togglePackageEmployee(item.localId, empId)}
+            />
+          ))}
 
           {merchandise.map((item) => (
             <MerchandiseOrderRow

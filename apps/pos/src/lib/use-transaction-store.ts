@@ -18,6 +18,8 @@ export interface ServiceLineItem {
   serviceId: string
   serviceName: string
   categoryName: string
+  /** Base price from catalog — used as fallback when no pricing matrix row exists */
+  basePrice: number
   unitPrice: number
   employeeIds: string[]
 }
@@ -87,6 +89,7 @@ interface TxActions {
   setVehicleSize(id: string, name: string): void
   // Services
   addService(s: Omit<ServiceLineItem, 'localId' | 'employeeIds'>): void
+  updateServicePrice(localId: string, price: number): void
   removeService(localId: string): void
   toggleServiceEmployee(localId: string, empId: string): void
   // Packages
@@ -144,6 +147,12 @@ export const useTransactionStore = create<TxState & TxActions>((set) => ({
     })),
   removeService: (localId) =>
     set((st) => ({ services: st.services.filter((s) => s.localId !== localId) })),
+  updateServicePrice: (localId, price) =>
+    set((st) => ({
+      services: st.services.map((s) =>
+        s.localId === localId ? { ...s, unitPrice: price } : s
+      ),
+    })),
   toggleServiceEmployee: (localId, empId) =>
     set((st) => ({
       services: st.services.map((s) =>
