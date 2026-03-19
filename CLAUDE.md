@@ -533,3 +533,13 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 - **Next.js 16 uses `proxy.ts`** not `middleware.ts`. Turbopack default. React Compiler stable.
 - **All times in Asia/Manila (UTC+8).** Store as UTC, convert for display.
 - **Currency: Philippine Peso (₱ / PHP).** Decimal with 2 places.
+
+## Living Documentation Rules
+
+1. **Changelog:** Append an entry after every task.
+2. **API Inventory:** When adding new endpoints, add them to the 
+   API Endpoint Inventory section.
+3. **Page Inventory:** When adding new frontend pages, add them to 
+   the Frontend Page Inventory section.
+4. **Business Rules:** When implementing new business logic, add 
+   the rule to the Key Business Rules section.
