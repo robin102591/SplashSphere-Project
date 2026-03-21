@@ -67,7 +67,8 @@
       "Bash(npx next:*)",
       "Bash(grep -r resolveSelectedLabel C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/node_modules/@base-ui/react/select/value/SelectValue.js --include=*.js -l 2)",
       "Bash(/dev/null grep:*)",
-      "Bash(node -e \"const s = require\\(''''C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/node_modules/@radix-ui/react-select''''\\); console.log\\(Object.keys\\(s\\)\\)\")"
+      "Bash(node -e \"const s = require\\(''''C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/node_modules/@radix-ui/react-select''''\\); console.log\\(Object.keys\\(s\\)\\)\")",
+      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))"
     ]
   }
 }

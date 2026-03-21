@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SplashSphere.Application.Features.Transactions.Commands.AddPayment;
 using SplashSphere.Application.Features.Transactions.Commands.CreateTransaction;
 using SplashSphere.Application.Features.Transactions.Commands.RefundTransaction;
+using SplashSphere.Application.Features.Transactions.Commands.UpdateDiscountTip;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionItems;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionStatus;
 using SplashSphere.Application.Features.Transactions.Queries.GetDailySummary;
@@ -26,6 +27,7 @@ public static class TransactionEndpoints
         group.MapPost("/",                           CreateTransaction);
         group.MapPatch("/{id}/status",               UpdateTransactionStatus);
         group.MapPatch("/{id}/items",                UpdateTransactionItems);
+        group.MapPatch("/{id}/discount-tip",         UpdateDiscountTip);
         group.MapPost("/{id}/payments",              AddPayment);
         group.MapPost("/{id}/refund",                RefundTransaction);
 
@@ -143,6 +145,28 @@ public static class TransactionEndpoints
             new AddPaymentResponse(result.Value!));
     }
 
+    // ── PATCH /{id}/discount-tip ──────────────────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateDiscountTip(
+        string id,
+        [FromBody] UpdateDiscountTipRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdateDiscountTipCommand(id, body.DiscountAmount, body.TipAmount), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.NoContent();
+    }
+
     // ── POST /{id}/refund ─────────────────────────────────────────────────────
 
     private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> RefundTransaction(
@@ -254,6 +278,8 @@ public static class TransactionEndpoints
         IReadOnlyList<TransactionMerchandiseRequest> Merchandise,
         decimal DiscountAmount,
         string? Notes);
+
+    private sealed record UpdateDiscountTipRequest(decimal DiscountAmount, decimal TipAmount);
 
     private sealed record AddPaymentRequest(
         PaymentMethod PaymentMethod,

@@ -73,6 +73,13 @@ export default function TransactionDetailPage({ params }: Props) {
   const [payError, setPayError] = useState<string | null>(null)
   const [isAddingPayment, setIsAddingPayment] = useState(false)
 
+  // ── Discount / tip edit state ──────────────────────────────────────────────
+  const [showDiscountTipForm, setShowDiscountTipForm] = useState(false)
+  const [editDiscount, setEditDiscount] = useState('')
+  const [editTip, setEditTip] = useState('')
+  const [discountTipError, setDiscountTipError] = useState<string | null>(null)
+  const [isSavingDiscountTip, setIsSavingDiscountTip] = useState(false)
+
   // ── Refund dialog state ────────────────────────────────────────────────────
   const [showRefundDialog, setShowRefundDialog] = useState(false)
   const [refundReason, setRefundReason] = useState('')
@@ -147,6 +154,28 @@ export default function TransactionDetailPage({ params }: Props) {
       setPayError(e?.detail ?? e?.title ?? 'Payment failed.')
     } finally {
       setIsAddingPayment(false)
+    }
+  }
+
+  const handleSaveDiscountTip = async () => {
+    const discount = parseFloat(editDiscount) || 0
+    const tip      = parseFloat(editTip) || 0
+    setIsSavingDiscountTip(true)
+    setDiscountTipError(null)
+    try {
+      const token = await getToken()
+      await apiClient.patch(
+        `/transactions/${id}/discount-tip`,
+        { discountAmount: discount, tipAmount: tip },
+        token ?? undefined
+      )
+      setShowDiscountTipForm(false)
+      queryClient.invalidateQueries({ queryKey: ['transaction', id] })
+    } catch (err) {
+      const e = err as { detail?: string; title?: string }
+      setDiscountTipError(e?.detail ?? e?.title ?? 'Failed to update.')
+    } finally {
+      setIsSavingDiscountTip(false)
     }
   }
 
@@ -494,15 +523,40 @@ export default function TransactionDetailPage({ params }: Props) {
         {/* Totals */}
         <div className="rounded-xl bg-gray-800 border border-gray-700 p-4 space-y-2">
           <TotalRow label="Subtotal" value={fmt(tx.totalAmount)} />
-          {tx.discountAmount > 0 && (
-            <TotalRow label="Discount" value={`-${fmt(tx.discountAmount)}`} valueClass="text-green-400" />
-          )}
+
+          {/* Discount row — editable when InProgress */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-400">Discount</span>
+            <div className="flex items-center gap-2">
+              {tx.discountAmount > 0 && (
+                <span className="text-sm text-green-400 font-mono">-{fmt(tx.discountAmount)}</span>
+              )}
+              {canEdit && !showDiscountTipForm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditDiscount(tx.discountAmount > 0 ? tx.discountAmount.toFixed(2) : '')
+                    setEditTip(tx.tipAmount > 0 ? tx.tipAmount.toFixed(2) : '')
+                    setDiscountTipError(null)
+                    setShowDiscountTipForm(true)
+                  }}
+                  className="text-xs text-gray-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+                >
+                  <Edit2 className="h-3 w-3" />
+                  {tx.discountAmount > 0 || tx.tipAmount > 0 ? 'Edit' : 'Add Discount / Tip'}
+                </button>
+              )}
+            </div>
+          </div>
+
           {tx.taxAmount > 0 && (
             <TotalRow label="Tax" value={fmt(tx.taxAmount)} />
           )}
           <div className="pt-2 border-t border-gray-700">
             <TotalRow label="Total" value={fmt(tx.finalAmount)} labelClass="font-bold text-white" valueClass="text-xl font-bold text-white" />
           </div>
+
+          {/* Tip row */}
           {tx.tipAmount > 0 && (
             <div className="flex items-center justify-between pt-1 border-t border-dashed border-gray-700">
               <span className="text-sm text-yellow-400 flex items-center gap-1.5">
@@ -513,7 +567,7 @@ export default function TransactionDetailPage({ params }: Props) {
           )}
           {tx.tipAmount > 0 && (
             <TotalRow
-              label="Customer Paid"
+              label="Customer Pays"
               value={fmt(tx.finalAmount + tx.tipAmount)}
               labelClass="text-gray-400"
               valueClass="font-mono font-bold text-white"
@@ -525,6 +579,61 @@ export default function TransactionDetailPage({ params }: Props) {
                 <Banknote className="h-3.5 w-3.5" /> Cash out to employee
               </span>
               <span className="font-mono text-sm font-semibold text-yellow-300">{fmt(cashOutAmount)}</span>
+            </div>
+          )}
+
+          {/* Inline discount / tip edit form */}
+          {canEdit && showDiscountTipForm && (
+            <div className="space-y-2 pt-2 border-t border-gray-700">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Discount (₱)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={editDiscount}
+                    onChange={(e) => setEditDiscount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Tip (₱)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={editTip}
+                    onChange={(e) => setEditTip(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+              {discountTipError && (
+                <div className="flex items-center gap-1.5 text-xs text-red-400">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {discountTipError}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowDiscountTipForm(false); setDiscountTipError(null) }}
+                  className="flex-1 min-h-10 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveDiscountTip()}
+                  disabled={isSavingDiscountTip}
+                  className="flex-1 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {isSavingDiscountTip ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                </button>
+              </div>
             </div>
           )}
         </div>

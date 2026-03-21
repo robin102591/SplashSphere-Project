@@ -404,6 +404,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/transactions` | List (filter by branch, date, status) |
 | `GET` | `/transactions/{id}` | Full detail |
 | `PATCH` | `/transactions/{id}/status` | Update status |
+| `PATCH` | `/transactions/{id}/discount-tip` | Update discount and/or tip on Pending/InProgress transaction |
 | `POST` | `/transactions/{id}/payments` | Add payment |
 | `GET` | `/transactions/daily-summary` | Daily branch summary |
 
@@ -541,5 +542,15 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
    API Endpoint Inventory section.
 3. **Page Inventory:** When adding new frontend pages, add them to 
    the Frontend Page Inventory section.
-4. **Business Rules:** When implementing new business logic, add 
+4. **Business Rules:** When implementing new business logic, add
    the rule to the Key Business Rules section.
+
+---
+
+## Changelog
+
+### 2026-03-20
+- **Fix: Queue number daily reset (duplicate key bug)** — Added `QueueDate` (DateOnly, Manila local date) column to `QueueEntry`. Updated unique constraint from `(BranchId, QueueNumber, TenantId)` to `(TenantId, BranchId, QueueDate, QueueNumber)` so Q-001 on different days never collide. Both `AddToQueueCommandHandler` and the walk-in path in `CreateTransactionCommandHandler` now filter by `QueueDate` instead of CreatedAt UTC range. Migration: `AddQueueEntryQueueDate`.
+
+### 2026-03-21
+- **Feature: Discount and Tip editing on Transaction Detail page** — Added `PATCH /transactions/{id}/discount-tip` endpoint (`UpdateDiscountTipCommand`). Validates transaction is not terminal, discount ≤ subtotal, and existing payments don't exceed new total. Frontend detail page (`/transactions/[id]`) now shows inline discount/tip edit form for `InProgress` transactions, with an "Add Discount / Tip" / "Edit" button in the Totals section.
