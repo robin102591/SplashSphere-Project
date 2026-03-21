@@ -120,3 +120,22 @@ export enum ReceiptLineType {
   Package     = 1,
   Merchandise = 2,
 }
+
+// ── Cashier Shifts ────────────────────────────────────────────────────────────
+
+export enum ShiftStatus {
+  Open   = 1,
+  Closed = 2,
+  Voided = 3,
+}
+
+export enum ReviewStatus {
+  Pending  = 1,
+  Approved = 2,
+  Flagged  = 3,
+}
+
+export enum CashMovementType {
+  CashIn  = 1,
+  CashOut = 2,
+}

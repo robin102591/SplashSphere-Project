@@ -27,6 +27,7 @@ import {
   usePricingModifiers, useCreatePricingModifier, useUpdatePricingModifier,
   useDeletePricingModifier, useTogglePricingModifier,
 } from '@/hooks/use-pricing-modifiers'
+import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import type { PricingModifier, VehicleType, Size, Make, VehicleModel, ServiceCategory } from '@splashsphere/types'
 import { ModifierType } from '@splashsphere/types'
 import { useBranches } from '@/hooks/use-branches'
@@ -627,6 +628,132 @@ function PricingModifiersTab() {
   )
 }
 
+// ── Shift Config tab ──────────────────────────────────────────────────────────
+
+function ShiftConfigTab() {
+  const { data: settings, isLoading } = useShiftSettings()
+  const { mutate: save, isPending: saving } = useUpdateShiftSettings()
+
+  const [form, setForm] = useState({
+    defaultOpeningFund: '',
+    autoApproveThreshold: '',
+    flagThreshold: '',
+    requireShiftForTransactions: false,
+    endOfDayReminderTime: '',
+  })
+  const [initialized, setInitialized] = useState(false)
+
+  if (settings && !initialized) {
+    setForm({
+      defaultOpeningFund: String(settings.defaultOpeningFund),
+      autoApproveThreshold: String(settings.autoApproveThreshold),
+      flagThreshold: String(settings.flagThreshold),
+      requireShiftForTransactions: settings.requireShiftForTransactions,
+      endOfDayReminderTime: settings.endOfDayReminderTime,
+    })
+    setInitialized(true)
+  }
+
+  const handleSave = () => {
+    const payload = {
+      defaultOpeningFund: parseFloat(form.defaultOpeningFund) || 0,
+      autoApproveThreshold: parseFloat(form.autoApproveThreshold) || 0,
+      flagThreshold: parseFloat(form.flagThreshold) || 0,
+      requireShiftForTransactions: form.requireShiftForTransactions,
+      endOfDayReminderTime: form.endOfDayReminderTime,
+    }
+    save(payload, {
+      onSuccess: () => toast.success('Shift settings saved.'),
+      onError: () => toast.error('Failed to save shift settings.'),
+    })
+  }
+
+  if (isLoading) return <Skeleton className="h-64 w-full" />
+
+  return (
+    <div className="space-y-6 max-w-lg">
+      <p className="text-sm text-muted-foreground">Configure cash drawer defaults and variance thresholds for cashier shifts.</p>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="default-opening-fund">Default Opening Cash Fund (₱)</Label>
+          <Input
+            id="default-opening-fund"
+            type="number"
+            min="0"
+            step="100"
+            value={form.defaultOpeningFund}
+            onChange={e => setForm(f => ({ ...f, defaultOpeningFund: e.target.value }))}
+            placeholder="e.g. 2000"
+          />
+          <p className="text-xs text-muted-foreground">Pre-filled when a cashier opens a new shift.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="auto-approve-threshold">Auto-Approve Threshold (₱)</Label>
+          <Input
+            id="auto-approve-threshold"
+            type="number"
+            min="0"
+            step="10"
+            value={form.autoApproveThreshold}
+            onChange={e => setForm(f => ({ ...f, autoApproveThreshold: e.target.value }))}
+            placeholder="e.g. 50"
+          />
+          <p className="text-xs text-muted-foreground">Shifts with |variance| ≤ this amount are automatically approved.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="flag-threshold">Flag Threshold (₱)</Label>
+          <Input
+            id="flag-threshold"
+            type="number"
+            min="0"
+            step="50"
+            value={form.flagThreshold}
+            onChange={e => setForm(f => ({ ...f, flagThreshold: e.target.value }))}
+            placeholder="e.g. 200"
+          />
+          <p className="text-xs text-muted-foreground">Shifts with |variance| &gt; this amount are automatically flagged for review.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="eod-reminder">End-of-Day Reminder Time</Label>
+          <Input
+            id="eod-reminder"
+            type="time"
+            value={form.endOfDayReminderTime}
+            onChange={e => setForm(f => ({ ...f, endOfDayReminderTime: e.target.value }))}
+          />
+          <p className="text-xs text-muted-foreground">Cashiers will receive a reminder to close their shift at this time.</p>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-lg border p-4">
+          <input
+            id="require-shift"
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 accent-primary cursor-pointer"
+            checked={form.requireShiftForTransactions}
+            onChange={e => setForm(f => ({ ...f, requireShiftForTransactions: e.target.checked }))}
+          />
+          <div>
+            <label htmlFor="require-shift" className="text-sm font-medium cursor-pointer">
+              Require open shift for transactions
+            </label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              When enabled, the POS will block new transactions unless the cashier has an open shift.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Button onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving…' : 'Save Shift Settings'}
+      </Button>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -644,6 +771,7 @@ export default function SettingsPage() {
           <TabsTrigger value="makes-models">Makes & Models</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="pricing-modifiers">Pricing Modifiers</TabsTrigger>
+          <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vehicle-types" className="mt-6"><VehicleTypesTab /></TabsContent>
@@ -651,6 +779,7 @@ export default function SettingsPage() {
         <TabsContent value="makes-models" className="mt-6"><MakesModelsTab /></TabsContent>
         <TabsContent value="categories" className="mt-6"><CategoriesTab /></TabsContent>
         <TabsContent value="pricing-modifiers" className="mt-6"><PricingModifiersTab /></TabsContent>
+        <TabsContent value="shift-config" className="mt-6"><ShiftConfigTab /></TabsContent>
       </Tabs>
     </div>
   )

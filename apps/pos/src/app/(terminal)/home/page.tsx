@@ -6,13 +6,14 @@ import { useAuth } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import {
   Plus, ListOrdered, LayoutGrid, Users,
-  TrendingUp, Receipt, Clock, Car, ChevronRight,
+  TrendingUp, Receipt, Clock, Car, ChevronRight, Wallet,
 } from 'lucide-react'
 import type { DailySummary, QueueStats, TransactionSummary } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
+import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 import { cn } from '@/lib/utils'
 
 const TX_STATUS: Record<number, { label: string; cls: string }> = {
@@ -30,6 +31,8 @@ function fmt(amount: number) {
 export default function HomePage() {
   const { getToken } = useAuth()
   const { branchId } = useBranch()
+  const { data: shift } = useCurrentShift()
+  const shiftOpen = isShiftOpen(shift)
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -118,6 +121,13 @@ export default function HomePage() {
           label="Customer Lookup"
           sub="Search by plate"
           accent="purple"
+        />
+        <QuickAction
+          href={shiftOpen ? '/shift' : '/shift/open'}
+          icon={<Wallet className="h-5 w-5" />}
+          label="My Shift"
+          sub={shiftOpen ? 'Shift active' : 'Open shift'}
+          accent={shiftOpen ? 'green' : 'yellow'}
         />
       </div>
 

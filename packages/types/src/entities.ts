@@ -10,6 +10,7 @@
  */
 
 import type {
+  CashMovementType,
   CommissionType,
   EmployeeType,
   ModifierType,
@@ -18,6 +19,8 @@ import type {
   QueuePriority,
   QueueStatus,
   ReceiptLineType,
+  ReviewStatus,
+  ShiftStatus,
   TransactionStatus,
 } from './enums';
 
@@ -709,4 +712,121 @@ export interface ServicePopularityReport {
   branchName: string | null;
   services: readonly ServicePopularityItem[];
   packages: readonly PackagePopularityItem[];
+}
+
+// ── Cashier Shifts ────────────────────────────────────────────────────────────
+
+export interface CashMovementDto {
+  id: string;
+  type: CashMovementType;
+  amount: number;
+  reason: string;
+  reference: string | null;
+  movementTime: string;
+}
+
+export interface ShiftDenominationDto {
+  denominationValue: number;
+  count: number;
+  subtotal: number;
+}
+
+export interface ShiftPaymentSummaryDto {
+  method: PaymentMethod;
+  transactionCount: number;
+  totalAmount: number;
+}
+
+export interface ShiftDetailDto {
+  id: string;
+  branchId: string;
+  branchName: string;
+  cashierId: string;
+  cashierName: string;
+  shiftDate: string;
+  openedAt: string;
+  closedAt: string | null;
+  status: ShiftStatus;
+  openingCashFund: number;
+  totalCashPayments: number;
+  totalNonCashPayments: number;
+  totalCashIn: number;
+  totalCashOut: number;
+  expectedCashInDrawer: number;
+  actualCashInDrawer: number;
+  variance: number;
+  totalTransactionCount: number;
+  totalRevenue: number;
+  totalCommissions: number;
+  totalDiscounts: number;
+  reviewStatus: ReviewStatus;
+  reviewedById: string | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  cashMovements: readonly CashMovementDto[];
+  denominations: readonly ShiftDenominationDto[];
+  paymentSummaries: readonly ShiftPaymentSummaryDto[];
+}
+
+export interface ShiftSummaryDto {
+  id: string;
+  branchId: string;
+  branchName: string;
+  cashierId: string;
+  cashierName: string;
+  shiftDate: string;
+  openedAt: string;
+  closedAt: string | null;
+  status: ShiftStatus;
+  openingCashFund: number;
+  totalRevenue: number;
+  variance: number;
+  reviewStatus: ReviewStatus;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+}
+
+export interface TopServiceDto {
+  serviceName: string;
+  transactionCount: number;
+  totalAmount: number;
+}
+
+export interface TopEmployeeDto {
+  employeeId: string;
+  employeeName: string;
+  serviceCount: number;
+  totalCommission: number;
+}
+
+export interface ShiftReportDto {
+  shift: ShiftDetailDto;
+  topServices: readonly TopServiceDto[];
+  topEmployees: readonly TopEmployeeDto[];
+  generatedAt: string;
+}
+
+export interface ShiftSettingsDto {
+  defaultOpeningFund: number;
+  autoApproveThreshold: number;
+  flagThreshold: number;
+  requireShiftForTransactions: boolean;
+  endOfDayReminderTime: string;
+}
+
+export interface ShiftVarianceCashierDto {
+  cashierId: string;
+  cashierName: string;
+  shiftCount: number;
+  totalVariance: number;
+  averageVariance: number;
+  largestShortage: number;
+}
+
+export interface VarianceTrendPointDto {
+  /** YYYY-MM-DD */
+  shiftDate: string;
+  variance: number;
+  reviewStatus: ReviewStatus;
 }

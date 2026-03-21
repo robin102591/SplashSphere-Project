@@ -26,40 +26,42 @@ public sealed class GetShiftReportQueryHandler(IApplicationDbContext db)
 
         var closedAt = shift.ClosedAt ?? DateTime.UtcNow;
 
-        // Top services — join TransactionService → Service for names
-        // UnitPrice is the resolved price per TransactionService
-        var topServices = await db.TransactionServices
+        // Project to scalars first — EF Core cannot translate GroupBy when navigation
+        // properties appear in the key selector. Fetch flat rows then group in memory.
+
+        var serviceRows = await db.TransactionServices
             .Where(ts =>
                 ts.Transaction.BranchId == shift.BranchId &&
                 ts.Transaction.CashierId == shift.CashierId &&
                 ts.Transaction.Status == TransactionStatus.Completed &&
                 ts.Transaction.CompletedAt >= shift.OpenedAt &&
                 ts.Transaction.CompletedAt <= closedAt)
-            .GroupBy(ts => new { ts.ServiceId, ts.Service.Name })
-            .Select(g => new TopServiceDto(
-                g.Key.Name,
-                g.Count(),
-                g.Sum(ts => ts.UnitPrice)))
-            .OrderByDescending(s => s.TotalAmount)
-            .Take(10)
+            .Select(ts => new { ts.ServiceId, ServiceName = ts.Service.Name, ts.UnitPrice })
             .ToListAsync(cancellationToken);
 
-        // Also include packages in top services
-        var topPackages = await db.TransactionPackages
+        var topServices = serviceRows
+            .GroupBy(r => new { r.ServiceId, r.ServiceName })
+            .Select(g => new TopServiceDto(g.Key.ServiceName, g.Count(), g.Sum(r => r.UnitPrice)))
+            .OrderByDescending(s => s.TotalAmount)
+            .Take(10)
+            .ToList();
+
+        var packageRows = await db.TransactionPackages
             .Where(tp =>
                 tp.Transaction.BranchId == shift.BranchId &&
                 tp.Transaction.CashierId == shift.CashierId &&
                 tp.Transaction.Status == TransactionStatus.Completed &&
                 tp.Transaction.CompletedAt >= shift.OpenedAt &&
                 tp.Transaction.CompletedAt <= closedAt)
-            .GroupBy(tp => new { tp.PackageId, tp.Package.Name })
-            .Select(g => new TopServiceDto(
-                g.Key.Name,
-                g.Count(),
-                g.Sum(tp => tp.UnitPrice)))
+            .Select(tp => new { tp.PackageId, PackageName = tp.Package.Name, tp.UnitPrice })
+            .ToListAsync(cancellationToken);
+
+        var topPackages = packageRows
+            .GroupBy(r => new { r.PackageId, r.PackageName })
+            .Select(g => new TopServiceDto(g.Key.PackageName, g.Count(), g.Sum(r => r.UnitPrice)))
             .OrderByDescending(p => p.TotalAmount)
             .Take(5)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var combinedTopServices = topServices
             .Concat(topPackages)
@@ -67,24 +69,32 @@ public sealed class GetShiftReportQueryHandler(IApplicationDbContext db)
             .Take(10)
             .ToList();
 
-        // Top employees by commission
-        // TransactionEmployee.Employee is Employee entity (has FullName)
-        var topEmployees = await db.TransactionEmployees
+        var employeeRows = await db.TransactionEmployees
             .Where(te =>
                 te.Transaction.BranchId == shift.BranchId &&
                 te.Transaction.CashierId == shift.CashierId &&
                 te.Transaction.Status == TransactionStatus.Completed &&
                 te.Transaction.CompletedAt >= shift.OpenedAt &&
                 te.Transaction.CompletedAt <= closedAt)
-            .GroupBy(te => new { te.EmployeeId, te.Employee.FirstName, te.Employee.LastName })
+            .Select(te => new
+            {
+                te.EmployeeId,
+                te.Employee.FirstName,
+                te.Employee.LastName,
+                te.TotalCommission
+            })
+            .ToListAsync(cancellationToken);
+
+        var topEmployees = employeeRows
+            .GroupBy(r => new { r.EmployeeId, r.FirstName, r.LastName })
             .Select(g => new TopEmployeeDto(
                 g.Key.EmployeeId,
                 g.Key.FirstName + " " + g.Key.LastName,
                 g.Count(),
-                g.Sum(te => te.TotalCommission)))
+                g.Sum(r => r.TotalCommission)))
             .OrderByDescending(e => e.TotalCommission)
             .Take(10)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return new ShiftReportDto(
             GetCurrentShiftQueryHandler.MapToDetail(shift),

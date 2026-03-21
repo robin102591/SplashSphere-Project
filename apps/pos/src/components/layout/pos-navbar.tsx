@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   MapPin,
+  Wallet,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -27,6 +28,7 @@ const navItems = [
   { label: 'History', href: '/history', icon: Clock },
   { label: 'Customers', href: '/customers/lookup', icon: Users },
   { label: 'Attendance', href: '/attendance', icon: Fingerprint },
+  { label: 'Shift', href: '/shift', icon: Wallet },
 ]
 
 export function PosNavbar() {

@@ -26,10 +26,11 @@ public sealed class ShiftDenominationConfiguration : IEntityTypeConfiguration<Sh
             .IsRequired()
             .HasMaxLength(36);
 
-        // 4 decimal digits to handle ₱0.25 (0.2500). Stored as numeric(6,4).
+        // 4 decimal digits to handle ₱0.25 (0.2500); 4 integer digits to handle ₱1000.
+        // Stored as numeric(8,4) — covers range 0.0001 to 9999.9999.
         builder.Property(d => d.DenominationValue)
             .IsRequired()
-            .HasPrecision(6, 4);
+            .HasPrecision(8, 4);
 
         builder.Property(d => d.Count)
             .IsRequired();

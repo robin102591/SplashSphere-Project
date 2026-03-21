@@ -68,7 +68,25 @@
       "Bash(grep -r resolveSelectedLabel C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/node_modules/@base-ui/react/select/value/SelectValue.js --include=*.js -l 2)",
       "Bash(/dev/null grep:*)",
       "Bash(node -e \"const s = require\\(''''C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/node_modules/@radix-ui/react-select''''\\); console.log\\(Object.keys\\(s\\)\\)\")",
-      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))"
+      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(pnpm --filter pos build)",
+      "Bash(/c/Users/rnobl/AppData/Roaming/npm/pnpm.cmd --filter pos build)",
+      "Bash(export PATH=\"$PATH:/c/Users/rnobl/AppData/Roaming/npm\")",
+      "Bash(npx --yes pnpm --version)",
+      "Bash(node /c/Users/rnobl/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs --version)",
+      "Bash(node /c/Users/rnobl/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs --filter pos build)",
+      "Read(//c/Users/rnobl/AppData/Roaming/npm/node_modules//**)",
+      "Read(//c/Users/rnobl/AppData/Roaming/npm//**)",
+      "Bash(\"/c/Program Files/nodejs/node_modules/corepack/shims/nodewin/pnpm\" --filter pos build)",
+      "Bash(\"/c/Users/rnobl/AppData/Local/npm-cache/_npx/e6e0ed1aca658cae/node_modules/.bin/pnpm\" --filter pos build)",
+      "Bash(pnpm --filter admin build)",
+      "Bash(npm run:*)",
+      "Read(//usr/local/bin/**)",
+      "Read(//c/Users/rnobl/.local/share/pnpm/**)",
+      "Bash(node -e \"require\\(''''child_process''''\\).execSync\\(''''pnpm --version'''', {stdio:''''inherit''''}\\)\")",
+      "Read(//c/Users/rnobl/AppData/Local/pnpm//**)",
+      "Read(//c/Program Files/nodejs//**)",
+      "Bash(node_modules/.bin/next build:*)"
     ]
   }
 }

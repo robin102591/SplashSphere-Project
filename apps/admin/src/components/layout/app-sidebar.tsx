@@ -26,6 +26,8 @@ import {
   BarChart3,
   Settings,
   Droplets,
+  Wallet,
+  TrendingDown,
 } from 'lucide-react'
 
 const navGroups = [
@@ -57,6 +59,8 @@ const navGroups = [
     items: [
       { label: 'Transactions', href: '/dashboard/transactions', icon: CreditCard },
       { label: 'Payroll', href: '/dashboard/payroll', icon: CreditCard },
+      { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet },
+      { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     ],
   },

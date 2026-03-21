@@ -27,7 +27,32 @@ public sealed class GetCurrentShiftQueryHandler(
                 s.Status == ShiftStatus.Open,
                 cancellationToken);
 
-        return shift is null ? null : MapToDetail(shift);
+        if (shift is null) return null;
+
+        var dto = MapToDetail(shift);
+
+        // While the shift is open, TotalRevenue and TotalTransactionCount on the entity
+        // are 0 (they are only written at CloseShift time). Compute live values instead.
+        var completedTxIds = await db.Transactions
+            .Where(t =>
+                t.BranchId == shift.BranchId &&
+                t.CashierId == shift.CashierId &&
+                t.Status == TransactionStatus.Completed &&
+                t.CompletedAt >= shift.OpenedAt)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var liveRevenue = completedTxIds.Count == 0
+            ? 0m
+            : await db.Payments
+                .Where(p => completedTxIds.Contains(p.TransactionId))
+                .SumAsync(p => p.Amount, cancellationToken);
+
+        return dto with
+        {
+            TotalTransactionCount = completedTxIds.Count,
+            TotalRevenue = liveRevenue,
+        };
     }
 
     internal static ShiftDetailDto MapToDetail(Domain.Entities.CashierShift s) => new(

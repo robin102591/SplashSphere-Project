@@ -449,6 +449,12 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 ### Admin Dashboard — 30+ routes for branches, services, packages, employees, payroll, customers, vehicles, merchandise, transactions, reports, settings
 
+| Route | Page |
+|---|---|
+| `/dashboard/shifts` | Shift list — paginated, filterable by branch/date/status/review |
+| `/dashboard/shifts/[id]` | Shift detail — EOD report + manager review actions |
+| `/dashboard/reports/shift-variance` | Variance report — per-cashier trend chart with thresholds |
+
 ### POS App
 
 | Route | Page |
@@ -462,6 +468,11 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/customers/lookup` | Plate/customer search |
 | `/attendance` | Clock in/out |
 | `/queue-display` | **PUBLIC (no auth)** full-screen queue for wall TV |
+| `/shift/open` | Open Shift — opening cash fund entry with quick presets |
+| `/shift` | Active Shift Panel — stats, cash movements log, payment breakdown, actions |
+| `/shift/cash-movement` | Cash Movement Form — Cash In / Cash Out with presets |
+| `/shift/close` | Close Shift — 3-step wizard: summary → denomination count → confirm |
+| `/shift/report` | Shift Report — printable EOD report with top services & employees |
 
 ---
 
@@ -574,3 +585,5 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 - **Feature: Cashier Shift domain layer (Prompt 15.9a)** — Added `CashierShift`, `CashMovement`, `ShiftDenomination`, `ShiftPaymentSummary` entities. Added `ShiftStatus`, `ReviewStatus`, `CashMovementType` enums. Added `ShiftOpenedEvent`, `ShiftClosedEvent`, `ShiftFlaggedEvent` domain events. Updated `Branch` and `User` navigations. Added 4 EF Core configurations with all indexes, cascade deletes, and decimal precision. `TenantId` on all 4 entities with matching global query filters. Migration: `AddCashierShifts`.
 - **Feature: Discount and Tip editing on Transaction Detail page** — Added `PATCH /transactions/{id}/discount-tip` endpoint (`UpdateDiscountTipCommand`). Validates transaction is not terminal, discount ≤ subtotal, and existing payments don't exceed new total. Frontend detail page (`/transactions/[id]`) now shows inline discount/tip edit form for `InProgress` transactions, with an "Add Discount / Tip" / "Edit" button in the Totals section.
 - **Feature: Cashier Shift CQRS application layer (Prompt 15.9b)** — Added `ShiftSettings` domain entity and EF Core configuration (one record per tenant, upsert pattern). Added 8 commands: `OpenShift`, `RecordCashMovement`, `CloseShift`, `ReviewShift`, `ReopenShift`, `VoidShift`, `UpdateShiftSettings` (with validators). Added 6 queries: `GetCurrentShift`, `GetShiftById`, `GetShifts` (paginated), `GetShiftReport` (top services + employees), `GetShiftVarianceReport`, `GetShiftSettings`. Added `ShiftEndpoints` and `ShiftSettingsEndpoints` minimal API endpoints. `CloseShift` auto-computes all totals, variance, and sets `ReviewStatus` based on tenant thresholds. Migration: `AddShiftSettings`.
+- **Feature: Cashier Shift POS frontend pages (Prompt 15.9c)** — Added 5 new POS pages: `/shift/open` (fund entry + presets), `/shift` (active shift dashboard), `/shift/cash-movement` (cash in/out form), `/shift/close` (3-step wizard: summary → denomination count → confirm), `/shift/report` (printable EOD report). Added `useCurrentShift` hook, `ShiftStatusBanner` component (shown on all terminal pages). Updated `PosNavbar` to include Shift nav item. Updated Home page with dynamic "My Shift" quick action. Added `ShiftStatus`, `ReviewStatus`, `CashMovementType` enums and 9 new DTO interfaces to `@splashsphere/types` package.
+- **Feature: Cashier Shift Admin Dashboard pages (Prompt 15.9d)** — Added 3 new admin pages: `/dashboard/shifts` (paginated shift list with filters by branch, date, status, review status), `/dashboard/shifts/[id]` (full EOD report with manager review actions — Approve/Flag/Reopen via AlertDialog), `/dashboard/reports/shift-variance` (30-day variance analysis with per-cashier LineChart and ±₱50/±₱200 reference lines). Added `use-shifts.ts` hook file with 5 queries and 3 mutations. Added `ShiftVarianceCashierDto` and `VarianceTrendPointDto` to `@splashsphere/types`. Updated admin sidebar with Shifts and Shift Variance nav items under Finance. Added "Cash Drawer" tab to Settings page with shift config form.
