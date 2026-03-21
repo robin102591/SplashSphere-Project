@@ -63,6 +63,12 @@ public sealed class ApplicationDbContext(
     // ── Queue ─────────────────────────────────────────────────────────────────
     public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
 
+    // ── Cashier shifts ────────────────────────────────────────────────────────
+    public DbSet<CashierShift> CashierShifts => Set<CashierShift>();
+    public DbSet<CashMovement> CashMovements => Set<CashMovement>();
+    public DbSet<ShiftDenomination> ShiftDenominations => Set<ShiftDenomination>();
+    public DbSet<ShiftPaymentSummary> ShiftPaymentSummaries => Set<ShiftPaymentSummary>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -169,6 +175,18 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<QueueEntry>()
             .HasQueryFilter(qe => qe.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<CashierShift>()
+            .HasQueryFilter(cs => cs.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<CashMovement>()
+            .HasQueryFilter(cm => cm.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<ShiftDenomination>()
+            .HasQueryFilter(sd => sd.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<ShiftPaymentSummary>()
+            .HasQueryFilter(sp => sp.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

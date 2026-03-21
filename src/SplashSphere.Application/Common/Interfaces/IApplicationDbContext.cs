@@ -74,4 +74,10 @@ public interface IApplicationDbContext
 
     // ── Queue ─────────────────────────────────────────────────────────────────
     DbSet<QueueEntry> QueueEntries { get; }
+
+    // ── Cashier shifts ────────────────────────────────────────────────────────
+    DbSet<CashierShift> CashierShifts { get; }
+    DbSet<CashMovement> CashMovements { get; }
+    DbSet<ShiftDenomination> ShiftDenominations { get; }
+    DbSet<ShiftPaymentSummary> ShiftPaymentSummaries { get; }
 }

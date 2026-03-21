@@ -54,4 +54,10 @@ public sealed class User : IAuditableEntity
     // ── Navigations ──────────────────────────────────────────────────────────
 
     public Tenant? Tenant { get; set; }
+
+    /// <summary>Shifts this user has operated as cashier.</summary>
+    public ICollection<CashierShift> CashierShifts { get; set; } = [];
+
+    /// <summary>Shifts this user has reviewed as manager.</summary>
+    public ICollection<CashierShift> ReviewedShifts { get; set; } = [];
 }
