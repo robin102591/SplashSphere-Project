@@ -50,10 +50,8 @@ public sealed class AddToQueueCommandHandler(
                 return Result.Failure<string>(Error.Validation("Car ID is invalid."));
         }
 
-        // ── Compute today's date window (Manila local time) ──────────────────
+        // ── Compute today's date (Manila local time) ──────────────────────────
         var localToday = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
-        var todayStart = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var todayEnd   = DateTime.SpecifyKind(localToday.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         // ── Estimate wait time ────────────────────────────────────────────────
         // Count active WAITING entries for this branch. Each one represents roughly
@@ -75,16 +73,16 @@ public sealed class AddToQueueCommandHandler(
         // ── Create queue entry with retry on duplicate queue number ───────────
         // COUNT-based numbering has a race condition under concurrent requests.
         // Instead we derive the next sequence from MAX of today's existing numbers
-        // and retry (up to 5×) if another request wins the race and causes a
-        // 23505 unique-constraint violation on (BranchId, QueueNumber, TenantId).
+        // (filtered by QueueDate — the Manila local date column) and retry up to 5×
+        // if another request wins the race and causes a 23505 unique-constraint
+        // violation on (TenantId, BranchId, QueueDate, QueueNumber).
         const int MaxRetries = 5;
 
         for (var attempt = 0; attempt < MaxRetries; attempt++)
         {
             var todayNumbers = await context.QueueEntries
                 .Where(q => q.BranchId == request.BranchId
-                          && q.CreatedAt >= todayStart
-                          && q.CreatedAt <= todayEnd)
+                          && q.QueueDate == localToday)
                 .Select(q => q.QueueNumber)
                 .ToListAsync(cancellationToken);
 
@@ -99,6 +97,7 @@ public sealed class AddToQueueCommandHandler(
                 tenantContext.TenantId,
                 request.BranchId,
                 queueNumber,
+                localToday,
                 request.PlateNumber,
                 request.Priority,
                 request.CustomerId,

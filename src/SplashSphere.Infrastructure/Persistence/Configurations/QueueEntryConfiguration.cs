@@ -42,6 +42,11 @@ public sealed class QueueEntryConfiguration : IEntityTypeConfiguration<QueueEntr
             .IsRequired()
             .HasMaxLength(20);
 
+        // Manila-local calendar date; determines the sequence reset boundary
+        builder.Property(qe => qe.QueueDate)
+            .IsRequired()
+            .HasColumnType("date");
+
         // Always stored — copied from Car or entered manually for unregistered vehicles
         builder.Property(qe => qe.PlateNumber)
             .IsRequired()
@@ -114,8 +119,10 @@ public sealed class QueueEntryConfiguration : IEntityTypeConfiguration<QueueEntr
             .OnDelete(DeleteBehavior.SetNull);
 
         // ── Unique constraints ────────────────────────────────────────────────
-        // Queue number is unique per branch per day (reset each calendar day)
-        builder.HasIndex(qe => new { qe.BranchId, qe.QueueNumber, qe.TenantId })
+        // Queue number resets daily — unique per tenant, branch, and calendar day.
+        // QueueDate (Manila local date) is the day-boundary column, so Q-001 on
+        // 2026-03-20 never conflicts with Q-001 on 2026-03-21.
+        builder.HasIndex(qe => new { qe.TenantId, qe.BranchId, qe.QueueDate, qe.QueueNumber })
             .IsUnique();
 
         // Enforces one-to-one cardinality: a transaction can only link to one queue entry

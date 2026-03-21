@@ -443,16 +443,21 @@ public sealed class CreateTransactionCommandHandler(
         {
             // Walk-in workflow: auto-create a queue entry so the vehicle appears
             // in the InService column on the queue board.
-            var dailyQueueCount = await context.QueueEntries
-                .CountAsync(q => q.BranchId == request.BranchId
-                              && q.CreatedAt >= todayStartUtc
-                              && q.CreatedAt < todayEndUtc,
-                            cancellationToken);
+            var walkInNumbers = await context.QueueEntries
+                .Where(q => q.BranchId == request.BranchId && q.QueueDate == manilaDate)
+                .Select(q => q.QueueNumber)
+                .ToListAsync(cancellationToken);
+
+            var walkInMaxSeq = walkInNumbers
+                .Select(n => n.StartsWith("Q-") && int.TryParse(n[2..], out var s) ? s : 0)
+                .DefaultIfEmpty(0)
+                .Max();
 
             var walkInEntry = new QueueEntry(
                 tenantContext.TenantId,
                 request.BranchId,
-                $"Q-{dailyQueueCount + 1:D3}",
+                $"Q-{walkInMaxSeq + 1:D3}",
+                manilaDate,
                 car.PlateNumber,
                 customerId: request.CustomerId,
                 carId: car.Id);

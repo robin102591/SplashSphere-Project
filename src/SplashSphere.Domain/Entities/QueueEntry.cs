@@ -35,6 +35,7 @@ public sealed class QueueEntry : IAuditableEntity
         string tenantId,
         string branchId,
         string queueNumber,
+        DateOnly queueDate,
         string plateNumber,
         QueuePriority priority = QueuePriority.Regular,
         string? customerId = null,
@@ -47,6 +48,7 @@ public sealed class QueueEntry : IAuditableEntity
         TenantId = tenantId;
         BranchId = branchId;
         QueueNumber = queueNumber;
+        QueueDate = queueDate;
         PlateNumber = plateNumber.ToUpperInvariant().Trim();
         Priority = priority;
         Status = QueueStatus.Waiting;
@@ -79,10 +81,18 @@ public sealed class QueueEntry : IAuditableEntity
 
     /// <summary>
     /// Daily sequence identifier: <c>Q-{DailySequence}</c> (e.g. "Q-042").
-    /// Unique per branch per day. Reset to Q-001 each calendar day.
-    /// Composite unique: [BranchId, QueueNumber, TenantId].
+    /// Unique per branch per day. Reset to Q-001 each calendar day (Manila time).
+    /// Composite unique: [TenantId, BranchId, QueueDate, QueueNumber].
     /// </summary>
     public string QueueNumber { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The Manila-local calendar date this queue entry belongs to.
+    /// Used as the day-boundary for sequence resets and the unique constraint,
+    /// ensuring Q-001 on 2026-03-20 does not conflict with Q-001 on 2026-03-21.
+    /// Stored as PostgreSQL <c>date</c> (no time component).
+    /// </summary>
+    public DateOnly QueueDate { get; set; }
 
     /// <summary>
     /// Vehicle plate number stored uppercase and trimmed, copied from <see cref="Car"/>
