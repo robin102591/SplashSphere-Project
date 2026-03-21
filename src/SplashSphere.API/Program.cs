@@ -117,5 +117,7 @@ app.MapPayrollEndpoints();
 app.MapPricingModifierEndpoints();
 app.MapDashboardEndpoints();
 app.MapReportEndpoints();
+app.MapShiftEndpoints();
+app.MapShiftSettingsEndpoints();
 
 app.Run();

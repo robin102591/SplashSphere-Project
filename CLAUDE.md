@@ -414,6 +414,24 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 ### Pricing Modifiers — CRUD
 
+### Cashier Shifts
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/shifts/open` | Open a new cashier shift |
+| `POST` | `/shifts/{id}/cash-movement` | Record cash-in or cash-out |
+| `POST` | `/shifts/{id}/close` | Close shift with denomination count |
+| `PATCH` | `/shifts/{id}/review` | Manager approves or flags a closed shift |
+| `PATCH` | `/shifts/{id}/reopen` | Reopen a Pending closed shift |
+| `PATCH` | `/shifts/{id}/void` | Void a shift with no completed transactions |
+| `GET` | `/shifts/current` | Get current open shift for cashier |
+| `GET` | `/shifts` | List shifts (paginated, filterable) |
+| `GET` | `/shifts/{id}` | Shift detail |
+| `GET` | `/shifts/{id}/report` | End-of-day report with top services & employees |
+| `GET` | `/shifts/variance-report` | Variance report by cashier |
+| `GET` | `/settings/shift-config` | Get shift settings |
+| `PUT` | `/settings/shift-config` | Update shift settings |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -555,3 +573,4 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 ### 2026-03-21
 - **Feature: Cashier Shift domain layer (Prompt 15.9a)** — Added `CashierShift`, `CashMovement`, `ShiftDenomination`, `ShiftPaymentSummary` entities. Added `ShiftStatus`, `ReviewStatus`, `CashMovementType` enums. Added `ShiftOpenedEvent`, `ShiftClosedEvent`, `ShiftFlaggedEvent` domain events. Updated `Branch` and `User` navigations. Added 4 EF Core configurations with all indexes, cascade deletes, and decimal precision. `TenantId` on all 4 entities with matching global query filters. Migration: `AddCashierShifts`.
 - **Feature: Discount and Tip editing on Transaction Detail page** — Added `PATCH /transactions/{id}/discount-tip` endpoint (`UpdateDiscountTipCommand`). Validates transaction is not terminal, discount ≤ subtotal, and existing payments don't exceed new total. Frontend detail page (`/transactions/[id]`) now shows inline discount/tip edit form for `InProgress` transactions, with an "Add Discount / Tip" / "Edit" button in the Totals section.
+- **Feature: Cashier Shift CQRS application layer (Prompt 15.9b)** — Added `ShiftSettings` domain entity and EF Core configuration (one record per tenant, upsert pattern). Added 8 commands: `OpenShift`, `RecordCashMovement`, `CloseShift`, `ReviewShift`, `ReopenShift`, `VoidShift`, `UpdateShiftSettings` (with validators). Added 6 queries: `GetCurrentShift`, `GetShiftById`, `GetShifts` (paginated), `GetShiftReport` (top services + employees), `GetShiftVarianceReport`, `GetShiftSettings`. Added `ShiftEndpoints` and `ShiftSettingsEndpoints` minimal API endpoints. `CloseShift` auto-computes all totals, variance, and sets `ReviewStatus` based on tenant thresholds. Migration: `AddShiftSettings`.

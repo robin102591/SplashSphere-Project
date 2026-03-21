@@ -68,6 +68,7 @@ public sealed class ApplicationDbContext(
     public DbSet<CashMovement> CashMovements => Set<CashMovement>();
     public DbSet<ShiftDenomination> ShiftDenominations => Set<ShiftDenomination>();
     public DbSet<ShiftPaymentSummary> ShiftPaymentSummaries => Set<ShiftPaymentSummary>();
+    public DbSet<ShiftSettings> ShiftSettings => Set<ShiftSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -187,6 +188,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<ShiftPaymentSummary>()
             .HasQueryFilter(sp => sp.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<ShiftSettings>()
+            .HasQueryFilter(ss => ss.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

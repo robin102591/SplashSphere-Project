@@ -80,4 +80,5 @@ public interface IApplicationDbContext
     DbSet<CashMovement> CashMovements { get; }
     DbSet<ShiftDenomination> ShiftDenominations { get; }
     DbSet<ShiftPaymentSummary> ShiftPaymentSummaries { get; }
+    DbSet<ShiftSettings> ShiftSettings { get; }
 }
