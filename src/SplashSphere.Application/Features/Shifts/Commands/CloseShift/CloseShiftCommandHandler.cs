@@ -33,17 +33,25 @@ public sealed class CloseShiftCommandHandler(
         var nowUtc = DateTime.UtcNow;
 
         // ── Step 1: Query completed transactions during this shift ───────────────
-        var payments = await db.Payments
-            .Where(p =>
-                p.Transaction.BranchId == shift.BranchId &&
-                p.Transaction.CashierId == shift.CashierId &&
-                p.Transaction.Status == TransactionStatus.Completed &&
-                p.Transaction.CompletedAt >= shift.OpenedAt &&
-                p.Transaction.CompletedAt <= nowUtc)
-            .Select(p => new { p.PaymentMethod, p.Amount, p.TransactionId })
+        // Query Transactions directly first — navigating p.Transaction.* in a Where
+        // clause causes EF Core to apply the Transaction global query filter on the
+        // JOIN, which can produce 0 rows. Fetching IDs first is always safe.
+        var transactionIds = await db.Transactions
+            .Where(t =>
+                t.BranchId == shift.BranchId &&
+                t.CashierId == shift.CashierId &&
+                t.Status == TransactionStatus.Completed &&
+                t.CompletedAt >= shift.OpenedAt &&
+                t.CompletedAt <= nowUtc)
+            .Select(t => t.Id)
             .ToListAsync(cancellationToken);
 
-        var transactionIds = payments.Select(p => p.TransactionId).Distinct().ToList();
+        var payments = transactionIds.Count == 0
+            ? []
+            : await db.Payments
+                .Where(p => transactionIds.Contains(p.TransactionId))
+                .Select(p => new { p.PaymentMethod, p.Amount, p.TransactionId })
+                .ToListAsync(cancellationToken);
 
         var commissions = await db.TransactionEmployees
             .Where(te => transactionIds.Contains(te.TransactionId))

@@ -42,16 +42,22 @@ public sealed class GetCurrentShiftQueryHandler(
             .Select(t => t.Id)
             .ToListAsync(cancellationToken);
 
-        var liveRevenue = completedTxIds.Count == 0
-            ? 0m
+        var livePayments = completedTxIds.Count == 0
+            ? []
             : await db.Payments
                 .Where(p => completedTxIds.Contains(p.TransactionId))
-                .SumAsync(p => p.Amount, cancellationToken);
+                .Select(p => new { p.PaymentMethod, p.Amount })
+                .ToListAsync(cancellationToken);
+
+        var liveCash    = livePayments.Where(p => p.PaymentMethod == PaymentMethod.Cash).Sum(p => p.Amount);
+        var liveNonCash = livePayments.Where(p => p.PaymentMethod != PaymentMethod.Cash).Sum(p => p.Amount);
 
         return dto with
         {
-            TotalTransactionCount = completedTxIds.Count,
-            TotalRevenue = liveRevenue,
+            TotalTransactionCount  = completedTxIds.Count,
+            TotalRevenue           = liveCash + liveNonCash,
+            TotalCashPayments      = liveCash,
+            TotalNonCashPayments   = liveNonCash,
         };
     }
 
