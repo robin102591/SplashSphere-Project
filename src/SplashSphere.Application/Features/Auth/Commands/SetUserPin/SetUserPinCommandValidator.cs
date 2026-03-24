@@ -9,7 +9,7 @@ public sealed class SetUserPinCommandValidator : AbstractValidator<SetUserPinCom
         RuleFor(x => x.UserId).NotEmpty();
         RuleFor(x => x.Pin)
             .NotEmpty()
-            .Matches(@"^\d{4,6}$")
-            .WithMessage("PIN must be 4–6 digits.");
+            .Matches(@"^\d{6}$")
+            .WithMessage("PIN must be exactly 6 digits.");
     }
 }

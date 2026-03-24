@@ -85,7 +85,7 @@ export function LockScreen({ maxPinAttempts, hasPin }: LockScreenProps) {
     const next = pin + digit
     setPin(next)
     setError(null)
-    if (next.length >= 4) {
+    if (next.length === PIN_LENGTH) {
       void handleVerify(next)
     }
   }

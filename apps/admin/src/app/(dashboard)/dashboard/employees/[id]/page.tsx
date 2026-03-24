@@ -468,7 +468,7 @@ function PinManagementSection({ emp }: { emp: Employee }) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const pinValid = /^\d{4,6}$/.test(pin)
+  const pinValid = /^\d{6}$/.test(pin)
   const pinsMatch = pin === confirm
   const canSave = pinValid && pinsMatch && !saving
 
@@ -500,7 +500,7 @@ function PinManagementSection({ emp }: { emp: Employee }) {
           POS Lock PIN
         </h3>
         <p className="text-sm text-muted-foreground">
-          Set a 4–6 digit PIN for this employee to unlock the POS screen.
+          Set a 6-digit PIN for this employee to unlock the POS screen.
         </p>
       </div>
 
@@ -512,7 +512,7 @@ function PinManagementSection({ emp }: { emp: Employee }) {
             type="password"
             inputMode="numeric"
             maxLength={6}
-            placeholder="Enter 4–6 digit PIN"
+            placeholder="Enter 6-digit PIN"
             value={pin}
             onChange={(e) => {
               const v = e.target.value.replace(/\D/g, '').slice(0, 6)

@@ -45,7 +45,7 @@ public sealed class User : IAuditableEntity
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// BCrypt hash of the user's 4–6 digit POS lock PIN.
+    /// BCrypt hash of the user's 6-digit POS lock PIN.
     /// Null if no PIN has been set — POS lock is not enforced for this user.
     /// </summary>
     public string? PinHash { get; set; }
