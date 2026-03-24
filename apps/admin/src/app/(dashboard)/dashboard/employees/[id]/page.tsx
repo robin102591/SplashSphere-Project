@@ -338,11 +338,18 @@ function AttendanceTab({ employeeId }: { employeeId: string }) {
 
 function InvitationSection({ emp }: { emp: Employee }) {
   const { mutate: invite, isPending } = useInviteEmployee()
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const handleInvite = () => {
     invite(emp.id, {
-      onSuccess: () => toast.success(`Invitation sent to ${emp.email}`),
-      onError: () => toast.error('Failed to send invitation'),
+      onSuccess: () => {
+        setDialogOpen(false)
+        toast.success(`Invitation sent to ${emp.email}`)
+      },
+      onError: () => {
+        setDialogOpen(false)
+        toast.error('Failed to send invitation')
+      },
     })
   }
 
@@ -398,7 +405,7 @@ function InvitationSection({ emp }: { emp: Employee }) {
             })}
             . The employee needs to accept the email invitation to create their account.
           </p>
-          <AlertDialog>
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="mt-3" disabled={isPending}>
                 <Send className="mr-2 h-3.5 w-3.5" />
@@ -415,7 +422,9 @@ function InvitationSection({ emp }: { emp: Employee }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleInvite}>Resend</AlertDialogAction>
+                <AlertDialogAction onClick={handleInvite} disabled={isPending}>
+                  {isPending ? 'Sending…' : 'Resend'}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -434,7 +443,7 @@ function InvitationSection({ emp }: { emp: Employee }) {
           Send an invitation to <span className="font-medium">{emp.email}</span> so they can create
           a system account. Once accepted, you can set their POS PIN.
         </p>
-        <AlertDialog>
+        <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <AlertDialogTrigger asChild>
             <Button size="sm" className="mt-3" disabled={isPending}>
               <Send className="mr-2 h-3.5 w-3.5" />
@@ -451,7 +460,9 @@ function InvitationSection({ emp }: { emp: Employee }) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleInvite}>Send Invitation</AlertDialogAction>
+              <AlertDialogAction onClick={handleInvite} disabled={isPending}>
+                {isPending ? 'Sending…' : 'Send Invitation'}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
