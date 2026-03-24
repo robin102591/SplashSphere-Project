@@ -14,6 +14,7 @@ import type { Car as CarType, ServiceSummary } from '@splashsphere/types'
 import type { PagedResult, ApiError } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
+import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,8 @@ export default function AddToQueuePage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { branchId } = useBranch()
+  const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
+  const shiftOpen = isShiftOpen(currentShift)
 
   const { register, handleSubmit, setValue, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -138,6 +141,46 @@ export default function AddToQueuePage() {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to add to queue. Please try again.')
     }
+  }
+
+  if (shiftLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-5 w-5 animate-spin text-gray-500" />
+      </div>
+    )
+  }
+
+  if (!shiftOpen) {
+    return (
+      <div className="p-4 max-w-lg mx-auto space-y-6 pb-10">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/queue"
+            className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-white">Add to Queue</h1>
+            <p className="text-sm text-gray-400">Enter vehicle details</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-yellow-700/50 bg-yellow-950/30 p-6 text-center space-y-3">
+          <AlertCircle className="h-10 w-10 text-yellow-400 mx-auto" />
+          <h2 className="text-lg font-bold text-white">Shift Required</h2>
+          <p className="text-sm text-gray-400">
+            You must open a shift before adding vehicles to the queue.
+          </p>
+          <Link
+            href="/shift/open"
+            className="inline-flex items-center gap-2 px-5 min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors"
+          >
+            Open Shift
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

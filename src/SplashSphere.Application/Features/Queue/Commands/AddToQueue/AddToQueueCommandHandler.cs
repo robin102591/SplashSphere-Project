@@ -32,6 +32,16 @@ public sealed class AddToQueueCommandHandler(
         if (!branchExists)
             return Result.Failure<string>(Error.Validation("Branch ID is invalid."));
 
+        // ── Shift gate: cashier must have an open shift at this branch ───────
+        var hasOpenShift = await context.CashierShifts
+            .AnyAsync(s => s.CashierId == tenantContext.UserId
+                        && s.BranchId == request.BranchId
+                        && s.Status == ShiftStatus.Open, cancellationToken);
+
+        if (!hasOpenShift)
+            return Result.Failure<string>(Error.Validation(
+                "No active shift. Open a shift before adding to the queue."));
+
         if (!string.IsNullOrWhiteSpace(request.CustomerId))
         {
             var customerExists = await context.Customers

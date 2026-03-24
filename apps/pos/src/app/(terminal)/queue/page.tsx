@@ -16,6 +16,7 @@ import { apiClient } from '@/lib/api-client'
 import { useSignalREvent } from '@/lib/signalr-context'
 import { useBranch } from '@/lib/branch-context'
 import { ConnectionStatusDot } from '@/components/connection-status'
+import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 
 // ── Priority config ────────────────────────────────────────────────────────────
 
@@ -258,6 +259,8 @@ export default function QueuePage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { branchId } = useBranch()
+  const { data: currentShift } = useCurrentShift()
+  const shiftOpen = isShiftOpen(currentShift)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   // Queue entries — only fetch when a branch is selected
@@ -363,13 +366,23 @@ export default function QueuePage() {
           </div>
         </div>
 
-        <Link
-          href="/queue/add"
-          className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-          Add to Queue
-        </Link>
+        {shiftOpen ? (
+          <Link
+            href="/queue/add"
+            className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add to Queue
+          </Link>
+        ) : (
+          <span
+            title="Open a shift first"
+            className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-gray-700 text-gray-500 font-semibold text-sm cursor-not-allowed shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add to Queue
+          </span>
+        )}
       </div>
 
       {/* ── Kanban ──────────────────────────────────────────────────────────── */}

@@ -33,6 +33,16 @@ public sealed class CreateTransactionCommandHandler(
         if (!branch.IsActive)
             return Result.Failure<string>(Error.Validation("Branch is not active."));
 
+        // ── Shift gate: cashier must have an open shift at this branch ───────
+        var hasOpenShift = await context.CashierShifts
+            .AnyAsync(s => s.CashierId == tenantContext.UserId
+                        && s.BranchId == request.BranchId
+                        && s.Status == ShiftStatus.Open, cancellationToken);
+
+        if (!hasOpenShift)
+            return Result.Failure<string>(Error.Validation(
+                "No active shift. Open a shift before creating a transaction."));
+
         // ── Car resolution: use CarId if provided, otherwise look up by plate
         //    and auto-create a minimal record (VehicleTypeId + SizeId required). ──────
         Car? car;

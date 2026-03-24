@@ -86,7 +86,9 @@
       "Bash(node -e \"require\\(''''child_process''''\\).execSync\\(''''pnpm --version'''', {stdio:''''inherit''''}\\)\")",
       "Read(//c/Users/rnobl/AppData/Local/pnpm//**)",
       "Read(//c/Program Files/nodejs//**)",
-      "Bash(node_modules/.bin/next build:*)"
+      "Bash(node_modules/.bin/next build:*)",
+      "Bash(cat:*)",
+      "Bash(cat /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/new/page.tsx)"
     ]
   }
 }

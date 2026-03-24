@@ -21,6 +21,7 @@ import type { PagedResult } from '@splashsphere/types'
 
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
+import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 import {
   useTransactionStore,
   type ServiceLineItem,
@@ -340,6 +341,8 @@ function NewTransactionContent() {
   const queueEntryId = searchParams.get('queueEntryId')
   const editId = searchParams.get('editId')          // edit mode — tx already exists
   const { branchId: contextBranchId } = useBranch()
+  const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
+  const shiftOpen = isShiftOpen(currentShift)
 
   // ── Store ──────────────────────────────────────────────────────────────────
   const store = useTransactionStore()
@@ -911,6 +914,34 @@ function NewTransactionContent() {
   )
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  if (shiftLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-5 w-5 animate-spin text-gray-500" />
+      </div>
+    )
+  }
+
+  if (!shiftOpen) {
+    return (
+      <div className="p-4 max-w-lg mx-auto space-y-6 pt-16">
+        <div className="rounded-xl border border-yellow-700/50 bg-yellow-950/30 p-6 text-center space-y-3">
+          <AlertCircle className="h-10 w-10 text-yellow-400 mx-auto" />
+          <h2 className="text-lg font-bold text-white">Shift Required</h2>
+          <p className="text-sm text-gray-400">
+            You must open a shift before creating a transaction.
+          </p>
+          <Link
+            href="/shift/open"
+            className="inline-flex items-center gap-2 px-5 min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors"
+          >
+            Open Shift
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
