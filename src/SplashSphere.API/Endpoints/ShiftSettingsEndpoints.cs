@@ -38,7 +38,9 @@ public static class ShiftSettingsEndpoints
             body.AutoApproveThreshold,
             body.FlagThreshold,
             body.RequireShiftForTransactions,
-            body.EndOfDayReminderTime);
+            body.EndOfDayReminderTime,
+            body.LockTimeoutMinutes,
+            body.MaxPinAttempts);
 
         var result = await sender.Send(command, ct);
 
@@ -53,5 +55,7 @@ public static class ShiftSettingsEndpoints
         decimal AutoApproveThreshold,
         decimal FlagThreshold,
         bool RequireShiftForTransactions,
-        TimeOnly EndOfDayReminderTime);
+        TimeOnly EndOfDayReminderTime,
+        int LockTimeoutMinutes,
+        int MaxPinAttempts);
 }

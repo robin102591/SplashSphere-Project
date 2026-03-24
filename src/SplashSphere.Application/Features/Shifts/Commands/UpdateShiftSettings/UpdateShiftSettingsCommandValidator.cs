@@ -11,5 +11,10 @@ public sealed class UpdateShiftSettingsCommandValidator : AbstractValidator<Upda
         RuleFor(x => x.FlagThreshold)
             .GreaterThan(x => x.AutoApproveThreshold)
             .WithMessage("FlagThreshold must be greater than AutoApproveThreshold.");
+        RuleFor(x => x.LockTimeoutMinutes)
+            .GreaterThanOrEqualTo(0)
+            .LessThanOrEqualTo(60);
+        RuleFor(x => x.MaxPinAttempts)
+            .InclusiveBetween(1, 20);
     }
 }

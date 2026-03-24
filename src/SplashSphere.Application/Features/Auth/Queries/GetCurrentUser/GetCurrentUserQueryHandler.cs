@@ -27,6 +27,7 @@ public sealed class GetCurrentUserQueryHandler(
                 u.LastName,
                 u.Role,
                 u.IsActive,
+                HasPin = u.PinHash != null,
                 u.TenantId,
                 TenantName            = u.Tenant != null ? u.Tenant.Name            : null,
                 TenantEmail           = u.Tenant != null ? u.Tenant.Email           : null,
@@ -58,6 +59,7 @@ public sealed class GetCurrentUserQueryHandler(
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Role,
             user.IsActive,
+            user.HasPin,
             tenant);
     }
 }

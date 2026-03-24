@@ -2,7 +2,8 @@
 
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Power, PowerOff, Mail, Phone, Calendar } from 'lucide-react'
+import { useAuth } from '@clerk/nextjs'
+import { ArrowLeft, Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,17 +16,32 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
   useEmployee,
   useUpdateEmployee,
   useToggleEmployeeStatus,
   useEmployeeCommissions,
   useAttendance,
+  useInviteEmployee,
 } from '@/hooks/use-employees'
 import { EmployeeType } from '@splashsphere/types'
 import type { Employee, EmployeeCommissionDto, AttendanceDto } from '@splashsphere/types'
 import { EditEmployeeForm } from '../_components/employee-form'
 import type { UpdateEmployeeValues } from '@/hooks/use-employees'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api-client'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
 
@@ -318,6 +334,244 @@ function AttendanceTab({ employeeId }: { employeeId: string }) {
   )
 }
 
+// ── Security tab (invitation + PIN management) ──────────────────────────────
+
+function InvitationSection({ emp }: { emp: Employee }) {
+  const { mutate: invite, isPending } = useInviteEmployee()
+
+  const handleInvite = () => {
+    invite(emp.id, {
+      onSuccess: () => toast.success(`Invitation sent to ${emp.email}`),
+      onError: () => toast.error('Failed to send invitation'),
+    })
+  }
+
+  // Already linked — show success state
+  if (emp.userId) {
+    return (
+      <div className="rounded-lg border border-green-200 bg-green-50 p-4 flex items-start gap-3">
+        <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-green-800">Account Linked</p>
+          <p className="text-sm text-green-700 mt-1">
+            This employee has a linked user account and can log into the system.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // No email — cannot invite
+  if (!emp.email) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-amber-800">Email required</p>
+          <p className="text-sm text-amber-700 mt-1">
+            Add an email address to this employee before sending an invitation.
+            Use the Edit button above to add one.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Invitation pending
+  if (emp.invitedAt) {
+    return (
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
+        <Clock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-blue-800">Invitation Pending</p>
+            <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs">Pending</Badge>
+          </div>
+          <p className="text-sm text-blue-700 mt-1">
+            An invitation was sent to <span className="font-medium">{emp.email}</span> on{' '}
+            {new Date(emp.invitedAt).toLocaleDateString('en-PH', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            . The employee needs to accept the email invitation to create their account.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="mt-3" disabled={isPending}>
+                <Send className="mr-2 h-3.5 w-3.5" />
+                {isPending ? 'Sending…' : 'Resend Invitation'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Resend invitation?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  A new invitation email will be sent to <strong>{emp.email}</strong>.
+                  The previous invitation will be replaced.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleInvite}>Resend</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+    )
+  }
+
+  // Not invited yet
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+      <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <p className="text-sm font-medium text-amber-800">No linked user account</p>
+        <p className="text-sm text-amber-700 mt-1">
+          Send an invitation to <span className="font-medium">{emp.email}</span> so they can create
+          a system account. Once accepted, you can set their POS PIN.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" className="mt-3" disabled={isPending}>
+              <Send className="mr-2 h-3.5 w-3.5" />
+              {isPending ? 'Sending…' : 'Send Invitation'}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Send invitation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                An invitation email will be sent to <strong>{emp.email}</strong>.
+                They will be able to create an account and join the organization.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleInvite}>Send Invitation</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  )
+}
+
+function PinManagementSection({ emp }: { emp: Employee }) {
+  const { getToken } = useAuth()
+  const [pin, setPin] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const pinValid = /^\d{4,6}$/.test(pin)
+  const pinsMatch = pin === confirm
+  const canSave = pinValid && pinsMatch && !saving
+
+  const handleSetPin = async () => {
+    if (!canSave || !emp.userId) return
+    setSaving(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      const token = await getToken()
+      await apiClient.patch(`/auth/users/${emp.userId}/pin`, { pin }, token ?? undefined)
+      setSuccess(true)
+      setPin('')
+      setConfirm('')
+      toast.success('PIN updated successfully')
+    } catch {
+      setError('Failed to set PIN. Please try again.')
+      toast.error('Failed to set PIN')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="max-w-sm space-y-5">
+      <div>
+        <h3 className="text-sm font-medium mb-1 flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-muted-foreground" />
+          POS Lock PIN
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Set a 4–6 digit PIN for this employee to unlock the POS screen.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="pin">New PIN</Label>
+          <Input
+            id="pin"
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Enter 4–6 digit PIN"
+            value={pin}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 6)
+              setPin(v)
+              setError(null)
+              setSuccess(false)
+            }}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="confirm-pin">Confirm PIN</Label>
+          <Input
+            id="confirm-pin"
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Re-enter PIN"
+            value={confirm}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 6)
+              setConfirm(v)
+              setError(null)
+              setSuccess(false)
+            }}
+          />
+          {confirm.length > 0 && !pinsMatch && (
+            <p className="text-xs text-destructive">PINs do not match</p>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
+
+      {success && (
+        <div className="flex items-center gap-2 text-sm text-green-600">
+          <Check className="h-4 w-4" />
+          PIN has been set successfully.
+        </div>
+      )}
+
+      <Button onClick={handleSetPin} disabled={!canSave} size="sm">
+        <KeyRound className="mr-2 h-3.5 w-3.5" />
+        {saving ? 'Saving…' : 'Set PIN'}
+      </Button>
+    </div>
+  )
+}
+
+function SecurityTab({ emp }: { emp: Employee }) {
+  return (
+    <div className="max-w-lg space-y-6">
+      <InvitationSection emp={emp} />
+      {emp.userId && <PinManagementSection emp={emp} />}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EmployeeDetailPage({
@@ -427,6 +681,7 @@ export default function EmployeeDetailPage({
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="commissions">Commission History</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-6">
@@ -439,6 +694,10 @@ export default function EmployeeDetailPage({
 
         <TabsContent value="attendance" className="mt-6">
           <AttendanceTab employeeId={id} />
+        </TabsContent>
+
+        <TabsContent value="security" className="mt-6">
+          <SecurityTab emp={emp} />
         </TabsContent>
       </Tabs>
 

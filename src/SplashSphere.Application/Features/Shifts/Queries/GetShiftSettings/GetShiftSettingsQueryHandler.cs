@@ -18,12 +18,14 @@ public sealed class GetShiftSettingsQueryHandler(
 
         // Return defaults if no settings record exists yet
         return settings is null
-            ? new ShiftSettingsDto(2000m, 50m, 200m, true, new TimeOnly(20, 0))
+            ? new ShiftSettingsDto(2000m, 50m, 200m, true, new TimeOnly(20, 0), 5, 5)
             : new ShiftSettingsDto(
                 settings.DefaultOpeningFund,
                 settings.AutoApproveThreshold,
                 settings.FlagThreshold,
                 settings.RequireShiftForTransactions,
-                settings.EndOfDayReminderTime);
+                settings.EndOfDayReminderTime,
+                settings.LockTimeoutMinutes,
+                settings.MaxPinAttempts);
     }
 }

@@ -172,30 +172,76 @@ public static class WebhookEndpoints
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.ClerkUserId == clerkUserId, ct);
 
+        // Race condition: organizationMembership.created may arrive before user.created
+        // has been processed. Create the User from public_user_data so the employee link
+        // is not lost. The idempotency check in HandleUserCreated will skip the duplicate.
         if (user is null)
         {
-            logger.LogWarning(
-                "Clerk webhook organizationMembership.created: no internal user for {ClerkUserId}.", clerkUserId);
-            return;
+            var pubEmail = string.Empty;
+            var pubFirstName = string.Empty;
+            var pubLastName = string.Empty;
+            if (data.TryGetProperty("public_user_data", out var pubData))
+            {
+                pubEmail = GetString(pubData, "identifier") ?? string.Empty;
+                pubFirstName = GetString(pubData, "first_name") ?? string.Empty;
+                pubLastName = GetString(pubData, "last_name") ?? string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(pubEmail))
+            {
+                logger.LogWarning(
+                    "Clerk webhook organizationMembership.created: no internal user and no email in public_user_data for {ClerkUserId}.",
+                    clerkUserId);
+                return;
+            }
+
+            user = new User(clerkUserId, pubEmail, pubFirstName, pubLastName);
+            db.Users.Add(user);
+
+            logger.LogInformation(
+                "Clerk webhook organizationMembership.created: created user from public_user_data for {ClerkUserId} (race condition fallback).",
+                clerkUserId);
         }
 
-        // Only update if not already linked to avoid overwriting an onboarding-flow link.
-        if (!string.IsNullOrEmpty(user.TenantId))
+        // Only update tenant link if not already set (avoid overwriting onboarding-flow link).
+        if (string.IsNullOrEmpty(user.TenantId))
+        {
+            user.TenantId = orgId;
+            user.Role     = role;
+
+            logger.LogInformation(
+                "Clerk webhook organizationMembership.created: linked user {ClerkUserId} to tenant {OrgId}.",
+                clerkUserId, orgId);
+        }
+        else
         {
             logger.LogDebug(
-                "Clerk webhook organizationMembership.created: user {ClerkUserId} already linked to tenant {TenantId} — skipping.",
+                "Clerk webhook organizationMembership.created: user {ClerkUserId} already linked to tenant {TenantId} — skipping tenant link.",
                 clerkUserId, user.TenantId);
-            return;
         }
 
-        user.TenantId = orgId;
-        user.Role     = role;
+        // Auto-link Employee by matching email (case-insensitive) within the same tenant.
+        var effectiveOrgId = user.TenantId ?? orgId;
+        if (!string.IsNullOrEmpty(user.Email) && !string.IsNullOrEmpty(effectiveOrgId))
+        {
+            var emailLower = user.Email.ToLowerInvariant();
+            var employee = await db.Employees
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e =>
+                    e.TenantId == effectiveOrgId &&
+                    e.Email != null && e.Email.ToLower() == emailLower &&
+                    e.UserId == null, ct);
+
+            if (employee is not null)
+            {
+                employee.UserId = user.Id;
+                logger.LogInformation(
+                    "Clerk webhook organizationMembership.created: auto-linked employee {EmployeeId} to user {UserId} by email {Email}.",
+                    employee.Id, user.Id, user.Email);
+            }
+        }
 
         await db.SaveChangesAsync(ct);
-
-        logger.LogInformation(
-            "Clerk webhook organizationMembership.created: linked user {ClerkUserId} to tenant {OrgId}.",
-            clerkUserId, orgId);
     }
 
     // ── Svix signature verification ──────────────────────────────────────────

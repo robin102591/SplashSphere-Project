@@ -1,7 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.Application.Features.Auth.Commands.SetUserPin;
+using SplashSphere.Application.Features.Auth.Commands.VerifyPin;
 using SplashSphere.Application.Features.Auth.Queries.GetCurrentUser;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.API.Extensions;
+using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -29,6 +33,37 @@ public static class AuthEndpoints
         .WithName("GetCurrentUser")
         .WithSummary("Get the authenticated user's profile and tenant information.");
 
+        // POST /api/v1/auth/verify-pin
+        // Verify the current user's POS lock PIN.
+        group.MapPost("/verify-pin", async (
+            [FromBody] VerifyPinRequest body,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new VerifyPinCommand(body.Pin), ct);
+            return result.IsFailure
+                ? result.ToProblem()
+                : Results.Ok(new { success = result.Value });
+        })
+        .WithName("VerifyPin")
+        .WithSummary("Verify the authenticated user's POS lock PIN.");
+
+        // PATCH /api/v1/auth/users/{id}/pin
+        // Set or reset a user's PIN (admin only).
+        group.MapPatch("/users/{id}/pin", async (
+            string id,
+            [FromBody] SetPinRequest body,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SetUserPinCommand(id, body.Pin), ct);
+            return result.IsFailure
+                ? result.ToProblem()
+                : Results.NoContent();
+        })
+        .WithName("SetUserPin")
+        .WithSummary("Set or reset a user's POS lock PIN (admin only).");
+
         // GET /api/v1/onboarding/status
         // Returns whether the current user still needs to complete onboarding.
         // Accessible before onboarding (TenantResolutionMiddleware allows /api/v1/onboarding*).
@@ -52,3 +87,8 @@ public static class AuthEndpoints
         return app;
     }
 }
+
+// ── Request bodies ──────────────────────────────────────────────────────────
+
+internal sealed record VerifyPinRequest(string Pin);
+internal sealed record SetPinRequest(string Pin);

@@ -45,6 +45,27 @@ public sealed class ClerkOrganizationService(IConfiguration configuration) : ICl
             });
     }
 
+    public async Task InviteMemberAsync(
+        string organizationId,
+        string emailAddress,
+        string inviterClerkUserId,
+        string role = "org:member",
+        string? redirectUrl = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sdk = CreateClient();
+
+        await sdk.OrganizationInvitations.CreateAsync(
+            organizationId: organizationId,
+            requestBody: new CreateOrganizationInvitationRequestBody
+            {
+                EmailAddress = emailAddress,
+                InviterUserId = inviterClerkUserId,
+                Role = role,
+                RedirectUrl = redirectUrl,
+            });
+    }
+
     private ClerkBackendApi CreateClient()
     {
         var secretKey = configuration["Clerk:SecretKey"]

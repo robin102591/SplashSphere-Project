@@ -9,6 +9,7 @@ public sealed record CurrentUserDto(
     string FullName,
     string? Role,
     bool IsActive,
+    bool HasPin,
     CurrentUserTenantDto? Tenant);
 
 public sealed record CurrentUserTenantDto(

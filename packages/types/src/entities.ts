@@ -44,6 +44,7 @@ export interface CurrentUser {
   fullName: string;
   role: string | null;
   isActive: boolean;
+  hasPin: boolean;
   tenant: CurrentUserTenant | null;
 }
 
@@ -309,6 +310,9 @@ export interface Employee {
   /** YYYY-MM-DD */
   hiredDate: string | null;
   isActive: boolean;
+  userId: string | null;
+  /** ISO-8601 DateTime — null if never invited */
+  invitedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -813,6 +817,8 @@ export interface ShiftSettingsDto {
   flagThreshold: number;
   requireShiftForTransactions: boolean;
   endOfDayReminderTime: string;
+  lockTimeoutMinutes: number;
+  maxPinAttempts: number;
 }
 
 export interface ShiftVarianceCashierDto {

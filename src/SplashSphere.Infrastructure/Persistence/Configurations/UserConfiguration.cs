@@ -45,6 +45,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasDefaultValue(true);
 
+        builder.Property(u => u.PinHash)
+            .HasMaxLength(128);
+
         // ── Computed / ignored ────────────────────────────────────────────────
         builder.Ignore(u => u.FullName);
 

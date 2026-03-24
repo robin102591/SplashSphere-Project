@@ -640,6 +640,8 @@ function ShiftConfigTab() {
     flagThreshold: '',
     requireShiftForTransactions: false,
     endOfDayReminderTime: '',
+    lockTimeoutMinutes: '',
+    maxPinAttempts: '',
   })
   const [initialized, setInitialized] = useState(false)
 
@@ -650,6 +652,8 @@ function ShiftConfigTab() {
       flagThreshold: String(settings.flagThreshold),
       requireShiftForTransactions: settings.requireShiftForTransactions,
       endOfDayReminderTime: settings.endOfDayReminderTime,
+      lockTimeoutMinutes: String(settings.lockTimeoutMinutes),
+      maxPinAttempts: String(settings.maxPinAttempts),
     })
     setInitialized(true)
   }
@@ -661,6 +665,8 @@ function ShiftConfigTab() {
       flagThreshold: parseFloat(form.flagThreshold) || 0,
       requireShiftForTransactions: form.requireShiftForTransactions,
       endOfDayReminderTime: form.endOfDayReminderTime,
+      lockTimeoutMinutes: parseInt(form.lockTimeoutMinutes) || 5,
+      maxPinAttempts: parseInt(form.maxPinAttempts) || 5,
     }
     save(payload, {
       onSuccess: () => toast.success('Shift settings saved.'),
@@ -744,6 +750,39 @@ function ShiftConfigTab() {
               When enabled, the POS will block new transactions unless the cashier has an open shift.
             </p>
           </div>
+        </div>
+        <div className="pt-2 border-t">
+          <p className="text-sm font-medium mb-3">POS Lock Screen</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="lock-timeout">Auto-Lock Timeout (minutes)</Label>
+          <Input
+            id="lock-timeout"
+            type="number"
+            min="0"
+            max="60"
+            step="1"
+            value={form.lockTimeoutMinutes}
+            onChange={e => setForm(f => ({ ...f, lockTimeoutMinutes: e.target.value }))}
+            placeholder="e.g. 5"
+          />
+          <p className="text-xs text-muted-foreground">Minutes of inactivity before the POS auto-locks. Set to 0 to disable.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="max-pin-attempts">Max PIN Attempts</Label>
+          <Input
+            id="max-pin-attempts"
+            type="number"
+            min="1"
+            max="20"
+            step="1"
+            value={form.maxPinAttempts}
+            onChange={e => setForm(f => ({ ...f, maxPinAttempts: e.target.value }))}
+            placeholder="e.g. 5"
+          />
+          <p className="text-xs text-muted-foreground">Wrong PIN attempts before a 30-second cooldown.</p>
         </div>
       </div>
 

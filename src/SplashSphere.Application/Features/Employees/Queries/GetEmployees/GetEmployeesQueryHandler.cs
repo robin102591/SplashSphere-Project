@@ -50,6 +50,8 @@ public sealed class GetEmployeesQueryHandler(IApplicationDbContext context)
                 e.DailyRate,
                 e.HiredDate,
                 e.IsActive,
+                e.UserId,
+                e.InvitedAt,
                 e.CreatedAt,
                 e.UpdatedAt))
             .ToListAsync(cancellationToken);

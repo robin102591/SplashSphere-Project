@@ -351,7 +351,9 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | Method | Route | Description |
 |---|---|---|
 | `POST` | `/webhooks/clerk` | Clerk webhook receiver (no auth) |
-| `GET` | `/auth/me` | Current user profile + tenant info |
+| `GET` | `/auth/me` | Current user profile + tenant info (includes `hasPin`) |
+| `POST` | `/auth/verify-pin` | Verify current user's POS lock PIN |
+| `PATCH` | `/auth/users/{id}/pin` | Set/reset a user's PIN (admin only) |
 | `GET` | `/onboarding/status` | Check if user needs onboarding |
 | `POST` | `/onboarding` | Create tenant + first branch + link user |
 
@@ -394,7 +396,11 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 ### Cars — List, Get, Create, Update, `GET /cars/lookup/{plateNumber}` (POS fast lookup)
 
-### Employees — CRUD + attendance clock-in/out + commission history
+### Employees — CRUD + attendance clock-in/out + commission history + invite
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/employees/{id}/invite` | Send Clerk org invitation to employee's email |
 
 ### Transactions (POS)
 
@@ -522,6 +528,7 @@ Events: `TransactionUpdated`, `DashboardMetricsUpdated`, `AttendanceUpdated`, `Q
 11. **Inventory Tracking**: Decrement on completion. Block sale if insufficient stock.
 12. **Attendance**: One record per employee per day. TimeIn before TimeOut.
 13. **Shift Gate**: Cashier must have an open shift before adding to queue or creating a transaction. Enforced in both backend (handler validation) and frontend (page-level gate).
+14. **POS Lock Screen**: POS auto-locks after configurable inactivity (default 5 min) or manual lock. Requires 4–6 digit PIN to unlock. PINs are BCrypt-hashed, stored on User entity, set by admins only. Max PIN attempts before 30s cooldown (configurable via ShiftSettings).
 
 ---
 
@@ -591,3 +598,5 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ### 2026-03-24
 - **Feature: Shift gate for queue and transactions** — Cashier must have an open shift before adding to queue or creating a transaction. Backend: Added open-shift validation in `AddToQueueCommandHandler` and `CreateTransactionCommandHandler` (returns 400 if no active shift). Frontend: Added shift gate screens on `/queue/add` and `/transactions/new` (shows "Shift Required" card with link to open shift). Disabled "Add to Queue" button on queue board when no shift is open. Added Business Rule #13.
+- **Feature: POS Lock Screen with PIN** — Added POS lock/unlock feature so cashiers can secure the terminal when stepping away. **Domain:** Added `PinHash` to `User` entity, `LockTimeoutMinutes` and `MaxPinAttempts` to `ShiftSettings`, `UserId` nullable FK on `Employee` (links employee to User account). **Application:** New `SetUserPinCommand` (admin-only, BCrypt hash, 4–6 digit validation), `VerifyPinCommand` (current user verifies own PIN). Extended `UpdateShiftSettings`/`GetShiftSettings` with lock config fields. Extended `CurrentUserDto` with `HasPin`. Extended `EmployeeDto` with `UserId`. **API:** `PATCH /auth/users/{id}/pin` (set PIN), `POST /auth/verify-pin` (verify PIN). **POS Frontend:** Zustand lock store (`use-lock-store.ts`), activity tracker hook with throttled event listeners and periodic timeout check (`use-activity-tracker.ts`), full-viewport lock screen overlay with numeric PIN pad, shake animation, cooldown timer, no-PIN-configured state (`lock-screen.tsx`), `PosLockGuard` wrapper component, Lock button in navbar. **Admin Frontend:** "Security" tab on employee detail page for PIN management, "POS Lock Screen" section in Settings page (timeout + max attempts). Migration: `AddUserPinAndLockSettings`. Added Business Rule #14.
+- **Feature: Employee Invitation Flow** — Admin can invite employees to create a user account directly from the employee detail page. **Domain:** Added `InvitedAt` nullable DateTime to `Employee` entity. **Infrastructure:** Added `InviteMemberAsync` to `IClerkOrganizationService` using Clerk's Organization Invitations API (`sdk.OrganizationInvitations.CreateAsync`). **Application:** New `InviteEmployeeCommand` with validation (requires email, active employee, no existing linked user). **Webhook:** Updated `HandleMembershipCreated` to auto-link `Employee.UserId` by matching email within the tenant when an invited user accepts. Restructured early-return logic so employee-linking runs even when tenant is already set. **API:** `POST /employees/{id}/invite`. **Admin Frontend:** Redesigned Security tab on employee detail page — shows invitation status (Not Invited / Pending / Linked) with Send/Resend Invitation buttons (AlertDialog confirmation), plus PIN management when linked. Migration: `AddEmployeeInvitedAt`.

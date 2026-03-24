@@ -88,7 +88,9 @@
       "Read(//c/Program Files/nodejs//**)",
       "Bash(node_modules/.bin/next build:*)",
       "Bash(cat:*)",
-      "Bash(cat /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/new/page.tsx)"
+      "Bash(cat /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/new/page.tsx)",
+      "Bash(grep -E \"\\\\.\\(cs\\)$\")",
+      "Bash(grep -o \"\"Clerk.BackendAPI/[^\"\"]*\"\" /c/PROJECTS/carwash/SplashSphere-Claude/src/SplashSphere.Infrastructure/obj/project.assets.json)"
     ]
   }
 }

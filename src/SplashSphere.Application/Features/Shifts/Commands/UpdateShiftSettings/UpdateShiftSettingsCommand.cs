@@ -8,4 +8,6 @@ public sealed record UpdateShiftSettingsCommand(
     decimal AutoApproveThreshold,
     decimal FlagThreshold,
     bool RequireShiftForTransactions,
-    TimeOnly EndOfDayReminderTime) : ICommand;
+    TimeOnly EndOfDayReminderTime,
+    int LockTimeoutMinutes,
+    int MaxPinAttempts) : ICommand;

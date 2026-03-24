@@ -29,6 +29,8 @@ public sealed class UpdateShiftSettingsCommandHandler(
         settings.FlagThreshold               = request.FlagThreshold;
         settings.RequireShiftForTransactions = request.RequireShiftForTransactions;
         settings.EndOfDayReminderTime        = request.EndOfDayReminderTime;
+        settings.LockTimeoutMinutes          = request.LockTimeoutMinutes;
+        settings.MaxPinAttempts              = request.MaxPinAttempts;
 
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();

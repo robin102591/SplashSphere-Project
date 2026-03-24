@@ -44,6 +44,14 @@ public sealed class ShiftSettingsConfiguration : IEntityTypeConfiguration<ShiftS
             .IsRequired()
             .HasColumnType("time");
 
+        builder.Property(s => s.LockTimeoutMinutes)
+            .IsRequired()
+            .HasDefaultValue(5);
+
+        builder.Property(s => s.MaxPinAttempts)
+            .IsRequired()
+            .HasDefaultValue(5);
+
         builder.Property(s => s.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");

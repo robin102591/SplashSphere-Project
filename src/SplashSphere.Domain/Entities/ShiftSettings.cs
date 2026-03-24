@@ -39,6 +39,12 @@ public sealed class ShiftSettings : IAuditableEntity
     /// <summary>Manila local time at which the end-of-day reminder is shown on the POS.</summary>
     public TimeOnly EndOfDayReminderTime { get; set; } = new(20, 0);
 
+    /// <summary>Minutes of inactivity before the POS auto-locks. 0 = disabled.</summary>
+    public int LockTimeoutMinutes { get; set; } = 5;
+
+    /// <summary>Max wrong PIN attempts before a 30-second cooldown.</summary>
+    public int MaxPinAttempts { get; set; } = 5;
+
     // ── Audit ──────────────────────────────────────────────────────────────────
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

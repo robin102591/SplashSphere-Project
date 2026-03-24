@@ -67,6 +67,11 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.UpdatedAt)
             .IsRequired();
 
+        builder.Property(e => e.UserId)
+            .HasMaxLength(36);
+
+        builder.Property(e => e.InvitedAt);
+
         // ── Relationships ─────────────────────────────────────────────────────
         builder.HasOne(e => e.Tenant)
             .WithMany()
@@ -78,6 +83,13 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .WithMany()
             .HasForeignKey(e => e.BranchId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Optional link to the Clerk-backed User account
+        builder.HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // ── Indexes ───────────────────────────────────────────────────────────
         builder.HasIndex(e => e.TenantId);

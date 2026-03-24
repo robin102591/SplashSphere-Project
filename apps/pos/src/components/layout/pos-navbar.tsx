@@ -15,11 +15,13 @@ import {
   ChevronDown,
   MapPin,
   Wallet,
+  Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { ConnectionStatusDot } from '@/components/connection-status'
 import { useBranch } from '@/lib/branch-context'
+import { useLockStore } from '@/lib/use-lock-store'
 
 const navItems = [
   { label: 'Home', href: '/home', icon: Home },
@@ -38,6 +40,7 @@ export function PosNavbar() {
   const { signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const { branchId, branchName, branches, setBranchId } = useBranch()
+  const lockScreen = useLockStore((s) => s.lock)
 
   const handleSignOut = async () => {
     await signOut()
@@ -98,6 +101,15 @@ export function PosNavbar() {
             )
           })}
         </nav>
+
+        {/* Lock button */}
+        <button
+          onClick={lockScreen}
+          title="Lock screen"
+          className="flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors shrink-0"
+        >
+          <Lock className="h-4 w-4" />
+        </button>
 
         {/* Profile — custom, NOT UserButton */}
         <div className="relative shrink-0">

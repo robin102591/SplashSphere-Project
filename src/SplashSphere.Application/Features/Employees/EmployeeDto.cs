@@ -15,5 +15,7 @@ public sealed record EmployeeDto(
     decimal? DailyRate,
     DateOnly? HiredDate,
     bool IsActive,
+    string? UserId,
+    DateTime? InvitedAt,
     DateTime CreatedAt,
     DateTime UpdatedAt);

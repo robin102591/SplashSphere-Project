@@ -9,4 +9,6 @@ public sealed record ShiftSettingsDto(
     decimal AutoApproveThreshold,
     decimal FlagThreshold,
     bool RequireShiftForTransactions,
-    TimeOnly EndOfDayReminderTime);
+    TimeOnly EndOfDayReminderTime,
+    int LockTimeoutMinutes,
+    int MaxPinAttempts);

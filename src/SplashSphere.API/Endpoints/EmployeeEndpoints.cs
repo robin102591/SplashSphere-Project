@@ -4,6 +4,7 @@ using SplashSphere.Application.Features.Employees.Commands.ClockIn;
 using SplashSphere.Application.Features.Employees.Commands.ClockOut;
 using SplashSphere.Application.Features.Employees.Commands.CreateEmployee;
 using SplashSphere.Application.Features.Employees.Commands.ToggleEmployeeStatus;
+using SplashSphere.Application.Features.Employees.Commands.InviteEmployee;
 using SplashSphere.Application.Features.Employees.Commands.UpdateEmployee;
 using SplashSphere.Application.Features.Employees.Queries.GetAttendance;
 using SplashSphere.Application.Features.Employees.Queries.GetEmployeeById;
@@ -26,6 +27,7 @@ public static class EmployeeEndpoints
         group.MapPost("/",                             CreateEmployee)        .WithName("CreateEmployee");
         group.MapPut("/{id}",                          UpdateEmployee)        .WithName("UpdateEmployee");
         group.MapPatch("/{id}/status",                 ToggleEmployeeStatus)  .WithName("ToggleEmployeeStatus");
+        group.MapPost("/{id}/invite",                  InviteEmployee)        .WithName("InviteEmployee");
         group.MapPost("/{id}/clock-in",                ClockIn)               .WithName("ClockIn");
         group.MapPost("/{id}/clock-out",               ClockOut)              .WithName("ClockOut");
         group.MapGet("/{id}/commissions",              GetCommissions)        .WithName("GetEmployeeCommissions");
@@ -67,6 +69,15 @@ public static class EmployeeEndpoints
                 id, body.FirstName, body.LastName, body.DailyRate,
                 body.Email, body.ContactNumber, body.HiredDate),
             ct);
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    // ── POST /api/v1/employees/{id}/invite ──────────────────────────────────
+
+    private static async Task<IResult> InviteEmployee(
+        string id, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new InviteEmployeeCommand(id), ct);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 

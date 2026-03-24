@@ -55,6 +55,18 @@ public sealed class Employee : IAuditableEntity
     public DateOnly? HiredDate { get; set; }
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Optional FK linking this employee to their Clerk-backed User account.
+    /// Enables PIN management and future self-service features.
+    /// </summary>
+    public string? UserId { get; set; }
+
+    /// <summary>
+    /// UTC timestamp of the last Clerk organization invitation sent for this employee.
+    /// Null if never invited. Once <see cref="UserId"/> is set, the invitation is considered accepted.
+    /// </summary>
+    public DateTime? InvitedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
@@ -66,6 +78,7 @@ public sealed class Employee : IAuditableEntity
 
     public Tenant Tenant { get; set; } = null!;
     public Branch Branch { get; set; } = null!;
+    public User? User { get; set; }
     public ICollection<Attendance> Attendances { get; set; } = [];
     public ICollection<PayrollEntry> PayrollEntries { get; set; } = [];
     public ICollection<TransactionEmployee> TransactionSummaries { get; set; } = [];

@@ -187,6 +187,21 @@ export function useAttendance(params: AttendanceParams = {}) {
   })
 }
 
+export function useInviteEmployee() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (employeeId: string) => {
+      const token = await getToken()
+      return apiClient.post<void>(`/employees/${employeeId}/invite`, {}, token ?? undefined)
+    },
+    onSuccess: (_data, employeeId) => {
+      qc.invalidateQueries({ queryKey: employeeKeys.detail(employeeId) })
+      qc.invalidateQueries({ queryKey: employeeKeys.all })
+    },
+  })
+}
+
 // Keep legacy export for branches detail page
 export function useEmployeesByBranch(branchId: string) {
   const { getToken } = useAuth()

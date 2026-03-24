@@ -20,4 +20,16 @@ public interface IClerkOrganizationService
         string clerkUserId,
         string role,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a Clerk organization invitation email to the specified address.
+    /// The recipient will receive an email with a link to accept and join the organization.
+    /// </summary>
+    Task InviteMemberAsync(
+        string organizationId,
+        string emailAddress,
+        string inviterClerkUserId,
+        string role = "org:member",
+        string? redirectUrl = null,
+        CancellationToken cancellationToken = default);
 }

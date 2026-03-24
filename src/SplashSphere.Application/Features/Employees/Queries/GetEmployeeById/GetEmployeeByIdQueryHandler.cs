@@ -28,6 +28,8 @@ public sealed class GetEmployeeByIdQueryHandler(IApplicationDbContext context)
                 e.DailyRate,
                 e.HiredDate,
                 e.IsActive,
+                e.UserId,
+                e.InvitedAt,
                 e.CreatedAt,
                 e.UpdatedAt))
             .FirstOrDefaultAsync(cancellationToken)
