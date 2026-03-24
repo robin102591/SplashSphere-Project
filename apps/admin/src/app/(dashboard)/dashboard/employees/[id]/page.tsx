@@ -406,11 +406,11 @@ function InvitationSection({ emp }: { emp: Employee }) {
             . The employee needs to accept the email invitation to create their account.
           </p>
           <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="mt-3" disabled={isPending}>
-                <Send className="mr-2 h-3.5 w-3.5" />
-                {isPending ? 'Sending…' : 'Resend Invitation'}
-              </Button>
+            <AlertDialogTrigger
+              render={<Button variant="outline" size="sm" className="mt-3" disabled={isPending} />}
+            >
+              <Send className="mr-2 h-3.5 w-3.5" />
+              {isPending ? 'Sending…' : 'Resend Invitation'}
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -444,11 +444,11 @@ function InvitationSection({ emp }: { emp: Employee }) {
           a system account. Once accepted, you can set their POS PIN.
         </p>
         <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button size="sm" className="mt-3" disabled={isPending}>
-              <Send className="mr-2 h-3.5 w-3.5" />
-              {isPending ? 'Sending…' : 'Send Invitation'}
-            </Button>
+          <AlertDialogTrigger
+            render={<Button size="sm" className="mt-3" disabled={isPending} />}
+          >
+            <Send className="mr-2 h-3.5 w-3.5" />
+            {isPending ? 'Sending…' : 'Send Invitation'}
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

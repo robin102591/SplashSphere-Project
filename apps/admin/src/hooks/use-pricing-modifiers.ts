@@ -37,7 +37,7 @@ export function usePricingModifiers(branchId?: string) {
         `/pricing-modifiers?${qs}`,
         token ?? undefined
       )
-      return result.items as PricingModifier[]
+      return (result?.items ?? []) as PricingModifier[]
     },
   })
 }
