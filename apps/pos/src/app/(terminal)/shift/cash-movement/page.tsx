@@ -84,12 +84,12 @@ export default function CashMovementPage() {
     <div className="p-4 max-w-sm mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/shift" className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800">
+        <Link href="/shift" className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center transition-all duration-150 active:scale-[0.97]">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-white">Record Cash Movement</h1>
-          <p className="text-sm text-gray-400">{shift.branchName}</p>
+          <p className="text-base text-gray-400">{shift.branchName}</p>
         </div>
       </div>
 
@@ -100,7 +100,7 @@ export default function CashMovementPage() {
             type="button"
             onClick={() => setType(CashMovementType.CashOut)}
             className={cn(
-              'flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-colors',
+              'flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-all duration-150 active:scale-[0.97] min-h-[44px]',
               !isCashIn
                 ? 'bg-red-600/20 border-red-500/50 text-red-300'
                 : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
@@ -113,7 +113,7 @@ export default function CashMovementPage() {
             type="button"
             onClick={() => setType(CashMovementType.CashIn)}
             className={cn(
-              'flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-colors',
+              'flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-all duration-150 active:scale-[0.97] min-h-[44px]',
               isCashIn
                 ? 'bg-green-600/20 border-green-500/50 text-green-300'
                 : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
@@ -134,7 +134,7 @@ export default function CashMovementPage() {
                 type="button"
                 onClick={() => handlePreset(p)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                  'px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-150 active:scale-[0.97] min-h-[44px]',
                   reason === p.label && type === p.type
                     ? 'bg-blue-600 border-blue-500 text-white'
                     : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
@@ -158,7 +158,7 @@ export default function CashMovementPage() {
               value={amount}
               onChange={e => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none text-white text-xl font-mono font-bold text-right"
+              className="w-full pl-9 pr-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none text-white text-xl font-mono tabular-nums font-bold text-right"
             />
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function CashMovementPage() {
           type="submit"
           disabled={mutation.isPending}
           className={cn(
-            'w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-colors min-h-[56px] disabled:opacity-50',
+            'w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg transition-all duration-150 active:scale-[0.97] min-h-[56px] disabled:opacity-50',
             isCashIn
               ? 'bg-green-600 hover:bg-green-500 text-white'
               : 'bg-red-600 hover:bg-red-500 text-white'

@@ -8,49 +8,49 @@ import { cn } from '@/lib/utils'
  */
 const STATUS_STYLES: Record<string, [bg: string, text: string, border: string, label?: string]> = {
   // ── Transaction ──────────────────────────────────────────────
-  Pending:      ['bg-amber-500/15', 'text-amber-700', 'border-amber-200'],
-  InProgress:   ['bg-blue-500/15', 'text-blue-700', 'border-blue-200', 'In Progress'],
-  Completed:    ['bg-emerald-500/15', 'text-emerald-700', 'border-emerald-200'],
-  Cancelled:    ['bg-gray-500/15', 'text-gray-600', 'border-gray-200'],
-  Refunded:     ['bg-red-500/15', 'text-red-700', 'border-red-200'],
+  Pending:      ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
+  InProgress:   ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800', 'In Progress'],
+  Completed:    ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
+  Cancelled:    ['bg-gray-500/15', 'text-gray-600 dark:text-gray-400', 'border-gray-200 dark:border-gray-700'],
+  Refunded:     ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
 
   // ── Payroll ──────────────────────────────────────────────────
-  Open:         ['bg-blue-500/15', 'text-blue-700', 'border-blue-200'],
-  Closed:       ['bg-amber-500/15', 'text-amber-700', 'border-amber-200'],
-  Processed:    ['bg-emerald-500/15', 'text-emerald-700', 'border-emerald-200'],
+  Open:         ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
+  Closed:       ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
+  Processed:    ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
 
   // ── Active / Inactive ────────────────────────────────────────
-  Active:       ['bg-emerald-500/15', 'text-emerald-700', 'border-emerald-200'],
-  Inactive:     ['bg-gray-100', 'text-gray-500', 'border-gray-200'],
+  Active:       ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
+  Inactive:     ['bg-gray-500/15', 'text-gray-500 dark:text-gray-400', 'border-gray-200 dark:border-gray-700'],
 
   // ── Employee type ────────────────────────────────────────────
-  Commission:   ['bg-purple-500/15', 'text-purple-700', 'border-purple-200'],
-  Daily:        ['bg-sky-500/15', 'text-sky-700', 'border-sky-200'],
+  Commission:   ['bg-purple-500/15', 'text-purple-700 dark:text-purple-400', 'border-purple-200 dark:border-purple-800'],
+  Daily:        ['bg-sky-500/15', 'text-sky-700 dark:text-sky-400', 'border-sky-200 dark:border-sky-800'],
 
   // ── Queue ────────────────────────────────────────────────────
-  Waiting:      ['bg-blue-500/15', 'text-blue-700', 'border-blue-200'],
-  Called:        ['bg-amber-500/15', 'text-amber-700', 'border-amber-200'],
-  InService:    ['bg-emerald-500/15', 'text-emerald-700', 'border-emerald-200', 'In Service'],
-  NoShow:       ['bg-red-500/15', 'text-red-700', 'border-red-200', 'No Show'],
+  Waiting:      ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
+  Called:        ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
+  InService:    ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800', 'In Service'],
+  NoShow:       ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800', 'No Show'],
 
   // ── Queue priority ───────────────────────────────────────────
-  Vip:          ['bg-purple-500/15', 'text-purple-700', 'border-purple-200', 'VIP'],
-  Express:      ['bg-blue-500/15', 'text-blue-700', 'border-blue-200'],
-  Regular:      ['bg-gray-100', 'text-gray-600', 'border-gray-200'],
+  Vip:          ['bg-purple-500/15', 'text-purple-700 dark:text-purple-400', 'border-purple-200 dark:border-purple-800', 'VIP'],
+  Express:      ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
+  Regular:      ['bg-gray-500/15', 'text-gray-600 dark:text-gray-400', 'border-gray-200 dark:border-gray-700'],
 
   // ── Shift ────────────────────────────────────────────────────
-  Voided:       ['bg-red-500/15', 'text-red-700', 'border-red-200'],
+  Voided:       ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
 
   // ── Review status ────────────────────────────────────────────
-  Approved:     ['bg-emerald-500/15', 'text-emerald-700', 'border-emerald-200'],
-  Flagged:      ['bg-red-500/15', 'text-red-700', 'border-red-200'],
+  Approved:     ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
+  Flagged:      ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
   // "Pending" review reuses the Pending entry above
 
   // ── Stock ────────────────────────────────────────────────────
-  'Low Stock':  ['bg-amber-500/15', 'text-amber-700', 'border-amber-200'],
+  'Low Stock':  ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
 
   // ── Variance ─────────────────────────────────────────────────
-  Watch:        ['bg-red-500/15', 'text-red-700', 'border-red-200'],
+  Watch:        ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
 }
 
 interface StatusBadgeProps {
@@ -68,7 +68,7 @@ interface StatusBadgeProps {
  */
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {
   const entry = STATUS_STYLES[status]
-  const [bg, text, border, defaultLabel] = entry ?? ['bg-gray-100', 'text-gray-600', 'border-gray-200']
+  const [bg, text, border, defaultLabel] = entry ?? ['bg-gray-500/15', 'text-gray-600 dark:text-gray-400', 'border-gray-200 dark:border-gray-700']
   const displayLabel = label ?? defaultLabel ?? status
 
   return (

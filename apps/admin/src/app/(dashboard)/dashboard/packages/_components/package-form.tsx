@@ -44,7 +44,7 @@ export function PackageForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-1.5">
-        <Label htmlFor="pkg-name">Package name</Label>
+        <Label htmlFor="pkg-name">Package name <span className="text-destructive">*</span></Label>
         <Input id="pkg-name" placeholder="Full Detail Package" {...register('name')} />
         {formState.errors.name && (
           <p className="text-xs text-destructive">{formState.errors.name.message}</p>
@@ -61,7 +61,7 @@ export function PackageForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Included services</Label>
+        <Label>Included services <span className="text-destructive">*</span></Label>
         {servicesLoading ? (
           <p className="text-sm text-muted-foreground">Loading services…</p>
         ) : (

@@ -75,11 +75,11 @@ export default function OpenShiftPage() {
         <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center">
           <span className="inline-block h-3 w-3 rounded-full bg-green-400 mb-2" />
           <p className="text-green-300 font-semibold">You have an active shift</p>
-          <p className="text-sm text-green-400 mt-1">Close it before opening a new one.</p>
+          <p className="text-base text-green-400 mt-1">Close it before opening a new one.</p>
         </div>
         <Link
           href="/shift"
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gray-800 text-white font-semibold"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gray-800 text-white font-semibold active:scale-[0.97] transition-all duration-150 min-h-[44px]"
         >
           View Active Shift
         </Link>
@@ -93,12 +93,12 @@ export default function OpenShiftPage() {
     <div className="p-4 max-w-sm mx-auto space-y-6 pt-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/home" className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800">
+        <Link href="/home" className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center transition-all duration-150 active:scale-[0.97]">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-white">Open Shift</h1>
-          <p className="text-sm text-gray-400">Enter your starting cash fund</p>
+          <p className="text-base text-gray-400">Enter your starting cash fund</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function OpenShiftPage() {
               value={amount}
               onChange={e => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full pl-9 pr-4 py-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none text-white text-2xl font-mono font-bold text-right"
+              className="w-full pl-9 pr-4 py-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none text-white text-xl font-mono tabular-nums font-bold text-right"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function OpenShiftPage() {
                 type="button"
                 onClick={() => setAmount(String(p))}
                 className={cn(
-                  'py-2 rounded-lg text-sm font-medium border transition-colors',
+                  'py-2 rounded-lg text-base font-medium border transition-all duration-150 active:scale-[0.97] min-h-[44px] font-mono tabular-nums',
                   amount === String(p)
                     ? 'bg-blue-600 border-blue-500 text-white'
                     : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
@@ -151,7 +151,7 @@ export default function OpenShiftPage() {
         <button
           type="submit"
           disabled={openMutation.isPending || !branchId}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-lg transition-colors min-h-[56px]"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 active:scale-[0.97] text-white font-bold text-lg transition-all duration-150 min-h-[56px]"
         >
           {openMutation.isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />

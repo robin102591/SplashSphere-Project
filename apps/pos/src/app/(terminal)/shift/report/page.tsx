@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
-import { Printer, CheckCircle2, AlertTriangle, XCircle, Home, Loader2 } from 'lucide-react'
+import { Printer, CheckCircle2, AlertTriangle, XCircle, Home } from 'lucide-react'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import type { ShiftReportDto } from '@splashsphere/types'
@@ -69,8 +69,24 @@ function ShiftReportContent() {
 
   if (isLoading) {
     return (
-      <div className="p-4 flex justify-center pt-16">
-        <Loader2 className="h-6 w-6 text-gray-500 animate-spin" />
+      <div className="p-4 max-w-lg mx-auto space-y-4 animate-pulse">
+        {/* Header skeleton */}
+        <div className="h-8 w-48 rounded bg-gray-800/60" />
+        {/* Stat cards skeleton */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+        </div>
+        {/* Table rows skeleton */}
+        <div className="rounded-xl bg-gray-800/60 overflow-hidden space-y-px">
+          <div className="h-10 bg-gray-800/60" />
+          <div className="h-10 bg-gray-700/40" />
+          <div className="h-10 bg-gray-800/60" />
+          <div className="h-10 bg-gray-700/40" />
+          <div className="h-10 bg-gray-800/60" />
+          <div className="h-10 bg-gray-700/40" />
+        </div>
       </div>
     )
   }
@@ -97,14 +113,14 @@ function ShiftReportContent() {
         <div className="flex gap-2">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 text-base transition-all duration-150 active:scale-[0.97] min-h-[44px]"
           >
             <Printer className="h-4 w-4" />
             Print
           </button>
           <Link
             href="/home"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-base transition-all duration-150 active:scale-[0.97] min-h-[44px]"
           >
             <Home className="h-4 w-4" />
             Done
@@ -122,7 +138,7 @@ function ShiftReportContent() {
         </div>
 
         {/* Shift info */}
-        <div className="px-6 py-4 border-b border-gray-700 grid grid-cols-2 gap-y-1.5 text-sm">
+        <div className="px-6 py-4 border-b border-gray-700 grid grid-cols-2 gap-y-1.5 text-base">
           <span className="text-gray-400">Branch</span>
           <span className="text-white font-medium text-right">{s.branchName}</span>
 
@@ -152,17 +168,17 @@ function ShiftReportContent() {
         {/* Payment method breakdown */}
         <ReportSection title="Payment Method Breakdown">
           {s.paymentSummaries.map(ps => (
-            <div key={ps.method} className="flex items-center justify-between py-1.5 text-sm">
+            <div key={ps.method} className="flex items-center justify-between py-1.5 text-base">
               <span className="text-gray-400">{METHOD_LABEL[ps.method]}</span>
               <div className="text-right">
-                <span className="text-white font-medium">{fmt(ps.totalAmount)}</span>
+                <span className="text-white font-medium font-mono tabular-nums">{fmt(ps.totalAmount)}</span>
                 <span className="text-gray-500 text-xs ml-2">{ps.transactionCount} txns</span>
               </div>
             </div>
           ))}
-          <div className="flex justify-between pt-2 border-t border-gray-700 text-sm font-semibold">
+          <div className="flex justify-between pt-2 border-t border-gray-700 text-base font-semibold">
             <span className="text-gray-300">Total</span>
-            <span className="text-white">{fmt(s.totalRevenue)}</span>
+            <span className="text-white font-mono tabular-nums">{fmt(s.totalRevenue)}</span>
           </div>
         </ReportSection>
 
@@ -173,14 +189,14 @@ function ShiftReportContent() {
           {s.cashMovements.filter(m => m.type === CashMovementType.CashIn).map(m => (
             <div key={m.id} className="flex items-start justify-between py-1 text-xs ml-4">
               <span className="text-gray-500">• {m.reason}</span>
-              <span className="text-green-400 font-mono">+{fmt(m.amount)}</span>
+              <span className="text-green-400 font-mono tabular-nums">+{fmt(m.amount)}</span>
             </div>
           ))}
           <Row label="(+) Manual Cash-In"  value={fmt(s.totalCashIn)} valueClass="text-green-400" />
           {s.cashMovements.filter(m => m.type === CashMovementType.CashOut).map(m => (
             <div key={m.id} className="flex items-start justify-between py-1 text-xs ml-4">
               <span className="text-gray-500">• {m.reason}</span>
-              <span className="text-red-400 font-mono">-{fmt(m.amount)}</span>
+              <span className="text-red-400 font-mono tabular-nums">-{fmt(m.amount)}</span>
             </div>
           ))}
           <Row label="(-) Manual Cash-Out" value={`-${fmt(s.totalCashOut)}`} valueClass="text-red-400" />
@@ -193,17 +209,17 @@ function ShiftReportContent() {
         {s.denominations.length > 0 && (
           <ReportSection title="Cash Count (Denomination Breakdown)">
             {s.denominations.map(d => (
-              <div key={d.denominationValue} className="flex items-center justify-between py-1 text-sm">
-                <span className="font-mono text-gray-300">
+              <div key={d.denominationValue} className="flex items-center justify-between py-1 text-base">
+                <span className="font-mono tabular-nums text-gray-300">
                   ₱{d.denominationValue >= 1 ? d.denominationValue.toLocaleString() : '0.25'}
                   {' '}× {d.count}
                 </span>
-                <span className="font-mono text-white">{fmt(d.subtotal)}</span>
+                <span className="font-mono tabular-nums text-white">{fmt(d.subtotal)}</span>
               </div>
             ))}
-            <div className="flex justify-between pt-2 border-t border-gray-700 text-sm font-semibold">
+            <div className="flex justify-between pt-2 border-t border-gray-700 text-base font-semibold">
               <span className="text-gray-300">Actual Cash Counted</span>
-              <span className="text-white">{fmt(s.actualCashInDrawer)}</span>
+              <span className="text-white font-mono tabular-nums">{fmt(s.actualCashInDrawer)}</span>
             </div>
           </ReportSection>
         )}
@@ -212,9 +228,9 @@ function ShiftReportContent() {
         <ReportSection title="Variance">
           <Row label="Expected"  value={fmt(s.expectedCashInDrawer)} />
           <Row label="Actual"    value={fmt(s.actualCashInDrawer)} />
-          <div className={cn('flex items-center justify-between pt-2 border-t border-gray-700 text-sm font-bold', varianceColor)}>
+          <div className={cn('flex items-center justify-between pt-2 border-t border-gray-700 text-base font-bold', varianceColor)}>
             <span>Variance</span>
-            <span className="font-mono">{s.variance >= 0 ? '+' : ''}{fmt(s.variance)} {varianceLabel}</span>
+            <span className="font-mono tabular-nums">{s.variance >= 0 ? '+' : ''}{fmt(s.variance)} {varianceLabel}</span>
           </div>
         </ReportSection>
 
@@ -222,10 +238,10 @@ function ShiftReportContent() {
         {report.topServices.length > 0 && (
           <ReportSection title="Top Services Today">
             {report.topServices.slice(0, 8).map((svc, i) => (
-              <div key={svc.serviceName} className="flex items-center justify-between py-1 text-sm">
+              <div key={svc.serviceName} className="flex items-center justify-between py-1 text-base">
                 <span className="text-gray-400">{i + 1}. {svc.serviceName}</span>
                 <div className="text-right">
-                  <span className="text-white font-medium">{fmt(svc.totalAmount)}</span>
+                  <span className="text-white font-medium font-mono tabular-nums">{fmt(svc.totalAmount)}</span>
                   <span className="text-gray-500 text-xs ml-2">{svc.transactionCount} txns</span>
                 </div>
               </div>
@@ -237,10 +253,10 @@ function ShiftReportContent() {
         {report.topEmployees.length > 0 && (
           <ReportSection title="Top Employees by Commission">
             {report.topEmployees.slice(0, 8).map((emp, i) => (
-              <div key={emp.employeeId} className="flex items-center justify-between py-1 text-sm">
+              <div key={emp.employeeId} className="flex items-center justify-between py-1 text-base">
                 <span className="text-gray-400">{i + 1}. {emp.employeeName}</span>
                 <div className="text-right">
-                  <span className="text-white font-medium">{fmt(emp.totalCommission)}</span>
+                  <span className="text-white font-medium font-mono tabular-nums">{fmt(emp.totalCommission)}</span>
                   <span className="text-gray-500 text-xs ml-2">{emp.serviceCount} services</span>
                 </div>
               </div>
@@ -249,7 +265,7 @@ function ShiftReportContent() {
         )}
 
         {/* Review status */}
-        <div className="px-6 py-4 border-t border-gray-700 text-sm">
+        <div className="px-6 py-4 border-t border-gray-700 text-base">
           <div className="flex items-center justify-between">
             <span className="text-gray-400">Review Status</span>
             <ReviewBadge status={s.reviewStatus} />
@@ -289,14 +305,14 @@ function ShiftReportContent() {
       <div className="flex gap-3 print:hidden">
         <button
           onClick={() => window.print()}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-semibold transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-semibold transition-all duration-150 active:scale-[0.97] min-h-[44px]"
         >
           <Printer className="h-4 w-4" />
           Print Report
         </button>
         <Link
           href="/home"
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all duration-150 active:scale-[0.97] min-h-[44px]"
         >
           <Home className="h-4 w-4" />
           Done
@@ -309,8 +325,18 @@ function ShiftReportContent() {
 export default function ShiftReportPage() {
   return (
     <Suspense fallback={
-      <div className="p-4 flex justify-center pt-16">
-        <Loader2 className="h-6 w-6 text-gray-500 animate-spin" />
+      <div className="p-4 max-w-lg mx-auto space-y-4 animate-pulse">
+        <div className="h-8 w-48 rounded bg-gray-800/60" />
+        <div className="grid grid-cols-3 gap-3">
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-10 rounded bg-gray-800/60" />
+          <div className="h-10 rounded bg-gray-800/60" />
+          <div className="h-10 rounded bg-gray-800/60" />
+        </div>
       </div>
     }>
       <ShiftReportContent />
@@ -338,9 +364,9 @@ function Row({
   bold?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between py-1 text-sm">
+    <div className="flex items-center justify-between py-1 text-base">
       <span className="text-gray-400">{label}</span>
-      <span className={cn(bold ? 'font-bold text-white' : 'text-white', valueClass)}>{value}</span>
+      <span className={cn(bold ? 'font-bold text-white' : 'text-white', 'font-mono tabular-nums', valueClass)}>{value}</span>
     </div>
   )
 }

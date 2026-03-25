@@ -40,7 +40,7 @@ function Clock() {
 // ── Priority helpers ──────────────────────────────────────────────────────────
 
 function priorityBadge(p: QueuePriority) {
-  if (p === QueuePriority.Vip)     return { label: 'VIP',     cls: 'bg-yellow-500 text-yellow-900' }
+  if (p === QueuePriority.Vip)     return { label: 'VIP',     cls: 'bg-purple-500 text-white' }
   if (p === QueuePriority.Express) return { label: 'EXPRESS', cls: 'bg-blue-500 text-white' }
   return null
 }
@@ -50,7 +50,7 @@ function priorityBadge(p: QueuePriority) {
 function CallingCard({ entry }: { entry: QueueDisplayEntry }) {
   const badge = priorityBadge(entry.priority)
   return (
-    <div className="rounded-2xl bg-yellow-400 p-6 flex flex-col items-center gap-2 shadow-2xl shadow-yellow-900/40 animate-pulse">
+    <div className="rounded-2xl bg-yellow-400 p-6 flex flex-col items-center gap-2 shadow-2xl shadow-yellow-900/40 animate-calling-flash">
       <p className="text-xs font-bold text-yellow-900 uppercase tracking-[0.3em]">Now Calling</p>
       <p className="text-6xl font-black text-yellow-900 tracking-tight leading-none">{entry.queueNumber}</p>
       <p className="text-2xl font-mono font-bold text-yellow-800">{entry.maskedPlate}</p>
@@ -159,12 +159,26 @@ function QueueDisplayContent() {
     return () => { cleanup.then(fn => fn?.()) }
   }, [connect])
 
-  const calling   = displayData?.calling    ?? []
-  const inService = displayData?.inService  ?? []
-  const waiting   = displayData?.waitingCount ?? 0
+  const calling    = displayData?.calling      ?? []
+  const inService  = displayData?.inService    ?? []
+  const waiting    = displayData?.waitingCount ?? 0
+  const servedToday = displayData?.servedToday ?? 0
+  const avgWait    = displayData?.avgWaitMinutes ?? null
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col select-none">
+
+      {/* ── Reconnecting banner ───────────────────────────────────────────── */}
+      {connState === 'reconnecting' && (
+        <div className="bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-bold uppercase tracking-wider">
+          Reconnecting…
+        </div>
+      )}
+      {connState === 'disconnected' && (
+        <div className="bg-red-600 text-white text-center py-2 text-sm font-bold uppercase tracking-wider">
+          Connection lost — Trying to reconnect…
+        </div>
+      )}
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-gray-800/60">
@@ -209,7 +223,7 @@ function QueueDisplayContent() {
         {/* NOW CALLING — left 2 cols */}
         <section className="col-span-2 border-r border-gray-800/60 p-8 flex flex-col gap-6">
           <div className="flex items-center gap-3">
-            <div className="h-4 w-4 rounded-full bg-yellow-400 animate-pulse" />
+            <div className="h-4 w-4 rounded-full bg-yellow-400 animate-calling-flash" />
             <h2 className="text-xl font-black text-yellow-400 uppercase tracking-[0.2em]">
               Now Calling
             </h2>
@@ -274,14 +288,20 @@ function QueueDisplayContent() {
         </section>
       </div>
 
-      {/* ── Footer ticker ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-gray-800/60 px-8 py-4">
-        <div className="overflow-hidden">
-          <p className="text-sm text-gray-600 text-center tracking-wide">
-            Please listen for your queue number to be called &nbsp;•&nbsp;
-            Proceed to the designated bay when called &nbsp;•&nbsp;
-            Thank you for choosing SplashSphere Car Wash
-          </p>
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-gray-800/60 px-8 py-4 flex items-center justify-between">
+        <p className="text-sm text-gray-600 tracking-wide">
+          Please listen for your queue number &nbsp;•&nbsp; Proceed to bay when called
+        </p>
+        <div className="flex items-center gap-6 text-sm text-gray-500">
+          <span>
+            Today: <span className="font-bold text-gray-300 font-mono tabular-nums">{servedToday}</span> served
+          </span>
+          <span>
+            Average wait: <span className="font-bold text-gray-300 font-mono tabular-nums">
+              {avgWait != null ? `${Math.round(avgWait)} min` : '—'}
+            </span>
+          </span>
         </div>
       </footer>
     </div>

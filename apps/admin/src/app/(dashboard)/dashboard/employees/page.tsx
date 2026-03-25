@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { DataTable } from '@/components/ui/data-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -98,23 +99,20 @@ export default function EmployeesPage() {
       )}
 
       {!isLoading && !isError && employees.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Users className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No employees found</p>
-            <p className="text-sm text-muted-foreground">
-              {branchFilter !== 'all' || typeFilter !== 'all'
-                ? 'Try adjusting the filters'
-                : 'Add employees to get started'}
-            </p>
-          </div>
-          {branchFilter === 'all' && typeFilter === 'all' && (
-            <Button variant="outline" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Employee
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No employees found"
+          description={
+            branchFilter !== 'all' || typeFilter !== 'all'
+              ? 'Try adjusting the filters'
+              : 'Add employees to get started'
+          }
+          action={
+            branchFilter === 'all' && typeFilter === 'all'
+              ? { label: 'New Employee', onClick: () => setCreateOpen(true), icon: Plus }
+              : undefined
+          }
+        />
       )}
 
       {!isLoading && employees.length > 0 && (

@@ -223,9 +223,17 @@ export function CommissionMatrixEditor({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Commission is split equally among all assigned employees.
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            Commission is split equally among all assigned employees.
+          </p>
+          {isDirty && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Unsaved changes
+            </span>
+          )}
+        </div>
         <Button size="sm" onClick={handleSave} disabled={!isDirty || isPending}>
           <Save className="mr-2 h-3.5 w-3.5" />
           {isPending ? 'Saving…' : 'Save Commissions'}
@@ -235,14 +243,14 @@ export function CommissionMatrixEditor({
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50">
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-36">
+            <tr className="bg-muted/30">
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground w-36">
                 Vehicle Type
               </th>
               {sizes.map((s) => (
                 <th
                   key={s.id}
-                  className="px-2 py-2.5 text-center font-medium text-muted-foreground min-w-[160px]"
+                  className="px-2 py-2.5 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground min-w-[160px]"
                 >
                   {s.name}
                 </th>
@@ -255,7 +263,7 @@ export function CommissionMatrixEditor({
                 key={vt.id}
                 className={cn('border-t', vtIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20')}
               >
-                <td className="px-4 py-2 font-medium align-top pt-3">{vt.name}</td>
+                <td className="px-4 py-2 font-medium align-top pt-3 bg-muted/30">{vt.name}</td>
                 {sizes.map((s) => (
                   <td key={s.id} className="px-1 py-1 align-top">
                     <CommissionCellEditor

@@ -79,8 +79,19 @@ export default function CloseShiftPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 flex justify-center pt-16">
-        <Loader2 className="h-6 w-6 text-gray-500 animate-spin" />
+      <div className="p-4 max-w-lg mx-auto space-y-4 animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-gray-800/60" />
+          <div className="flex-1 space-y-2">
+            <div className="h-6 w-32 rounded bg-gray-800/60" />
+            <div className="h-4 w-20 rounded bg-gray-800/60" />
+          </div>
+        </div>
+        {/* Summary card skeleton */}
+        <div className="h-48 rounded-xl bg-gray-800/60" />
+        {/* Action button skeleton */}
+        <div className="h-14 rounded-xl bg-gray-800/60" />
       </div>
     )
   }
@@ -127,13 +138,13 @@ export default function CloseShiftPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={goBack}
-          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800"
+          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center transition-all duration-150 active:scale-[0.97]"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-white">Close Shift</h1>
-          <p className="text-sm text-gray-400">Step {step} of 3</p>
+          <p className="text-base text-gray-400">Step {step} of 3</p>
         </div>
         {/* Step indicators */}
         <div className="flex gap-1.5">
@@ -155,18 +166,18 @@ export default function CloseShiftPage() {
           <div className="rounded-xl bg-gray-800 border border-gray-700 p-4 space-y-3">
             <h2 className="text-sm font-semibold text-gray-300">Shift Summary</h2>
 
-            <div className="grid grid-cols-2 gap-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-y-2 text-base">
               <span className="text-gray-400">Started</span>
               <span className="text-white font-medium text-right">{fmtTime(shift.openedAt)}</span>
 
               <span className="text-gray-400">Opening Fund</span>
-              <span className="text-white font-medium text-right">{fmt(shift.openingCashFund)}</span>
+              <span className="text-white font-medium text-right font-mono tabular-nums">{fmt(shift.openingCashFund)}</span>
 
               <span className="text-gray-400">Transactions</span>
               <span className="text-white font-medium text-right">{shift.totalTransactionCount}</span>
 
               <span className="text-gray-400">Revenue</span>
-              <span className="text-white font-medium text-right">{fmt(shift.totalRevenue)}</span>
+              <span className="text-white font-medium text-right font-mono tabular-nums">{fmt(shift.totalRevenue)}</span>
             </div>
           </div>
 
@@ -177,10 +188,10 @@ export default function CloseShiftPage() {
                 Cash Movements ({shift.cashMovements.length})
               </h2>
               {shift.cashMovements.map(m => (
-                <div key={m.id} className="flex items-center justify-between text-sm">
+                <div key={m.id} className="flex items-center justify-between text-base">
                   <span className="text-gray-400">{m.reason}</span>
                   <span className={cn(
-                    'font-semibold',
+                    'font-semibold font-mono tabular-nums',
                     m.type === CashMovementType.CashIn ? 'text-green-400' : 'text-red-400'
                   )}>
                     {m.type === CashMovementType.CashIn ? '+' : '-'}{fmt(m.amount)}
@@ -195,9 +206,9 @@ export default function CloseShiftPage() {
             <div className="rounded-xl bg-gray-800 border border-gray-700 p-4 space-y-2">
               <h2 className="text-sm font-semibold text-gray-300">Payments</h2>
               {shift.paymentSummaries.map(ps => (
-                <div key={ps.method} className="flex items-center justify-between text-sm">
+                <div key={ps.method} className="flex items-center justify-between text-base">
                   <span className="text-gray-400">{METHOD_LABEL[ps.method]}</span>
-                  <span className="text-white font-medium">{fmt(ps.totalAmount)}</span>
+                  <span className="text-white font-medium font-mono tabular-nums">{fmt(ps.totalAmount)}</span>
                 </div>
               ))}
             </div>
@@ -205,7 +216,7 @@ export default function CloseShiftPage() {
 
           <button
             onClick={() => setStep(2)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-colors min-h-[56px]"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.97] text-white font-bold text-lg transition-all duration-150 min-h-[56px]"
           >
             Continue to Cash Count
             <ArrowRight className="h-5 w-5" />
@@ -216,7 +227,7 @@ export default function CloseShiftPage() {
       {/* ── Step 2: Denomination count ───────────────────────────────────────── */}
       {step === 2 && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-400">Count each denomination in your drawer.</p>
+          <p className="text-base text-gray-400">Count each denomination in your drawer.</p>
 
           {/* Bills */}
           <div className="rounded-xl bg-gray-800 border border-gray-700 overflow-hidden">
@@ -240,7 +251,7 @@ export default function CloseShiftPage() {
                     placeholder="0"
                     className="w-20 text-center text-lg font-mono text-white bg-gray-700 border border-gray-600 rounded-lg py-1.5 focus:border-blue-500 focus:outline-none"
                   />
-                  <span className="ml-auto font-mono text-gray-300 text-sm w-28 text-right">
+                  <span className="ml-auto font-mono tabular-nums text-gray-300 text-base w-28 text-right">
                     = {fmt(subtotal)}
                   </span>
                 </div>
@@ -270,7 +281,7 @@ export default function CloseShiftPage() {
                     placeholder="0"
                     className="w-20 text-center text-lg font-mono text-white bg-gray-700 border border-gray-600 rounded-lg py-1.5 focus:border-blue-500 focus:outline-none"
                   />
-                  <span className="ml-auto font-mono text-gray-300 text-sm w-28 text-right">
+                  <span className="ml-auto font-mono tabular-nums text-gray-300 text-base w-28 text-right">
                     = {fmt(subtotal)}
                   </span>
                 </div>
@@ -280,20 +291,20 @@ export default function CloseShiftPage() {
 
           {/* Running total */}
           <div className="rounded-xl bg-gray-900 border border-gray-700 p-4 space-y-2">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-base">
               <span className="text-gray-400">Total Counted</span>
-              <span className="font-mono font-bold text-white">{fmt(totalCounted)}</span>
+              <span className="font-mono tabular-nums font-bold text-white">{fmt(totalCounted)}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-base">
               <span className="text-gray-400">Expected</span>
-              <span className="font-mono text-gray-300">{fmt(expectedEstimate)}</span>
+              <span className="font-mono tabular-nums text-gray-300">{fmt(expectedEstimate)}</span>
             </div>
-            <div className={cn('flex items-center justify-between text-sm font-semibold', varianceColor)}>
+            <div className={cn('flex items-center justify-between text-base font-semibold', varianceColor)}>
               <span className="flex items-center gap-1">
                 {varianceIcon}
                 Variance
               </span>
-              <span className="font-mono">
+              <span className="font-mono tabular-nums">
                 {variance >= 0 ? '+' : ''}{fmt(variance)}
                 {absVariance <= 50 ? ' ✓' : absVariance <= 200 ? ' ⚠' : ' ✗'}
               </span>
@@ -302,7 +313,7 @@ export default function CloseShiftPage() {
 
           <button
             onClick={() => setStep(3)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-colors min-h-[56px]"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.97] text-white font-bold text-lg transition-all duration-150 min-h-[56px]"
           >
             Review &amp; Confirm
             <ArrowRight className="h-5 w-5" />
@@ -316,15 +327,15 @@ export default function CloseShiftPage() {
           <div className="rounded-xl bg-gray-800 border border-gray-700 p-4 space-y-3">
             <h2 className="text-sm font-semibold text-gray-300">Final Summary</h2>
 
-            <div className="grid grid-cols-2 gap-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-y-2 text-base">
               <span className="text-gray-400">Opening Fund</span>
-              <span className="text-white font-medium text-right">{fmt(shift.openingCashFund)}</span>
+              <span className="text-white font-medium font-mono tabular-nums text-right">{fmt(shift.openingCashFund)}</span>
 
               <span className="text-gray-400">Cash Counted</span>
-              <span className="text-white font-mono font-bold text-right">{fmt(totalCounted)}</span>
+              <span className="text-white font-mono tabular-nums font-bold text-right">{fmt(totalCounted)}</span>
 
               <span className="text-gray-400">Expected</span>
-              <span className="text-gray-300 font-mono text-right">{fmt(expectedEstimate)}</span>
+              <span className="text-gray-300 font-mono tabular-nums text-right">{fmt(expectedEstimate)}</span>
             </div>
 
             <div className={cn(
@@ -335,20 +346,20 @@ export default function CloseShiftPage() {
                 {varianceIcon}
                 Variance
               </span>
-              <span className="font-mono">
+              <span className="font-mono tabular-nums">
                 {variance >= 0 ? '+' : ''}{fmt(variance)}
               </span>
             </div>
           </div>
 
           {absVariance > 200 && (
-            <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-sm text-red-300">
+            <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-base text-red-300">
               <strong>Large variance detected.</strong> This shift will be flagged for manager review.
             </div>
           )}
 
           {absVariance > 50 && absVariance <= 200 && (
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-sm text-amber-300">
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-base text-amber-300">
               Variance exceeds threshold. This shift will need manager approval.
             </div>
           )}
@@ -362,7 +373,7 @@ export default function CloseShiftPage() {
           <button
             onClick={() => closeMutation.mutate()}
             disabled={closeMutation.isPending}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-lg transition-colors min-h-[56px]"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 active:scale-[0.97] text-white font-bold text-lg transition-all duration-150 min-h-[56px]"
           >
             {closeMutation.isPending ? (
               <Loader2 className="h-5 w-5 animate-spin" />

@@ -118,10 +118,18 @@ export function PricingMatrixEditor({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Base price (fallback for empty cells):{' '}
-          <span className="font-medium text-foreground">{formatPHP(String(basePrice))}</span>
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            Base price (fallback for empty cells):{' '}
+            <span className="font-medium text-foreground">{formatPHP(String(basePrice))}</span>
+          </p>
+          {isDirty && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Unsaved changes
+            </span>
+          )}
+        </div>
         <Button size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
           <Save className="mr-2 h-3.5 w-3.5" />
           {isSaving ? 'Saving…' : 'Save Pricing'}
@@ -131,14 +139,14 @@ export function PricingMatrixEditor({
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50">
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-36">
+            <tr className="bg-muted/30">
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground w-36">
                 Vehicle Type
               </th>
               {sizes.map((s) => (
                 <th
                   key={s.id}
-                  className="px-4 py-2.5 text-center font-medium text-muted-foreground min-w-28"
+                  className="px-4 py-2.5 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground min-w-28"
                 >
                   {s.name}
                 </th>
@@ -151,12 +159,12 @@ export function PricingMatrixEditor({
                 key={vt.id}
                 className={cn('border-t', vtIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20')}
               >
-                <td className="px-4 py-2 font-medium">{vt.name}</td>
+                <td className="px-4 py-2 font-medium bg-muted/30">{vt.name}</td>
                 {sizes.map((s) => {
                   const key = matrixKey(vt.id, s.id)
                   const val = matrix[key] ?? ''
                   return (
-                    <td key={s.id} className="px-2 py-1.5">
+                    <td key={s.id} className={cn('px-2 py-1.5', val && 'bg-splash-50')}>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
                           ₱

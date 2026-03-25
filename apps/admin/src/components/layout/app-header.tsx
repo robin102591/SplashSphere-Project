@@ -1,8 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useUser, useAuth, useOrganization } from '@clerk/nextjs'
+import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +19,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import { Building2, LogOut, Settings, User } from 'lucide-react'
-import { ConnectionStatusBadge } from '@/components/connection-status'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  Bell, LogOut, Moon, Search, Settings, Sun, User,
+} from 'lucide-react'
+import { ConnectionStatusDot } from '@/components/connection-status'
 
 export function AppHeader() {
   const { user } = useUser()
   const { signOut } = useAuth()
-  const { organization } = useOrganization()
+  const { organization, membership } = useOrganization()
   const router = useRouter()
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -29,27 +38,64 @@ export function AppHeader() {
     .join('')
     .toUpperCase()
 
+  const role = membership?.role?.replace('org:', '') ?? 'member'
+
   const handleSignOut = async () => {
     await signOut()
     router.push('/sign-in')
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b px-4 lg:px-6">
+    <header className="flex h-14 items-center gap-3 border-b px-4 lg:px-6">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-4" />
 
-      {/* Tenant display — custom, NOT OrganizationSwitcher */}
-      {organization && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Building2 className="h-4 w-4" />
-          <span>{organization.name}</span>
+      {/* Global search — desktop */}
+      <div className="hidden md:flex flex-1 justify-center">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            className="pl-9 h-8 bg-muted/50"
+          />
         </div>
-      )}
+      </div>
+      {/* Global search — mobile toggle */}
+      <div className="flex-1 md:hidden" />
+      <Tooltip>
+        <TooltipTrigger render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 md:hidden"
+            onClick={() => setSearchOpen(!searchOpen)}
+          />
+        }>
+          <Search className="h-4 w-4" />
+        </TooltipTrigger>
+        <TooltipContent>Search</TooltipContent>
+      </Tooltip>
 
-      <div className="ml-auto flex items-center gap-3">
-        <ConnectionStatusBadge className="hidden sm:flex" />
-        {/* Profile dropdown — custom, NOT UserButton */}
+      <div className="flex items-center gap-1.5">
+        <ConnectionStatusDot className="hidden sm:block" />
+
+        {/* Dark mode toggle */}
+        <DarkModeToggle />
+
+        {/* Notification bell */}
+        <Tooltip>
+          <TooltipTrigger render={
+            <Button variant="ghost" size="icon" className="h-8 w-8 relative" />
+          }>
+            <Bell className="h-4 w-4" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+              0
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Notifications</TooltipContent>
+        </Tooltip>
+
+        {/* Profile dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">
             <Avatar className="h-8 w-8 cursor-pointer">
@@ -61,10 +107,20 @@ export function AppHeader() {
             <DropdownMenuGroup>
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.fullName}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">{user?.fullName}</p>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                      {role}
+                    </Badge>
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.primaryEmailAddress?.emailAddress}
                   </p>
+                  {organization && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {organization.name}
+                    </p>
+                  )}
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
@@ -93,5 +149,28 @@ export function AppHeader() {
         </DropdownMenu>
       </div>
     </header>
+  )
+}
+
+// ── Dark mode toggle ─────────────────────────────────────────────────────────
+
+function DarkModeToggle() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        />
+      }>
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </TooltipTrigger>
+      <TooltipContent>{isDark ? 'Light mode' : 'Dark mode'}</TooltipContent>
+    </Tooltip>
   )
 }

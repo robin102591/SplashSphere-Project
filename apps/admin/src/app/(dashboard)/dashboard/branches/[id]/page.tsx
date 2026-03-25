@@ -1,10 +1,10 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Power, PowerOff, MapPin, Phone, Hash } from 'lucide-react'
+import { Pencil, Power, PowerOff, MapPin, Phone, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -176,7 +176,6 @@ export default function BranchDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
 
   const { data: branch, isLoading, isError } = useBranch(id)
@@ -218,10 +217,7 @@ export default function BranchDetailPage({
   if (isError || !branch) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <PageHeader title="Branch" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Branch not found or failed to load.
         </div>
@@ -232,61 +228,56 @@ export default function BranchDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{branch.name}</h1>
-              <StatusBadge status={branch.isActive ? 'Active' : 'Inactive'} />
-            </div>
-            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Hash className="h-3.5 w-3.5" />
-                {branch.code}
-              </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                {branch.address}
-              </span>
-              <span className="flex items-center gap-1">
-                <Phone className="h-3.5 w-3.5" />
-                {branch.contactNumber}
-              </span>
-            </div>
-          </div>
+      <PageHeader
+        title={branch.name}
+        back
+        badge={<StatusBadge status={branch.isActive ? 'Active' : 'Inactive'} />}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggle}
+              disabled={isToggling}
+            >
+              {branch.isActive ? (
+                <>
+                  <PowerOff className="mr-2 h-3.5 w-3.5" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <Power className="mr-2 h-3.5 w-3.5" />
+                  Activate
+                </>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Hash className="h-3.5 w-3.5" />
+            {branch.code}
+          </span>
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5" />
+            {branch.address}
+          </span>
+          <span className="flex items-center gap-1">
+            <Phone className="h-3.5 w-3.5" />
+            {branch.contactNumber}
+          </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggle}
-            disabled={isToggling}
-          >
-            {branch.isActive ? (
-              <>
-                <PowerOff className="mr-2 h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <Power className="mr-2 h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* Tabs */}
       <Tabs defaultValue="employees">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="employees">Employees</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
         </TabsList>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { TrendingUp, Car, CreditCard, Users, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/stat-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -28,29 +29,6 @@ function defaultRange() {
   const from = new Date()
   from.setDate(to.getDate() - 29)
   return { from: dateStr(from), to: dateStr(to) }
-}
-
-function KpiCard({
-  title, value, sub, icon: Icon, highlight,
-}: {
-  title: string
-  value: string
-  sub?: string
-  icon: React.ElementType
-  highlight?: boolean
-}) {
-  return (
-    <Card className={highlight ? 'border-primary/30 bg-primary/5' : ''}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <p className={`text-2xl font-bold tabular-nums ${highlight ? 'text-primary' : ''}`}>{value}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-      </CardContent>
-    </Card>
-  )
 }
 
 export default function DashboardPage() {
@@ -112,26 +90,26 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <KpiCard
+          <StatCard
             title="Revenue Today"
             value={formatPeso(summary?.revenueToday ?? 0)}
             sub={`This week: ${formatPeso(summary?.revenueThisWeek ?? 0)}`}
             icon={CreditCard}
             highlight
           />
-          <KpiCard
+          <StatCard
             title="Transactions Today"
             value={String(summary?.transactionsToday ?? 0)}
             sub={`This week: ${summary?.transactionsThisWeek ?? 0}`}
             icon={Activity}
           />
-          <KpiCard
+          <StatCard
             title="Queue Waiting"
             value={String(summary?.queueWaiting ?? 0)}
             sub={`In service: ${summary?.queueInService ?? 0}`}
             icon={Car}
           />
-          <KpiCard
+          <StatCard
             title="Active Employees"
             value={String(summary?.activeEmployees ?? 0)}
             sub={`Clocked in: ${summary?.clockedInToday ?? 0}`}
@@ -180,15 +158,15 @@ export default function DashboardPage() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                   <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
-                  <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#colorRev)" />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#colorRev)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -241,7 +219,7 @@ export default function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
-                <Bar dataKey="revenue" fill="#2563eb" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -258,11 +236,11 @@ export default function DashboardPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2.5 text-left font-medium">Branch</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Revenue</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Transactions</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Queue Waiting</th>
-                  <th className="px-4 py-2.5 text-right font-medium">In Service</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Branch</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Revenue</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Transactions</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Queue Waiting</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">In Service</th>
                 </tr>
               </thead>
               <tbody className="divide-y">

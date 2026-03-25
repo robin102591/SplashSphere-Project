@@ -1,11 +1,11 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Power, PowerOff, CheckCircle2 } from 'lucide-react'
+import { Pencil, Power, PowerOff, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -104,7 +104,6 @@ export default function PackageDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
 
   const { data: pkg, isLoading, isError } = usePackage(id)
@@ -149,10 +148,7 @@ export default function PackageDetailPage({
   if (isError || !pkg) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <PageHeader title="Package" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Package not found or failed to load.
         </div>
@@ -163,48 +159,44 @@ export default function PackageDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{pkg.name}</h1>
-              <StatusBadge status={pkg.isActive ? 'Active' : 'Inactive'} />
-              <Badge variant="outline" className="text-xs">
-                {pkg.serviceCount} {pkg.serviceCount === 1 ? 'service' : 'services'}
-              </Badge>
-            </div>
-            {pkg.description && (
-              <p className="text-sm text-muted-foreground mt-0.5">{pkg.description}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
-            {pkg.isActive ? (
-              <>
-                <PowerOff className="mr-2 h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <Power className="mr-2 h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={pkg.name}
+        back
+        badge={
+          <>
+            <StatusBadge status={pkg.isActive ? 'Active' : 'Inactive'} />
+            <Badge variant="outline" className="text-xs">
+              {pkg.serviceCount} {pkg.serviceCount === 1 ? 'service' : 'services'}
+            </Badge>
+          </>
+        }
+        description={pkg.description ?? undefined}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
+              {pkg.isActive ? (
+                <>
+                  <PowerOff className="mr-2 h-3.5 w-3.5" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <Power className="mr-2 h-3.5 w-3.5" />
+                  Activate
+                </>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="pricing">
             Pricing Matrix

@@ -29,9 +29,9 @@ function defaultDates() {
 
 function VarianceBadge({ value }: { value: number }) {
   const abs = Math.abs(value)
-  if (abs <= 50) return <span className="text-green-700 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
-  if (abs <= 200) return <span className="text-amber-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
-  return <span className="text-red-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
+  if (abs <= 50) return <span className="text-green-700 dark:text-green-400 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
+  if (abs <= 200) return <span className="text-amber-600 dark:text-amber-400 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
+  return <span className="text-red-600 dark:text-red-400 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
 }
 
 function CashierRow({ cashier, onClick, selected }: {
@@ -46,7 +46,7 @@ function CashierRow({ cashier, onClick, selected }: {
       className={cn(
         'cursor-pointer transition-colors',
         selected ? 'bg-primary/5 border-l-2 border-primary' : 'hover:bg-muted/40',
-        isConsistentlyNegative && 'bg-red-50/40'
+        isConsistentlyNegative && 'bg-red-50/40 dark:bg-red-950/20'
       )}
       onClick={onClick}
     >
@@ -61,7 +61,7 @@ function CashierRow({ cashier, onClick, selected }: {
       <td className="px-4 py-3 text-right tabular-nums">{cashier.shiftCount}</td>
       <td className="px-4 py-3 text-right"><VarianceBadge value={cashier.totalVariance} /></td>
       <td className="px-4 py-3 text-right"><VarianceBadge value={cashier.averageVariance} /></td>
-      <td className="px-4 py-3 text-right font-mono text-red-600 font-semibold text-sm">
+      <td className="px-4 py-3 text-right font-mono text-red-600 dark:text-red-400 font-semibold text-sm">
         {cashier.largestShortage < 0 ? formatPeso(cashier.largestShortage) : '—'}
       </td>
     </tr>
@@ -152,16 +152,16 @@ export default function ShiftVariancePage() {
                   ]}
                 />
                 <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1} />
-                <ReferenceLine y={50} stroke="#16a34a" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={-50} stroke="#16a34a" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={200} stroke="#d97706" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={-200} stroke="#d97706" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={50} stroke="oklch(0.55 0.16 155)" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={-50} stroke="oklch(0.55 0.16 155)" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={200} stroke="oklch(0.70 0.16 70)" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={-200} stroke="oklch(0.70 0.16 70)" strokeDasharray="4 4" strokeWidth={1} />
                 <Line
                   type="monotone"
                   dataKey="variance"
-                  stroke="#2563eb"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: '#2563eb' }}
+                  dot={{ r: 3, fill: 'hsl(var(--chart-1))' }}
                   activeDot={{ r: 5 }}
                 />
               </LineChart>

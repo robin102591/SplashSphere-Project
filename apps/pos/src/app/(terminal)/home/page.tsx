@@ -96,35 +96,35 @@ export default function HomePage() {
       <div className="grid grid-cols-2 gap-3">
         <QuickAction
           href="/transactions/new"
-          icon={<Plus className="h-5 w-5" />}
+          icon={<Plus className="h-6 w-6" />}
           label="New Transaction"
           sub="Direct service"
           accent="blue"
         />
         <QuickAction
           href="/queue/add"
-          icon={<ListOrdered className="h-5 w-5" />}
+          icon={<ListOrdered className="h-6 w-6" />}
           label="Add to Queue"
           sub="Queue a vehicle"
           accent="yellow"
         />
         <QuickAction
           href="/queue"
-          icon={<LayoutGrid className="h-5 w-5" />}
+          icon={<LayoutGrid className="h-6 w-6" />}
           label="Queue Board"
           sub={queueStats ? `${queueStats.waitingCount} waiting` : 'Manage queue'}
           accent="green"
         />
         <QuickAction
           href="/customers/lookup"
-          icon={<Users className="h-5 w-5" />}
+          icon={<Users className="h-6 w-6" />}
           label="Customer Lookup"
           sub="Search by plate"
           accent="purple"
         />
         <QuickAction
           href={shiftOpen ? '/shift' : '/shift/open'}
-          icon={<Wallet className="h-5 w-5" />}
+          icon={<Wallet className="h-6 w-6" />}
           label="My Shift"
           sub={shiftOpen ? 'Shift active' : 'Open shift'}
           accent={shiftOpen ? 'green' : 'yellow'}
@@ -203,15 +203,15 @@ export default function HomePage() {
                 <Link
                   key={tx.id}
                   href={`/transactions/${tx.id}`}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors"
+                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 active:scale-[0.97] transition-all duration-150 min-h-[56px]"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-mono font-semibold text-white">{tx.plateNumber}</p>
-                    <p className="text-xs text-gray-500 truncate">{tx.transactionNumber}</p>
+                    <p className="text-base font-mono font-semibold text-white">{tx.plateNumber}</p>
+                    <p className="text-sm text-gray-500 truncate">{tx.transactionNumber}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className={cn('text-xs font-medium', st.cls)}>{st.label}</span>
-                    <span className="text-sm font-semibold text-white">{fmt(tx.finalAmount)}</span>
+                  <div className="flex items-center gap-3 shrink-0 ml-2">
+                    <span className={cn('text-sm font-medium', st.cls)}>{st.label}</span>
+                    <span className="text-base font-bold font-mono text-white">{fmt(tx.finalAmount)}</span>
                   </div>
                 </Link>
               )
@@ -243,12 +243,12 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-start gap-3 p-4 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 active:scale-95 transition-all min-h-[72px]"
+      className="flex items-start gap-3 p-4 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 active:scale-[0.97] transition-all duration-150 min-h-[72px]"
     >
       <span className={cn('mt-0.5 shrink-0', accentMap[accent])}>{icon}</span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-white leading-tight">{label}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+        <p className="text-base font-semibold text-white leading-tight">{label}</p>
+        <p className="text-sm text-gray-400 mt-0.5">{sub}</p>
       </div>
     </Link>
   )
@@ -268,7 +268,7 @@ function StatCard({
         {icon}
         <span className="text-xs text-gray-400">{label}</span>
       </div>
-      <p className="text-xl font-bold text-white">{value}</p>
+      <p className="text-xl font-bold font-mono tabular-nums text-white">{value}</p>
       <p className="text-xs text-gray-500">{sub}</p>
     </div>
   )

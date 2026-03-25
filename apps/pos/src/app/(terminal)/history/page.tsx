@@ -87,14 +87,14 @@ export default function HistoryPage() {
         <div>
           <h1 className="text-xl font-bold text-white">Transaction History</h1>
           {data && (
-            <p className="text-sm text-gray-400">{data.totalCount} transactions</p>
+            <p className="text-base text-gray-400">{data.totalCount} transactions</p>
           )}
         </div>
         <input
           type="date"
           value={date}
           onChange={(e) => { setDate(e.target.value); resetPage() }}
-          className="min-h-[44px] px-3 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-[44px] px-3 rounded-lg bg-gray-800 border border-gray-700 text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -106,7 +106,7 @@ export default function HistoryPage() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); resetPage() }}
           placeholder="Search plate or transaction #…"
-          className="w-full min-h-[48px] pl-10 pr-10 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full min-h-[48px] pl-10 pr-10 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {search && (
           <button
@@ -125,7 +125,7 @@ export default function HistoryPage() {
             key={f.value}
             onClick={() => { setStatusFilter(f.value); resetPage() }}
             className={cn(
-              'shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[36px]',
+              'shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-[0.97] min-h-[44px]',
               statusFilter === f.value
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700',
@@ -140,12 +140,12 @@ export default function HistoryPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-[68px] rounded-xl bg-gray-800 animate-pulse" />
+            <div key={i} className="h-[68px] rounded-xl bg-gray-800/60" />
           ))}
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-700 py-16 text-center">
-          <p className="text-gray-500">No transactions found</p>
+          <p className="text-base text-gray-500">No transactions found</p>
           {(search || statusFilter) && (
             <button
               onClick={() => { setSearch(''); setStatusFilter(''); resetPage() }}
@@ -163,11 +163,11 @@ export default function HistoryPage() {
               <Link
                 key={tx.id}
                 href={`/transactions/${tx.id}`}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors"
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors duration-150 active:scale-[0.98] min-h-[56px]"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-mono font-bold text-white">{tx.plateNumber}</p>
+                    <p className="text-base font-mono font-bold text-white">{tx.plateNumber}</p>
                     <span className={cn('flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full', st.cls)}>
                       {st.icon}
                       {st.label}
@@ -178,7 +178,7 @@ export default function HistoryPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-sm font-semibold text-white">{fmt(tx.finalAmount)}</span>
+                  <span className="text-base font-mono tabular-nums font-semibold text-white">{fmt(tx.finalAmount)}</span>
                   <ChevronRight className="h-4 w-4 text-gray-600" />
                 </div>
               </Link>
@@ -193,17 +193,17 @@ export default function HistoryPage() {
           <button
             disabled={page === 1 || isFetching}
             onClick={() => setPage((p) => p - 1)}
-            className="min-h-[44px] px-4 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
+            className="min-h-[44px] px-4 rounded-lg bg-gray-800 border border-gray-700 text-base text-white disabled:opacity-40 hover:bg-gray-700 transition-colors duration-150 active:scale-[0.97]"
           >
             Previous
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-base text-gray-500">
             Page {page} of {totalPages}
           </span>
           <button
             disabled={page >= totalPages || isFetching}
             onClick={() => setPage((p) => p + 1)}
-            className="min-h-[44px] px-4 rounded-lg bg-gray-800 border border-gray-700 text-sm text-white disabled:opacity-40 hover:bg-gray-700 transition-colors"
+            className="min-h-[44px] px-4 rounded-lg bg-gray-800 border border-gray-700 text-base text-white disabled:opacity-40 hover:bg-gray-700 transition-colors duration-150 active:scale-[0.97]"
           >
             Next
           </button>

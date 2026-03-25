@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -125,15 +126,11 @@ export default function PayrollPage() {
       )}
 
       {!isLoading && !isError && periods.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Wallet className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No payroll periods found</p>
-            <p className="text-sm text-muted-foreground">
-              Periods are created automatically every Monday by the background job
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={Wallet}
+          title="No payroll periods found"
+          description="Periods are created automatically every Monday by the background job"
+        />
       )}
 
       {!isLoading && periods.length > 0 && (
@@ -141,11 +138,11 @@ export default function PayrollPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Period</th>
-                <th className="px-4 py-3 text-left font-medium">Dates</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-center font-medium">Entries</th>
-                <th className="px-4 py-3 text-right font-medium">Total Net Pay</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Period</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Dates</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Entries</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Total Net Pay</th>
               </tr>
             </thead>
             <tbody className="divide-y">

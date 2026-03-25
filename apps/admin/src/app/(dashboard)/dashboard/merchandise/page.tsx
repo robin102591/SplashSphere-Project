@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Package, AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -219,15 +220,11 @@ export default function MerchandisePage() {
       )}
 
       {!isLoading && !isError && items.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Package className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No items found</p>
-            <p className="text-sm text-muted-foreground">
-              {lowStockOnly ? 'No low-stock items' : 'Add your first merchandise item'}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No items found"
+          description={lowStockOnly ? 'No low-stock items' : 'Add your first merchandise item'}
+        />
       )}
 
       {!isLoading && items.length > 0 && (
@@ -235,11 +232,11 @@ export default function MerchandisePage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Item</th>
-                <th className="px-4 py-3 text-left font-medium">SKU</th>
-                <th className="px-4 py-3 text-right font-medium">Price</th>
-                <th className="px-4 py-3 text-center font-medium">Stock</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Item</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">SKU</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Price</th>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Stock</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">

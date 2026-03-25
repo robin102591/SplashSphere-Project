@@ -3,11 +3,12 @@
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Pencil, Power, PowerOff, Car, Mail, Phone, FileText, Plus,
+  Pencil, Power, PowerOff, Car, Mail, Phone, FileText, Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -63,14 +64,14 @@ function EditCustomerForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>First name</Label>
+          <Label>First name <span className="text-destructive">*</span></Label>
           <Input {...register('firstName')} />
           {formState.errors.firstName && (
             <p className="text-xs text-destructive">{formState.errors.firstName.message}</p>
           )}
         </div>
         <div className="space-y-1.5">
-          <Label>Last name</Label>
+          <Label>Last name <span className="text-destructive">*</span></Label>
           <Input {...register('lastName')} />
           {formState.errors.lastName && (
             <p className="text-xs text-destructive">{formState.errors.lastName.message}</p>
@@ -166,7 +167,7 @@ function AddCarDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label>Plate number</Label>
+            <Label>Plate number <span className="text-destructive">*</span></Label>
             <Input placeholder="ABC1234" {...register('plateNumber')} />
             {formState.errors.plateNumber && (
               <p className="text-xs text-destructive">{formState.errors.plateNumber.message}</p>
@@ -174,7 +175,7 @@ function AddCarDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Vehicle type</Label>
+              <Label>Vehicle type <span className="text-destructive">*</span></Label>
               <Select onValueChange={(v) => setValue('vehicleTypeId', v, { shouldValidate: true })}>
                 <SelectTrigger><SelectValue placeholder="Type…" /></SelectTrigger>
                 <SelectContent>
@@ -188,7 +189,7 @@ function AddCarDialog({
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Size</Label>
+              <Label>Size <span className="text-destructive">*</span></Label>
               <Select onValueChange={(v) => setValue('sizeId', v, { shouldValidate: true })}>
                 <SelectTrigger><SelectValue placeholder="Size…" /></SelectTrigger>
                 <SelectContent>
@@ -358,9 +359,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   if (isError || !customer) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
-        </Button>
+        <PageHeader title="Customer" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Customer not found or failed to load.
         </div>
@@ -370,38 +369,29 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{customer.fullName}</h1>
-              <StatusBadge status={customer.isActive ? 'Active' : 'Inactive'} />
-            </div>
-            {customer.email && (
-              <p className="text-sm text-muted-foreground mt-0.5">{customer.email}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
-            {customer.isActive ? (
-              <><PowerOff className="mr-2 h-3.5 w-3.5" />Deactivate</>
-            ) : (
-              <><Power className="mr-2 h-3.5 w-3.5" />Activate</>
-            )}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={customer.fullName}
+        description={customer.email || undefined}
+        back
+        badge={<StatusBadge status={customer.isActive ? 'Active' : 'Inactive'} />}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
+              {customer.isActive ? (
+                <><PowerOff className="mr-2 h-3.5 w-3.5" />Deactivate</>
+              ) : (
+                <><Power className="mr-2 h-3.5 w-3.5" />Activate</>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="vehicles">
             Vehicles

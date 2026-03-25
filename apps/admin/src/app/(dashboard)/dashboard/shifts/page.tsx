@@ -33,7 +33,7 @@ const REVIEW_STATUS_KEYS: Record<ReviewStatus, string> = {
 
 function VarianceCell({ variance }: { variance: number }) {
   const abs = Math.abs(variance)
-  const color = abs <= 50 ? 'text-green-700' : abs <= 200 ? 'text-amber-600' : 'text-red-600'
+  const color = abs <= 50 ? 'text-green-700 dark:text-green-400' : abs <= 200 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
   return (
     <span className={cn('font-mono tabular-nums font-semibold', color)}>
       {variance >= 0 ? '+' : ''}{formatPeso(variance)}
@@ -138,15 +138,15 @@ export default function ShiftsPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-4 py-2.5 text-left font-medium">Date</th>
-              <th className="px-4 py-2.5 text-left font-medium">Branch</th>
-              <th className="px-4 py-2.5 text-left font-medium">Cashier</th>
-              <th className="px-4 py-2.5 text-left font-medium">Opened</th>
-              <th className="px-4 py-2.5 text-left font-medium">Closed</th>
-              <th className="px-4 py-2.5 text-right font-medium">Revenue</th>
-              <th className="px-4 py-2.5 text-right font-medium">Variance</th>
-              <th className="px-4 py-2.5 text-left font-medium">Status</th>
-              <th className="px-4 py-2.5 text-left font-medium">Review</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Date</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Branch</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Cashier</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Opened</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Closed</th>
+              <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Revenue</th>
+              <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Variance</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Review</th>
             </tr>
           </thead>
           <tbody className="divide-y">

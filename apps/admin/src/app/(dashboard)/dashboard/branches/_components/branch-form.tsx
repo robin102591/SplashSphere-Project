@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { BranchFormValues } from '@/hooks/use-branches'
 
 const branchSchema = z.object({
@@ -22,10 +23,11 @@ const branchSchema = z.object({
 interface BranchFormProps {
   defaultValues?: Partial<BranchFormValues>
   onSubmit: (values: BranchFormValues) => Promise<void>
+  onCancel?: () => void
   submitLabel?: string
 }
 
-export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: BranchFormProps) {
+export function BranchForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Save' }: BranchFormProps) {
   const { register, handleSubmit, setValue, watch, formState } = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
     defaultValues: {
@@ -41,7 +43,7 @@ export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: Br
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="name">Branch name</Label>
+          <Label htmlFor="name">Branch name <span className="text-destructive">*</span></Label>
           <Input id="name" placeholder="Makati Main Branch" {...register('name')} />
           {formState.errors.name && (
             <p className="text-xs text-destructive">{formState.errors.name.message}</p>
@@ -49,7 +51,7 @@ export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: Br
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="code">Branch code</Label>
+          <Label htmlFor="code">Branch code <span className="text-destructive">*</span></Label>
           <Input
             id="code"
             placeholder="MKT"
@@ -70,7 +72,7 @@ export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: Br
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="contactNumber">Contact number</Label>
+          <Label htmlFor="contactNumber">Contact number <span className="text-destructive">*</span></Label>
           <Input id="contactNumber" placeholder="+63 917 123 4567" {...register('contactNumber')} />
           {formState.errors.contactNumber && (
             <p className="text-xs text-destructive">{formState.errors.contactNumber.message}</p>
@@ -78,7 +80,7 @@ export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: Br
         </div>
 
         <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">Address <span className="text-destructive">*</span></Label>
           <Input id="address" placeholder="123 Ayala Ave, Makati City" {...register('address')} />
           {formState.errors.address && (
             <p className="text-xs text-destructive">{formState.errors.address.message}</p>
@@ -86,7 +88,21 @@ export function BranchForm({ defaultValues, onSubmit, submitLabel = 'Save' }: Br
         </div>
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end gap-2 pt-2">
+        {onCancel && (
+          formState.isDirty ? (
+            <ConfirmDialog
+              title="Discard changes?"
+              description="You have unsaved changes. Are you sure you want to leave?"
+              confirmLabel="Discard"
+              variant="warning"
+              onConfirm={onCancel}
+              trigger={<Button type="button" variant="outline">Cancel</Button>}
+            />
+          ) : (
+            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+          )
+        )}
         <Button type="submit" disabled={formState.isSubmitting}>
           {formState.isSubmitting ? 'Saving…' : submitLabel}
         </Button>

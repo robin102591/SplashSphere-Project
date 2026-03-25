@@ -86,7 +86,7 @@ export function CreateEmployeeForm({
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label>Branch</Label>
+        <Label>Branch <span className="text-destructive">*</span></Label>
         <Select onValueChange={(v) => setValue('branchId', v, { shouldValidate: true })}>
           <SelectTrigger>
             <SelectValue placeholder="Select branch…" />
@@ -106,14 +106,14 @@ export function CreateEmployeeForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="emp-first">First name</Label>
+          <Label htmlFor="emp-first">First name <span className="text-destructive">*</span></Label>
           <Input id="emp-first" placeholder="Juan" {...register('firstName')} />
           {formState.errors.firstName && (
             <p className="text-xs text-destructive">{formState.errors.firstName.message}</p>
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="emp-last">Last name</Label>
+          <Label htmlFor="emp-last">Last name <span className="text-destructive">*</span></Label>
           <Input id="emp-last" placeholder="dela Cruz" {...register('lastName')} />
           {formState.errors.lastName && (
             <p className="text-xs text-destructive">{formState.errors.lastName.message}</p>
@@ -122,7 +122,7 @@ export function CreateEmployeeForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Employee type</Label>
+        <Label>Employee type <span className="text-destructive">*</span></Label>
         <Select
           defaultValue={String(EmployeeType.Commission)}
           onValueChange={(v) =>
@@ -141,7 +141,7 @@ export function CreateEmployeeForm({
 
       {employeeType === EmployeeType.Daily && (
         <div className="space-y-1.5">
-          <Label htmlFor="emp-daily-rate">Daily rate (₱)</Label>
+          <Label htmlFor="emp-daily-rate">Daily rate (₱) <span className="text-destructive">*</span></Label>
           <Input
             id="emp-daily-rate"
             type="number"
@@ -220,14 +220,14 @@ export function EditEmployeeForm({ defaultValues, onSubmit }: EditEmployeeFormPr
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="edit-emp-first">First name</Label>
+          <Label htmlFor="edit-emp-first">First name <span className="text-destructive">*</span></Label>
           <Input id="edit-emp-first" {...register('firstName')} />
           {formState.errors.firstName && (
             <p className="text-xs text-destructive">{formState.errors.firstName.message}</p>
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="edit-emp-last">Last name</Label>
+          <Label htmlFor="edit-emp-last">Last name <span className="text-destructive">*</span></Label>
           <Input id="edit-emp-last" {...register('lastName')} />
           {formState.errors.lastName && (
             <p className="text-xs text-destructive">{formState.errors.lastName.message}</p>
@@ -247,7 +247,7 @@ export function EditEmployeeForm({ defaultValues, onSubmit }: EditEmployeeFormPr
 
       {defaultValues.employeeType === EmployeeType.Daily && (
         <div className="space-y-1.5">
-          <Label htmlFor="edit-emp-daily-rate">Daily rate (₱)</Label>
+          <Label htmlFor="edit-emp-daily-rate">Daily rate (₱) <span className="text-destructive">*</span></Label>
           <Input
             id="edit-emp-daily-rate"
             type="number"

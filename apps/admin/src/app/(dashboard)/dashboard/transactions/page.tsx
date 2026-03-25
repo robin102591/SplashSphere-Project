@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Receipt } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
@@ -163,11 +164,11 @@ export default function TransactionsPage() {
       )}
 
       {branchId && !isLoading && !isError && transactions.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Receipt className="h-10 w-10 text-muted-foreground/40" />
-          <p className="font-medium">No transactions found</p>
-          <p className="text-sm text-muted-foreground">Try adjusting the filters</p>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title="No transactions found"
+          description="Try adjusting the filters"
+        />
       )}
 
       {branchId && !isLoading && transactions.length > 0 && (
@@ -175,12 +176,12 @@ export default function TransactionsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Txn #</th>
-                <th className="px-4 py-3 text-left font-medium">Vehicle</th>
-                <th className="px-4 py-3 text-left font-medium">Customer</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Txn #</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Vehicle</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Customer</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -189,10 +190,10 @@ export default function TransactionsPage() {
               ))}
             </tbody>
           </table>
-          {data && data.totalCount > transactions.length && (
-            <p className="px-4 py-3 text-xs text-center text-muted-foreground border-t">
-              Showing {transactions.length} of {data.totalCount} transactions
-            </p>
+          {data && (
+            <div className="px-4 py-3 text-sm text-muted-foreground border-t">
+              Showing 1–{transactions.length} of {data.totalCount} results
+            </div>
           )}
         </div>
       )}

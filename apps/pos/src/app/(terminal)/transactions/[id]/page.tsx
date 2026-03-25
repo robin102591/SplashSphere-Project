@@ -184,7 +184,7 @@ export default function TransactionDetailPage({ params }: Props) {
     return (
       <div className="p-4 max-w-2xl mx-auto space-y-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-gray-800 animate-pulse" />
+          <div key={i} className="h-24 rounded-xl bg-gray-800/60" />
         ))}
       </div>
     )
@@ -229,7 +229,7 @@ export default function TransactionDetailPage({ params }: Props) {
         <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors min-h-[44px] px-2 -ml-2"
+            className="flex items-center gap-1.5 text-base text-gray-400 hover:text-white transition-colors duration-150 min-h-[44px] px-2 -ml-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
@@ -237,7 +237,7 @@ export default function TransactionDetailPage({ params }: Props) {
             {canEdit && (
               <Link
                 href={`/transactions/new?editId=${id}`}
-                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-blue-300 hover:bg-blue-900/20 border border-blue-800/50 transition-colors"
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-blue-300 hover:bg-blue-900/20 border border-blue-800/50 transition-colors duration-150 active:scale-[0.97]"
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Items
@@ -249,7 +249,7 @@ export default function TransactionDetailPage({ params }: Props) {
                   if (confirm('Cancel this transaction?')) cancelMutation.mutate()
                 }}
                 disabled={cancelMutation.isPending}
-                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-red-400 hover:bg-red-900/20 border border-red-800/50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-red-400 hover:bg-red-900/20 border border-red-800/50 transition-colors duration-150 active:scale-[0.97] disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 Cancel
@@ -258,7 +258,7 @@ export default function TransactionDetailPage({ params }: Props) {
             {canRefund && (
               <button
                 onClick={() => setShowRefundDialog(true)}
-                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-orange-400 hover:bg-orange-900/20 border border-orange-800/50 transition-colors"
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-orange-400 hover:bg-orange-900/20 border border-orange-800/50 transition-colors duration-150 active:scale-[0.97]"
               >
                 <RotateCcw className="h-4 w-4" />
                 Refund
@@ -266,7 +266,7 @@ export default function TransactionDetailPage({ params }: Props) {
             )}
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-gray-300 hover:bg-gray-800 border border-gray-700 transition-colors"
+              className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm text-gray-300 hover:bg-gray-800 border border-gray-700 transition-colors duration-150 active:scale-[0.97]"
             >
               <Printer className="h-4 w-4" />
               Print
@@ -279,7 +279,7 @@ export default function TransactionDetailPage({ params }: Props) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs text-gray-500">Transaction</p>
-              <p className="text-lg font-mono font-bold text-white">{tx.transactionNumber}</p>
+              <p className="text-lg font-mono tabular-nums font-bold text-white">{tx.transactionNumber}</p>
               <p className="text-xs text-gray-500 mt-0.5">{fmtDateTime(tx.createdAt)}</p>
             </div>
             <span className={cn('flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full border', status.cls)}>
@@ -287,7 +287,7 @@ export default function TransactionDetailPage({ params }: Props) {
               {status.label}
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-gray-700 grid grid-cols-2 gap-2 text-sm">
+          <div className="mt-3 pt-3 border-t border-gray-700 grid grid-cols-2 gap-2 text-base">
             <div>
               <p className="text-xs text-gray-500">Branch</p>
               <p className="text-white">{tx.branchName}</p>
@@ -302,9 +302,9 @@ export default function TransactionDetailPage({ params }: Props) {
         {/* Vehicle */}
         <Section icon={<Car className="h-4 w-4" />} title="Vehicle">
           <div className="flex items-center gap-3">
-            <p className="text-2xl font-mono font-bold text-white tracking-widest">{tx.plateNumber}</p>
+            <p className="text-2xl font-mono tabular-nums font-bold text-white tracking-widest">{tx.plateNumber}</p>
           </div>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-base text-gray-400 mt-1">
             {tx.vehicleTypeName} · {tx.sizeName}
           </p>
         </Section>
@@ -324,10 +324,10 @@ export default function TransactionDetailPage({ params }: Props) {
                 <div key={svc.id}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-sm font-medium text-white">{svc.serviceName}</p>
+                      <p className="text-base font-medium text-white">{svc.serviceName}</p>
                       <p className="text-xs text-gray-500">{svc.vehicleTypeName} · {svc.sizeName}</p>
                     </div>
-                    <p className="text-sm font-semibold text-white ml-2 shrink-0">{fmt(svc.unitPrice)}</p>
+                    <p className="text-base font-mono tabular-nums font-semibold text-white ml-2 shrink-0">{fmt(svc.unitPrice)}</p>
                   </div>
                   {svc.employeeAssignments.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -352,10 +352,10 @@ export default function TransactionDetailPage({ params }: Props) {
                 <div key={pkg.id}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-sm font-medium text-white">{pkg.packageName}</p>
+                      <p className="text-base font-medium text-white">{pkg.packageName}</p>
                       <p className="text-xs text-gray-500">{pkg.vehicleTypeName} · {pkg.sizeName}</p>
                     </div>
-                    <p className="text-sm font-semibold text-white ml-2 shrink-0">{fmt(pkg.unitPrice)}</p>
+                    <p className="text-base font-mono tabular-nums font-semibold text-white ml-2 shrink-0">{fmt(pkg.unitPrice)}</p>
                   </div>
                   {pkg.employeeAssignments.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -377,11 +377,11 @@ export default function TransactionDetailPage({ params }: Props) {
           <Section icon={<ShoppingCart className="h-4 w-4" />} title="Merchandise">
             <div className="space-y-2">
               {tx.merchandise.map((m) => (
-                <div key={m.id} className="flex justify-between items-center text-sm">
+                <div key={m.id} className="flex justify-between items-center text-base">
                   <span className="text-white">{m.merchandiseName}</span>
                   <div className="flex items-center gap-3 text-gray-400 shrink-0">
                     <span>×{m.quantity}</span>
-                    <span className="text-white font-medium">{fmt(m.lineTotal)}</span>
+                    <span className="text-white font-mono tabular-nums font-medium">{fmt(m.lineTotal)}</span>
                   </div>
                 </div>
               ))}
@@ -394,9 +394,9 @@ export default function TransactionDetailPage({ params }: Props) {
           <Section icon={<Users className="h-4 w-4" />} title="Employee Commissions">
             <div className="space-y-1.5">
               {tx.employees.map((e) => (
-                <div key={e.id} className="flex justify-between text-sm">
+                <div key={e.id} className="flex justify-between text-base">
                   <span className="text-gray-300">{e.employeeName}</span>
-                  <span className="text-green-400 font-medium">{fmt(e.totalCommission)}</span>
+                  <span className="text-green-400 font-mono tabular-nums font-medium">{fmt(e.totalCommission)}</span>
                 </div>
               ))}
             </div>
@@ -408,26 +408,26 @@ export default function TransactionDetailPage({ params }: Props) {
           {tx.payments.length > 0 && (
             <div className="space-y-1.5 mb-3">
               {tx.payments.map((p) => (
-                <div key={p.id} className="flex justify-between text-sm">
+                <div key={p.id} className="flex justify-between text-base">
                   <div>
                     <span className="text-gray-300">{PAYMENT_LABEL[p.method] ?? 'Payment'}</span>
                     {p.reference && (
                       <span className="text-xs text-gray-500 ml-2">Ref: {p.reference}</span>
                     )}
                   </div>
-                  <span className="text-white font-medium">{fmt(p.amount)}</span>
+                  <span className="text-white font-mono tabular-nums font-medium">{fmt(p.amount)}</span>
                 </div>
               ))}
-              <div className="flex justify-between text-sm pt-1.5 border-t border-gray-700">
+              <div className="flex justify-between text-base pt-1.5 border-t border-gray-700">
                 <span className="text-gray-400">Paid</span>
-                <span className={cn('font-mono font-bold', isFullyPaid ? 'text-green-400' : 'text-white')}>
+                <span className={cn('font-mono tabular-nums font-bold', isFullyPaid ? 'text-green-400' : 'text-white')}>
                   {fmt(alreadyPaid)}
                 </span>
               </div>
               {!isFullyPaid && (
-                <div className="flex justify-between text-sm text-orange-400">
+                <div className="flex justify-between text-base text-orange-400">
                   <span>Remaining</span>
-                  <span className="font-mono font-bold">{fmt(remaining)}</span>
+                  <span className="font-mono tabular-nums font-bold">{fmt(remaining)}</span>
                 </div>
               )}
             </div>
@@ -440,7 +440,7 @@ export default function TransactionDetailPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => { setShowPayForm(true); setPayAmount(remaining.toFixed(2)) }}
-                  className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors min-h-[40px]"
+                  className="flex items-center gap-1.5 text-base text-blue-400 hover:text-blue-300 transition-colors duration-150 min-h-[44px]"
                 >
                   <BadgeCheck className="h-4 w-4" />
                   Add Payment
@@ -454,7 +454,7 @@ export default function TransactionDetailPage({ params }: Props) {
                         key={value}
                         type="button"
                         onClick={() => setPayMethod(value)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        className={`flex-1 py-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors duration-150 active:scale-[0.97] ${
                           payMethod === value
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-700 text-gray-400 hover:text-gray-300 border border-gray-600'
@@ -473,7 +473,7 @@ export default function TransactionDetailPage({ params }: Props) {
                       value={payAmount}
                       onChange={(e) => setPayAmount(e.target.value)}
                       placeholder={remaining.toFixed(2)}
-                      className="flex-1 min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 min-h-[44px] px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     {payMethod !== PaymentMethod.Cash && (
                       <input
@@ -481,7 +481,7 @@ export default function TransactionDetailPage({ params }: Props) {
                         value={payRef}
                         onChange={(e) => setPayRef(e.target.value)}
                         placeholder="Ref #"
-                        className="w-24 min-h-10 px-2 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-24 min-h-[44px] px-2 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     )}
                   </div>
@@ -495,7 +495,7 @@ export default function TransactionDetailPage({ params }: Props) {
                     <button
                       type="button"
                       onClick={() => { setShowPayForm(false); setPayError(null) }}
-                      className="flex-1 min-h-10 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors"
+                      className="flex-1 min-h-[44px] rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors duration-150 active:scale-[0.97]"
                     >
                       Cancel
                     </button>
@@ -503,7 +503,7 @@ export default function TransactionDetailPage({ params }: Props) {
                       type="button"
                       onClick={() => void handleAddPayment()}
                       disabled={isAddingPayment || !payAmount || parseFloat(payAmount) <= 0}
-                      className="flex-1 min-h-10 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                      className="flex-1 min-h-[44px] rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
                     >
                       {isAddingPayment
                         ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -516,7 +516,7 @@ export default function TransactionDetailPage({ params }: Props) {
           )}
 
           {tx.payments.length === 0 && !canEdit && (
-            <p className="text-sm text-gray-500">No payments recorded.</p>
+            <p className="text-base text-gray-500">No payments recorded.</p>
           )}
         </Section>
 
@@ -529,7 +529,7 @@ export default function TransactionDetailPage({ params }: Props) {
             <span className="text-sm text-gray-400">Discount</span>
             <div className="flex items-center gap-2">
               {tx.discountAmount > 0 && (
-                <span className="text-sm text-green-400 font-mono">-{fmt(tx.discountAmount)}</span>
+                <span className="text-sm text-green-400 font-mono tabular-nums">-{fmt(tx.discountAmount)}</span>
               )}
               {canEdit && !showDiscountTipForm && (
                 <button
@@ -553,7 +553,7 @@ export default function TransactionDetailPage({ params }: Props) {
             <TotalRow label="Tax" value={fmt(tx.taxAmount)} />
           )}
           <div className="pt-2 border-t border-gray-700">
-            <TotalRow label="Total" value={fmt(tx.finalAmount)} labelClass="font-bold text-white" valueClass="text-xl font-bold text-white" />
+            <TotalRow label="Total" value={fmt(tx.finalAmount)} labelClass="font-bold text-white text-base" valueClass="text-2xl font-bold font-mono tabular-nums text-white" />
           </div>
 
           {/* Tip row */}
@@ -562,7 +562,7 @@ export default function TransactionDetailPage({ params }: Props) {
               <span className="text-sm text-yellow-400 flex items-center gap-1.5">
                 <Banknote className="h-3.5 w-3.5" /> Tip
               </span>
-              <span className="font-mono text-sm font-semibold text-yellow-400">{fmt(tx.tipAmount)}</span>
+              <span className="font-mono tabular-nums text-sm font-semibold text-yellow-400">{fmt(tx.tipAmount)}</span>
             </div>
           )}
           {tx.tipAmount > 0 && (
@@ -570,7 +570,7 @@ export default function TransactionDetailPage({ params }: Props) {
               label="Customer Pays"
               value={fmt(tx.finalAmount + tx.tipAmount)}
               labelClass="text-gray-400"
-              valueClass="font-mono font-bold text-white"
+              valueClass="font-mono tabular-nums font-bold text-white"
             />
           )}
           {cashOutAmount > 0 && (
@@ -578,7 +578,7 @@ export default function TransactionDetailPage({ params }: Props) {
               <span className="text-sm text-yellow-300 flex items-center gap-1.5">
                 <Banknote className="h-3.5 w-3.5" /> Cash out to employee
               </span>
-              <span className="font-mono text-sm font-semibold text-yellow-300">{fmt(cashOutAmount)}</span>
+              <span className="font-mono tabular-nums text-sm font-semibold text-yellow-300">{fmt(cashOutAmount)}</span>
             </div>
           )}
 
@@ -595,7 +595,7 @@ export default function TransactionDetailPage({ params }: Props) {
                     value={editDiscount}
                     onChange={(e) => setEditDiscount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full min-h-[44px] px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -607,7 +607,7 @@ export default function TransactionDetailPage({ params }: Props) {
                     value={editTip}
                     onChange={(e) => setEditTip(e.target.value)}
                     placeholder="0.00"
-                    className="w-full min-h-10 px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                    className="w-full min-h-[44px] px-3 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder:text-gray-500 text-sm font-mono tabular-nums focus:outline-none focus:ring-1 focus:ring-yellow-500"
                   />
                 </div>
               </div>
@@ -621,7 +621,7 @@ export default function TransactionDetailPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => { setShowDiscountTipForm(false); setDiscountTipError(null) }}
-                  className="flex-1 min-h-10 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors"
+                  className="flex-1 min-h-[44px] rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-colors duration-150 active:scale-[0.97]"
                 >
                   Cancel
                 </button>
@@ -629,7 +629,7 @@ export default function TransactionDetailPage({ params }: Props) {
                   type="button"
                   onClick={() => void handleSaveDiscountTip()}
                   disabled={isSavingDiscountTip}
-                  className="flex-1 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
                 >
                   {isSavingDiscountTip ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
                 </button>
@@ -642,7 +642,7 @@ export default function TransactionDetailPage({ params }: Props) {
         {tx.notes && (
           <div className="rounded-xl bg-gray-800 border border-gray-700 p-4">
             <p className="text-xs text-gray-500 mb-1">Notes</p>
-            <p className="text-sm text-gray-300">{tx.notes}</p>
+            <p className="text-base text-gray-300">{tx.notes}</p>
           </div>
         )}
 
@@ -694,14 +694,14 @@ export default function TransactionDetailPage({ params }: Props) {
               <button
                 onClick={() => { setShowRefundDialog(false); setRefundReason(''); setRefundError(null) }}
                 disabled={refundMutation.isPending}
-                className="flex-1 min-h-[44px] rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-white hover:border-gray-500 transition-colors disabled:opacity-50"
+                className="flex-1 min-h-[44px] rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-white hover:border-gray-500 transition-colors duration-150 active:scale-[0.97] disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => refundMutation.mutate(refundReason || null)}
                 disabled={refundMutation.isPending}
-                className="flex-1 min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97] disabled:opacity-50"
               >
                 {refundMutation.isPending ? 'Processing…' : 'Confirm Refund'}
               </button>
@@ -808,7 +808,7 @@ function TotalRow({
   return (
     <div className="flex justify-between items-center">
       <span className={cn('text-sm text-gray-400', labelClass)}>{label}</span>
-      <span className={cn('text-sm text-white', valueClass)}>{value}</span>
+      <span className={cn('text-sm font-mono tabular-nums text-white', valueClass)}>{value}</span>
     </div>
   )
 }

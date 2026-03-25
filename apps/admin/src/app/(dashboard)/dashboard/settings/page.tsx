@@ -46,7 +46,7 @@ function NameDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-2 py-2">
-          <Label>Name</Label>
+          <Label>Name <span className="text-destructive">*</span></Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim())} />
         </div>
         <DialogFooter>
@@ -326,7 +326,7 @@ function CategoriesTab() {
           <DialogHeader><DialogTitle>{editing ? 'Edit Category' : 'Add Category'}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1">
-              <Label>Name</Label>
+              <Label>Name <span className="text-destructive">*</span></Label>
               <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="space-y-1">
@@ -522,7 +522,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="vehicle-types">
-        <TabsList className="flex-wrap h-auto">
+        <TabsList variant="line" className="flex-wrap h-auto">
           <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
           <TabsTrigger value="sizes">Sizes</TabsTrigger>
           <TabsTrigger value="makes-models">Makes & Models</TabsTrigger>

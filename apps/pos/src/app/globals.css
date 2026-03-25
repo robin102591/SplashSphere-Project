@@ -36,3 +36,30 @@ body {
 .animate-shake {
   animation: shake 0.4s ease-in-out;
 }
+
+/* Queue display — calling card flash animation */
+@keyframes calling-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-calling-flash {
+  animation: calling-flash 2s ease-in-out infinite;
+}
+
+/* Print styles — only show receipt content */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-content,
+  #receipt-content * {
+    visibility: visible;
+  }
+  #receipt-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 4mm;
+  }
+}

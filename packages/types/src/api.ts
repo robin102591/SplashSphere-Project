@@ -134,6 +134,8 @@ export interface QueueDisplayUpdatedPayload {
   calling: readonly QueueDisplayEntry[];
   inService: readonly QueueDisplayEntry[];
   waitingCount: number;
+  servedToday?: number;
+  avgWaitMinutes?: number | null;
 }
 
 // ── Hub event names (type-safe constants) ─────────────────────────────────────

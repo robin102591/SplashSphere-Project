@@ -90,7 +90,7 @@ export default function AttendancePage() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-white">Attendance</h1>
-        <p className="text-sm text-gray-400">
+        <p className="text-base text-gray-400">
           {new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
@@ -130,7 +130,7 @@ export default function AttendancePage() {
       {isLoading && branchId && (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[72px] rounded-xl bg-gray-800 animate-pulse" />
+            <div key={i} className="h-[72px] rounded-xl bg-gray-800/60" />
           ))}
         </div>
       )}
@@ -149,7 +149,7 @@ export default function AttendancePage() {
               <div
                 key={emp.id}
                 className={cn(
-                  'rounded-xl border p-4 transition-colors',
+                  'rounded-xl border p-4 transition-colors duration-150',
                   isClockedIn
                     ? 'bg-green-900/15 border-green-700/40'
                     : isCompleted
@@ -179,7 +179,7 @@ export default function AttendancePage() {
 
                     {/* Name + times */}
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{emp.fullName}</p>
+                      <p className="text-base font-semibold text-white truncate">{emp.fullName}</p>
                       {att ? (
                         <p className="text-xs text-gray-500">
                           In: {fmtTime(att.timeIn)}
@@ -197,7 +197,7 @@ export default function AttendancePage() {
                       <button
                         onClick={() => att && clockOutMutation.mutate(att.id)}
                         disabled={!!isClockingOut}
-                        className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+                        className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 text-base font-medium transition-colors duration-150 active:scale-[0.97] disabled:opacity-50 shrink-0"
                       >
                         <LogOut className="h-4 w-4" />
                         {isClockingOut ? 'Clocking…' : 'Clock Out'}
@@ -206,7 +206,7 @@ export default function AttendancePage() {
                       <button
                         onClick={() => clockInMutation.mutate(emp.id)}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 text-green-400 text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+                        className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 text-green-400 text-base font-medium transition-colors duration-150 active:scale-[0.97] disabled:opacity-50 shrink-0"
                       >
                         <LogIn className="h-4 w-4" />
                         {isPending ? 'Clocking…' : 'Clock In'}
@@ -246,7 +246,7 @@ function SummaryBadge({
   return (
     <div className="rounded-xl bg-gray-800 border border-gray-700 p-3 text-center">
       <div className="flex justify-center mb-1">{icon}</div>
-      <p className={cn('text-xl font-bold', cls)}>{value}</p>
+      <p className={cn('text-xl font-bold font-mono tabular-nums', cls)}>{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
     </div>
   )

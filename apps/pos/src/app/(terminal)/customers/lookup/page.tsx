@@ -83,7 +83,7 @@ export default function CustomerLookupPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-white">Customer Lookup</h1>
-        <p className="text-sm text-gray-400">Find a customer by plate or name</p>
+        <p className="text-base text-gray-400">Find a customer by plate or name</p>
       </div>
 
       {/* Mode toggle */}
@@ -93,7 +93,7 @@ export default function CustomerLookupPage() {
             key={m}
             onClick={() => setMode(m)}
             className={cn(
-              'flex-1 min-h-[40px] rounded-lg text-sm font-medium transition-colors',
+              'flex-1 min-h-[44px] rounded-lg text-base font-medium transition-colors duration-150 active:scale-[0.97]',
               mode === m ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white',
             )}
           >
@@ -130,7 +130,7 @@ export default function CustomerLookupPage() {
             <button
               onClick={handlePlateLookup}
               disabled={plate.length < 2 || plateFetching}
-              className="min-h-[52px] px-5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+              className="min-h-[52px] px-5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-base font-semibold transition-colors duration-150 active:scale-[0.97]"
             >
               {plateFetching ? 'Looking…' : 'Lookup'}
             </button>
@@ -139,7 +139,7 @@ export default function CustomerLookupPage() {
           {/* Plate result */}
           {plateError && (
             <div className="rounded-xl bg-red-900/20 border border-red-800 p-4 text-center">
-              <p className="text-red-400 text-sm">No vehicle found with plate "{plate}"</p>
+              <p className="text-red-400 text-base">No vehicle found with plate "{plate}"</p>
             </div>
           )}
 
@@ -160,7 +160,7 @@ export default function CustomerLookupPage() {
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Juan Cruz or 09171234567"
               autoFocus
-              className="w-full min-h-[52px] pl-10 pr-10 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full min-h-[52px] pl-10 pr-10 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {nameInput && (
               <button
@@ -175,14 +175,14 @@ export default function CustomerLookupPage() {
           {nameFetching && (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-gray-800 animate-pulse" />
+                <div key={i} className="h-16 rounded-xl bg-gray-800/60" />
               ))}
             </div>
           )}
 
           {customerResults && customerResults.items.length === 0 && debouncedName.length >= 2 && (
             <div className="rounded-xl border border-dashed border-gray-700 py-10 text-center">
-              <p className="text-gray-500 text-sm">No customers found for "{debouncedName}"</p>
+              <p className="text-gray-500 text-base">No customers found for "{debouncedName}"</p>
             </div>
           )}
 
@@ -195,14 +195,14 @@ export default function CustomerLookupPage() {
                   <div key={customer.id} className="rounded-xl bg-gray-800 border border-gray-700 overflow-hidden">
                     <button
                       onClick={() => setExpandedCustomerId(isExpanded ? null : customer.id)}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-700/50 transition-colors text-left"
+                      className="w-full flex items-center justify-between px-4 py-3 min-h-[56px] hover:bg-gray-700/50 transition-colors duration-150 active:scale-[0.97] text-left"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-9 w-9 rounded-full bg-blue-600/20 border border-blue-600/30 flex items-center justify-center shrink-0">
                           <User2 className="h-4 w-4 text-blue-400" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-white">{customer.fullName}</p>
+                          <p className="text-base font-semibold text-white">{customer.fullName}</p>
                           <div className="flex items-center gap-2 text-xs text-gray-500">
                             {customer.contactNumber && (
                               <span className="flex items-center gap-1">
@@ -240,14 +240,14 @@ export default function CustomerLookupPage() {
                                 <div className="flex gap-1.5 shrink-0">
                                   <Link
                                     href={`/queue/add?plate=${encodeURIComponent(car.plateNumber)}`}
-                                    className="flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs text-white transition-colors"
+                                    className="flex items-center gap-1 min-h-[44px] px-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm text-white transition-colors duration-150 active:scale-[0.97]"
                                   >
                                     <ListOrdered className="h-3.5 w-3.5" />
                                     Queue
                                   </Link>
                                   <Link
                                     href={`/transactions/new?carId=${car.id}`}
-                                    className="flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs text-white transition-colors"
+                                    className="flex items-center gap-1 min-h-[44px] px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm text-white transition-colors duration-150 active:scale-[0.97]"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Transact
@@ -259,7 +259,7 @@ export default function CustomerLookupPage() {
                             <p className="text-xs text-gray-500 text-center py-2">No vehicles on file</p>
                           )
                         ) : (
-                          <div className="h-12 rounded-lg bg-gray-700 animate-pulse" />
+                          <div className="h-12 rounded-lg bg-gray-700/60" />
                         )}
                       </div>
                     )}
@@ -281,8 +281,8 @@ function CarResultCard({ car }: { car: CarType }) {
     <div className="rounded-xl bg-gray-800 border border-green-700/50 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-2xl font-mono font-bold text-white tracking-widest">{car.plateNumber}</p>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <p className="text-xl font-mono font-bold text-white tracking-widest">{car.plateNumber}</p>
+          <p className="text-base text-gray-400 mt-0.5">
             {car.vehicleTypeName} · {car.sizeName}
             {car.makeName && ` · ${car.makeName}${car.modelName ? ` ${car.modelName}` : ''}`}
             {car.color && ` · ${car.color}`}
@@ -295,7 +295,7 @@ function CarResultCard({ car }: { car: CarType }) {
       </div>
 
       {car.customerFullName && (
-        <div className="flex items-center gap-2 text-sm text-gray-300">
+        <div className="flex items-center gap-2 text-base text-gray-300">
           <User2 className="h-4 w-4 text-gray-500" />
           {car.customerFullName}
         </div>
@@ -304,14 +304,14 @@ function CarResultCard({ car }: { car: CarType }) {
       <div className="flex gap-2 pt-1">
         <Link
           href={`/queue/add?plate=${encodeURIComponent(car.plateNumber)}`}
-          className="flex-1 flex items-center justify-center gap-2 min-h-[48px] rounded-xl bg-gray-700 hover:bg-gray-600 text-sm font-medium text-white transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 min-h-[48px] rounded-xl bg-gray-700 hover:bg-gray-600 text-base font-medium text-white transition-colors duration-150 active:scale-[0.97]"
         >
           <ListOrdered className="h-4 w-4" />
           Add to Queue
         </Link>
         <Link
           href={`/transactions/new?carId=${car.id}`}
-          className="flex-1 flex items-center justify-center gap-2 min-h-[48px] rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 min-h-[48px] rounded-xl bg-blue-600 hover:bg-blue-500 text-base font-medium text-white transition-colors duration-150 active:scale-[0.97]"
         >
           <Plus className="h-4 w-4" />
           New Transaction

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from '@/components/ui/card'
@@ -16,8 +16,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw } from 'lucide-react'
-import Link from 'next/link'
+import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw } from 'lucide-react'
+import { PageHeader } from '@/components/ui/page-header'
 import { useShiftById, useShiftReport, useReviewShift, useReopenShift } from '@/hooks/use-shifts'
 import { ShiftStatus, ReviewStatus, PaymentMethod, CashMovementType } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
@@ -57,7 +57,7 @@ const REVIEW_STATUS_KEYS: Record<ReviewStatus, string> = {
 
 function VarianceDisplay({ variance }: { variance: number }) {
   const abs = Math.abs(variance)
-  const color = abs <= 50 ? 'text-green-700' : abs <= 200 ? 'text-amber-600' : 'text-red-600'
+  const color = abs <= 50 ? 'text-green-700 dark:text-green-400' : abs <= 200 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
   const label = abs <= 50 ? 'BALANCED' : variance > 0 ? 'OVER' : 'SHORT'
   return (
     <span className={cn('font-mono font-bold text-lg', color)}>
@@ -77,7 +77,6 @@ function ReportRow({ label, value, bold, valueClass }: { label: string; value: s
 
 export default function ShiftDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
 
   const { data: shift, isLoading: shiftLoading } = useShiftById(id)
   const { data: report } = useShiftReport(id)
@@ -136,9 +135,11 @@ export default function ShiftDetailPage() {
 
   if (!shift) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground">Shift not found.</p>
-        <Link href="/dashboard/shifts" className="text-primary underline mt-2 block">Back to shifts</Link>
+      <div className="space-y-4">
+        <PageHeader title="Error" back="/dashboard/shifts" />
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
+          Shift not found.
+        </div>
       </div>
     )
   }
@@ -151,35 +152,27 @@ export default function ShiftDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Shift Report</h1>
-            <p className="text-muted-foreground">
-              {shift.cashierName} · {shift.branchName} · {fmtDate(shift.shiftDate)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <StatusBadge status={REVIEW_STATUS_KEYS[shift.reviewStatus]} />
+      <PageHeader
+        title="Shift Report"
+        description={`${shift.cashierName} · ${shift.branchName} · ${fmtDate(shift.shiftDate)}`}
+        back
+        badge={<StatusBadge status={REVIEW_STATUS_KEYS[shift.reviewStatus]} />}
+        actions={
           <Button variant="outline" size="sm" onClick={() => window.print()} className="print:hidden">
             <Printer className="h-4 w-4 mr-1.5" />
             Print
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Manager review actions */}
       {canReview && (
-        <Card className="border-amber-200 bg-amber-50/50 print:hidden">
+        <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30 print:hidden">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-amber-900">Pending Review</p>
-                <p className="text-sm text-amber-700">
+                <p className="font-semibold text-amber-900 dark:text-amber-300">Pending Review</p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
                   Variance: <strong>{shift.variance >= 0 ? '+' : ''}{formatPeso(shift.variance)}</strong>
                   {absVariance > 200 && ' — Large variance, investigation recommended.'}
                   {absVariance > 50 && absVariance <= 200 && ' — Within moderate range.'}
@@ -197,7 +190,7 @@ export default function ShiftDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setFlagDialogOpen(true)}
-                  className="border-red-200 text-red-700 hover:bg-red-50"
+                  className="border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   <XCircle className="h-3.5 w-3.5 mr-1.5" />
                   Flag
@@ -205,7 +198,7 @@ export default function ShiftDetailPage() {
                 <Button
                   size="sm"
                   onClick={() => setApproveDialogOpen(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
                   Approve
@@ -220,8 +213,8 @@ export default function ShiftDetailPage() {
       {isClosed && !canReview && (
         <Card className={cn(
           'print:hidden',
-          shift.reviewStatus === ReviewStatus.Approved && 'border-green-200 bg-green-50/50',
-          shift.reviewStatus === ReviewStatus.Flagged && 'border-red-200 bg-red-50/50',
+          shift.reviewStatus === ReviewStatus.Approved && 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30',
+          shift.reviewStatus === ReviewStatus.Flagged && 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30',
         )}>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -271,7 +264,7 @@ export default function ShiftDetailPage() {
             <CardContent className="space-y-0">
               <ReportRow label="Total Transactions" value={String(shift.totalTransactionCount)} bold />
               <ReportRow label="Total Revenue"      value={formatPeso(shift.totalRevenue)} bold />
-              <ReportRow label="Total Discounts"    value={`−${formatPeso(shift.totalDiscounts)}`} valueClass="text-red-600" />
+              <ReportRow label="Total Discounts"    value={`−${formatPeso(shift.totalDiscounts)}`} valueClass="text-red-600 dark:text-red-400" />
               <ReportRow label="Net Revenue"        value={formatPeso(shift.totalRevenue - shift.totalDiscounts)} bold />
               <ReportRow label="Total Commissions"  value={formatPeso(shift.totalCommissions)} />
             </CardContent>
@@ -313,9 +306,9 @@ export default function ShiftDetailPage() {
             </CardHeader>
             <CardContent className="space-y-0">
               <ReportRow label="Opening Cash Fund"        value={formatPeso(shift.openingCashFund)} />
-              <ReportRow label="(+) Cash Payments"        value={formatPeso(shift.totalCashPayments)} valueClass="text-green-700" />
-              <ReportRow label="(+) Manual Cash-In"       value={formatPeso(shift.totalCashIn)} valueClass="text-green-700" />
-              <ReportRow label="(−) Manual Cash-Out"      value={`−${formatPeso(shift.totalCashOut)}`} valueClass="text-red-600" />
+              <ReportRow label="(+) Cash Payments"        value={formatPeso(shift.totalCashPayments)} valueClass="text-green-700 dark:text-green-400" />
+              <ReportRow label="(+) Manual Cash-In"       value={formatPeso(shift.totalCashIn)} valueClass="text-green-700 dark:text-green-400" />
+              <ReportRow label="(−) Manual Cash-Out"      value={`−${formatPeso(shift.totalCashOut)}`} valueClass="text-red-600 dark:text-red-400" />
               <Separator className="my-2" />
               <ReportRow label="Expected Cash in Drawer"  value={formatPeso(shift.expectedCashInDrawer)} bold />
               <ReportRow label="Actual Cash Counted"      value={formatPeso(shift.actualCashInDrawer)} bold />
@@ -369,7 +362,7 @@ export default function ShiftDetailPage() {
                       </div>
                       <span className={cn(
                         'font-mono font-semibold shrink-0 ml-2',
-                        m.type === CashMovementType.CashIn ? 'text-green-700' : 'text-red-600'
+                        m.type === CashMovementType.CashIn ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       )}>
                         {m.type === CashMovementType.CashIn ? '+' : '−'}{formatPeso(m.amount)}
                       </span>
@@ -443,7 +436,7 @@ export default function ShiftDetailPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleApprove}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
               disabled={reviewMutation.isPending}
             >
               Approve
@@ -476,7 +469,7 @@ export default function ShiftDetailPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleFlag}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
               disabled={reviewMutation.isPending || !flagNotes.trim()}
             >
               Flag Shift

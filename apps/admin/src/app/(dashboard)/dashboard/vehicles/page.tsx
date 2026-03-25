@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCars } from '@/hooks/use-cars'
 
@@ -56,15 +57,11 @@ export default function VehiclesPage() {
       )}
 
       {!isLoading && !isError && cars.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Car className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No vehicles found</p>
-            <p className="text-sm text-muted-foreground">
-              {debouncedSearch ? 'Try a different plate number' : 'Vehicles are registered through customer profiles'}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={Car}
+          title="No vehicles found"
+          description={debouncedSearch ? 'Try a different plate number' : 'Vehicles are registered through customer profiles'}
+        />
       )}
 
       {!isLoading && cars.length > 0 && (
@@ -72,11 +69,11 @@ export default function VehiclesPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Plate</th>
-                <th className="px-4 py-3 text-left font-medium">Type / Size</th>
-                <th className="px-4 py-3 text-left font-medium">Make / Model</th>
-                <th className="px-4 py-3 text-left font-medium">Color / Year</th>
-                <th className="px-4 py-3 text-left font-medium">Owner</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Plate</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Type / Size</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Make / Model</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Color / Year</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Owner</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -117,10 +114,10 @@ export default function VehiclesPage() {
               ))}
             </tbody>
           </table>
-          {data && data.totalCount > cars.length && (
-            <p className="px-4 py-3 text-xs text-center text-muted-foreground border-t">
-              Showing {cars.length} of {data.totalCount} vehicles
-            </p>
+          {data && (
+            <div className="px-4 py-3 text-sm text-muted-foreground border-t">
+              Showing 1–{cars.length} of {data.totalCount} results
+            </div>
           )}
         </div>
       )}

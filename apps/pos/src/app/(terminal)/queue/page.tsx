@@ -9,7 +9,7 @@ import {
   Plus, Clock, PhoneCall, AlertTriangle, Timer,
   Wrench, Eye, RefreshCw,
 } from 'lucide-react'
-import type { QueueEntry, ServiceSummary } from '@splashsphere/types'
+import type { QueueEntry, ServiceSummary, QueueStats } from '@splashsphere/types'
 import type { PagedResult, QueueUpdatedPayload } from '@splashsphere/types'
 import { QueueStatus, QueuePriority } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
@@ -33,8 +33,8 @@ const PRIORITY: Record<QueuePriority, { label: string; badgeCls: string; dotCls:
   },
   [QueuePriority.Vip]: {
     label: 'VIP',
-    badgeCls: 'bg-yellow-500/20 text-yellow-300 ring-1 ring-yellow-500/40',
-    dotCls: 'bg-yellow-400',
+    badgeCls: 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/40',
+    dotCls: 'bg-purple-400',
   },
 }
 
@@ -183,7 +183,7 @@ function QueueCard({
           <button
             onClick={() => onCall(entry.id)}
             disabled={isBusy}
-            className="flex-1 flex items-center justify-center gap-1.5 min-h-9 rounded-lg bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97]"
           >
             {isBusy ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5" />}
             Call
@@ -195,7 +195,7 @@ function QueueCard({
             <button
               onClick={() => onStartService(entry.id)}
               disabled={isBusy}
-              className="flex-1 flex items-center justify-center gap-1.5 min-h-9 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97]"
             >
               <Wrench className="h-3.5 w-3.5" />
               Start Service
@@ -204,7 +204,7 @@ function QueueCard({
               onClick={() => onNoShow(entry.id)}
               disabled={isBusy}
               title="Mark as no-show"
-              className="flex items-center justify-center min-h-9 px-2.5 rounded-lg bg-gray-700 hover:bg-red-900/50 border border-gray-600 hover:border-red-700 disabled:opacity-50 text-gray-400 hover:text-red-400 transition-colors"
+              className="flex items-center justify-center min-h-[44px] px-3 rounded-lg bg-gray-700 hover:bg-red-900/50 border border-gray-600 hover:border-red-700 disabled:opacity-50 text-gray-400 hover:text-red-400 transition-colors duration-150 active:scale-[0.97]"
             >
               {isBusy ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <AlertTriangle className="h-3.5 w-3.5" />}
             </button>
@@ -214,7 +214,7 @@ function QueueCard({
         {entry.status === QueueStatus.InService && entry.transactionId && (
           <button
             onClick={() => onViewTransaction(entry.transactionId!)}
-            className="flex-1 flex items-center justify-center gap-1.5 min-h-9 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-semibold transition-colors duration-150 active:scale-[0.97]"
           >
             <Eye className="h-3.5 w-3.5" />
             View Transaction
@@ -293,9 +293,22 @@ export default function QueuePage() {
   })
   const serviceNames = new Map(services.map(s => [s.id, s.name]))
 
+  // Queue stats for top bar
+  const { data: queueStats } = useQuery({
+    queryKey: ['queue-stats', branchId],
+    enabled: !!branchId,
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<QueueStats>(`/queue/stats?branchId=${branchId}`, token ?? undefined)
+    },
+  })
+
   // Real-time queue updates via shared SignalR context
   useSignalREvent<QueueUpdatedPayload>('QueueUpdated', () => {
     void queryClient.invalidateQueries({ queryKey: ['queue'] })
+    void queryClient.invalidateQueries({ queryKey: ['queue-stats'] })
   })
 
   // ── Actions ─────────────────────────────────────────────────────────────────
@@ -350,26 +363,39 @@ export default function QueuePage() {
     )
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 3.5rem)' }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 3.5rem - 3.5rem)' }}>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">Queue Board</h1>
-            <p className="text-xs text-gray-400">
-              {waiting.length} waiting · {called.length} called · {inService.length} in service
-            </p>
           </div>
           <div className="flex items-center gap-1.5">
             {isFetching && <RefreshCw className="h-3.5 w-3.5 text-gray-600 animate-spin" />}
             <ConnectionStatusDot />
+          </div>
+          {/* Stats pills */}
+          <div className="hidden sm:flex items-center gap-3 text-sm">
+            <span className="text-gray-400">
+              Waiting: <span className="font-bold text-white font-mono tabular-nums">{waiting.length}</span>
+            </span>
+            <span className="text-gray-700">|</span>
+            <span className="text-gray-400">
+              Avg Wait: <span className="font-bold text-white font-mono tabular-nums">
+                {queueStats?.avgWaitMinutes != null ? `${Math.round(queueStats.avgWaitMinutes)} min` : '—'}
+              </span>
+            </span>
+            <span className="text-gray-700">|</span>
+            <span className="text-gray-400">
+              Served Today: <span className="font-bold text-white font-mono tabular-nums">{queueStats?.servedToday ?? 0}</span>
+            </span>
           </div>
         </div>
 
         {shiftOpen ? (
           <Link
             href="/queue/add"
-            className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shrink-0"
+            className="flex items-center gap-2 px-5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors duration-150 active:scale-[0.97] shrink-0"
           >
             <Plus className="h-4 w-4" />
             Add to Queue
@@ -377,7 +403,7 @@ export default function QueuePage() {
         ) : (
           <span
             title="Open a shift first"
-            className="flex items-center gap-2 px-4 min-h-10 rounded-xl bg-gray-700 text-gray-500 font-semibold text-sm cursor-not-allowed shrink-0"
+            className="flex items-center gap-2 px-5 min-h-[44px] rounded-xl bg-gray-700 text-gray-500 font-semibold text-sm cursor-not-allowed shrink-0"
           >
             <Plus className="h-4 w-4" />
             Add to Queue
@@ -406,7 +432,7 @@ export default function QueuePage() {
           )}
         </Column>
 
-        <Column title="Called" count={called.length} dotCls="bg-yellow-400 animate-pulse">
+        <Column title="Called" count={called.length} dotCls="bg-yellow-400">
           {called.length === 0 ? (
             <p className="text-center text-sm text-gray-700 py-10">No vehicles called</p>
           ) : (

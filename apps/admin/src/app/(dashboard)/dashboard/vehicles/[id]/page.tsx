@@ -1,10 +1,10 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, ExternalLink } from 'lucide-react'
+import { Pencil, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
@@ -76,7 +76,7 @@ function EditCarForm({
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Vehicle type</Label>
+          <Label>Vehicle type <span className="text-destructive">*</span></Label>
           <Select
             defaultValue={car.vehicleTypeId}
             onValueChange={(v) => setValue('vehicleTypeId', v, { shouldValidate: true })}
@@ -91,7 +91,7 @@ function EditCarForm({
           )}
         </div>
         <div className="space-y-1.5">
-          <Label>Size</Label>
+          <Label>Size <span className="text-destructive">*</span></Label>
           <Select
             defaultValue={car.sizeId}
             onValueChange={(v) => setValue('sizeId', v, { shouldValidate: true })}
@@ -160,7 +160,6 @@ function EditCarForm({
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
 
   const { data: car, isLoading, isError } = useCar(id)
@@ -188,9 +187,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   if (isError || !car) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
-        </Button>
+        <PageHeader title="Error" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Vehicle not found or failed to load.
         </div>
@@ -200,26 +197,22 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
+      <PageHeader
+        title={car.plateNumber}
+        description={[car.makeName, car.modelName, car.color, car.year].filter(Boolean).join(' · ') || 'No additional details'}
+        back
+        badge={
+          <>
+            <Badge variant="outline">{car.vehicleTypeName}</Badge>
+            <Badge variant="outline">{car.sizeName}</Badge>
+          </>
+        }
+        actions={
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-2 h-3.5 w-3.5" />Edit
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight font-mono">{car.plateNumber}</h1>
-              <Badge variant="outline">{car.vehicleTypeName}</Badge>
-              <Badge variant="outline">{car.sizeName}</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {[car.makeName, car.modelName, car.color, car.year].filter(Boolean).join(' · ') || 'No additional details'}
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil className="mr-2 h-3.5 w-3.5" />Edit
-        </Button>
-      </div>
+        }
+      />
 
       <div className="max-w-md rounded-lg border p-5 space-y-4">
         <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">

@@ -1,10 +1,10 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Power, PowerOff, AlertTriangle, Plus, Minus } from 'lucide-react'
+import { Pencil, Power, PowerOff, AlertTriangle, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import {
@@ -65,7 +65,7 @@ function EditMerchandiseForm({
       className="space-y-4"
     >
       <div className="space-y-1.5">
-        <Label>Name</Label>
+        <Label>Name <span className="text-destructive">*</span></Label>
         <Input {...register('name')} />
         {formState.errors.name && (
           <p className="text-xs text-destructive">{formState.errors.name.message}</p>
@@ -73,7 +73,7 @@ function EditMerchandiseForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Selling price (₱)</Label>
+          <Label>Selling price (₱) <span className="text-destructive">*</span></Label>
           <Input type="number" step="0.01" {...register('price')} />
           {formState.errors.price && (
             <p className="text-xs text-destructive">{formState.errors.price.message}</p>
@@ -85,7 +85,7 @@ function EditMerchandiseForm({
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label>Low stock alert at</Label>
+        <Label>Low stock alert at <span className="text-destructive">*</span></Label>
         <Input type="number" {...register('lowStockThreshold')} />
       </div>
       <div className="space-y-1.5">
@@ -163,7 +163,7 @@ function StockAdjustDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Adjustment</Label>
+            <Label>Adjustment <span className="text-destructive">*</span></Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -198,7 +198,6 @@ function StockAdjustDialog({
 
 export default function MerchandiseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
   const [adjustOpen, setAdjustOpen] = useState(false)
 
@@ -236,9 +235,7 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
   if (isError || !item) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
-        </Button>
+        <PageHeader title="Error" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Item not found or failed to load.
         </div>
@@ -248,39 +245,35 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{item.name}</h1>
-              {item.isLowStock && (
-                <StatusBadge status="Low Stock" />
+      <PageHeader
+        title={item.name}
+        description={item.sku}
+        back
+        badge={
+          <>
+            {item.isLowStock && <StatusBadge status="Low Stock" />}
+            <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setAdjustOpen(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />/<Minus className="mr-2 h-3.5 w-3.5" />
+              Stock
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
+              {item.isActive ? (
+                <><PowerOff className="mr-2 h-3.5 w-3.5" />Deactivate</>
+              ) : (
+                <><Power className="mr-2 h-3.5 w-3.5" />Activate</>
               )}
-              <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
-            </div>
-            <p className="text-sm text-muted-foreground font-mono mt-0.5">{item.sku}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setAdjustOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />/<Minus className="mr-2 h-3.5 w-3.5" />
-            Stock
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
-            {item.isActive ? (
-              <><PowerOff className="mr-2 h-3.5 w-3.5" />Deactivate</>
-            ) : (
-              <><Power className="mr-2 h-3.5 w-3.5" />Activate</>
-            )}
-          </Button>
-        </div>
-      </div>
+            </Button>
+          </>
+        }
+      />
 
       {/* Stock card */}
       <div className={cn(

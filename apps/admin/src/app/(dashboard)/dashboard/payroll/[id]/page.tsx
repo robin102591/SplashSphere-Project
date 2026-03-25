@@ -1,11 +1,11 @@
 'use client'
 
 import { use, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Lock, CheckCheck, AlertTriangle, Pencil, Check, X } from 'lucide-react'
+import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -283,7 +283,6 @@ export default function PayrollPeriodDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
   const [confirmClose, setConfirmClose] = useState(false)
   const [confirmProcess, setConfirmProcess] = useState(false)
 
@@ -330,10 +329,7 @@ export default function PayrollPeriodDetailPage({
   if (isError || !period) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <PageHeader title="Payroll" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Payroll period not found or failed to load.
         </div>
@@ -360,47 +356,34 @@ export default function PayrollPeriodDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
-                {period.year} — Week {period.cutOffWeek}
-              </h1>
-              <StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {startDate} – {endDate} · {entries.length}{' '}
-              {entries.length === 1 ? 'entry' : 'entries'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {period.status === PayrollStatus.Open && (
-            <Button onClick={() => setConfirmClose(true)}>
-              <Lock className="mr-2 h-3.5 w-3.5" />
-              Close Period
-            </Button>
-          )}
-          {period.status === PayrollStatus.Closed && (
-            <Button onClick={() => setConfirmProcess(true)} variant="default">
-              <CheckCheck className="mr-2 h-3.5 w-3.5" />
-              Process Payroll
-            </Button>
-          )}
-          {period.status === PayrollStatus.Processed && (
-            <Badge variant="outline" className="px-3 py-1.5 text-xs">
-              <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-green-600" />
-              Payroll finalised
-            </Badge>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title={`${period.year} — Week ${period.cutOffWeek}`}
+        description={`${startDate} – ${endDate} · ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`}
+        back
+        badge={<StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />}
+        actions={
+          <>
+            {period.status === PayrollStatus.Open && (
+              <Button onClick={() => setConfirmClose(true)}>
+                <Lock className="mr-2 h-3.5 w-3.5" />
+                Close Period
+              </Button>
+            )}
+            {period.status === PayrollStatus.Closed && (
+              <Button onClick={() => setConfirmProcess(true)} variant="default">
+                <CheckCheck className="mr-2 h-3.5 w-3.5" />
+                Process Payroll
+              </Button>
+            )}
+            {period.status === PayrollStatus.Processed && (
+              <Badge variant="outline" className="px-3 py-1.5 text-xs">
+                <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-green-600" />
+                Payroll finalised
+              </Badge>
+            )}
+          </>
+        }
+      />
 
       {/* Status callout */}
       {editable && (

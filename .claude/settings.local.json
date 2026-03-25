@@ -100,7 +100,11 @@
       "Read(//c/Users/rnobl/AppData/Local/pnpm/**)",
       "Read(//c/Users/rnobl/AppData/Roaming/npm/**)",
       "Bash(corepack pnpm:*)",
-      "Bash(grep -n \"bg-.*500.*text-\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)"
+      "Bash(grep -n \"bg-.*500.*text-\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)",
+      "Bash(find \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard\" -type f -name \"page.tsx\")",
+      "Bash(ls -la \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard/\")",
+      "Bash(find \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)\" -name \"*form*.tsx\" -type f)",
+      "Bash(find \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard\" -name \"page.tsx\" -o -name \"page.ts\")"
     ]
   }
 }

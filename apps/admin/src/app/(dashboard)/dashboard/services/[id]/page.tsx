@@ -1,14 +1,14 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Pencil, Power, PowerOff } from 'lucide-react'
+import { Pencil, Power, PowerOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -86,7 +86,7 @@ function EditSheet({ open, onOpenChange, serviceId, defaultValues }: EditSheetPr
         </SheetHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="edit-name">Service name</Label>
+            <Label htmlFor="edit-name">Service name <span className="text-destructive">*</span></Label>
             <Input id="edit-name" {...register('name')} />
             {formState.errors.name && (
               <p className="text-xs text-destructive">{formState.errors.name.message}</p>
@@ -94,7 +94,7 @@ function EditSheet({ open, onOpenChange, serviceId, defaultValues }: EditSheetPr
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edit-category">Category</Label>
+            <Label htmlFor="edit-category">Category <span className="text-destructive">*</span></Label>
             <select
               id="edit-category"
               className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -113,7 +113,7 @@ function EditSheet({ open, onOpenChange, serviceId, defaultValues }: EditSheetPr
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edit-basePrice">Base price (₱)</Label>
+            <Label htmlFor="edit-basePrice">Base price (₱) <span className="text-destructive">*</span></Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">
                 ₱
@@ -207,7 +207,6 @@ export default function ServiceDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
 
   const { data: service, isLoading, isError } = useService(id)
@@ -240,10 +239,7 @@ export default function ServiceDetailPage({
   if (isError || !service) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <PageHeader title="Service" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Service not found or failed to load.
         </div>
@@ -254,51 +250,44 @@ export default function ServiceDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{service.name}</h1>
-              <StatusBadge status={service.isActive ? 'Active' : 'Inactive'} />
-              <Badge variant="outline" className="text-xs">
-                {service.categoryName}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Base price:{' '}
-              <span className="font-medium font-mono text-foreground">
-                {formatPeso(service.basePrice)}
-              </span>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
-            {service.isActive ? (
-              <>
-                <PowerOff className="mr-2 h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <Power className="mr-2 h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={service.name}
+        back
+        badge={
+          <>
+            <StatusBadge status={service.isActive ? 'Active' : 'Inactive'} />
+            <Badge variant="outline" className="text-xs">
+              {service.categoryName}
+            </Badge>
+          </>
+        }
+        description={`Base price: ${formatPeso(service.basePrice)}`}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
+              {service.isActive ? (
+                <>
+                  <PowerOff className="mr-2 h-3.5 w-3.5" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <Power className="mr-2 h-3.5 w-3.5" />
+                  Activate
+                </>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="pricing">
             Pricing Matrix

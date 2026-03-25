@@ -145,8 +145,17 @@ export default function AddToQueuePage() {
 
   if (shiftLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-5 w-5 animate-spin text-gray-500" />
+      <div className="p-4 max-w-lg mx-auto space-y-6 animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gray-800/60" />
+          <div className="space-y-2">
+            <div className="h-6 w-36 rounded bg-gray-800/60" />
+            <div className="h-4 w-44 rounded bg-gray-800/60" />
+          </div>
+        </div>
+        {/* Form card skeleton */}
+        <div className="h-64 rounded-xl bg-gray-800/60" />
       </div>
     )
   }
@@ -157,24 +166,24 @@ export default function AddToQueuePage() {
         <div className="flex items-center gap-3">
           <Link
             href="/queue"
-            className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors shrink-0"
+            className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors duration-150 active:scale-[0.97] shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-white">Add to Queue</h1>
-            <p className="text-sm text-gray-400">Enter vehicle details</p>
+            <p className="text-base text-gray-400">Enter vehicle details</p>
           </div>
         </div>
         <div className="rounded-xl border border-yellow-700/50 bg-yellow-950/30 p-6 text-center space-y-3">
           <AlertCircle className="h-10 w-10 text-yellow-400 mx-auto" />
           <h2 className="text-lg font-bold text-white">Shift Required</h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-base text-gray-400">
             You must open a shift before adding vehicles to the queue.
           </p>
           <Link
             href="/shift/open"
-            className="inline-flex items-center gap-2 px-5 min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-5 min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base transition-colors duration-150 active:scale-[0.97]"
           >
             Open Shift
           </Link>
@@ -190,13 +199,13 @@ export default function AddToQueuePage() {
       <div className="flex items-center gap-3">
         <Link
           href="/queue"
-          className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors shrink-0"
+          className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors duration-150 active:scale-[0.97] shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-white">Add to Queue</h1>
-          <p className="text-sm text-gray-400">Enter vehicle details</p>
+          <p className="text-base text-gray-400">Enter vehicle details</p>
         </div>
       </div>
 
@@ -220,7 +229,7 @@ export default function AddToQueuePage() {
               type="button"
               onClick={handlePlateLookup}
               disabled={isLookingUp || !plateValue.trim()}
-              className="min-h-14 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors"
+              className="min-h-14 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors duration-150 active:scale-[0.97]"
               title="Look up plate"
             >
               {isLookingUp
@@ -238,7 +247,7 @@ export default function AddToQueuePage() {
             <div className="rounded-xl bg-green-950/40 border border-green-700/50 p-3 space-y-1.5">
               <div className="flex items-center gap-2">
                 <Car className="h-4 w-4 text-green-400 shrink-0" />
-                <span className="text-sm font-semibold text-green-300">
+                <span className="text-base font-semibold text-green-300">
                   {foundCar.vehicleTypeName} · {foundCar.sizeName}
                   {foundCar.makeName ? ` · ${foundCar.makeName}` : ''}
                   {foundCar.modelName ? ` ${foundCar.modelName}` : ''}
@@ -248,7 +257,7 @@ export default function AddToQueuePage() {
               {foundCar.customerFullName && (
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400 shrink-0" />
-                  <span className="text-sm text-gray-300">{foundCar.customerFullName}</span>
+                  <span className="text-base text-gray-300">{foundCar.customerFullName}</span>
                 </div>
               )}
             </div>
@@ -270,7 +279,7 @@ export default function AddToQueuePage() {
                 key={opt.value}
                 type="button"
                 onClick={() => setValue('priority', opt.value, { shouldValidate: true })}
-                className={`min-h-[4.5rem] rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${
+                className={`min-h-[4.5rem] rounded-xl border-2 transition-all duration-150 active:scale-[0.97] flex flex-col items-center justify-center gap-1 ${
                   selectedPriority === opt.value
                     ? opt.activeCls
                     : 'border-gray-700 bg-gray-800/50 text-gray-500 hover:border-gray-600'
@@ -310,7 +319,7 @@ export default function AddToQueuePage() {
                     key={service.id}
                     type="button"
                     onClick={() => toggleService(service.id)}
-                    className={`flex items-center gap-2.5 min-h-11 px-3 rounded-xl text-left transition-all border ${
+                    className={`flex items-center gap-2.5 min-h-[44px] px-3 rounded-xl text-left transition-all duration-150 active:scale-[0.97] border ${
                       selected
                         ? 'bg-blue-600/20 border-blue-500/60 text-blue-300'
                         : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'
@@ -345,7 +354,7 @@ export default function AddToQueuePage() {
           <textarea
             rows={2}
             placeholder="Special instructions, customer preferences…"
-            className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             {...register('notes')}
           />
         </div>
@@ -354,7 +363,7 @@ export default function AddToQueuePage() {
         {submitError && (
           <div className="flex items-start gap-2 rounded-xl bg-red-950/50 border border-red-800/60 px-4 py-3">
             <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-red-300">{submitError}</p>
+            <p className="text-base text-red-300">{submitError}</p>
           </div>
         )}
 
@@ -362,7 +371,7 @@ export default function AddToQueuePage() {
         <button
           type="submit"
           disabled={formState.isSubmitting || !branchId}
-          className="w-full min-h-14 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors"
+          className="w-full min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors duration-150 active:scale-[0.97]"
         >
           {formState.isSubmitting ? (
             <span className="flex items-center justify-center gap-2">

@@ -38,12 +38,13 @@ const PAYMENT_METHODS: {
   value: PaymentMethod
   label: string
   Icon: React.ComponentType<{ className?: string }>
+  activeCls: string
 }[] = [
-  { value: PaymentMethod.Cash,         label: 'Cash',   Icon: Banknote   },
-  { value: PaymentMethod.GCash,        label: 'GCash',  Icon: Smartphone },
-  { value: PaymentMethod.CreditCard,   label: 'Credit', Icon: CreditCard },
-  { value: PaymentMethod.DebitCard,    label: 'Debit',  Icon: CreditCard },
-  { value: PaymentMethod.BankTransfer, label: 'Bank',   Icon: Building2  },
+  { value: PaymentMethod.Cash,         label: 'Cash',   Icon: Banknote,    activeCls: 'bg-emerald-600 text-white' },
+  { value: PaymentMethod.GCash,        label: 'GCash',  Icon: Smartphone,  activeCls: 'bg-blue-600 text-white' },
+  { value: PaymentMethod.CreditCard,   label: 'Credit', Icon: CreditCard,  activeCls: 'bg-purple-600 text-white' },
+  { value: PaymentMethod.DebitCard,    label: 'Debit',  Icon: CreditCard,  activeCls: 'bg-purple-600 text-white' },
+  { value: PaymentMethod.BankTransfer, label: 'Bank',   Icon: Building2,   activeCls: 'bg-indigo-600 text-white' },
 ]
 
 function parseServiceIds(raw: string | null): string[] {
@@ -53,36 +54,54 @@ function parseServiceIds(raw: string | null): string[] {
 
 // ── Employee chip row ─────────────────────────────────────────────────────────
 
-function EmployeeChips({
+function EmployeePicker({
   selectedIds,
   employees,
   onToggle,
+  itemPrice,
 }: {
   selectedIds: string[]
   employees: Employee[]
   onToggle: (id: string) => void
+  itemPrice?: number
 }) {
   if (!employees.length)
-    return <p className="text-xs text-gray-600 mt-1.5">No employees available</p>
+    return <p className="text-sm text-gray-600 mt-1.5">No employees available</p>
+
+  const count = selectedIds.length
+  const commissionEach = count > 0 && itemPrice ? itemPrice / count : 0
+
   return (
-    <div className="flex flex-wrap gap-1 mt-1.5">
-      {employees.map((emp) => {
-        const on = selectedIds.includes(emp.id)
-        return (
-          <button
-            key={emp.id}
-            type="button"
-            onClick={() => onToggle(emp.id)}
-            className={`text-xs px-2.5 py-0.5 rounded-full transition-colors ${
-              on
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
-            }`}
-          >
-            {emp.firstName}
-          </button>
-        )
-      })}
+    <div className="mt-1.5 space-y-2">
+      <div className="grid grid-cols-2 gap-1.5">
+        {employees.map((emp) => {
+          const on = selectedIds.includes(emp.id)
+          return (
+            <button
+              key={emp.id}
+              type="button"
+              onClick={() => onToggle(emp.id)}
+              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors duration-150 active:scale-[0.97] ${
+                on
+                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40'
+                  : 'bg-gray-700/50 text-gray-400 border border-transparent hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                on ? 'border-blue-400 bg-blue-500' : 'border-gray-600'
+              }`}>
+                {on && <CheckCircle2 className="h-3 w-3 text-white" />}
+              </div>
+              <span className="truncate">{emp.firstName} {emp.lastName?.charAt(0)}.</span>
+            </button>
+          )
+        })}
+      </div>
+      {count > 0 && (
+        <p className="text-xs text-gray-500">
+          {count} assigned{commissionEach > 0 && <> &middot; <span className="font-mono tabular-nums text-gray-400">{peso(commissionEach)}</span> each</>}
+        </p>
+      )}
     </div>
   )
 }
@@ -123,7 +142,7 @@ function ServiceOrderRow({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-mono font-semibold text-white">
+          <span className="text-sm font-mono tabular-nums font-semibold text-white">
             {displayPrice > 0 ? peso(displayPrice) : '₱—'}
           </span>
           <button
@@ -148,10 +167,11 @@ function ServiceOrderRow({
       </button>
 
       {expanded && (
-        <EmployeeChips
+        <EmployeePicker
           selectedIds={item.employeeIds}
           employees={employees}
           onToggle={onToggleEmployee}
+          itemPrice={displayPrice}
         />
       )}
     </div>
@@ -171,26 +191,26 @@ function MerchandiseOrderRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-800/60 border border-gray-700/50 p-3">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{item.merchandiseName}</p>
-        <p className="text-xs text-gray-500">{peso(item.unitPrice)} each</p>
+        <p className="text-xs text-gray-500 font-mono tabular-nums">{peso(item.unitPrice)} each</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
           onClick={() => onQtyChange(item.quantity - 1)}
-          className="h-7 w-7 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+          className="h-8 w-8 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors duration-150 active:scale-[0.97]"
         >
           <Minus className="h-3 w-3" />
         </button>
-        <span className="w-8 text-center text-sm font-mono font-bold text-white">{item.quantity}</span>
+        <span className="w-8 text-center text-sm font-mono tabular-nums font-bold text-white">{item.quantity}</span>
         <button
           type="button"
           onClick={() => onQtyChange(item.quantity + 1)}
-          className="h-7 w-7 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+          className="h-8 w-8 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors duration-150 active:scale-[0.97]"
         >
           <Plus className="h-3 w-3" />
         </button>
       </div>
-      <span className="text-sm font-mono font-semibold text-white w-20 text-right shrink-0">
+      <span className="text-sm font-mono tabular-nums font-semibold text-white w-20 text-right shrink-0">
         {peso(item.unitPrice * item.quantity)}
       </span>
       <button
@@ -224,16 +244,21 @@ function ServiceCard({
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full text-left p-3 rounded-xl border-2 transition-all min-h-[4.5rem] flex flex-col justify-between gap-1 ${
+      className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.97] min-h-[72px] flex flex-col justify-between gap-1 relative ${
         inCart
-          ? 'border-blue-500 bg-blue-600/15 text-blue-300'
-          : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-500 hover:text-white'
+          ? 'border-blue-500 bg-blue-600/15 text-blue-300 ring-2 ring-blue-500/20'
+          : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-blue-400/50 hover:text-white'
       }`}
     >
-      <p className="text-sm font-semibold leading-tight line-clamp-2">{service.name}</p>
+      {inCart && (
+        <div className="absolute top-1.5 right-1.5">
+          <CheckCircle2 className="h-4 w-4 text-blue-400" />
+        </div>
+      )}
+      <p className="text-sm font-medium leading-tight line-clamp-2 pr-5">{service.name}</p>
       <div className="flex items-end justify-between gap-1">
         <span className="text-xs text-gray-500 truncate">{service.categoryName}</span>
-        <span className={`text-xs font-mono font-semibold shrink-0 ${inCart ? 'text-blue-400' : isPriceFromMatrix ? 'text-emerald-400' : 'text-gray-400'}`}>
+        <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-blue-400' : isPriceFromMatrix ? 'text-emerald-400' : 'text-gray-400'}`}>
           {peso(price)}
         </span>
       </div>
@@ -259,24 +284,29 @@ function PackageCard({
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full text-left p-3 rounded-xl border-2 transition-all min-h-[4.5rem] flex flex-col justify-between gap-1 ${
+      className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.97] min-h-[72px] flex flex-col justify-between gap-1 relative ${
         inCart
-          ? 'border-purple-500 bg-purple-600/15 text-purple-300'
-          : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-500 hover:text-white'
+          ? 'border-purple-500 bg-purple-600/15 text-purple-300 ring-2 ring-purple-500/20'
+          : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-400/50 hover:text-white'
       }`}
     >
-      <div className="flex items-start justify-between gap-1">
-        <p className="text-sm font-semibold leading-tight line-clamp-2">{pkg.name}</p>
+      {inCart && (
+        <div className="absolute top-1.5 right-1.5">
+          <CheckCircle2 className="h-4 w-4 text-purple-400" />
+        </div>
+      )}
+      <div className="flex items-start gap-1">
         <Layers className="h-3.5 w-3.5 shrink-0 mt-0.5 text-purple-400" />
+        <p className="text-sm font-medium leading-tight line-clamp-2 pr-4">{pkg.name}</p>
       </div>
       <div className="flex items-end justify-between gap-1">
         <span className="text-xs text-gray-500">
           {pkg.serviceCount} service{pkg.serviceCount !== 1 ? 's' : ''}
         </span>
         {isPriceLoading ? (
-          <span className="text-xs font-mono text-gray-600 animate-pulse">···</span>
+          <span className="text-xs font-mono tabular-nums text-gray-600">···</span>
         ) : displayPrice != null ? (
-          <span className={`text-xs font-mono font-semibold shrink-0 ${inCart ? 'text-purple-400' : 'text-emerald-400'}`}>
+          <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-purple-400' : 'text-emerald-400'}`}>
             {peso(displayPrice)}
           </span>
         ) : (
@@ -302,7 +332,7 @@ function MerchandiseCard({
       type="button"
       onClick={onAdd}
       disabled={item.stockQuantity === 0}
-      className={`w-full text-left p-3 rounded-xl border-2 transition-all min-h-[4.5rem] flex flex-col justify-between gap-1 ${
+      className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-150 active:scale-[0.97] min-h-[72px] flex flex-col justify-between gap-1 relative ${
         cartQty > 0
           ? 'border-green-600 bg-green-700/15 text-green-300'
           : item.stockQuantity === 0
@@ -325,7 +355,7 @@ function MerchandiseCard({
               ×{cartQty}
             </span>
           )}
-          <span className="text-xs font-mono font-semibold text-gray-400">{peso(item.price)}</span>
+          <span className="text-xs font-mono tabular-nums font-semibold text-gray-400">{peso(item.price)}</span>
         </div>
       </div>
     </button>
@@ -355,6 +385,7 @@ function NewTransactionContent() {
 
   // ── Local UI state ─────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'services' | 'packages' | 'merchandise'>('services')
+  const [mobilePanel, setMobilePanel] = useState<'catalog' | 'order'>('catalog')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [lookupPlate, setLookupPlate] = useState('')
   const [isLookingUp, setIsLookingUp] = useState(false)
@@ -363,6 +394,23 @@ function NewTransactionContent() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   // Cash-out alert shown after completing a non-cash transaction with a tip
   const [cashOutTip, setCashOutTip] = useState<{ amount: number; transactionId: string } | null>(null)
+  // Receipt dialog shown after completion
+  const [receiptData, setReceiptData] = useState<{
+    transactionId: string
+    transactionNumber?: string
+    plateNumber: string
+    vehicleType: string
+    size: string
+    services: { name: string; price: number }[]
+    packages: { name: string; price: number }[]
+    merchandise: { name: string; qty: number; price: number }[]
+    subtotal: number
+    discount: number
+    tip: number
+    total: number
+    payments: { method: string; amount: number }[]
+    change: number
+  } | null>(null)
   const [payMethod, setPayMethod] = useState<PaymentMethod>(PaymentMethod.Cash)
   const [payAmount, setPayAmount] = useState('')
   const [payRef, setPayRef] = useState('')
@@ -841,11 +889,31 @@ function NewTransactionContent() {
       const tipCoveredByCash = Math.min(tip, Math.max(0, totalCashPaid - estimatedTotal))
       const cashOutAmount = tip - tipCoveredByCash
 
+      // Build receipt data from current cart state before resetting
+      const receipt = {
+        transactionId,
+        plateNumber,
+        vehicleType: vehicleTypeName,
+        size: sizeName,
+        services: services.map(s => ({ name: s.serviceName, price: s.unitPrice })),
+        packages: packages.map(p => ({ name: p.packageName, price: p.unitPrice })),
+        merchandise: merchandise.map(m => ({ name: m.merchandiseName, qty: m.quantity, price: m.unitPrice * m.quantity })),
+        subtotal,
+        discount,
+        tip,
+        total: customerPayable,
+        payments: payments.map(p => ({
+          method: PAYMENT_METHODS.find(pm => pm.value === p.method)?.label ?? 'Other',
+          amount: p.amount,
+        })),
+        change,
+      }
+
       store.reset()
       if (cashOutAmount > 0) {
         setCashOutTip({ amount: cashOutAmount, transactionId })
       } else {
-        router.push(`/transactions/${transactionId}`)
+        setReceiptData(receipt)
       }
     } catch (err) {
       const apiErr = err as ApiError
@@ -928,13 +996,13 @@ function NewTransactionContent() {
       <div className="p-4 max-w-lg mx-auto space-y-6 pt-16">
         <div className="rounded-xl border border-yellow-700/50 bg-yellow-950/30 p-6 text-center space-y-3">
           <AlertCircle className="h-10 w-10 text-yellow-400 mx-auto" />
-          <h2 className="text-lg font-bold text-white">Shift Required</h2>
-          <p className="text-sm text-gray-400">
+          <h2 className="text-xl font-bold text-white">Shift Required</h2>
+          <p className="text-base text-gray-400">
             You must open a shift before creating a transaction.
           </p>
           <Link
             href="/shift/open"
-            className="inline-flex items-center gap-2 px-5 min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-5 min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base transition-colors duration-150 active:scale-[0.97]"
           >
             Open Shift
           </Link>
@@ -945,16 +1013,42 @@ function NewTransactionContent() {
 
   return (
     <>
-    <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 3.5rem)' }}>
+    {/* Mobile panel toggle */}
+    <div className="md:hidden flex border-b border-gray-800 shrink-0">
+      <button
+        type="button"
+        onClick={() => setMobilePanel('catalog')}
+        className={`flex-1 py-3 text-sm font-semibold text-center transition-colors duration-150 ${
+          mobilePanel === 'catalog' ? 'text-white border-b-2 border-blue-500' : 'text-gray-500'
+        }`}
+      >
+        Vehicle &amp; Services
+      </button>
+      <button
+        type="button"
+        onClick={() => setMobilePanel('order')}
+        className={`flex-1 py-3 text-sm font-semibold text-center transition-colors duration-150 relative ${
+          mobilePanel === 'order' ? 'text-white border-b-2 border-blue-500' : 'text-gray-500'
+        }`}
+      >
+        Summary &amp; Payment
+        {itemCount > 0 && (
+          <span className="ml-1.5 text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full">{itemCount}</span>
+        )}
+      </button>
+    </div>
+
+    <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 7rem)' }}>
 
       {/* ════════════ LEFT PANEL — Catalog (60%) ════════════ */}
-      <div className="flex flex-col border-r border-gray-800 min-h-0 overflow-hidden" style={{ width: '60%' }}>
+      <div className={`flex flex-col border-r border-gray-800 min-h-0 overflow-hidden ${mobilePanel === 'order' ? 'hidden md:flex' : 'flex'}`} style={{ width: undefined }} data-panel="catalog">
+        <style>{`[data-panel="catalog"] { width: 100%; } @media (min-width: 768px) { [data-panel="catalog"] { width: 60%; } }`}</style>
 
         {/* Page header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800 shrink-0">
           <Link
             href="/queue"
-            className="flex items-center justify-center h-9 w-9 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors shrink-0"
+            className="flex items-center justify-center h-10 w-10 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors duration-150 active:scale-[0.97] shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -1003,7 +1097,7 @@ function NewTransactionContent() {
                   type="button"
                   onClick={() => void handlePlateLookup()}
                   disabled={isLookingUp || !lookupPlate.trim()}
-                  className="min-h-11 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors"
+                  className="min-h-[44px] px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors duration-150 active:scale-[0.97]"
                 >
                   {isLookingUp ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </button>
@@ -1067,7 +1161,7 @@ function NewTransactionContent() {
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-t-lg text-sm font-medium transition-colors duration-150 active:scale-[0.97] ${
                 activeTab === key
                   ? 'bg-gray-800 text-white border-b-2 border-blue-500'
                   : 'text-gray-500 hover:text-gray-300'
@@ -1092,7 +1186,7 @@ function NewTransactionContent() {
                   <button
                     type="button"
                     onClick={() => setCategoryFilter(null)}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                    className={`text-xs px-3 py-1.5 rounded-full transition-colors duration-150 active:scale-[0.97] ${
                       !categoryFilter ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                     }`}
                   >
@@ -1103,7 +1197,7 @@ function NewTransactionContent() {
                       key={cat}
                       type="button"
                       onClick={() => setCategoryFilter(cat)}
-                      className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                      className={`text-xs px-3 py-1.5 rounded-full transition-colors duration-150 active:scale-[0.97] ${
                         categoryFilter === cat ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                       }`}
                     >
@@ -1112,7 +1206,7 @@ function NewTransactionContent() {
                   ))}
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {filteredServices.map((svc) => (
                   <ServiceCard
                     key={svc.id}
@@ -1123,7 +1217,7 @@ function NewTransactionContent() {
                   />
                 ))}
                 {filteredServices.length === 0 && (
-                  <p className="col-span-3 text-center text-sm text-gray-600 py-8">No services found</p>
+                  <p className="col-span-full text-center text-sm text-gray-600 py-8">No services found</p>
                 )}
               </div>
             </div>
@@ -1131,7 +1225,7 @@ function NewTransactionContent() {
 
           {activeTab === 'packages' && (
             <div className="p-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {allPackages.map((pkg) => {
                   const pkgIdx = allPackages.indexOf(pkg)
                   return (
@@ -1146,7 +1240,7 @@ function NewTransactionContent() {
                   )
                 })}
                 {allPackages.length === 0 && (
-                  <p className="col-span-3 text-center text-sm text-gray-600 py-8">No packages found</p>
+                  <p className="col-span-full text-center text-sm text-gray-600 py-8">No packages found</p>
                 )}
               </div>
             </div>
@@ -1154,7 +1248,7 @@ function NewTransactionContent() {
 
           {activeTab === 'merchandise' && (
             <div className="p-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {allMerchandise.map((item) => (
                   <MerchandiseCard
                     key={item.id}
@@ -1164,7 +1258,7 @@ function NewTransactionContent() {
                   />
                 ))}
                 {allMerchandise.length === 0 && (
-                  <p className="col-span-3 text-center text-sm text-gray-600 py-8">No merchandise found</p>
+                  <p className="col-span-full text-center text-sm text-gray-600 py-8">No merchandise found</p>
                 )}
               </div>
             </div>
@@ -1173,7 +1267,8 @@ function NewTransactionContent() {
       </div>
 
       {/* ════════════ RIGHT PANEL — Order (40%) ════════════ */}
-      <div className="flex flex-col min-h-0 overflow-hidden" style={{ width: '40%' }}>
+      <div className={`flex flex-col min-h-0 overflow-hidden ${mobilePanel === 'catalog' ? 'hidden md:flex' : 'flex'}`} style={{ width: undefined }} data-panel="order">
+        <style>{`[data-panel="order"] { width: 100%; } @media (min-width: 768px) { [data-panel="order"] { width: 40%; } }`}</style>
 
         {/* Order header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 shrink-0">
@@ -1232,7 +1327,7 @@ function NewTransactionContent() {
           <div className="px-4 py-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-400">
               <span>Subtotal</span>
-              <span className="font-mono">{peso(subtotal)}</span>
+              <span className="font-mono tabular-nums">{peso(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-400">
               <span>Discount</span>
@@ -1254,7 +1349,7 @@ function NewTransactionContent() {
             {tip > 0 && (
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Service Total</span>
-                <span className="font-mono">{peso(estimatedTotal)}</span>
+                <span className="font-mono tabular-nums">{peso(estimatedTotal)}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm text-gray-400">
@@ -1275,8 +1370,8 @@ function NewTransactionContent() {
               </div>
             </div>
             <div className="flex justify-between font-bold text-white pt-0.5 border-t border-gray-800/60">
-              <span className="text-sm">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
-              <span className="font-mono text-xl text-white">{peso(customerPayable)}</span>
+              <span className="text-base">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
+              <span className="font-mono tabular-nums text-2xl font-bold text-white">{peso(customerPayable)}</span>
             </div>
           </div>
 
@@ -1292,7 +1387,7 @@ function NewTransactionContent() {
                   return (
                     <div key={p.localId} className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 w-14 text-xs shrink-0">{m?.label}</span>
-                      <span className="flex-1 font-mono text-green-400">{peso(p.amount)}</span>
+                      <span className="flex-1 font-mono tabular-nums text-green-400">{peso(p.amount)}</span>
                       {p.reference && (
                         <span className="text-xs text-gray-600 truncate max-w-[4rem]">{p.reference}</span>
                       )}
@@ -1308,20 +1403,20 @@ function NewTransactionContent() {
                 })}
                 <div className="flex justify-between text-sm pt-1 border-t border-gray-800/60">
                   <span className="text-gray-400">Paid</span>
-                  <span className={`font-mono font-bold ${totalPaid >= customerPayable ? 'text-green-400' : 'text-white'}`}>
+                  <span className={`font-mono tabular-nums font-bold ${totalPaid >= customerPayable ? 'text-green-400' : 'text-white'}`}>
                     {peso(totalPaid)}
                   </span>
                 </div>
                 {change > 0 && (
                   <div className="flex justify-between text-sm text-green-400">
                     <span>Change</span>
-                    <span className="font-mono font-bold">{peso(change)}</span>
+                    <span className="font-mono tabular-nums font-bold">{peso(change)}</span>
                   </div>
                 )}
                 {balance > 0 && (
                   <div className="flex justify-between text-sm text-orange-400">
                     <span>Balance</span>
-                    <span className="font-mono font-bold">{peso(balance)}</span>
+                    <span className="font-mono tabular-nums font-bold">{peso(balance)}</span>
                   </div>
                 )}
               </div>
@@ -1329,17 +1424,18 @@ function NewTransactionContent() {
 
             {/* Payment method selector */}
             <div className="flex gap-1">
-              {PAYMENT_METHODS.map(({ value, label }) => (
+              {PAYMENT_METHODS.map(({ value, label, Icon, activeCls }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => handlePayMethodSelect(value)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] rounded-lg text-xs font-medium transition-colors duration-150 active:scale-[0.97] ${
                     payMethod === value
-                      ? 'bg-blue-600 text-white'
+                      ? activeCls
                       : 'bg-gray-800 text-gray-500 hover:text-gray-300 border border-gray-700'
                   }`}
                 >
+                  <Icon className="h-4 w-4" />
                   {label}
                 </button>
               ))}
@@ -1355,7 +1451,7 @@ function NewTransactionContent() {
                 onChange={(e) => setPayAmount(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddPayment() }}
                 placeholder={balance > 0 ? balance.toFixed(2) : '0.00'}
-                className="flex-1 min-h-9 px-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-600 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 min-h-[44px] px-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-600 text-sm font-mono tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               {payMethod !== PaymentMethod.Cash && (
                 <input
@@ -1363,14 +1459,14 @@ function NewTransactionContent() {
                   value={payRef}
                   onChange={(e) => setPayRef(e.target.value)}
                   placeholder="Ref #"
-                  className="w-20 min-h-9 px-2 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-600 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-20 min-h-[44px] px-2 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder:text-gray-600 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               )}
               <button
                 type="button"
                 onClick={handleAddPayment}
                 disabled={!payAmount || parseFloat(payAmount) <= 0}
-                className="min-h-9 px-4 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors shrink-0"
+                className="min-h-[44px] px-4 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97] shrink-0"
               >
                 Add
               </button>
@@ -1404,7 +1500,7 @@ function NewTransactionContent() {
                 type="button"
                 onClick={() => void handleSaveChanges()}
                 disabled={!canSaveItems || isSubmitting}
-                className="w-full min-h-12 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors flex items-center justify-center gap-2"
+                className="w-full min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-2"
               >
                 {isSubmitting
                   ? <><RefreshCw className="h-4 w-4 animate-spin" /> Saving…</>
@@ -1418,7 +1514,7 @@ function NewTransactionContent() {
                     type="button"
                     onClick={() => void handlePayLater()}
                     disabled={!canPayLater || isSubmitting}
-                    className="flex-1 min-h-12 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 min-h-[44px] rounded-xl bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
                   >
                     {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <><BadgeCheck className="h-4 w-4" /> Pay Later</>}
                   </button>
@@ -1426,7 +1522,7 @@ function NewTransactionContent() {
                     type="button"
                     onClick={() => void handleComplete()}
                     disabled={!canComplete || isSubmitting}
-                    className="flex-1 min-h-12 rounded-xl bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 min-h-[56px] rounded-xl bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold text-base transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-2"
                   >
                     {isSubmitting
                       ? <><RefreshCw className="h-4 w-4 animate-spin" /> Processing…</>
@@ -1456,6 +1552,113 @@ function NewTransactionContent() {
       </div>
     </div>
 
+    {/* ── Receipt dialog ────────────────────────────────────────────────── */}
+    {receiptData && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none">
+          {/* Receipt content (printable) */}
+          <div id="receipt-content" className="p-6 text-black space-y-4">
+            <div className="text-center space-y-1">
+              <h2 className="text-lg font-bold">SplashSphere</h2>
+              <p className="text-xs text-gray-500">Transaction Complete</p>
+            </div>
+            <div className="border-t border-dashed border-gray-300 pt-3 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Plate</span>
+                <span className="font-mono font-bold">{receiptData.plateNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Vehicle</span>
+                <span>{receiptData.vehicleType} · {receiptData.size}</span>
+              </div>
+              {receiptData.transactionNumber && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tx#</span>
+                  <span className="font-mono text-xs">{receiptData.transactionNumber}</span>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
+              {receiptData.services.map((s, i) => (
+                <div key={i} className="flex justify-between">
+                  <span>{s.name}</span>
+                  <span className="font-mono tabular-nums">{peso(s.price)}</span>
+                </div>
+              ))}
+              {receiptData.packages.map((p, i) => (
+                <div key={i} className="flex justify-between">
+                  <span>{p.name} <span className="text-gray-400">(pkg)</span></span>
+                  <span className="font-mono tabular-nums">{peso(p.price)}</span>
+                </div>
+              ))}
+              {receiptData.merchandise.map((m, i) => (
+                <div key={i} className="flex justify-between">
+                  <span>{m.name} ×{m.qty}</span>
+                  <span className="font-mono tabular-nums">{peso(m.price)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-mono tabular-nums">{peso(receiptData.subtotal)}</span>
+              </div>
+              {receiptData.discount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Discount</span>
+                  <span className="font-mono tabular-nums">-{peso(receiptData.discount)}</span>
+                </div>
+              )}
+              {receiptData.tip > 0 && (
+                <div className="flex justify-between">
+                  <span>Tip</span>
+                  <span className="font-mono tabular-nums">{peso(receiptData.tip)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-base pt-1 border-t border-gray-200">
+                <span>Total</span>
+                <span className="font-mono tabular-nums">{peso(receiptData.total)}</span>
+              </div>
+            </div>
+            <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
+              {receiptData.payments.map((p, i) => (
+                <div key={i} className="flex justify-between">
+                  <span className="text-gray-500">{p.method}</span>
+                  <span className="font-mono tabular-nums">{peso(p.amount)}</span>
+                </div>
+              ))}
+              {receiptData.change > 0 && (
+                <div className="flex justify-between font-bold text-emerald-600">
+                  <span>Change</span>
+                  <span className="font-mono tabular-nums">{peso(receiptData.change)}</span>
+                </div>
+              )}
+            </div>
+            <p className="text-center text-xs text-gray-400 pt-2">Thank you for your patronage!</p>
+          </div>
+
+          {/* Action buttons (hidden when printing) */}
+          <div className="flex gap-2 p-4 border-t border-gray-200 bg-gray-50 print:hidden">
+            <button
+              onClick={() => window.print()}
+              className="flex-1 min-h-[44px] rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-100 transition-colors duration-150 active:scale-[0.97]"
+            >
+              Print Receipt
+            </button>
+            <button
+              onClick={() => {
+                setReceiptData(null)
+                store.reset()
+              }}
+              className="flex-1 min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors duration-150 active:scale-[0.97]"
+            >
+              New Transaction
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* ── Cash-out alert modal ─────────────────────────────────────────────── */}
     {cashOutTip && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
@@ -1471,17 +1674,28 @@ function NewTransactionContent() {
           </div>
           <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 py-4">
             <p className="text-xs text-yellow-500 uppercase tracking-wider mb-1">Amount to give</p>
-            <p className="text-4xl font-mono font-bold text-yellow-400">{peso(cashOutTip.amount)}</p>
+            <p className="text-4xl font-mono tabular-nums font-bold text-yellow-400">{peso(cashOutTip.amount)}</p>
           </div>
-          <button
-            onClick={() => {
-              setCashOutTip(null)
-              router.push(`/transactions/${cashOutTip.transactionId}`)
-            }}
-            className="w-full min-h-[48px] rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-base transition-colors"
-          >
-            Done — Tip Given
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setCashOutTip(null)
+                router.push(`/transactions/${cashOutTip.transactionId}`)
+              }}
+              className="flex-1 min-h-[44px] rounded-xl border border-gray-700 text-gray-300 font-semibold text-sm hover:bg-gray-800 transition-colors duration-150 active:scale-[0.97]"
+            >
+              View Transaction
+            </button>
+            <button
+              onClick={() => {
+                setCashOutTip(null)
+                store.reset()
+              }}
+              className="flex-1 min-h-[56px] rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-base transition-colors duration-150 active:scale-[0.97]"
+            >
+              Done — Tip Given
+            </button>
+          </div>
         </div>
       </div>
     )}

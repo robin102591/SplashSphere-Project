@@ -74,15 +74,15 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                   <Tooltip formatter={(v: number, name: string) => [formatPeso(v), name === 'revenue' ? 'Revenue' : 'Discount']} />
-                  <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#revGrad)" />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#revGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -176,7 +176,7 @@ function CommissionsTab({
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(v: number) => [formatPeso(v), 'Commission']} />
-                <Bar dataKey="commission" fill="#16a34a" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="commission" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -259,7 +259,7 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip />
-                <Bar dataKey="count" name="Times Performed" fill="#2563eb" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" name="Times Performed" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -278,7 +278,7 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip />
-                <Bar dataKey="count" name="Times Performed" fill="#7c3aed" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" name="Times Performed" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -372,7 +372,7 @@ export default function ReportsPage() {
       </div>
 
       <Tabs defaultValue="revenue">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="popularity">Service Popularity</TabsTrigger>

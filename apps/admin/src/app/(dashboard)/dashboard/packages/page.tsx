@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { DataTable } from '@/components/ui/data-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePackages, useTogglePackageStatus } from '@/hooks/use-packages'
@@ -53,19 +54,12 @@ export default function PackagesPage() {
       )}
 
       {!isLoading && !isError && packages.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Package className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No packages yet</p>
-            <p className="text-sm text-muted-foreground">
-              Bundle services together to offer package deals
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Package
-          </Button>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No packages yet"
+          description="Bundle services together to offer package deals"
+          action={{ label: 'New Package', onClick: () => setCreateOpen(true), icon: Plus }}
+        />
       )}
 
       {!isLoading && packages.length > 0 && (

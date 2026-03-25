@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { DataTable } from '@/components/ui/data-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useServices, useToggleServiceStatus } from '@/hooks/use-services'
@@ -53,19 +54,12 @@ export default function ServicesPage() {
       )}
 
       {!isLoading && !isError && services.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Wrench className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No services yet</p>
-            <p className="text-sm text-muted-foreground">
-              Create your first service to start building pricing matrices
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Service
-          </Button>
-        </div>
+        <EmptyState
+          icon={Wrench}
+          title="No services yet"
+          description="Create your first service to start building pricing matrices"
+          action={{ label: 'New Service', onClick: () => setCreateOpen(true), icon: Plus }}
+        />
       )}
 
       {!isLoading && services.length > 0 && (

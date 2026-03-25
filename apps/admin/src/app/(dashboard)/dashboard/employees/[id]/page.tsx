@@ -1,12 +1,12 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { ArrowLeft, Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock } from 'lucide-react'
+import { Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -587,7 +587,6 @@ export default function EmployeeDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
 
   const { data: emp, isLoading, isError } = useEmployee(id)
@@ -625,10 +624,7 @@ export default function EmployeeDetailPage({
   if (isError || !emp) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <PageHeader title="Employee" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Employee not found or failed to load.
         </div>
@@ -638,45 +634,36 @@ export default function EmployeeDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{emp.fullName}</h1>
-              <StatusBadge status={emp.isActive ? 'Active' : 'Inactive'} />
-              <StatusBadge status={emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">{emp.branchName}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" />
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
-            {emp.isActive ? (
-              <>
-                <PowerOff className="mr-2 h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <Power className="mr-2 h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={emp.fullName}
+        description={emp.branchName}
+        back
+        badge={
+          <>
+            <StatusBadge status={emp.isActive ? 'Active' : 'Inactive'} />
+            <StatusBadge status={emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleToggle} disabled={isToggling}>
+              {emp.isActive ? (
+                <><PowerOff className="mr-2 h-3.5 w-3.5" />Deactivate</>
+              ) : (
+                <><Power className="mr-2 h-3.5 w-3.5" />Activate</>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="commissions">Commission History</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>

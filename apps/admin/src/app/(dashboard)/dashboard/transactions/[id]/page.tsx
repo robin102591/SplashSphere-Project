@@ -1,10 +1,9 @@
 'use client'
 
 import { use } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Car, User, MapPin, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Car, User, MapPin, ExternalLink } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTransaction } from '@/hooks/use-transactions'
 import { TransactionStatus, PaymentMethod } from '@splashsphere/types'
@@ -228,7 +227,6 @@ function PaymentsSection({ payments, finalAmount }: { payments: readonly Payment
 
 export default function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
 
   const { data: tx, isLoading, isError } = useTransaction(id)
 
@@ -245,9 +243,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   if (isError || !tx) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
-        </Button>
+        <PageHeader title="Error" back />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-sm text-destructive">
           Transaction not found or failed to load.
         </div>
@@ -263,20 +259,12 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight font-mono">{tx.transactionNumber}</h1>
-              <StatusBadge status={STATUS_KEYS[tx.status]} />
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">{date}</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={tx.transactionNumber}
+        description={date}
+        back
+        badge={<StatusBadge status={STATUS_KEYS[tx.status]} />}
+      />
 
       {/* Summary bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

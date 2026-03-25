@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Users, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -170,21 +171,16 @@ export default function CustomersPage() {
       )}
 
       {!isLoading && !isError && customers.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <Users className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No customers found</p>
-            <p className="text-sm text-muted-foreground">
-              {debouncedSearch ? 'Try a different search term' : 'Add your first customer'}
-            </p>
-          </div>
-          {!debouncedSearch && (
-            <Button variant="outline" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Customer
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No customers found"
+          description={debouncedSearch ? 'Try a different search term' : 'Add your first customer'}
+          action={
+            !debouncedSearch
+              ? { label: 'New Customer', onClick: () => setCreateOpen(true), icon: Plus }
+              : undefined
+          }
+        />
       )}
 
       {!isLoading && customers.length > 0 && (
@@ -192,10 +188,10 @@ export default function CustomersPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Name</th>
-                <th className="px-4 py-3 text-left font-medium">Email</th>
-                <th className="px-4 py-3 text-left font-medium">Contact</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -215,10 +211,10 @@ export default function CustomersPage() {
               ))}
             </tbody>
           </table>
-          {data && data.totalCount > customers.length && (
-            <p className="px-4 py-3 text-xs text-center text-muted-foreground border-t">
-              Showing {customers.length} of {data.totalCount} customers
-            </p>
+          {data && (
+            <div className="px-4 py-3 text-sm text-muted-foreground border-t">
+              Showing 1–{customers.length} of {data.totalCount} results
+            </div>
           )}
         </div>
       )}

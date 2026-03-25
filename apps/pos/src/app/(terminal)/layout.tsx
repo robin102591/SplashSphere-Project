@@ -19,7 +19,7 @@ export default async function TerminalLayout({ children }: { children: React.Rea
           <PosLockGuard />
           <PosNavbar />
           <ShiftStatusBanner />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto pb-16 md:pb-0">{children}</main>
         </SignalRProvider>
       </BranchProvider>
     </div>

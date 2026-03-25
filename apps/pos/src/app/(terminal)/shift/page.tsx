@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import {
   Wallet, Plus, Clock, Receipt,
-  TrendingUp, ArrowUpRight, ArrowDownLeft, ChevronRight, Loader2,
+  TrendingUp, ArrowUpRight, ArrowDownLeft, ChevronRight,
 } from 'lucide-react'
 import { useCurrentShift } from '@/lib/use-shift'
 import { CashMovementType, PaymentMethod } from '@splashsphere/types'
@@ -39,8 +39,22 @@ export default function ShiftPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 flex items-center justify-center pt-16">
-        <Loader2 className="h-6 w-6 text-gray-500 animate-spin" />
+      <div className="p-4 max-w-sm mx-auto space-y-4 animate-pulse">
+        {/* Shift header card skeleton */}
+        <div className="h-32 rounded-xl bg-gray-800/60" />
+        {/* Stats grid skeleton */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+          <div className="h-24 rounded-xl bg-gray-800/60" />
+        </div>
+        {/* Cash movements list skeleton */}
+        <div className="space-y-1.5">
+          <div className="h-12 rounded-lg bg-gray-800/60" />
+          <div className="h-12 rounded-lg bg-gray-800/60" />
+          <div className="h-12 rounded-lg bg-gray-800/60" />
+          <div className="h-12 rounded-lg bg-gray-800/60" />
+        </div>
       </div>
     )
   }
@@ -51,11 +65,11 @@ export default function ShiftPage() {
         <div className="rounded-xl bg-gray-800 border border-gray-700 p-6 text-center space-y-3">
           <Wallet className="h-10 w-10 text-gray-600 mx-auto" />
           <p className="text-white font-semibold">No Active Shift</p>
-          <p className="text-sm text-gray-400">Open a shift to start processing transactions.</p>
+          <p className="text-base text-gray-400">Open a shift to start processing transactions.</p>
         </div>
         <Link
           href="/shift/open"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-colors min-h-[56px]"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.97] text-white font-bold text-lg transition-all duration-150 min-h-[56px]"
         >
           <Wallet className="h-5 w-5" />
           Open Shift
@@ -74,11 +88,11 @@ export default function ShiftPage() {
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
-            <span className="text-green-300 text-sm font-semibold">Shift Active</span>
+            <span className="text-green-300 text-base font-semibold">Shift Active</span>
           </span>
           <span className="text-xs text-gray-500">{fmtDuration(shift.openedAt)}</span>
         </div>
-        <p className="text-white text-2xl font-bold">{shift.branchName}</p>
+        <p className="text-white text-xl font-bold">{shift.branchName}</p>
         <p className="text-xs text-gray-400">
           Started {fmtTime(shift.openedAt)} · Opening fund {fmt(shift.openingCashFund)}
         </p>
@@ -98,21 +112,21 @@ export default function ShiftPage() {
             <TrendingUp className="h-3.5 w-3.5 text-green-400" />
             <span className="text-xs text-gray-400">Revenue</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(shift.totalRevenue)}</p>
+          <p className="text-xl font-bold text-white font-mono tabular-nums">{fmt(shift.totalRevenue)}</p>
         </div>
         <div className="rounded-xl bg-gray-800 border border-gray-700 p-3">
           <div className="flex items-center gap-1.5 mb-1">
             <ArrowUpRight className="h-3.5 w-3.5 text-yellow-400" />
             <span className="text-xs text-gray-400">Cash In</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(cashIn)}</p>
+          <p className="text-xl font-bold text-white font-mono tabular-nums">{fmt(cashIn)}</p>
         </div>
         <div className="rounded-xl bg-gray-800 border border-gray-700 p-3">
           <div className="flex items-center gap-1.5 mb-1">
             <ArrowDownLeft className="h-3.5 w-3.5 text-red-400" />
             <span className="text-xs text-gray-400">Cash Out</span>
           </div>
-          <p className="text-xl font-bold text-white">{fmt(cashOut)}</p>
+          <p className="text-xl font-bold text-white font-mono tabular-nums">{fmt(cashOut)}</p>
         </div>
       </div>
 
@@ -129,11 +143,11 @@ export default function ShiftPage() {
                 className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-800 border border-gray-700"
               >
                 <div className="min-w-0">
-                  <p className="text-sm text-white">{m.reason}</p>
+                  <p className="text-base text-white">{m.reason}</p>
                   {m.reference && <p className="text-xs text-gray-500">{m.reference}</p>}
                 </div>
                 <span className={cn(
-                  'text-sm font-semibold shrink-0 ml-2',
+                  'text-base font-semibold font-mono tabular-nums shrink-0 ml-2',
                   m.type === CashMovementType.CashIn ? 'text-green-400' : 'text-red-400'
                 )}>
                   {m.type === CashMovementType.CashIn ? '+' : '-'}{fmt(m.amount)}
@@ -159,9 +173,9 @@ export default function ShiftPage() {
                   i !== shift.paymentSummaries.length - 1 && 'border-b border-gray-700'
                 )}
               >
-                <span className="text-sm text-gray-300">{METHOD_LABEL[ps.method] ?? 'Other'}</span>
+                <span className="text-base text-gray-300">{METHOD_LABEL[ps.method] ?? 'Other'}</span>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-white">{fmt(ps.totalAmount)}</p>
+                  <p className="text-base font-semibold text-white font-mono tabular-nums">{fmt(ps.totalAmount)}</p>
                   <p className="text-xs text-gray-500">{ps.transactionCount} txn{ps.transactionCount !== 1 ? 's' : ''}</p>
                 </div>
               </div>
@@ -174,7 +188,7 @@ export default function ShiftPage() {
       <div className="space-y-2 pt-1">
         <Link
           href="/shift/cash-movement"
-          className="flex items-center justify-between px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors min-h-[52px]"
+          className="flex items-center justify-between px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 hover:border-gray-600 active:scale-[0.97] transition-all duration-150 min-h-[44px]"
         >
           <div className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-yellow-400" />
@@ -185,7 +199,7 @@ export default function ShiftPage() {
 
         <Link
           href="/shift/close"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 text-red-300 font-semibold transition-colors min-h-[52px]"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 active:scale-[0.97] text-red-300 font-semibold transition-all duration-150 min-h-[56px]"
         >
           <Clock className="h-4 w-4" />
           Close Shift (End of Day)

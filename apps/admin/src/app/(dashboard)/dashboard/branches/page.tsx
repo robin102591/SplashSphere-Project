@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Plus, GitBranch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { DataTable } from '@/components/ui/data-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBranches, useToggleBranchStatus } from '@/hooks/use-branches'
@@ -27,7 +28,6 @@ export default function BranchesPage() {
   }
 
   const columns = getBranchColumns({ onToggleStatus: handleToggleStatus })
-  console.log('Branches:', branches)
 
   return (
     <div className="space-y-6">
@@ -57,19 +57,12 @@ export default function BranchesPage() {
       )}
 
       {!isLoading && !isError && (!branches || branches.length === 0) && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-16 text-center gap-3">
-          <GitBranch className="h-10 w-10 text-muted-foreground/40" />
-          <div>
-            <p className="font-medium">No branches yet</p>
-            <p className="text-sm text-muted-foreground">
-              Create your first branch to get started
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => router.push('/dashboard/branches/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Branch
-          </Button>
-        </div>
+        <EmptyState
+          icon={GitBranch}
+          title="No branches yet"
+          description="Create your first branch to get started"
+          action={{ label: 'New Branch', onClick: () => router.push('/dashboard/branches/new'), icon: Plus }}
+        />
       )}
 
       {!isLoading && branches && branches.length > 0 && (
