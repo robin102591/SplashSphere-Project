@@ -19,6 +19,7 @@ import type { DashboardMetricsUpdatedPayload } from '@splashsphere/types'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
 
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
+const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
 
 function dateStr(d: Date) {
   return d.toISOString().split('T')[0]
@@ -158,15 +159,15 @@ export default function DashboardPage() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
-                  <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#colorRev)" />
+                  <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} contentStyle={TOOLTIP_STYLE} />
+                  <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#colorRev)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -197,7 +198,7 @@ export default function DashboardPage() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatPeso(v)} />
+                  <Tooltip formatter={(v: number) => formatPeso(v)} contentStyle={TOOLTIP_STYLE} />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -215,11 +216,11 @@ export default function DashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={topServices} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
-                <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="revenue" fill="#2563eb" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

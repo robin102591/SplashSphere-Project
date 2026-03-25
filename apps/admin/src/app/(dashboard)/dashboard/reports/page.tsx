@@ -15,6 +15,7 @@ import { useBranches } from '@/hooks/use-branches'
 import { useEmployees } from '@/hooks/use-employees'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
+const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
 
 function dateStr(d: Date) { return d.toISOString().split('T')[0] }
 
@@ -74,15 +75,15 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
-                  <Tooltip formatter={(v: number, name: string) => [formatPeso(v), name === 'revenue' ? 'Revenue' : 'Discount']} />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#revGrad)" />
+                  <Tooltip formatter={(v: number, name: string) => [formatPeso(v), name === 'revenue' ? 'Revenue' : 'Discount']} contentStyle={TOOLTIP_STYLE} />
+                  <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#revGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -102,7 +103,7 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="42%" outerRadius={65} strokeWidth={1}>
                     {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatPeso(v)} />
+                  <Tooltip formatter={(v: number) => formatPeso(v)} contentStyle={TOOLTIP_STYLE} />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -129,7 +130,7 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                 <tr key={d.date} className="hover:bg-muted/30">
                   <td className="px-4 py-2">{new Date(d.date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{formatPeso(d.revenue)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-green-700">{d.discount > 0 ? `−${formatPeso(d.discount)}` : '—'}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-green-700 dark:text-green-400">{d.discount > 0 ? `−${formatPeso(d.discount)}` : '—'}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.tax > 0 ? formatPeso(d.tax) : '—'}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.transactionCount}</td>
                 </tr>
@@ -172,11 +173,11 @@ function CommissionsTab({
           <CardContent>
             <ResponsiveContainer width="100%" height={Math.max(200, barData.length * 28)}>
               <BarChart data={barData} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: number) => [formatPeso(v), 'Commission']} />
-                <Bar dataKey="commission" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]} />
+                <Tooltip formatter={(v: number) => [formatPeso(v), 'Commission']} contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="commission" fill="#16a34a" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -255,11 +256,11 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
           <CardContent>
             <ResponsiveContainer width="100%" height={Math.max(180, serviceBar.length * 28)}>
               <BarChart data={serviceBar} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip />
-                <Bar dataKey="count" name="Times Performed" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="count" name="Times Performed" fill="#2563eb" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -274,11 +275,11 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
           <CardContent>
             <ResponsiveContainer width="100%" height={Math.max(160, pkgBar.length * 28)}>
               <BarChart data={pkgBar} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip />
-                <Bar dataKey="count" name="Times Performed" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="count" name="Times Performed" fill="#7c3aed" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils'
 import type { ShiftVarianceCashierDto } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
 
+const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
+
 function dateStr(d: Date) { return d.toISOString().split('T')[0] }
 
 function defaultDates() {
@@ -137,7 +139,7 @@ export default function ShiftVariancePage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis
                   tick={{ fontSize: 11 }}
@@ -146,22 +148,23 @@ export default function ShiftVariancePage() {
                   tickFormatter={(v: number) => `₱${v >= 0 ? '+' : ''}${v}`}
                 />
                 <Tooltip
+                  contentStyle={TOOLTIP_STYLE}
                   formatter={(v: number) => [
                     `${v >= 0 ? '+' : ''}${formatPeso(v)}`,
                     'Variance',
                   ]}
                 />
-                <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1} />
-                <ReferenceLine y={50} stroke="oklch(0.55 0.16 155)" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={-50} stroke="oklch(0.55 0.16 155)" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={200} stroke="oklch(0.70 0.16 70)" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={-200} stroke="oklch(0.70 0.16 70)" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={0} stroke="var(--color-muted-foreground)" strokeWidth={1} />
+                <ReferenceLine y={50} stroke="#16a34a" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={-50} stroke="#16a34a" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={200} stroke="#d97706" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={-200} stroke="#d97706" strokeDasharray="4 4" strokeWidth={1} />
                 <Line
                   type="monotone"
                   dataKey="variance"
-                  stroke="hsl(var(--chart-1))"
+                  stroke="#2563eb"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: 'hsl(var(--chart-1))' }}
+                  dot={{ r: 3, fill: '#2563eb' }}
                   activeDot={{ r: 5 }}
                 />
               </LineChart>
