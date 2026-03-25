@@ -17,6 +17,10 @@ import {
   useMerchandiseItem, useUpdateMerchandise, useToggleMerchandiseStatus, useAdjustStock,
 } from '@/hooks/use-merchandise'
 import type { UpdateMerchandiseValues } from '@/hooks/use-merchandise'
+import { useMerchandiseCategories } from '@/hooks/use-merchandise-categories'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -29,6 +33,7 @@ const editSchema = z.object({
   name: z.string().min(1, 'Required'),
   price: z.coerce.number().positive('Must be positive'),
   lowStockThreshold: z.coerce.number().int().min(0),
+  categoryId: z.string().optional(),
   description: z.string().optional(),
   costPrice: z.coerce.number().positive().optional().or(z.literal('')),
 })
@@ -38,15 +43,18 @@ function EditMerchandiseForm({
   item,
   onSubmit,
 }: {
-  item: { name: string; price: number; lowStockThreshold: number; description: string | null; costPrice: number | null }
+  item: { name: string; price: number; lowStockThreshold: number; categoryId: string | null; description: string | null; costPrice: number | null }
   onSubmit: (v: UpdateMerchandiseValues) => Promise<void>
 }) {
-  const { register, handleSubmit, formState } = useForm<EditFormValues>({
+  const { data: catData } = useMerchandiseCategories()
+  const activeCategories = (catData?.items ?? []).filter((c) => c.isActive)
+  const { register, handleSubmit, formState, setValue, watch } = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: item.name,
       price: item.price,
       lowStockThreshold: item.lowStockThreshold,
+      categoryId: item.categoryId ?? '',
       description: item.description ?? '',
       costPrice: item.costPrice ?? '',
     },
@@ -58,6 +66,7 @@ function EditMerchandiseForm({
           name: v.name,
           price: v.price,
           lowStockThreshold: v.lowStockThreshold,
+          categoryId: v.categoryId || null,
           description: v.description || undefined,
           costPrice: v.costPrice ? Number(v.costPrice) : undefined,
         })
@@ -71,6 +80,25 @@ function EditMerchandiseForm({
           <p className="text-xs text-destructive">{formState.errors.name.message}</p>
         )}
       </div>
+      {activeCategories.length > 0 && (
+        <div className="space-y-1.5">
+          <Label>Category</Label>
+          <Select
+            value={watch('categoryId') || '__none__'}
+            onValueChange={(v) => setValue('categoryId', v === '__none__' ? '' : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="No category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">No category</SelectItem>
+              {activeCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Selling price (₱) <span className="text-destructive">*</span></Label>
@@ -278,11 +306,11 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
       {/* Stock card */}
       <div className={cn(
         'rounded-lg border px-5 py-4 flex items-center gap-8',
-        item.isLowStock ? 'border-amber-200 bg-amber-50/60' : ''
+        item.isLowStock ? 'border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/30' : ''
       )}>
         <div>
           <p className="text-xs text-muted-foreground">Current stock</p>
-          <p className={cn('text-4xl font-bold tabular-nums mt-0.5', item.isLowStock && 'text-amber-700')}>
+          <p className={cn('text-4xl font-bold tabular-nums mt-0.5', item.isLowStock && 'text-amber-700 dark:text-amber-400')}>
             {item.stockQuantity}
           </p>
         </div>
@@ -291,7 +319,7 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
           <p className="text-xl font-semibold tabular-nums mt-0.5">{item.lowStockThreshold}</p>
         </div>
         {item.isLowStock && (
-          <div className="ml-auto flex items-center gap-2 text-amber-700 text-sm">
+          <div className="ml-auto flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm">
             <AlertTriangle className="h-4 w-4" />
             Restock soon
           </div>

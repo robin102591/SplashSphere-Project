@@ -13,6 +13,7 @@ export const merchandiseKeys = {
 
 export interface MerchandiseListParams {
   search?: string
+  categoryId?: string
   lowStockOnly?: boolean
   page?: number
   pageSize?: number
@@ -24,6 +25,7 @@ export interface CreateMerchandiseValues {
   price: number
   stockQuantity: number
   lowStockThreshold: number
+  categoryId?: string
   description?: string
   costPrice?: number
 }
@@ -32,6 +34,7 @@ export interface UpdateMerchandiseValues {
   name: string
   price: number
   lowStockThreshold: number
+  categoryId?: string | null
   description?: string
   costPrice?: number
 }
@@ -49,6 +52,7 @@ export function useMerchandiseList(params: MerchandiseListParams = {}) {
       const token = await getToken()
       const qs = new URLSearchParams()
       if (params.search) qs.set('search', params.search)
+      if (params.categoryId) qs.set('categoryId', params.categoryId)
       if (params.lowStockOnly) qs.set('lowStockOnly', 'true')
       if (params.page) qs.set('page', String(params.page))
       if (params.pageSize) qs.set('pageSize', String(params.pageSize))
