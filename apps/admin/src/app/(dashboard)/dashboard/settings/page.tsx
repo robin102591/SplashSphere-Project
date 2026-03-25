@@ -23,14 +23,8 @@ import { useVehicleTypes, useCreateVehicleType, useUpdateVehicleType, useToggleV
 import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/use-sizes'
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
 import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel, useToggleModel } from '@/hooks/use-cars'
-import {
-  usePricingModifiers, useCreatePricingModifier, useUpdatePricingModifier,
-  useDeletePricingModifier, useTogglePricingModifier,
-} from '@/hooks/use-pricing-modifiers'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
-import type { PricingModifier, VehicleType, Size, Make, VehicleModel, ServiceCategory } from '@splashsphere/types'
-import { ModifierType } from '@splashsphere/types'
-import { useBranches } from '@/hooks/use-branches'
+import type { VehicleType, Size, Make, VehicleModel, ServiceCategory } from '@splashsphere/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -360,274 +354,6 @@ function CategoriesTab() {
   )
 }
 
-// ── Pricing Modifiers tab ─────────────────────────────────────────────────────
-
-const MODIFIER_TYPE_LABELS: Record<ModifierType, string> = {
-  [ModifierType.PeakHour]: 'Peak Hour',
-  [ModifierType.DayOfWeek]: 'Day of Week',
-  [ModifierType.Holiday]: 'Holiday',
-  [ModifierType.Promotion]: 'Promotion',
-  [ModifierType.Weather]: 'Weather',
-}
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-function modifierSubtitle(m: PricingModifier): string {
-  if (m.type === ModifierType.PeakHour && m.startTime && m.endTime)
-    return `${m.startTime.slice(0, 5)} – ${m.endTime.slice(0, 5)}`
-  if (m.type === ModifierType.DayOfWeek && m.activeDayOfWeek != null)
-    return DAY_NAMES[m.activeDayOfWeek]
-  if (m.type === ModifierType.Holiday && m.holidayDate)
-    return `${m.holidayName ?? ''} (${m.holidayDate})`
-  if (m.type === ModifierType.Promotion && m.startDate && m.endDate)
-    return `${m.startDate} – ${m.endDate}`
-  return ''
-}
-
-type ModifierForm = {
-  name: string
-  type: ModifierType
-  value: string
-  branchId: string
-  startTime: string
-  endTime: string
-  activeDayOfWeek: string
-  holidayDate: string
-  holidayName: string
-  startDate: string
-  endDate: string
-}
-
-const emptyModifierForm: ModifierForm = {
-  name: '', type: ModifierType.PeakHour, value: '',
-  branchId: '', startTime: '', endTime: '',
-  activeDayOfWeek: '', holidayDate: '', holidayName: '',
-  startDate: '', endDate: '',
-}
-
-function PricingModifiersTab() {
-  const { data: items = [], isLoading } = usePricingModifiers()
-  const { mutate: create, isPending: creating } = useCreatePricingModifier()
-  const { mutate: toggle } = useTogglePricingModifier()
-  const { mutate: remove } = useDeletePricingModifier()
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const { mutate: update, isPending: updating } = useUpdatePricingModifier(editingId ?? '')
-  const { data: branches = [] } = useBranches()
-
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
-  const [form, setForm] = useState<ModifierForm>(emptyModifierForm)
-
-  const f = (key: keyof ModifierForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((prev) => ({ ...prev, [key]: e.target.value }))
-
-  const openAdd = () => { setEditingId(null); setForm(emptyModifierForm); setDialogOpen(true) }
-  const openEdit = (item: PricingModifier) => {
-    setEditingId(item.id)
-    setForm({
-      name: item.name,
-      type: item.type,
-      value: String(item.value),
-      branchId: item.branchId ?? '',
-      startTime: item.startTime?.slice(0, 5) ?? '',
-      endTime: item.endTime?.slice(0, 5) ?? '',
-      activeDayOfWeek: item.activeDayOfWeek != null ? String(item.activeDayOfWeek) : '',
-      holidayDate: item.holidayDate ?? '',
-      holidayName: item.holidayName ?? '',
-      startDate: item.startDate ?? '',
-      endDate: item.endDate ?? '',
-    })
-    setDialogOpen(true)
-  }
-
-  const buildPayload = () => ({
-    name: form.name.trim(),
-    type: form.type,
-    value: parseFloat(form.value),
-    branchId: form.branchId || undefined,
-    startTime: form.type === ModifierType.PeakHour ? form.startTime || undefined : undefined,
-    endTime: form.type === ModifierType.PeakHour ? form.endTime || undefined : undefined,
-    activeDayOfWeek: form.type === ModifierType.DayOfWeek && form.activeDayOfWeek !== '' ? parseInt(form.activeDayOfWeek) : undefined,
-    holidayDate: form.type === ModifierType.Holiday ? form.holidayDate || undefined : undefined,
-    holidayName: form.type === ModifierType.Holiday ? form.holidayName || undefined : undefined,
-    startDate: form.type === ModifierType.Promotion ? form.startDate || undefined : undefined,
-    endDate: form.type === ModifierType.Promotion ? form.endDate || undefined : undefined,
-  })
-
-  const handleSave = () => {
-    const payload = buildPayload()
-    if (editingId) {
-      update(payload, { onSuccess: () => { toast.success('Updated'); setDialogOpen(false) }, onError: () => toast.error('Failed') })
-    } else {
-      create(payload, { onSuccess: () => { toast.success('Pricing modifier created'); setDialogOpen(false) }, onError: () => toast.error('Failed') })
-    }
-  }
-
-  const handleDelete = (id: string) => remove(id, {
-    onSuccess: () => { toast.success('Deleted'); setDeleteTarget(null) },
-    onError: () => toast.error('Failed to delete'),
-  })
-
-  const isFormValid = form.name.trim() && form.value && !isNaN(parseFloat(form.value))
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Price adjustment rules for peak hours, holidays, and promotions</p>
-        <Button size="sm" onClick={openAdd}><Plus className="mr-1 h-3.5 w-3.5" />Add</Button>
-      </div>
-
-      {isLoading ? <Skeleton className="h-40 w-full" /> : (
-        <div className="rounded-lg border divide-y">
-          {items.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No pricing modifiers yet</p>}
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm">{item.name}</span>
-                  <Badge variant="outline" className="text-xs">{MODIFIER_TYPE_LABELS[item.type]}</Badge>
-                  <span className="text-sm font-semibold tabular-nums">{item.value}×</span>
-                  {item.branchName && <span className="text-xs text-muted-foreground">{item.branchName}</span>}
-                  <Badge variant={item.isActive ? 'default' : 'secondary'} className={cn('text-xs', item.isActive && 'bg-green-500/15 text-green-700 border-green-200')}>
-                    {item.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-                {modifierSubtitle(item) && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{modifierSubtitle(item)}</p>
-                )}
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => toggle(item.id, { onSuccess: () => toast.success('Updated') })}>
-                  {item.isActive ? 'Deactivate' : 'Activate'}
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(item.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add/Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(v) => !v && setDialogOpen(false)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>{editingId ? 'Edit Pricing Modifier' : 'Add Pricing Modifier'}</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto pr-1">
-            <div className="space-y-1">
-              <Label>Name</Label>
-              <Input value={form.name} onChange={f('name')} placeholder="e.g. Weekend Surcharge" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Type</Label>
-                <Select value={String(form.type)} onValueChange={(v) => setForm((p) => ({ ...p, type: parseInt(v) as ModifierType }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(MODIFIER_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label>Multiplier value</Label>
-                <Input type="number" step="0.01" min="0" value={form.value} onChange={f('value')} placeholder="e.g. 1.2" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label>Branch <span className="text-muted-foreground">(leave blank for all)</span></Label>
-              <Select value={form.branchId || '__all__'} onValueChange={(v) => setForm((p) => ({ ...p, branchId: v === '__all__' ? '' : v }))}>
-                <SelectTrigger><SelectValue placeholder="All branches" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All branches</SelectItem>
-                  {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {form.type === ModifierType.PeakHour && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>Start time</Label>
-                  <Input type="time" value={form.startTime} onChange={f('startTime')} />
-                </div>
-                <div className="space-y-1">
-                  <Label>End time</Label>
-                  <Input type="time" value={form.endTime} onChange={f('endTime')} />
-                </div>
-              </div>
-            )}
-
-            {form.type === ModifierType.DayOfWeek && (
-              <div className="space-y-1">
-                <Label>Day of week</Label>
-                <Select value={form.activeDayOfWeek} onValueChange={(v) => setForm((p) => ({ ...p, activeDayOfWeek: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select day" /></SelectTrigger>
-                  <SelectContent>
-                    {DAY_NAMES.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {form.type === ModifierType.Holiday && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>Holiday name</Label>
-                  <Input value={form.holidayName} onChange={f('holidayName')} placeholder="e.g. Christmas" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Date</Label>
-                  <Input type="date" value={form.holidayDate} onChange={f('holidayDate')} />
-                </div>
-              </div>
-            )}
-
-            {form.type === ModifierType.Promotion && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>Start date</Label>
-                  <Input type="date" value={form.startDate} onChange={f('startDate')} />
-                </div>
-                <div className="space-y-1">
-                  <Label>End date</Label>
-                  <Input type="date" value={form.endDate} onChange={f('endDate')} />
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!isFormValid || creating || updating}>
-              {(creating || updating) ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete pricing modifier?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteTarget && handleDelete(deleteTarget)}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  )
-}
-
 // ── Shift Config tab ──────────────────────────────────────────────────────────
 
 function ShiftConfigTab() {
@@ -800,7 +526,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and pricing rules</p>
+        <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
       </div>
 
       <Tabs defaultValue="vehicle-types">
@@ -809,7 +535,6 @@ export default function SettingsPage() {
           <TabsTrigger value="sizes">Sizes</TabsTrigger>
           <TabsTrigger value="makes-models">Makes & Models</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="pricing-modifiers">Pricing Modifiers</TabsTrigger>
           <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
         </TabsList>
 
@@ -817,7 +542,6 @@ export default function SettingsPage() {
         <TabsContent value="sizes" className="mt-6"><SizesTab /></TabsContent>
         <TabsContent value="makes-models" className="mt-6"><MakesModelsTab /></TabsContent>
         <TabsContent value="categories" className="mt-6"><CategoriesTab /></TabsContent>
-        <TabsContent value="pricing-modifiers" className="mt-6"><PricingModifiersTab /></TabsContent>
         <TabsContent value="shift-config" className="mt-6"><ShiftConfigTab /></TabsContent>
       </Tabs>
     </div>

@@ -28,6 +28,7 @@ import {
   Droplets,
   Wallet,
   TrendingDown,
+  Percent,
 } from 'lucide-react'
 
 const navGroups = [
@@ -44,6 +45,7 @@ const navGroups = [
       { label: 'Services', href: '/dashboard/services', icon: Wrench },
       { label: 'Packages', href: '/dashboard/packages', icon: Package },
       { label: 'Merchandise', href: '/dashboard/merchandise', icon: ShoppingBag },
+      { label: 'Pricing Rules', href: '/dashboard/pricing-modifiers', icon: Percent },
     ],
   },
   {

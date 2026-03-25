@@ -93,7 +93,13 @@
       "Bash(grep -o \"\"Clerk.BackendAPI/[^\"\"]*\"\" /c/PROJECTS/carwash/SplashSphere-Claude/src/SplashSphere.Infrastructure/obj/project.assets.json)",
       "Bash(grep -n \"price\\\\|discount\\\\|tip\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)",
       "Bash(grep:*)",
-      "Bash(grep -n \"receipt\\\\|print\\\\|Print\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)"
+      "Bash(grep -n \"receipt\\\\|print\\\\|Print\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)",
+      "Bash(pnpm exec:*)",
+      "Bash(node -e \"require\\(''''child_process''''\\).execSync\\(''''npx --yes pnpm exec tsc --noEmit'''', {cwd: ''''C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin'''', stdio: ''''inherit''''}\\)\")",
+      "Bash(PATH=\"$PATH:/c/Users/rnobl/AppData/Roaming/npm:/c/Users/rnobl/AppData/Local/pnpm\")",
+      "Read(//c/Users/rnobl/AppData/Local/pnpm/**)",
+      "Read(//c/Users/rnobl/AppData/Roaming/npm/**)",
+      "Bash(corepack pnpm:*)"
     ]
   }
 }
