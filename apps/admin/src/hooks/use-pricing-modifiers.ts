@@ -3,7 +3,7 @@
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { PricingModifier, PagedResult } from '@splashsphere/types'
+import type { PricingModifier } from '@splashsphere/types'
 import type { ModifierType } from '@splashsphere/types'
 
 export const pricingModifierKeys = {
@@ -31,13 +31,12 @@ export function usePricingModifiers(branchId?: string) {
     queryKey: pricingModifierKeys.list({ branchId }),
     queryFn: async () => {
       const token = await getToken()
-      const qs = new URLSearchParams({ pageSize: '100' })
+      const qs = new URLSearchParams()
       if (branchId) qs.set('branchId', branchId)
-      const result = await apiClient.get<PagedResult<PricingModifier>>(
+      return apiClient.get<PricingModifier[]>(
         `/pricing-modifiers?${qs}`,
         token ?? undefined
       )
-      return (result?.items ?? []) as PricingModifier[]
     },
   })
 }
@@ -84,7 +83,7 @@ export function useTogglePricingModifier() {
   return useMutation({
     mutationFn: async (id: string) => {
       const token = await getToken()
-      return apiClient.patch<void>(`/pricing-modifiers/${id}/status`, {}, token ?? undefined)
+      return apiClient.patch<void>(`/pricing-modifiers/${id}/toggle`, {}, token ?? undefined)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: pricingModifierKeys.all }),
   })
