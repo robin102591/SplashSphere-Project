@@ -368,9 +368,7 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
             <SheetTitle>Edit Item</SheetTitle>
             <SheetDescription>SKU cannot be changed. Use stock adjustment to change quantity.</SheetDescription>
           </SheetHeader>
-          <div className="mt-6">
-            <EditMerchandiseForm item={item} onSubmit={handleUpdate} />
-          </div>
+          <EditMerchandiseForm item={item} onSubmit={handleUpdate} />
         </SheetContent>
       </Sheet>
 

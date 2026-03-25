@@ -213,7 +213,7 @@ function ManageCategoriesSheet({
           <SheetTitle>Merchandise Categories</SheetTitle>
           <SheetDescription>Create and manage item categories.</SheetDescription>
         </SheetHeader>
-        <div className="mt-6 space-y-6">
+        <div className="space-y-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="space-y-1.5">
               <Label>Name</Label>
