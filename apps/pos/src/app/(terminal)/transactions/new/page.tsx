@@ -419,6 +419,14 @@ function NewTransactionContent() {
   const servicesInitDone = useRef(false)
   const editInitDone = useRef(false)
 
+  /** Reset store and strip query params (queueEntryId, editId) so the page is fully clean. */
+  const resetPage = () => {
+    store.reset()
+    if (queueEntryId || editId) {
+      router.replace('/transactions/new')
+    }
+  }
+
   // ── Boot ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     store.reset()
@@ -909,7 +917,7 @@ function NewTransactionContent() {
         change,
       }
 
-      store.reset()
+      resetPage()
       if (cashOutAmount > 0) {
         setCashOutTip({ amount: cashOutAmount, transactionId })
       } else {
@@ -932,7 +940,7 @@ function NewTransactionContent() {
       const { transactionId } = await apiClient.post<{ transactionId: string }>(
         '/transactions', buildCreateBody(), token ?? undefined
       )
-      store.reset()
+      resetPage()
       router.push(`/transactions/${transactionId}`)
     } catch (err) {
       const apiErr = err as ApiError
@@ -960,7 +968,7 @@ function NewTransactionContent() {
         },
         token ?? undefined
       )
-      store.reset()
+      resetPage()
       router.push(`/transactions/${editId}`)
     } catch (err) {
       const apiErr = err as ApiError
@@ -1648,7 +1656,7 @@ function NewTransactionContent() {
             <button
               onClick={() => {
                 setReceiptData(null)
-                store.reset()
+                resetPage()
               }}
               className="flex-1 min-h-[56px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors duration-150 active:scale-[0.97]"
             >
@@ -1689,7 +1697,7 @@ function NewTransactionContent() {
             <button
               onClick={() => {
                 setCashOutTip(null)
-                store.reset()
+                resetPage()
               }}
               className="flex-1 min-h-[56px] rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-base transition-colors duration-150 active:scale-[0.97]"
             >
