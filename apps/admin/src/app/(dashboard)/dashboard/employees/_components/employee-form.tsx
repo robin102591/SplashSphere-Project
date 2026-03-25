@@ -1,11 +1,12 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -62,7 +63,7 @@ export function CreateEmployeeForm({
 }: CreateEmployeeFormProps) {
   const { data: branches = [] } = useBranches()
 
-  const { register, handleSubmit, watch, setValue, formState } = useForm<CreateFormValues>({
+  const { register, handleSubmit, watch, setValue, control, formState } = useForm<CreateFormValues>({
     resolver: zodResolver(createSchema),
     defaultValues: {
       branchId: '',
@@ -174,8 +175,19 @@ export function CreateEmployeeForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="emp-hired">Hired date (optional)</Label>
-        <Input id="emp-hired" type="date" {...register('hiredDate')} />
+        <Label>Hired date (optional)</Label>
+        <Controller
+          control={control}
+          name="hiredDate"
+          render={({ field }) => (
+            <DatePicker
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Select hired date"
+              className="w-full"
+            />
+          )}
+        />
       </div>
 
       <div className="flex justify-end pt-1">
@@ -195,7 +207,7 @@ interface EditEmployeeFormProps {
 }
 
 export function EditEmployeeForm({ defaultValues, onSubmit }: EditEmployeeFormProps) {
-  const { register, handleSubmit, watch, formState } = useForm<UpdateFormValues>({
+  const { register, handleSubmit, watch, control, formState } = useForm<UpdateFormValues>({
     resolver: zodResolver(updateSchema),
     defaultValues: {
       firstName: defaultValues.firstName,
@@ -274,8 +286,19 @@ export function EditEmployeeForm({ defaultValues, onSubmit }: EditEmployeeFormPr
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="edit-emp-hired">Hired date (optional)</Label>
-        <Input id="edit-emp-hired" type="date" {...register('hiredDate')} />
+        <Label>Hired date (optional)</Label>
+        <Controller
+          control={control}
+          name="hiredDate"
+          render={({ field }) => (
+            <DatePicker
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Select hired date"
+              className="w-full"
+            />
+          )}
+        />
       </div>
 
       <div className="flex justify-end pt-1">

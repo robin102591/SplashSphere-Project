@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/ui/status-badge'
 import {
@@ -111,11 +111,11 @@ export default function ShiftVariancePage() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">From</label>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="h-9 w-36" />
+          <DatePicker value={from} onChange={setFrom} className="w-40" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">To</label>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="h-9 w-36" />
+          <DatePicker value={to} onChange={setTo} className="w-40" />
         </div>
         <Select value={branchId || '__all__'} onValueChange={v => setBranchId(v === '__all__' ? '' : v)}>
           <SelectTrigger className="w-44">

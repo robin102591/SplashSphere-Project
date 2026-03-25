@@ -104,7 +104,13 @@
       "Bash(find \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard\" -type f -name \"page.tsx\")",
       "Bash(ls -la \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard/\")",
       "Bash(find \"/c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)\" -name \"*form*.tsx\" -type f)",
-      "Bash(find \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard\" -name \"page.tsx\" -o -name \"page.ts\")"
+      "Bash(find \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard\" -name \"page.tsx\" -o -name \"page.ts\")",
+      "Bash(pnpm add:*)",
+      "Bash(npm root:*)",
+      "Bash(npm install:*)",
+      "Bash(corepack enable:*)",
+      "Bash(node C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs add react-day-picker@9 date-fns)",
+      "Bash(node C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs add @radix-ui/react-popover)"
     ]
   }
 }

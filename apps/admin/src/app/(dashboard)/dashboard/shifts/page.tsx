@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -101,11 +101,11 @@ export default function ShiftsPage() {
 
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">From</label>
-          <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1) }} className="h-9 w-36" />
+          <DatePicker value={dateFrom} onChange={(v) => { setDateFrom(v); setPage(1) }} className="w-40" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">To</label>
-          <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1) }} className="h-9 w-36" />
+          <DatePicker value={dateTo} onChange={(v) => { setDateTo(v); setPage(1) }} className="w-40" />
         </div>
 
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>

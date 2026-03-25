@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
@@ -333,8 +334,19 @@ function ModifierFormDialog({
                 <Input id="holidayName" placeholder="e.g. Christmas Day" {...register('holidayName')} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="holidayDate">Date</Label>
-                <Input id="holidayDate" type="date" {...register('holidayDate')} />
+                <Label>Date</Label>
+                <Controller
+                  control={control}
+                  name="holidayDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="Select holiday date"
+                      className="w-full"
+                    />
+                  )}
+                />
               </div>
             </>
           )}
@@ -342,12 +354,34 @@ function ModifierFormDialog({
           {Number(selectedType) === ModifierType.Promotion && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input id="startDate" type="date" {...register('startDate')} />
+                <Label>Start Date</Label>
+                <Controller
+                  control={control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="Start"
+                      className="w-full"
+                    />
+                  )}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input id="endDate" type="date" {...register('endDate')} />
+                <Label>End Date</Label>
+                <Controller
+                  control={control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="End"
+                      className="w-full"
+                    />
+                  )}
+                />
               </div>
             </div>
           )}

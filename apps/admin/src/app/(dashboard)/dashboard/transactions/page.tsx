@@ -6,7 +6,7 @@ import { Receipt } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -125,21 +125,11 @@ export default function TransactionsPage() {
 
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">From</label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 w-36"
-          />
+          <DatePicker value={dateFrom} onChange={setDateFrom} className="w-40" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">To</label>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 w-36"
-          />
+          <DatePicker value={dateTo} onChange={setDateTo} className="w-40" />
         </div>
       </div>
 

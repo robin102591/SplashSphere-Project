@@ -42,6 +42,7 @@ import type { UpdateEmployeeValues } from '@/hooks/use-employees'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { formatPeso } from '@/lib/format'
 
@@ -146,21 +147,11 @@ function CommissionsTab({ employeeId }: { employeeId: string }) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">From</label>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          />
+          <DatePicker value={from} onChange={setFrom} className="w-40" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">To</label>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          />
+          <DatePicker value={to} onChange={setTo} className="w-40" />
         </div>
       </div>
 
@@ -251,21 +242,11 @@ function AttendanceTab({ employeeId }: { employeeId: string }) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">From</label>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          />
+          <DatePicker value={from} onChange={setFrom} className="w-40" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">To</label>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          />
+          <DatePicker value={to} onChange={setTo} className="w-40" />
         </div>
       </div>
 

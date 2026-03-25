@@ -18,7 +18,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ConnectionStatusDot } from '@/components/connection-status'
 import { useBranch } from '@/lib/branch-context'
 import { useLockStore } from '@/lib/use-lock-store'
@@ -57,6 +57,77 @@ function LiveClock() {
   )
 }
 
+// ── Branch selector dropdown ──────────────────────────────────────────────────
+
+function BranchSelector({
+  branchId,
+  branchName,
+  branches,
+  onSelect,
+}: {
+  branchId: string
+  branchName: string
+  branches: { id: string; name: string }[]
+  onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-2.5 h-9 text-sm text-gray-300 hover:bg-gray-750 hover:border-gray-600 transition-colors duration-150 active:scale-[0.98] max-w-[200px]"
+      >
+        <MapPin className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+        <span className="truncate">{branchName || 'Select branch…'}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 text-gray-500 shrink-0 transition-transform duration-150', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-[200px] rounded-xl bg-gray-800 border border-gray-700 shadow-xl py-1 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150">
+          {branches.length > 1 && !branchId && (
+            <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-700">
+              Select a branch
+            </div>
+          )}
+          {branches.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => {
+                onSelect(b.id)
+                setOpen(false)
+              }}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors duration-100',
+                b.id === branchId
+                  ? 'bg-blue-600/15 text-blue-400'
+                  : 'text-gray-300 hover:bg-gray-700/60'
+              )}
+            >
+              <MapPin className={cn('h-3.5 w-3.5 shrink-0', b.id === branchId ? 'text-blue-400' : 'text-gray-600')} />
+              <span className="truncate">{b.name}</span>
+              {b.id === branchId && (
+                <svg className="ml-auto h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Top bar ────────────────────────────────────────────────────────────────────
 
 function TopBar() {
@@ -81,21 +152,12 @@ function TopBar() {
             <Droplets className="h-4.5 w-4.5 text-white" />
           </div>
           {branches.length > 0 && (
-            <div className="relative flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-2.5 h-9">
-              <MapPin className="h-3.5 w-3.5 text-gray-500 shrink-0" />
-              <select
-                value={branchId}
-                onChange={e => setBranchId(e.target.value)}
-                className="bg-transparent text-sm text-gray-300 focus:outline-none cursor-pointer pr-1 max-w-[150px]"
-              >
-                {branches.length > 1 && (
-                  <option value="">Select branch…</option>
-                )}
-                {branches.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
+            <BranchSelector
+              branchId={branchId}
+              branchName={branchName}
+              branches={branches}
+              onSelect={setBranchId}
+            />
           )}
           {!branchId && (
             <span className="text-sm text-yellow-500 font-medium">No branch</span>
