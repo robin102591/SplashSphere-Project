@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Branch } from '@splashsphere/types'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -56,14 +56,9 @@ export function getBranchColumns({ onToggleStatus }: ColumnActions): ColumnDef<B
     {
       accessorKey: 'isActive',
       header: 'Status',
-      cell: ({ row }) =>
-        row.original.isActive ? (
-          <Badge variant="default" className="bg-green-500/15 text-green-700 border-green-200">
-            Active
-          </Badge>
-        ) : (
-          <Badge variant="secondary">Inactive</Badge>
-        ),
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.isActive ? 'Active' : 'Inactive'} />
+      ),
     },
     {
       id: 'actions',

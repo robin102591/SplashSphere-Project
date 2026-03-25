@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, Power, PowerOff, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -170,11 +171,7 @@ export default function PackageDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{pkg.name}</h1>
-              {pkg.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
+              <StatusBadge status={pkg.isActive ? 'Active' : 'Inactive'} />
               <Badge variant="outline" className="text-xs">
                 {pkg.serviceCount} {pkg.serviceCount === 1 ? 'service' : 'services'}
               </Badge>

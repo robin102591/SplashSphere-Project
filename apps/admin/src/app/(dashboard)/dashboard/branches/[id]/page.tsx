@@ -4,7 +4,7 @@ import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, Power, PowerOff, MapPin, Phone, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -29,13 +29,7 @@ import { BranchForm } from '../_components/branch-form'
 import type { BranchFormValues } from '@/hooks/use-branches'
 import { EmployeeType, TransactionStatus } from '@splashsphere/types'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-function formatPHP(amount: number) {
-  return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount)
-}
+import { formatPeso } from '@/lib/format'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-PH', {
@@ -45,17 +39,9 @@ function formatDate(iso: string) {
   })
 }
 
-const STATUS_STYLES: Record<TransactionStatus, string> = {
-  [TransactionStatus.Pending]: 'bg-yellow-500/15 text-yellow-700 border-yellow-200',
-  [TransactionStatus.InProgress]: 'bg-blue-500/15 text-blue-700 border-blue-200',
-  [TransactionStatus.Completed]: 'bg-green-500/15 text-green-700 border-green-200',
-  [TransactionStatus.Cancelled]: 'bg-gray-500/15 text-gray-600 border-gray-200',
-  [TransactionStatus.Refunded]: 'bg-red-500/15 text-red-700 border-red-200',
-}
-
-const STATUS_LABELS: Record<TransactionStatus, string> = {
+const STATUS_KEYS: Record<TransactionStatus, string> = {
   [TransactionStatus.Pending]: 'Pending',
-  [TransactionStatus.InProgress]: 'In Progress',
+  [TransactionStatus.InProgress]: 'InProgress',
   [TransactionStatus.Completed]: 'Completed',
   [TransactionStatus.Cancelled]: 'Cancelled',
   [TransactionStatus.Refunded]: 'Refunded',
@@ -100,24 +86,16 @@ function EmployeesTab({ branchId }: { branchId: string }) {
           <TableRow key={emp.id}>
             <TableCell className="font-medium">{emp.fullName}</TableCell>
             <TableCell>
-              <Badge variant="outline" className="text-xs">
-                {emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'}
-              </Badge>
+              <StatusBadge status={emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
             </TableCell>
             <TableCell className="text-sm text-muted-foreground">
-              {emp.dailyRate != null ? formatPHP(emp.dailyRate) : '—'}
+              {emp.dailyRate != null ? formatPeso(emp.dailyRate) : '—'}
             </TableCell>
             <TableCell className="text-sm text-muted-foreground">
               {emp.hiredDate ? formatDate(emp.hiredDate) : '—'}
             </TableCell>
             <TableCell>
-              {emp.isActive ? (
-                <Badge variant="default" className="bg-green-500/15 text-green-700 border-green-200 text-xs">
-                  Active
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-xs">Inactive</Badge>
-              )}
+              <StatusBadge status={emp.isActive ? 'Active' : 'Inactive'} />
             </TableCell>
           </TableRow>
         ))}
@@ -171,15 +149,10 @@ function TransactionsTab({ branchId }: { branchId: string }) {
                 {tx.vehicleTypeName} · {tx.sizeName}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant="outline"
-                  className={cn('text-xs', STATUS_STYLES[tx.status])}
-                >
-                  {STATUS_LABELS[tx.status]}
-                </Badge>
+                <StatusBadge status={STATUS_KEYS[tx.status]} />
               </TableCell>
               <TableCell className="text-right font-medium text-sm">
-                {formatPHP(tx.finalAmount)}
+                {formatPeso(tx.finalAmount)}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 {formatDate(tx.createdAt)}
@@ -267,11 +240,7 @@ export default function BranchDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{branch.name}</h1>
-              {branch.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
+              <StatusBadge status={branch.isActive ? 'Active' : 'Inactive'} />
             </div>
             <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">

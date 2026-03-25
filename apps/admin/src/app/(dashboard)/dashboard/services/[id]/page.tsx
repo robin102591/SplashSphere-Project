@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { ArrowLeft, Pencil, Power, PowerOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -33,6 +34,7 @@ import { PricingMatrixEditor } from '@/components/pricing-matrix-editor'
 import { CommissionMatrixEditor } from '@/components/commission-matrix-editor'
 import type { ServiceFormValues } from '@/hooks/use-services'
 import { toast } from 'sonner'
+import { formatPeso } from '@/lib/format'
 
 // ── Edit form ─────────────────────────────────────────────────────────────────
 
@@ -161,9 +163,6 @@ function DetailsTab({
   createdAt: string
   updatedAt: string
 }) {
-  function formatPHP(n: number) {
-    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
-  }
   function formatDate(iso: string) {
     return new Date(iso).toLocaleString('en-PH', {
       year: 'numeric',
@@ -182,7 +181,7 @@ function DetailsTab({
       </div>
       <div>
         <dt className="text-sm text-muted-foreground">Base price</dt>
-        <dd className="mt-0.5 font-mono font-medium">{formatPHP(basePrice)}</dd>
+        <dd className="mt-0.5 font-mono font-medium">{formatPeso(basePrice)}</dd>
       </div>
       <div className="col-span-2">
         <dt className="text-sm text-muted-foreground">Description</dt>
@@ -263,11 +262,7 @@ export default function ServiceDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{service.name}</h1>
-              {service.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
+              <StatusBadge status={service.isActive ? 'Active' : 'Inactive'} />
               <Badge variant="outline" className="text-xs">
                 {service.categoryName}
               </Badge>
@@ -275,10 +270,7 @@ export default function ServiceDetailPage({
             <p className="text-sm text-muted-foreground mt-0.5">
               Base price:{' '}
               <span className="font-medium font-mono text-foreground">
-                {new Intl.NumberFormat('en-PH', {
-                  style: 'currency',
-                  currency: 'PHP',
-                }).format(service.basePrice)}
+                {formatPeso(service.basePrice)}
               </span>
             </p>
           </div>

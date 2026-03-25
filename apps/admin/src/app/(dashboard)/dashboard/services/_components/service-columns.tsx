@@ -3,6 +3,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ServiceSummary } from '@splashsphere/types'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,13 +14,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, Eye, Power, PowerOff } from 'lucide-react'
 import Link from 'next/link'
+import { formatPeso } from '@/lib/format'
 
 interface ColumnActions {
   onToggleStatus: (id: string) => void
-}
-
-function formatPHP(amount: number) {
-  return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount)
 }
 
 export function getServiceColumns({ onToggleStatus }: ColumnActions): ColumnDef<ServiceSummary>[] {
@@ -49,20 +47,15 @@ export function getServiceColumns({ onToggleStatus }: ColumnActions): ColumnDef<
       accessorKey: 'basePrice',
       header: 'Base Price',
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{formatPHP(row.original.basePrice)}</span>
+        <span className="font-mono text-sm">{formatPeso(row.original.basePrice)}</span>
       ),
     },
     {
       accessorKey: 'isActive',
       header: 'Status',
-      cell: ({ row }) =>
-        row.original.isActive ? (
-          <Badge variant="default" className="bg-green-500/15 text-green-700 border-green-200">
-            Active
-          </Badge>
-        ) : (
-          <Badge variant="secondary">Inactive</Badge>
-        ),
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.isActive ? 'Active' : 'Inactive'} />
+      ),
     },
     {
       id: 'actions',

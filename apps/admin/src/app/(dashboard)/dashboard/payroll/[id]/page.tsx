@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Lock, CheckCheck, AlertTriangle, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -23,17 +24,12 @@ import {
 import { PayrollStatus, EmployeeType } from '@splashsphere/types'
 import type { PayrollEntry } from '@splashsphere/types'
 import { toast } from 'sonner'
+import { formatPeso } from '@/lib/format'
 
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
-
-// ── Status badge ──────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: PayrollStatus }) {
-  if (status === PayrollStatus.Open)
-    return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">Open</Badge>
-  if (status === PayrollStatus.Closed)
-    return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">Closed</Badge>
-  return <Badge className="bg-green-500/15 text-green-700 border-green-200">Processed</Badge>
+const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
+  [PayrollStatus.Open]: 'Open',
+  [PayrollStatus.Closed]: 'Closed',
+  [PayrollStatus.Processed]: 'Processed',
 }
 
 // ── Inline-editable cell ──────────────────────────────────────────────────────
@@ -113,7 +109,7 @@ function EditableCell({
 
   return (
     <div className="flex items-center gap-1 group">
-      <span className="tabular-nums">{php.format(value)}</span>
+      <span className="tabular-nums">{formatPeso(value)}</span>
       <button
         onClick={startEdit}
         className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded hover:bg-muted transition-opacity"
@@ -245,28 +241,28 @@ function EntryRow({
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums">
         {entry.employeeTypeSnapshot === EmployeeType.Daily
-          ? php.format(entry.baseSalary)
+          ? formatPeso(entry.baseSalary)
           : <span className="text-muted-foreground">—</span>}
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums">
-        {php.format(entry.totalCommissions)}
+        {formatPeso(entry.totalCommissions)}
       </td>
       <td className="px-4 py-3 text-right text-sm">
         {editable ? (
           <EditableCell value={entry.bonuses} onSave={(v) => saveField('bonuses', v)} />
         ) : (
-          <span className="tabular-nums">{php.format(entry.bonuses)}</span>
+          <span className="tabular-nums">{formatPeso(entry.bonuses)}</span>
         )}
       </td>
       <td className="px-4 py-3 text-right text-sm">
         {editable ? (
           <EditableCell value={entry.deductions} onSave={(v) => saveField('deductions', v)} />
         ) : (
-          <span className="tabular-nums">{php.format(entry.deductions)}</span>
+          <span className="tabular-nums">{formatPeso(entry.deductions)}</span>
         )}
       </td>
       <td className="px-4 py-3 text-right font-semibold text-sm tabular-nums">
-        {php.format(entry.netPay)}
+        {formatPeso(entry.netPay)}
       </td>
       <td className="px-4 py-3 text-sm max-w-[140px]">
         {editable ? (
@@ -375,7 +371,7 @@ export default function PayrollPeriodDetailPage({
               <h1 className="text-2xl font-bold tracking-tight">
                 {period.year} — Week {period.cutOffWeek}
               </h1>
-              <StatusBadge status={period.status} />
+              <StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               {startDate} – {endDate} · {entries.length}{' '}
@@ -441,7 +437,7 @@ export default function PayrollPeriodDetailPage({
             >
               <p className="text-xs text-muted-foreground">{label}</p>
               <p className={`text-lg font-bold tabular-nums mt-0.5 ${highlight ? 'text-primary' : ''}`}>
-                {php.format(value)}
+                {formatPeso(value)}
               </p>
             </div>
           ))}
@@ -486,16 +482,16 @@ export default function PayrollPeriodDetailPage({
                   Totals ({entries.length} employees)
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
-                  {php.format(totalCommissions)}
+                  {formatPeso(totalCommissions)}
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
-                  {php.format(totalBonuses)}
+                  {formatPeso(totalBonuses)}
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
-                  {php.format(totalDeductions)}
+                  {formatPeso(totalDeductions)}
                 </td>
                 <td className="px-4 py-3 text-right font-bold tabular-nums">
-                  {php.format(totalNetPay)}
+                  {formatPeso(totalNetPay)}
                 </td>
                 <td />
               </tr>

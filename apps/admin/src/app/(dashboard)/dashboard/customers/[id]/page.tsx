@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -29,8 +30,6 @@ import { toast } from 'sonner'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
 
 // ── Edit customer form ────────────────────────────────────────────────────────
 
@@ -380,11 +379,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{customer.fullName}</h1>
-              {customer.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
+              <StatusBadge status={customer.isActive ? 'Active' : 'Inactive'} />
             </div>
             {customer.email && (
               <p className="text-sm text-muted-foreground mt-0.5">{customer.email}</p>

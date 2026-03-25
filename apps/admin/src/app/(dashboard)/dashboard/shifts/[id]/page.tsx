@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,8 +21,7 @@ import Link from 'next/link'
 import { useShiftById, useShiftReport, useReviewShift, useReopenShift } from '@/hooks/use-shifts'
 import { ShiftStatus, ReviewStatus, PaymentMethod, CashMovementType } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -50,12 +49,10 @@ const METHOD_LABEL: Record<number, string> = {
   [PaymentMethod.BankTransfer]: 'Bank Transfer',
 }
 
-function ReviewStatusBadge({ status }: { status: ReviewStatus }) {
-  if (status === ReviewStatus.Approved)
-    return <Badge className="bg-green-500/15 text-green-700 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Approved</Badge>
-  if (status === ReviewStatus.Flagged)
-    return <Badge className="bg-red-500/15 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" />Flagged</Badge>
-  return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200"><AlertTriangle className="h-3 w-3 mr-1" />Pending</Badge>
+const REVIEW_STATUS_KEYS: Record<ReviewStatus, string> = {
+  [ReviewStatus.Pending]: 'Pending',
+  [ReviewStatus.Approved]: 'Approved',
+  [ReviewStatus.Flagged]: 'Flagged',
 }
 
 function VarianceDisplay({ variance }: { variance: number }) {
@@ -64,7 +61,7 @@ function VarianceDisplay({ variance }: { variance: number }) {
   const label = abs <= 50 ? 'BALANCED' : variance > 0 ? 'OVER' : 'SHORT'
   return (
     <span className={cn('font-mono font-bold text-lg', color)}>
-      {variance >= 0 ? '+' : ''}{php.format(variance)} · {label}
+      {variance >= 0 ? '+' : ''}{formatPeso(variance)} · {label}
     </span>
   )
 }
@@ -167,7 +164,7 @@ export default function ShiftDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ReviewStatusBadge status={shift.reviewStatus} />
+          <StatusBadge status={REVIEW_STATUS_KEYS[shift.reviewStatus]} />
           <Button variant="outline" size="sm" onClick={() => window.print()} className="print:hidden">
             <Printer className="h-4 w-4 mr-1.5" />
             Print
@@ -183,7 +180,7 @@ export default function ShiftDetailPage() {
               <div>
                 <p className="font-semibold text-amber-900">Pending Review</p>
                 <p className="text-sm text-amber-700">
-                  Variance: <strong>{shift.variance >= 0 ? '+' : ''}{php.format(shift.variance)}</strong>
+                  Variance: <strong>{shift.variance >= 0 ? '+' : ''}{formatPeso(shift.variance)}</strong>
                   {absVariance > 200 && ' — Large variance, investigation recommended.'}
                   {absVariance > 50 && absVariance <= 200 && ' — Within moderate range.'}
                   {absVariance <= 50 && ' — Acceptable.'}
@@ -229,7 +226,7 @@ export default function ShiftDetailPage() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <ReviewStatusBadge status={shift.reviewStatus} />
+                <StatusBadge status={REVIEW_STATUS_KEYS[shift.reviewStatus]} />
                 {shift.reviewedByName && (
                   <p className="text-sm text-muted-foreground mt-1">
                     By {shift.reviewedByName}
@@ -273,10 +270,10 @@ export default function ShiftDetailPage() {
             </CardHeader>
             <CardContent className="space-y-0">
               <ReportRow label="Total Transactions" value={String(shift.totalTransactionCount)} bold />
-              <ReportRow label="Total Revenue"      value={php.format(shift.totalRevenue)} bold />
-              <ReportRow label="Total Discounts"    value={`−${php.format(shift.totalDiscounts)}`} valueClass="text-red-600" />
-              <ReportRow label="Net Revenue"        value={php.format(shift.totalRevenue - shift.totalDiscounts)} bold />
-              <ReportRow label="Total Commissions"  value={php.format(shift.totalCommissions)} />
+              <ReportRow label="Total Revenue"      value={formatPeso(shift.totalRevenue)} bold />
+              <ReportRow label="Total Discounts"    value={`−${formatPeso(shift.totalDiscounts)}`} valueClass="text-red-600" />
+              <ReportRow label="Net Revenue"        value={formatPeso(shift.totalRevenue - shift.totalDiscounts)} bold />
+              <ReportRow label="Total Commissions"  value={formatPeso(shift.totalCommissions)} />
             </CardContent>
           </Card>
 
@@ -291,7 +288,7 @@ export default function ShiftDetailPage() {
                   <div key={ps.method} className="flex items-center justify-between py-1.5 text-sm">
                     <span className="text-muted-foreground">{METHOD_LABEL[ps.method] ?? 'Other'}</span>
                     <div className="text-right">
-                      <span className="font-semibold">{php.format(ps.totalAmount)}</span>
+                      <span className="font-semibold">{formatPeso(ps.totalAmount)}</span>
                       <span className="text-muted-foreground text-xs ml-2">{ps.transactionCount} txns</span>
                     </div>
                   </div>
@@ -299,7 +296,7 @@ export default function ShiftDetailPage() {
                 <Separator className="my-2" />
                 <div className="flex justify-between text-sm font-bold">
                   <span>Total</span>
-                  <span>{php.format(shift.totalRevenue)}</span>
+                  <span>{formatPeso(shift.totalRevenue)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -315,13 +312,13 @@ export default function ShiftDetailPage() {
               <CardTitle className="text-sm font-medium">Cash Flow</CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
-              <ReportRow label="Opening Cash Fund"        value={php.format(shift.openingCashFund)} />
-              <ReportRow label="(+) Cash Payments"        value={php.format(shift.totalCashPayments)} valueClass="text-green-700" />
-              <ReportRow label="(+) Manual Cash-In"       value={php.format(shift.totalCashIn)} valueClass="text-green-700" />
-              <ReportRow label="(−) Manual Cash-Out"      value={`−${php.format(shift.totalCashOut)}`} valueClass="text-red-600" />
+              <ReportRow label="Opening Cash Fund"        value={formatPeso(shift.openingCashFund)} />
+              <ReportRow label="(+) Cash Payments"        value={formatPeso(shift.totalCashPayments)} valueClass="text-green-700" />
+              <ReportRow label="(+) Manual Cash-In"       value={formatPeso(shift.totalCashIn)} valueClass="text-green-700" />
+              <ReportRow label="(−) Manual Cash-Out"      value={`−${formatPeso(shift.totalCashOut)}`} valueClass="text-red-600" />
               <Separator className="my-2" />
-              <ReportRow label="Expected Cash in Drawer"  value={php.format(shift.expectedCashInDrawer)} bold />
-              <ReportRow label="Actual Cash Counted"      value={php.format(shift.actualCashInDrawer)} bold />
+              <ReportRow label="Expected Cash in Drawer"  value={formatPeso(shift.expectedCashInDrawer)} bold />
+              <ReportRow label="Actual Cash Counted"      value={formatPeso(shift.actualCashInDrawer)} bold />
               <div className="flex items-center justify-between pt-2 border-t mt-2">
                 <span className="text-sm font-semibold">Variance</span>
                 <VarianceDisplay variance={shift.variance} />
@@ -342,13 +339,13 @@ export default function ShiftDetailPage() {
                       <span className="font-mono text-muted-foreground">
                         ₱{d.denominationValue >= 1 ? d.denominationValue.toLocaleString() : '0.25'} × {d.count}
                       </span>
-                      <span className="font-mono font-semibold">{php.format(d.subtotal)}</span>
+                      <span className="font-mono font-semibold">{formatPeso(d.subtotal)}</span>
                     </div>
                   ))}
                   <Separator className="my-2" />
                   <div className="flex justify-between text-sm font-bold">
                     <span>Total Counted</span>
-                    <span className="font-mono">{php.format(shift.actualCashInDrawer)}</span>
+                    <span className="font-mono">{formatPeso(shift.actualCashInDrawer)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -374,7 +371,7 @@ export default function ShiftDetailPage() {
                         'font-mono font-semibold shrink-0 ml-2',
                         m.type === CashMovementType.CashIn ? 'text-green-700' : 'text-red-600'
                       )}>
-                        {m.type === CashMovementType.CashIn ? '+' : '−'}{php.format(m.amount)}
+                        {m.type === CashMovementType.CashIn ? '+' : '−'}{formatPeso(m.amount)}
                       </span>
                     </div>
                   ))}
@@ -399,7 +396,7 @@ export default function ShiftDetailPage() {
                     <div key={svc.serviceName} className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{i + 1}. {svc.serviceName}</span>
                       <div className="text-right">
-                        <span className="font-semibold">{php.format(svc.totalAmount)}</span>
+                        <span className="font-semibold">{formatPeso(svc.totalAmount)}</span>
                         <span className="text-xs text-muted-foreground ml-2">{svc.transactionCount} txns</span>
                       </div>
                     </div>
@@ -420,7 +417,7 @@ export default function ShiftDetailPage() {
                     <div key={emp.employeeId} className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{i + 1}. {emp.employeeName}</span>
                       <div className="text-right">
-                        <span className="font-semibold">{php.format(emp.totalCommission)}</span>
+                        <span className="font-semibold">{formatPeso(emp.totalCommission)}</span>
                         <span className="text-xs text-muted-foreground ml-2">{emp.serviceCount} svc</span>
                       </div>
                     </div>
@@ -438,7 +435,7 @@ export default function ShiftDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Approve Shift</AlertDialogTitle>
             <AlertDialogDescription>
-              Approve this shift for {shift.cashierName} with variance of {php.format(shift.variance)}?
+              Approve this shift for {shift.cashierName} with variance of {formatPeso(shift.variance)}?
               This action acknowledges the variance is acceptable.
             </AlertDialogDescription>
           </AlertDialogHeader>

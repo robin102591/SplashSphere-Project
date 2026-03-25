@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Package, AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -18,8 +18,7 @@ import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 // ── Create dialog ─────────────────────────────────────────────────────────────
 
@@ -267,7 +266,7 @@ export default function MerchandisePage() {
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{php.format(item.price)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatPeso(item.price)}</td>
                   <td className="px-4 py-3 text-center">
                     <span
                       className={cn(
@@ -280,17 +279,7 @@ export default function MerchandisePage() {
                     <span className="text-muted-foreground text-xs"> / {item.lowStockThreshold}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {item.isLowStock ? (
-                      <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">
-                        Low Stock
-                      </Badge>
-                    ) : item.isActive ? (
-                      <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
+                    <StatusBadge status={item.isLowStock ? 'Low Stock' : item.isActive ? 'Active' : 'Inactive'} />
                   </td>
                 </tr>
               ))}

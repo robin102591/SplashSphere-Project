@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -27,8 +27,6 @@ import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory } from '@splashsphere/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
 
 // ── Reusable simple-name dialog ───────────────────────────────────────────────
 
@@ -95,9 +93,7 @@ function VehicleTypesTab() {
             <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <span className="font-medium text-sm">{item.name}</span>
-                <Badge variant={item.isActive ? 'default' : 'secondary'} className={cn('text-xs', item.isActive && 'bg-green-500/15 text-green-700 border-green-200')}>
-                  {item.isActive ? 'Active' : 'Inactive'}
-                </Badge>
+                <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(item)}>
@@ -152,9 +148,7 @@ function SizesTab() {
             <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <span className="font-medium text-sm">{item.name}</span>
-                <Badge variant={item.isActive ? 'default' : 'secondary'} className={cn('text-xs', item.isActive && 'bg-green-500/15 text-green-700 border-green-200')}>
-                  {item.isActive ? 'Active' : 'Inactive'}
-                </Badge>
+                <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(item)}>
@@ -223,7 +217,7 @@ function MakesModelsTab() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{make.name}</span>
-                  {!make.isActive && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                  {!make.isActive && <StatusBadge status="Inactive" />}
                 </div>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={(e) => { e.stopPropagation(); toggleMake(make.id, { onSuccess: () => toast.success('Updated') }) }}>
                   {make.isActive ? 'Deactivate' : 'Activate'}
@@ -256,7 +250,7 @@ function MakesModelsTab() {
               <div key={model.id} className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{model.name}</span>
-                  {!model.isActive && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                  {!model.isActive && <StatusBadge status="Inactive" />}
                 </div>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => toggleModel({ id: model.id, makeId: selectedMake.id }, { onSuccess: () => toast.success('Updated') })}>
                   {model.isActive ? 'Deactivate' : 'Activate'}
@@ -310,9 +304,7 @@ function CategoriesTab() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{item.name}</span>
-                  <Badge variant={item.isActive ? 'default' : 'secondary'} className={cn('text-xs', item.isActive && 'bg-green-500/15 text-green-700 border-green-200')}>
-                    {item.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
                 </div>
                 {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
               </div>

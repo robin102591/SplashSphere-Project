@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Receipt } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import {
@@ -17,8 +17,7 @@ import type { TransactionUpdatedPayload } from '@splashsphere/types'
 import { TransactionStatus } from '@splashsphere/types'
 import type { TransactionSummary } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 const STATUS_LABELS: Record<TransactionStatus, string> = {
   [TransactionStatus.Pending]: 'Pending',
@@ -28,17 +27,12 @@ const STATUS_LABELS: Record<TransactionStatus, string> = {
   [TransactionStatus.Refunded]: 'Refunded',
 }
 
-function StatusBadge({ status }: { status: TransactionStatus }) {
-  const label = STATUS_LABELS[status]
-  if (status === TransactionStatus.Completed)
-    return <Badge className="bg-green-500/15 text-green-700 border-green-200">{label}</Badge>
-  if (status === TransactionStatus.InProgress)
-    return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">{label}</Badge>
-  if (status === TransactionStatus.Pending)
-    return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">{label}</Badge>
-  if (status === TransactionStatus.Cancelled)
-    return <Badge variant="secondary">{label}</Badge>
-  return <Badge variant="outline">{label}</Badge>
+const STATUS_KEYS: Record<TransactionStatus, string> = {
+  [TransactionStatus.Pending]: 'Pending',
+  [TransactionStatus.InProgress]: 'InProgress',
+  [TransactionStatus.Completed]: 'Completed',
+  [TransactionStatus.Cancelled]: 'Cancelled',
+  [TransactionStatus.Refunded]: 'Refunded',
 }
 
 function TransactionRow({ tx }: { tx: TransactionSummary }) {
@@ -57,8 +51,8 @@ function TransactionRow({ tx }: { tx: TransactionSummary }) {
         <p className="text-xs text-muted-foreground">{tx.vehicleTypeName} · {tx.sizeName}</p>
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">{tx.customerName ?? '—'}</td>
-      <td className="px-4 py-3 text-right font-semibold tabular-nums">{php.format(tx.finalAmount)}</td>
-      <td className="px-4 py-3"><StatusBadge status={tx.status} /></td>
+      <td className="px-4 py-3 text-right font-semibold tabular-nums">{formatPeso(tx.finalAmount)}</td>
+      <td className="px-4 py-3"><StatusBadge status={STATUS_KEYS[tx.status]} /></td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {new Date(tx.createdAt).toLocaleDateString('en-PH', {
           month: 'short', day: 'numeric', year: 'numeric',

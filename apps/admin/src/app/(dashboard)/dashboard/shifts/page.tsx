@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -15,25 +15,20 @@ import { cn } from '@/lib/utils'
 import type { ShiftSummaryDto } from '@splashsphere/types'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
-function ShiftStatusBadge({ status }: { status: ShiftStatus }) {
-  if (status === ShiftStatus.Open)
-    return <Badge className="bg-green-500/15 text-green-700 border-green-200">Open</Badge>
-  if (status === ShiftStatus.Closed)
-    return <Badge variant="secondary">Closed</Badge>
-  return <Badge className="bg-red-500/15 text-red-700 border-red-200">Voided</Badge>
+const SHIFT_STATUS_KEYS: Record<ShiftStatus, string> = {
+  [ShiftStatus.Open]: 'Open',
+  [ShiftStatus.Closed]: 'Closed',
+  [ShiftStatus.Voided]: 'Voided',
 }
 
-function ReviewStatusBadge({ status }: { status: ReviewStatus }) {
-  if (status === ReviewStatus.Approved)
-    return <Badge className="bg-green-500/15 text-green-700 border-green-200">Approved</Badge>
-  if (status === ReviewStatus.Flagged)
-    return <Badge className="bg-red-500/15 text-red-700 border-red-200">Flagged</Badge>
-  return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">Pending</Badge>
+const REVIEW_STATUS_KEYS: Record<ReviewStatus, string> = {
+  [ReviewStatus.Pending]: 'Pending',
+  [ReviewStatus.Approved]: 'Approved',
+  [ReviewStatus.Flagged]: 'Flagged',
 }
 
 function VarianceCell({ variance }: { variance: number }) {
@@ -41,7 +36,7 @@ function VarianceCell({ variance }: { variance: number }) {
   const color = abs <= 50 ? 'text-green-700' : abs <= 200 ? 'text-amber-600' : 'text-red-600'
   return (
     <span className={cn('font-mono tabular-nums font-semibold', color)}>
-      {variance >= 0 ? '+' : ''}{php.format(variance)}
+      {variance >= 0 ? '+' : ''}{formatPeso(variance)}
     </span>
   )
 }
@@ -186,12 +181,12 @@ export default function ShiftsPage() {
                   <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
                     {shift.closedAt ? fmtTime(shift.closedAt) : '—'}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums font-semibold">{php.format(shift.totalRevenue)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums font-semibold">{formatPeso(shift.totalRevenue)}</td>
                   <td className="px-4 py-3 text-right">
                     <VarianceCell variance={shift.variance} />
                   </td>
-                  <td className="px-4 py-3"><ShiftStatusBadge status={shift.status} /></td>
-                  <td className="px-4 py-3"><ReviewStatusBadge status={shift.reviewStatus} /></td>
+                  <td className="px-4 py-3"><StatusBadge status={SHIFT_STATUS_KEYS[shift.status]} /></td>
+                  <td className="px-4 py-3"><StatusBadge status={REVIEW_STATUS_KEYS[shift.reviewStatus]} /></td>
                 </tr>
               ))
             }

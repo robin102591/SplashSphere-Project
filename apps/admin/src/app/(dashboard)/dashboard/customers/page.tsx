@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Users, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -209,13 +209,7 @@ export default function CustomersPage() {
                   <td className="px-4 py-3 text-muted-foreground">{c.email ?? '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.contactNumber ?? '—'}</td>
                   <td className="px-4 py-3">
-                    {c.isActive ? (
-                      <Badge className="bg-green-500/15 text-green-700 border-green-200">
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
+                    <StatusBadge status={c.isActive ? 'Active' : 'Inactive'} />
                   </td>
                 </tr>
               ))}

@@ -4,7 +4,7 @@ import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Car, User, MapPin, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTransaction } from '@/hooks/use-transactions'
 import { TransactionStatus, PaymentMethod } from '@splashsphere/types'
@@ -16,14 +16,12 @@ import type {
   TransactionEmployeeSummary,
   Payment,
 } from '@splashsphere/types'
-import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { formatPeso } from '@/lib/format'
 
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
-
-const STATUS_LABELS: Record<TransactionStatus, string> = {
+const STATUS_KEYS: Record<TransactionStatus, string> = {
   [TransactionStatus.Pending]: 'Pending',
-  [TransactionStatus.InProgress]: 'In Progress',
+  [TransactionStatus.InProgress]: 'InProgress',
   [TransactionStatus.Completed]: 'Completed',
   [TransactionStatus.Cancelled]: 'Cancelled',
   [TransactionStatus.Refunded]: 'Refunded',
@@ -35,19 +33,6 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   [PaymentMethod.CreditCard]: 'Credit Card',
   [PaymentMethod.DebitCard]: 'Debit Card',
   [PaymentMethod.BankTransfer]: 'Bank Transfer',
-}
-
-function StatusBadge({ status }: { status: TransactionStatus }) {
-  const label = STATUS_LABELS[status]
-  if (status === TransactionStatus.Completed)
-    return <Badge className="bg-green-500/15 text-green-700 border-green-200">{label}</Badge>
-  if (status === TransactionStatus.InProgress)
-    return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">{label}</Badge>
-  if (status === TransactionStatus.Pending)
-    return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">{label}</Badge>
-  if (status === TransactionStatus.Cancelled)
-    return <Badge variant="secondary">{label}</Badge>
-  return <Badge variant="outline">{label}</Badge>
 }
 
 // ── Service lines section ─────────────────────────────────────────────────────
@@ -70,9 +55,9 @@ function ServiceLines({ services }: { services: readonly TransactionServiceLine[
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-semibold text-sm tabular-nums">{php.format(svc.unitPrice)}</p>
+                <p className="font-semibold text-sm tabular-nums">{formatPeso(svc.unitPrice)}</p>
                 <p className="text-xs text-muted-foreground">
-                  commission: {php.format(svc.totalCommission)}
+                  commission: {formatPeso(svc.totalCommission)}
                 </p>
               </div>
             </div>
@@ -85,7 +70,7 @@ function ServiceLines({ services }: { services: readonly TransactionServiceLine[
                   >
                     {a.employeeName}
                     <span className="text-muted-foreground">
-                      {php.format(a.commissionAmount)}
+                      {formatPeso(a.commissionAmount)}
                     </span>
                   </span>
                 ))}
@@ -118,9 +103,9 @@ function PackageLines({ packages }: { packages: readonly TransactionPackageLine[
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-semibold text-sm tabular-nums">{php.format(pkg.unitPrice)}</p>
+                <p className="font-semibold text-sm tabular-nums">{formatPeso(pkg.unitPrice)}</p>
                 <p className="text-xs text-muted-foreground">
-                  commission: {php.format(pkg.totalCommission)}
+                  commission: {formatPeso(pkg.totalCommission)}
                 </p>
               </div>
             </div>
@@ -133,7 +118,7 @@ function PackageLines({ packages }: { packages: readonly TransactionPackageLine[
                   >
                     {a.employeeName}
                     <span className="text-muted-foreground">
-                      {php.format(a.commissionAmount)}
+                      {formatPeso(a.commissionAmount)}
                     </span>
                   </span>
                 ))}
@@ -161,10 +146,10 @@ function MerchandiseLines({ merchandise }: { merchandise: readonly TransactionMe
             <div>
               <p className="font-medium text-sm">{m.merchandiseName}</p>
               <p className="text-xs text-muted-foreground">
-                {php.format(m.unitPrice)} × {m.quantity}
+                {formatPeso(m.unitPrice)} × {m.quantity}
               </p>
             </div>
-            <p className="font-semibold text-sm tabular-nums">{php.format(m.lineTotal)}</p>
+            <p className="font-semibold text-sm tabular-nums">{formatPeso(m.lineTotal)}</p>
           </div>
         ))}
       </div>
@@ -186,12 +171,12 @@ function EmployeeSummary({ employees }: { employees: readonly TransactionEmploye
         {employees.map((e) => (
           <div key={e.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
             <span>{e.employeeName}</span>
-            <span className="font-medium tabular-nums">{php.format(e.totalCommission)}</span>
+            <span className="font-medium tabular-nums">{formatPeso(e.totalCommission)}</span>
           </div>
         ))}
         <div className="flex items-center justify-between px-4 py-2.5 text-sm bg-muted/50 font-semibold">
           <span>Total commissions</span>
-          <span className="tabular-nums">{php.format(total)}</span>
+          <span className="tabular-nums">{formatPeso(total)}</span>
         </div>
       </div>
     </section>
@@ -224,13 +209,13 @@ function PaymentsSection({ payments, finalAmount }: { payments: readonly Payment
                   {new Date(p.createdAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-              <span className="font-medium tabular-nums">{php.format(p.amount)}</span>
+              <span className="font-medium tabular-nums">{formatPeso(p.amount)}</span>
             </div>
           ))}
           {change > 0 && (
             <div className="flex items-center justify-between px-4 py-2.5 text-sm bg-muted/30 text-muted-foreground">
               <span>Change</span>
-              <span className="tabular-nums">{php.format(change)}</span>
+              <span className="tabular-nums">{formatPeso(change)}</span>
             </div>
           )}
         </div>
@@ -286,7 +271,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight font-mono">{tx.transactionNumber}</h1>
-              <StatusBadge status={tx.status} />
+              <StatusBadge status={STATUS_KEYS[tx.status]} />
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">{date}</p>
           </div>
@@ -297,23 +282,23 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="rounded-lg border px-4 py-3">
           <p className="text-xs text-muted-foreground">Subtotal</p>
-          <p className="font-semibold tabular-nums mt-0.5">{php.format(tx.totalAmount)}</p>
+          <p className="font-semibold tabular-nums mt-0.5">{formatPeso(tx.totalAmount)}</p>
         </div>
         {tx.discountAmount > 0 && (
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Discount</p>
-            <p className="font-semibold tabular-nums mt-0.5 text-green-700">−{php.format(tx.discountAmount)}</p>
+            <p className="font-semibold tabular-nums mt-0.5 text-green-700">−{formatPeso(tx.discountAmount)}</p>
           </div>
         )}
         {tx.taxAmount > 0 && (
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Tax</p>
-            <p className="font-semibold tabular-nums mt-0.5">{php.format(tx.taxAmount)}</p>
+            <p className="font-semibold tabular-nums mt-0.5">{formatPeso(tx.taxAmount)}</p>
           </div>
         )}
         <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
           <p className="text-xs text-muted-foreground">Total</p>
-          <p className="text-lg font-bold tabular-nums mt-0.5 text-primary">{php.format(tx.finalAmount)}</p>
+          <p className="text-lg font-bold tabular-nums mt-0.5 text-primary">{formatPeso(tx.finalAmount)}</p>
         </div>
       </div>
 

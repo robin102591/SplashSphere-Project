@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -16,8 +16,7 @@ import { useShiftVarianceReport } from '@/hooks/use-shifts'
 import { useBranches } from '@/hooks/use-branches'
 import { cn } from '@/lib/utils'
 import type { ShiftVarianceCashierDto } from '@splashsphere/types'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 function dateStr(d: Date) { return d.toISOString().split('T')[0] }
 
@@ -30,9 +29,9 @@ function defaultDates() {
 
 function VarianceBadge({ value }: { value: number }) {
   const abs = Math.abs(value)
-  if (abs <= 50) return <span className="text-green-700 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{php.format(value)}</span>
-  if (abs <= 200) return <span className="text-amber-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{php.format(value)}</span>
-  return <span className="text-red-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{php.format(value)}</span>
+  if (abs <= 50) return <span className="text-green-700 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
+  if (abs <= 200) return <span className="text-amber-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
+  return <span className="text-red-600 font-mono font-semibold text-sm">{value >= 0 ? '+' : ''}{formatPeso(value)}</span>
 }
 
 function CashierRow({ cashier, onClick, selected }: {
@@ -55,7 +54,7 @@ function CashierRow({ cashier, onClick, selected }: {
         <div className="flex items-center gap-2">
           {cashier.cashierName}
           {isConsistentlyNegative && (
-            <Badge className="bg-red-500/15 text-red-700 border-red-200 text-xs">Watch</Badge>
+            <StatusBadge status="Watch" />
           )}
         </div>
       </td>
@@ -63,7 +62,7 @@ function CashierRow({ cashier, onClick, selected }: {
       <td className="px-4 py-3 text-right"><VarianceBadge value={cashier.totalVariance} /></td>
       <td className="px-4 py-3 text-right"><VarianceBadge value={cashier.averageVariance} /></td>
       <td className="px-4 py-3 text-right font-mono text-red-600 font-semibold text-sm">
-        {cashier.largestShortage < 0 ? php.format(cashier.largestShortage) : '—'}
+        {cashier.largestShortage < 0 ? formatPeso(cashier.largestShortage) : '—'}
       </td>
     </tr>
   )
@@ -148,7 +147,7 @@ export default function ShiftVariancePage() {
                 />
                 <Tooltip
                   formatter={(v: number) => [
-                    `${v >= 0 ? '+' : ''}${php.format(v)}`,
+                    `${v >= 0 ? '+' : ''}${formatPeso(v)}`,
                     'Variance',
                   ]}
                 />

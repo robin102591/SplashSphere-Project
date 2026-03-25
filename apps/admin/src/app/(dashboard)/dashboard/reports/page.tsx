@@ -13,8 +13,7 @@ import {
 import { useRevenueReport, useCommissionsReport, useServicePopularityReport } from '@/hooks/use-reports'
 import { useBranches } from '@/hooks/use-branches'
 import { useEmployees } from '@/hooks/use-employees'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso, formatPesoCompact } from '@/lib/format'
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 
 function dateStr(d: Date) { return d.toISOString().split('T')[0] }
@@ -56,9 +55,9 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total Revenue" value={php.format(data?.grandTotal ?? 0)} />
-        <StatCard label="Total Discount" value={php.format(data?.totalDiscount ?? 0)} />
-        <StatCard label="Total Tax" value={php.format(data?.totalTax ?? 0)} />
+        <StatCard label="Total Revenue" value={formatPeso(data?.grandTotal ?? 0)} />
+        <StatCard label="Total Discount" value={formatPeso(data?.totalDiscount ?? 0)} />
+        <StatCard label="Total Tax" value={formatPeso(data?.totalTax ?? 0)} />
         <StatCard label="Transactions" value={String(data?.transactionCount ?? 0)} />
       </div>
 
@@ -81,8 +80,8 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number, name: string) => [php.format(v), name === 'revenue' ? 'Revenue' : 'Discount']} />
+                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
+                  <Tooltip formatter={(v: number, name: string) => [formatPeso(v), name === 'revenue' ? 'Revenue' : 'Discount']} />
                   <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#revGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -103,7 +102,7 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="42%" outerRadius={65} strokeWidth={1}>
                     {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => php.format(v)} />
+                  <Tooltip formatter={(v: number) => formatPeso(v)} />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -129,9 +128,9 @@ function RevenueTab({ from, to, branchId }: { from: string; to: string; branchId
               {data?.dailyBreakdown.map((d) => (
                 <tr key={d.date} className="hover:bg-muted/30">
                   <td className="px-4 py-2">{new Date(d.date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{php.format(d.revenue)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-green-700">{d.discount > 0 ? `−${php.format(d.discount)}` : '—'}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{d.tax > 0 ? php.format(d.tax) : '—'}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{formatPeso(d.revenue)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-green-700">{d.discount > 0 ? `−${formatPeso(d.discount)}` : '—'}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{d.tax > 0 ? formatPeso(d.tax) : '—'}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{d.transactionCount}</td>
                 </tr>
               ))}
@@ -161,7 +160,7 @@ function CommissionsTab({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Total Commissions" value={php.format(data?.grandTotalCommissions ?? 0)} />
+        <StatCard label="Total Commissions" value={formatPeso(data?.grandTotalCommissions ?? 0)} />
         <StatCard label="Transactions" value={String(data?.transactionCount ?? 0)} />
       </div>
 
@@ -174,9 +173,9 @@ function CommissionsTab({
             <ResponsiveContainer width="100%" height={Math.max(200, barData.length * 28)}>
               <BarChart data={barData} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: number) => [php.format(v), 'Commission']} />
+                <Tooltip formatter={(v: number) => [formatPeso(v), 'Commission']} />
                 <Bar dataKey="commission" fill="#16a34a" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -203,7 +202,7 @@ function CommissionsTab({
                   <td className="px-4 py-2 text-muted-foreground">{e.branchName}</td>
                   <td className="px-4 py-2 text-muted-foreground">{e.employeeType}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{e.transactionCount}</td>
-                  <td className="px-4 py-2 text-right tabular-nums font-semibold">{php.format(e.totalCommissions)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums font-semibold">{formatPeso(e.totalCommissions)}</td>
                 </tr>
               ))}
             </tbody>
@@ -211,7 +210,7 @@ function CommissionsTab({
               <tr className="bg-muted/50 font-semibold">
                 <td className="px-4 py-2.5" colSpan={3}>Total</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{data.transactionCount}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums">{php.format(data.grandTotalCommissions)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(data.grandTotalCommissions)}</td>
               </tr>
             </tfoot>
           </table>
@@ -305,8 +304,8 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
                   <td className="px-4 py-2 font-medium">{s.serviceName}</td>
                   <td className="px-4 py-2 text-muted-foreground">{s.categoryName ?? '—'}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{s.timesPerformed}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{php.format(s.totalRevenue)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{php.format(s.averageRevenue)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{formatPeso(s.totalRevenue)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{formatPeso(s.averageRevenue)}</td>
                 </tr>
               ))}
               {data.packages.map((p) => (
@@ -314,8 +313,8 @@ function ServicePopularityTab({ from, to, branchId }: { from: string; to: string
                   <td className="px-4 py-2 font-medium">{p.packageName}</td>
                   <td className="px-4 py-2 text-muted-foreground text-xs">Package</td>
                   <td className="px-4 py-2 text-right tabular-nums">{p.timesPerformed}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{php.format(p.totalRevenue)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{php.format(p.averageRevenue)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{formatPeso(p.totalRevenue)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{formatPeso(p.averageRevenue)}</td>
                 </tr>
               ))}
             </tbody>

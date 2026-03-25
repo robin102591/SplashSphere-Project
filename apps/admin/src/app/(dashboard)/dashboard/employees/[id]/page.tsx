@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { ArrowLeft, Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -42,8 +43,7 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-PH', {
@@ -68,18 +68,14 @@ function DetailsTab({ emp }: { emp: Employee }) {
         <div>
           <dt className="text-sm text-muted-foreground">Employee type</dt>
           <dd className="mt-0.5">
-            {emp.employeeType === EmployeeType.Commission ? (
-              <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">Commission</Badge>
-            ) : (
-              <Badge variant="outline">Daily Rate</Badge>
-            )}
+            <StatusBadge status={emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
           </dd>
         </div>
 
         {emp.employeeType === EmployeeType.Daily && emp.dailyRate != null && (
           <div>
             <dt className="text-sm text-muted-foreground">Daily rate</dt>
-            <dd className="mt-0.5 font-medium">{php.format(emp.dailyRate)}</dd>
+            <dd className="mt-0.5 font-medium">{formatPeso(emp.dailyRate)}</dd>
           </div>
         )}
 
@@ -201,7 +197,7 @@ function CommissionsTab({ employeeId }: { employeeId: string }) {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{r.branchName}</td>
                     <td className="px-4 py-3 text-right font-medium">
-                      {php.format(r.totalCommission)}
+                      {formatPeso(r.totalCommission)}
                     </td>
                   </tr>
                 ))}
@@ -211,7 +207,7 @@ function CommissionsTab({ employeeId }: { employeeId: string }) {
                   <td colSpan={3} className="px-4 py-3 font-medium">
                     Total ({rows.length} transactions)
                   </td>
-                  <td className="px-4 py-3 text-right font-bold">{php.format(grandTotal)}</td>
+                  <td className="px-4 py-3 text-right font-bold">{formatPeso(grandTotal)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -651,16 +647,8 @@ export default function EmployeeDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{emp.fullName}</h1>
-              {emp.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
-              {emp.employeeType === EmployeeType.Commission ? (
-                <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">Commission</Badge>
-              ) : (
-                <Badge variant="outline">Daily Rate</Badge>
-              )}
+              <StatusBadge status={emp.isActive ? 'Active' : 'Inactive'} />
+              <StatusBadge status={emp.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">{emp.branchName}</p>
           </div>

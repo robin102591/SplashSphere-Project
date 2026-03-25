@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
 import {
@@ -48,6 +49,7 @@ import { toast } from 'sonner'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { formatPeso } from '@/lib/format'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -72,7 +74,7 @@ function typeLabel(type: ModifierType) {
 
 function formatValue(type: ModifierType, value: number) {
   if (type === ModifierType.Promotion) {
-    return `₱${value.toFixed(2)} off`
+    return `${formatPeso(value)} off`
   }
   const pct = ((value - 1) * 100).toFixed(0)
   return value >= 1 ? `+${pct}%` : `${pct}%`
@@ -450,9 +452,7 @@ function ModifierRow({
         {mod.branchName ?? 'All branches'}
       </td>
       <td className="px-4 py-3">
-        <Badge variant={mod.isActive ? 'default' : 'secondary'}>
-          {mod.isActive ? 'Active' : 'Inactive'}
-        </Badge>
+        <StatusBadge status={mod.isActive ? 'Active' : 'Inactive'} />
       </td>
       <td className="px-4 py-3 text-right">
         <DropdownMenu>

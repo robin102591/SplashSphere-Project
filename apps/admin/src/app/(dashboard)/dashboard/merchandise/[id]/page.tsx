@@ -4,7 +4,7 @@ import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, Power, PowerOff, AlertTriangle, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import {
@@ -21,8 +21,7 @@ import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso } from '@/lib/format'
 
 // ── Edit form ─────────────────────────────────────────────────────────────────
 
@@ -258,15 +257,9 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{item.name}</h1>
               {item.isLowStock && (
-                <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">
-                  <AlertTriangle className="mr-1 h-3 w-3" />Low Stock
-                </Badge>
+                <StatusBadge status="Low Stock" />
               )}
-              {item.isActive ? (
-                <Badge className="bg-green-500/15 text-green-700 border-green-200">Active</Badge>
-              ) : (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
+              <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
             </div>
             <p className="text-sm text-muted-foreground font-mono mt-0.5">{item.sku}</p>
           </div>
@@ -317,12 +310,12 @@ export default function MerchandiseDetailPage({ params }: { params: Promise<{ id
         <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
           <div>
             <dt className="text-muted-foreground">Selling price</dt>
-            <dd className="mt-0.5 font-semibold text-base">{php.format(item.price)}</dd>
+            <dd className="mt-0.5 font-semibold text-base">{formatPeso(item.price)}</dd>
           </div>
           {item.costPrice != null && (
             <div>
               <dt className="text-muted-foreground">Cost price</dt>
-              <dd className="mt-0.5 font-medium">{php.format(item.costPrice)}</dd>
+              <dd className="mt-0.5 font-medium">{formatPeso(item.costPrice)}</dd>
             </div>
           )}
           {item.categoryName && (

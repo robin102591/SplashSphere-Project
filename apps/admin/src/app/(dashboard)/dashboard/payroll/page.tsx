@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wallet } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
@@ -15,15 +15,12 @@ import {
 import { usePayrollPeriods } from '@/hooks/use-payroll'
 import { PayrollStatus } from '@splashsphere/types'
 import type { PayrollPeriodSummary } from '@splashsphere/types'
+import { formatPeso } from '@/lib/format'
 
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
-
-function StatusBadge({ status }: { status: PayrollStatus }) {
-  if (status === PayrollStatus.Open)
-    return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200">Open</Badge>
-  if (status === PayrollStatus.Closed)
-    return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">Closed</Badge>
-  return <Badge className="bg-green-500/15 text-green-700 border-green-200">Processed</Badge>
+const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
+  [PayrollStatus.Open]: 'Open',
+  [PayrollStatus.Closed]: 'Closed',
+  [PayrollStatus.Processed]: 'Processed',
 }
 
 function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
@@ -51,11 +48,11 @@ function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
         {startDate} – {endDate}
       </td>
       <td className="px-4 py-3">
-        <StatusBadge status={period.status} />
+        <StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />
       </td>
       <td className="px-4 py-3 text-sm text-center tabular-nums">{period.entryCount}</td>
       <td className="px-4 py-3 text-right font-medium tabular-nums">
-        {php.format(period.totalNetPay)}
+        {formatPeso(period.totalNetPay)}
       </td>
     </tr>
   )

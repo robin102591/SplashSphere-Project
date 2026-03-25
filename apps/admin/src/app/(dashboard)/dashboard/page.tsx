@@ -15,8 +15,7 @@ import { useBranches } from '@/hooks/use-branches'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSignalREvent } from '@/lib/signalr-context'
 import type { DashboardMetricsUpdatedPayload } from '@splashsphere/types'
-
-const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' })
+import { formatPeso, formatPesoCompact } from '@/lib/format'
 
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 
@@ -115,8 +114,8 @@ export default function DashboardPage() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <KpiCard
             title="Revenue Today"
-            value={php.format(summary?.revenueToday ?? 0)}
-            sub={`This week: ${php.format(summary?.revenueThisWeek ?? 0)}`}
+            value={formatPeso(summary?.revenueToday ?? 0)}
+            sub={`This week: ${formatPeso(summary?.revenueThisWeek ?? 0)}`}
             icon={CreditCard}
             highlight
           />
@@ -146,7 +145,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Revenue This Month</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{php.format(summary?.revenueThisMonth ?? 0)}</p>
+            <p className="text-lg font-bold tabular-nums mt-0.5">{formatPeso(summary?.revenueThisMonth ?? 0)}</p>
           </div>
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Transactions This Month</p>
@@ -154,7 +153,7 @@ export default function DashboardPage() {
           </div>
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Revenue This Week</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{php.format(summary?.revenueThisWeek ?? 0)}</p>
+            <p className="text-lg font-bold tabular-nums mt-0.5">{formatPeso(summary?.revenueThisWeek ?? 0)}</p>
           </div>
           <div className="rounded-lg border px-4 py-3">
             <p className="text-xs text-muted-foreground">Transactions This Week</p>
@@ -187,8 +186,8 @@ export default function DashboardPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => [php.format(v), 'Revenue']} />
+                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
+                  <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
                   <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#colorRev)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -220,7 +219,7 @@ export default function DashboardPage() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => php.format(v)} />
+                  <Tooltip formatter={(v: number) => formatPeso(v)} />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -239,9 +238,9 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={topServices} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => formatPesoCompact(v)} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: number) => [php.format(v), 'Revenue']} />
+                <Tooltip formatter={(v: number) => [formatPeso(v), 'Revenue']} />
                 <Bar dataKey="revenue" fill="#2563eb" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -270,7 +269,7 @@ export default function DashboardPage() {
                 {summary.branches.map((b) => (
                   <tr key={b.branchId} className="hover:bg-muted/30">
                     <td className="px-4 py-2.5 font-medium">{b.branchName}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{php.format(b.revenueToday)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(b.revenueToday)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{b.transactionsToday}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{b.queueWaiting}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{b.queueInService}</td>

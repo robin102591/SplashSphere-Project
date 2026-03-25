@@ -7,6 +7,7 @@ import type { VehicleType, Size } from '@splashsphere/types'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
+import { formatPeso } from '@/lib/format'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,11 +44,7 @@ function buildInitialMatrix(rows: readonly PricingRowInput[]): PricingMatrix {
 function formatPHP(value: string): string {
   const n = parseFloat(value)
   if (isNaN(n)) return ''
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-  }).format(n)
+  return formatPeso(n)
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

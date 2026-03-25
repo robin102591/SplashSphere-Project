@@ -99,7 +99,8 @@
       "Bash(PATH=\"$PATH:/c/Users/rnobl/AppData/Roaming/npm:/c/Users/rnobl/AppData/Local/pnpm\")",
       "Read(//c/Users/rnobl/AppData/Local/pnpm/**)",
       "Read(//c/Users/rnobl/AppData/Roaming/npm/**)",
-      "Bash(corepack pnpm:*)"
+      "Bash(corepack pnpm:*)",
+      "Bash(grep -n \"bg-.*500.*text-\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/pos/src/app/\\\\\\(terminal\\\\\\)/transactions/[id]/page.tsx)"
     ]
   }
 }

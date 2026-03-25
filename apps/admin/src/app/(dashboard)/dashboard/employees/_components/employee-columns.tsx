@@ -3,7 +3,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Employee } from '@splashsphere/types'
 import { EmployeeType } from '@splashsphere/types'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, Eye, Power, PowerOff } from 'lucide-react'
 import Link from 'next/link'
+import { formatPeso } from '@/lib/format'
 
 interface ColumnActions {
   onToggleStatus: (id: string) => void
@@ -43,14 +44,9 @@ export function getEmployeeColumns({ onToggleStatus }: ColumnActions): ColumnDef
     {
       accessorKey: 'employeeType',
       header: 'Type',
-      cell: ({ row }) =>
-        row.original.employeeType === EmployeeType.Commission ? (
-          <Badge variant="default" className="bg-blue-500/15 text-blue-700 border-blue-200">
-            Commission
-          </Badge>
-        ) : (
-          <Badge variant="outline">Daily Rate</Badge>
-        ),
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
+      ),
     },
     {
       id: 'rateOrNote',
@@ -60,10 +56,7 @@ export function getEmployeeColumns({ onToggleStatus }: ColumnActions): ColumnDef
         if (emp.employeeType === EmployeeType.Daily && emp.dailyRate != null) {
           return (
             <span className="text-sm">
-              {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(
-                emp.dailyRate
-              )}
-              /day
+              {formatPeso(emp.dailyRate)}/day
             </span>
           )
         }
@@ -73,14 +66,9 @@ export function getEmployeeColumns({ onToggleStatus }: ColumnActions): ColumnDef
     {
       accessorKey: 'isActive',
       header: 'Status',
-      cell: ({ row }) =>
-        row.original.isActive ? (
-          <Badge variant="default" className="bg-green-500/15 text-green-700 border-green-200">
-            Active
-          </Badge>
-        ) : (
-          <Badge variant="secondary">Inactive</Badge>
-        ),
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.isActive ? 'Active' : 'Inactive'} />
+      ),
     },
     {
       id: 'actions',
