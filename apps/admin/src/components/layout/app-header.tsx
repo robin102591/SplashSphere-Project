@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth, useOrganization } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +23,7 @@ import {
   Bell, LogOut, Moon, Search, Settings, Sun, User,
 } from 'lucide-react'
 import { ConnectionStatusDot } from '@/components/connection-status'
+import { SearchDialog } from '@/components/search-dialog'
 
 export function AppHeader() {
   const { user } = useUser()
@@ -31,6 +31,18 @@ export function AppHeader() {
   const { organization, membership } = useOrganization()
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
+
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -50,15 +62,18 @@ export function AppHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-4" />
 
-      {/* Global search — desktop */}
+      {/* Global search — desktop trigger */}
       <div className="hidden md:flex flex-1 justify-center">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            className="pl-9 h-8 bg-muted/50"
-          />
-        </div>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="inline-flex items-center gap-2 w-full max-w-sm rounded-md border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Search...</span>
+          <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-background px-1.5 font-mono text-[10px] font-medium">
+            ⌘K
+          </kbd>
+        </button>
       </div>
       {/* Global search — mobile toggle */}
       <div className="flex-1 md:hidden" />
@@ -68,13 +83,15 @@ export function AppHeader() {
             variant="ghost"
             size="icon"
             className="h-8 w-8 md:hidden"
-            onClick={() => setSearchOpen(!searchOpen)}
+            onClick={() => setSearchOpen(true)}
           />
         }>
           <Search className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent>Search</TooltipContent>
       </Tooltip>
+
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       <div className="flex items-center gap-1.5">
         <ConnectionStatusDot className="hidden sm:block" />

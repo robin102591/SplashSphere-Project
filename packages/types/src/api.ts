@@ -77,6 +77,24 @@ export interface CreateOnboardingResponse {
   tenantId: string;
 }
 
+// ── Global Search ─────────────────────────────────────────────────────────────
+
+export interface SearchHit {
+  readonly id: string;
+  readonly title: string;
+  readonly subtitle: string | null;
+  readonly category: string;
+}
+
+export interface GlobalSearchResult {
+  readonly customers: readonly SearchHit[];
+  readonly employees: readonly SearchHit[];
+  readonly transactions: readonly SearchHit[];
+  readonly vehicles: readonly SearchHit[];
+  readonly services: readonly SearchHit[];
+  readonly merchandise: readonly SearchHit[];
+}
+
 // ── SignalR hub payloads ───────────────────────────────────────────────────────
 
 /**
