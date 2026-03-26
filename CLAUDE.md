@@ -416,7 +416,21 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 ### Merchandise — CRUD + stock adjustment
 
-### Payroll — Periods list, close, process, entry update
+### Payroll
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/payroll/periods` | List periods (filter by status, year, paginated) |
+| `GET` | `/payroll/periods/{id}` | Period detail with all entries |
+| `POST` | `/payroll/periods/{id}/close` | Close period (generates entries) |
+| `POST` | `/payroll/periods/{id}/process` | Process/finalise period (immutable) |
+| `PATCH` | `/payroll/entries/{id}` | Update entry (bonuses, deductions, notes) |
+| `GET` | `/payroll/entries/{id}/detail` | Entry detail with commission breakdown + attendance |
+| `POST` | `/payroll/entries/bulk-adjust` | Bulk apply bonus/deduction to selected entries |
+| `GET` | `/payroll/templates` | List adjustment templates |
+| `POST` | `/payroll/templates` | Create adjustment template |
+| `PUT` | `/payroll/templates/{id}` | Update adjustment template |
+| `DELETE` | `/payroll/templates/{id}` | Soft-delete (toggle active) adjustment template |
 
 ### Pricing Modifiers — CRUD
 
@@ -626,3 +640,4 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 - **Feature: Global Search (Cmd+K)** — Full-stack global search across 6 entity types. **Backend:** `GET /search?q=term&limit=5` endpoint with `GlobalSearchQuery`/`GlobalSearchQueryHandler` running 6 sequential queries (customers, employees, transactions, vehicles, services, merchandise). Case-insensitive via `ToLower().Contains()` which Npgsql translates to `LOWER(col) LIKE`. Clamped limit 1–10. **Types:** Added `SearchHit` and `GlobalSearchResult` interfaces to `@splashsphere/types`. **Frontend:** Command palette dialog (`SearchDialog`) with `⌘K`/`Ctrl+K` shortcut. 250ms debounced search via `useGlobalSearch` hook. Keyboard navigation (↑↓ Enter Esc), grouped results by category with icons, click-to-navigate to detail pages. Replaced placeholder search input in `AppHeader` with styled Cmd+K trigger button.
 - **Feature: Persistent Notification System** — Full-stack notification system with persistence and real-time delivery. **Domain:** `Notification` entity with `NotificationType` (TransactionCompleted, LowStockAlert, ShiftFlagged, QueueNoShow) and `NotificationCategory` (Operations, Inventory, Finance, Queue) enums. **Application:** Centralized `INotificationService` interface. CQRS: `GetNotificationsQuery` (paginated), `GetUnreadCountQuery`, `MarkNotificationReadCommand`, `MarkAllNotificationsReadCommand` (bulk `ExecuteUpdateAsync`). **Infrastructure:** `NotificationService` creates entity + broadcasts `NotificationReceived` via SignalR to tenant group. Updated `TransactionStatusChangedNotificationHandler` and `QueueEntryNoShowNotificationHandler` to persist notifications. New `LowStockAlertNotificationHandler` (consumes previously unhandled `LowStockAlertEvent` from Hangfire job) and `ShiftFlaggedNotificationHandler`. **API:** 4 endpoints under `/api/v1/notifications`. **Frontend:** `NotificationDropdown` popover replaces hardcoded bell icon — live unread badge (polled every 60s + incremented via SignalR), scrollable notification list with category icons, click-to-navigate, mark-all-read. Migration: `AddNotifications`.
 - **Feature: Low-Stock Alert UI** — Completed the low-stock alert pipeline (Hangfire job → domain event → handler → UI). **Backend:** `GET /merchandise/low-stock` endpoint with `GetLowStockMerchandiseQuery` returning active items below threshold. **Frontend:** `LowStockAlertBanner` component on admin dashboard — amber warning with item names, stock counts, and link to merchandise page. Listens to `LowStockAlert` SignalR event to auto-refresh. Added `useLowStockItems` hook. **Types:** Added `LowStockItem`, `NotificationDto`, `UnreadCountDto`, `NotificationReceivedPayload`, `LowStockAlertPayload` to `@splashsphere/types`. Extended `HubEvents` with `NotificationReceived` and `LowStockAlert`.
+- **Feature: Payroll Processing UI Polish** — Three sub-features to complete the payroll workflow. **(A) Adjustment Templates:** `PayrollAdjustmentTemplate` entity with `AdjustmentType` enum (Bonus/Deduction). Full CQRS (Create/Update/Delete + GetAll). 4 API endpoints under `/payroll/templates`. "Payroll" tab on Settings page with CRUD table for template management. **(B) Bulk Apply Adjustments:** `BulkApplyAdjustmentCommand` applies a bonus or deduction to multiple entries at once (additive, not replacement). Checkbox selection column on payroll detail table (Closed state only), sticky toolbar, bulk apply dialog with template quick-select. `POST /payroll/entries/bulk-adjust` endpoint. **(C) Employee Payroll Detail Sheet:** `GetPayrollEntryDetailQuery` returns commission line items (from `ServiceEmployeeAssignment` + `PackageEmployeeAssignment`) and attendance records for the period. `GET /payroll/entries/{id}/detail` endpoint. Slide-out Sheet on employee name click with summary cards, tabbed commission breakdown table and attendance table. **Types:** Added `AdjustmentType` enum, `PayrollAdjustmentTemplate`, `PayrollEntryDetail`, `CommissionLineItem`, `AttendanceLineItem` to `@splashsphere/types`. Migration: `AddPayrollAdjustmentTemplates`.

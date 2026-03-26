@@ -1,12 +1,17 @@
 'use client'
 
-import { use, useState, useRef } from 'react'
+import { use, useState, useRef, useCallback } from 'react'
 import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -16,12 +21,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
   usePayrollPeriod,
   useClosePayrollPeriod,
   useProcessPayrollPeriod,
   useUpdatePayrollEntry,
+  useBulkApplyAdjustment,
+  usePayrollTemplates,
+  usePayrollEntryDetail,
 } from '@/hooks/use-payroll'
-import { PayrollStatus, EmployeeType } from '@splashsphere/types'
+import { PayrollStatus, EmployeeType, AdjustmentType } from '@splashsphere/types'
 import type { PayrollEntry } from '@splashsphere/types'
 import { toast } from 'sonner'
 import { formatPeso } from '@/lib/format'
@@ -197,10 +209,16 @@ function EntryRow({
   entry,
   editable,
   periodId,
+  selected,
+  onToggle,
+  onNameClick,
 }: {
   entry: PayrollEntry
   editable: boolean
   periodId: string
+  selected?: boolean
+  onToggle?: (id: string) => void
+  onNameClick?: (id: string) => void
 }) {
   const { mutateAsync: updateEntry } = useUpdatePayrollEntry(periodId)
 
@@ -228,8 +246,23 @@ function EntryRow({
 
   return (
     <tr className="hover:bg-muted/30">
+      {editable && onToggle && (
+        <td className="pl-4 pr-0 py-3 w-8">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggle(entry.id)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+        </td>
+      )}
       <td className="px-4 py-3">
-        <p className="font-medium text-sm">{entry.employeeName}</p>
+        <button
+          className="text-left font-medium text-sm hover:underline cursor-pointer"
+          onClick={() => onNameClick?.(entry.id)}
+        >
+          {entry.employeeName}
+        </button>
         <p className="text-xs text-muted-foreground">{entry.branchName}</p>
       </td>
       <td className="px-4 py-3 text-center text-sm tabular-nums">
@@ -275,6 +308,267 @@ function EntryRow({
   )
 }
 
+// ── Employee detail sheet ────────────────────────────────────────────────────
+
+function EmployeeDetailSheet({
+  entryId,
+  onClose,
+}: {
+  entryId: string | null
+  onClose: () => void
+}) {
+  const { data, isLoading } = usePayrollEntryDetail(entryId)
+
+  return (
+    <Sheet open={!!entryId} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        {isLoading || !data ? (
+          <div className="space-y-4 pt-6">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        ) : (
+          <>
+            <SheetHeader>
+              <SheetTitle>{data.entry.employeeName}</SheetTitle>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{data.entry.branchName}</span>
+                <Badge variant="outline" className="text-[10px] capitalize">
+                  {data.entry.employeeTypeSnapshot === EmployeeType.Daily ? 'Daily' : 'Commission'}
+                </Badge>
+              </div>
+            </SheetHeader>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {[
+                { label: 'Base Salary', value: data.entry.baseSalary },
+                { label: 'Commissions', value: data.entry.totalCommissions },
+                { label: 'Bonuses', value: data.entry.bonuses },
+                { label: 'Deductions', value: data.entry.deductions },
+              ].map(({ label, value }) => (
+                <div key={label} className="rounded-lg border px-3 py-2">
+                  <p className="text-[11px] text-muted-foreground">{label}</p>
+                  <p className="text-sm font-semibold tabular-nums">{formatPeso(value)}</p>
+                </div>
+              ))}
+              <div className="col-span-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                <p className="text-[11px] text-muted-foreground">Net Pay</p>
+                <p className="text-lg font-bold tabular-nums text-primary">{formatPeso(data.entry.netPay)}</p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <Tabs defaultValue="commissions" className="mt-4">
+              <TabsList variant="line">
+                <TabsTrigger value="commissions">
+                  Commissions ({data.commissionLineItems.length})
+                </TabsTrigger>
+                <TabsTrigger value="attendance">
+                  Attendance ({data.attendanceRecords.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="commissions" className="mt-3">
+                {data.commissionLineItems.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">No commissions earned this period</p>
+                ) : (
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium">Transaction</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium">Service</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.commissionLineItems.map((item, i) => (
+                          <tr key={i} className="hover:bg-muted/30">
+                            <td className="px-3 py-2 text-xs font-mono">{item.transactionNumber}</td>
+                            <td className="px-3 py-2 text-xs">{item.serviceName}</td>
+                            <td className="px-3 py-2 text-right text-xs tabular-nums">{formatPeso(item.commissionAmount)}</td>
+                            <td className="px-3 py-2 text-right text-xs text-muted-foreground">
+                              {new Date(item.completedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="border-t bg-muted/50">
+                        <tr>
+                          <td colSpan={2} className="px-3 py-2 text-xs font-medium">Total</td>
+                          <td className="px-3 py-2 text-right text-xs font-semibold tabular-nums">
+                            {formatPeso(data.commissionLineItems.reduce((s, c) => s + c.commissionAmount, 0))}
+                          </td>
+                          <td />
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="attendance" className="mt-3">
+                {data.attendanceRecords.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">No attendance recorded this period</p>
+                ) : (
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium">Date</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium">Time In</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium">Time Out</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.attendanceRecords.map((rec, i) => (
+                          <tr key={i} className="hover:bg-muted/30">
+                            <td className="px-3 py-2 text-xs">
+                              {new Date(rec.date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </td>
+                            <td className="px-3 py-2 text-right text-xs tabular-nums">
+                              {new Date(rec.timeIn).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className="px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
+                              {rec.timeOut
+                                ? new Date(rec.timeOut).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="border-t bg-muted/50">
+                        <tr>
+                          <td colSpan={3} className="px-3 py-2 text-xs font-medium">
+                            {data.attendanceRecords.length} day{data.attendanceRecords.length !== 1 ? 's' : ''} worked
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// ── Bulk apply dialog ────────────────────────────────────────────────────────
+
+function BulkApplyDialog({
+  open,
+  onOpenChange,
+  selectedCount,
+  periodId,
+  selectedIds,
+  onSuccess,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  selectedCount: number
+  periodId: string
+  selectedIds: string[]
+  onSuccess: () => void
+}) {
+  const { data: templates = [] } = usePayrollTemplates()
+  const { mutate: bulkApply, isPending } = useBulkApplyAdjustment(periodId)
+  const [type, setType] = useState<AdjustmentType>(AdjustmentType.Deduction)
+  const [amount, setAmount] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const activeTemplates = templates.filter((t) => t.isActive)
+
+  const handleTemplateSelect = (templateId: string) => {
+    const tpl = activeTemplates.find((t) => t.id === templateId)
+    if (!tpl) return
+    setType(tpl.type)
+    setAmount(String(tpl.defaultAmount))
+    setNotes(tpl.name)
+  }
+
+  const handleApply = () => {
+    const num = parseFloat(amount)
+    if (isNaN(num) || num <= 0) {
+      toast.error('Amount must be greater than 0')
+      return
+    }
+    bulkApply(
+      { entryIds: selectedIds, adjustmentType: type, amount: num, notes: notes || undefined },
+      {
+        onSuccess: () => {
+          toast.success(`Adjustment applied to ${selectedCount} entries`)
+          onOpenChange(false)
+          onSuccess()
+        },
+        onError: () => toast.error('Failed to apply adjustment'),
+      }
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Apply Bulk Adjustment</DialogTitle>
+          <DialogDescription>
+            Apply a bonus or deduction to {selectedCount} selected {selectedCount === 1 ? 'entry' : 'entries'}.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          {activeTemplates.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Quick template</Label>
+              <Select onValueChange={handleTemplateSelect}>
+                <SelectTrigger><SelectValue placeholder="Select a template…" /></SelectTrigger>
+                <SelectContent>
+                  {activeTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} — {t.type === AdjustmentType.Bonus ? 'Bonus' : 'Deduction'} ({formatPeso(t.defaultAmount)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label>Type</Label>
+            <Select value={String(type)} onValueChange={(v) => setType(Number(v) as AdjustmentType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(AdjustmentType.Deduction)}>Deduction</SelectItem>
+                <SelectItem value={String(AdjustmentType.Bonus)}>Bonus</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Amount (₱)</Label>
+            <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Notes (optional)</Label>
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. SSS March 2026" />
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Amounts are <strong>added</strong> to existing bonuses/deductions, not replaced.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleApply} disabled={isPending || !amount}>
+            {isPending ? 'Applying…' : `Apply to ${selectedCount} ${selectedCount === 1 ? 'entry' : 'entries'}`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PayrollPeriodDetailPage({
@@ -285,10 +579,29 @@ export default function PayrollPeriodDetailPage({
   const { id } = use(params)
   const [confirmClose, setConfirmClose] = useState(false)
   const [confirmProcess, setConfirmProcess] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [detailEntryId, setDetailEntryId] = useState<string | null>(null)
 
   const { data: period, isLoading, isError } = usePayrollPeriod(id)
   const { mutate: closePeriod, isPending: isClosing } = useClosePayrollPeriod()
   const { mutate: processPeriod, isPending: isProcessing } = useProcessPayrollPeriod()
+
+  const toggleEntry = useCallback((entryId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(entryId)) next.delete(entryId)
+      else next.add(entryId)
+      return next
+    })
+  }, [])
+
+  const toggleAll = useCallback(() => {
+    const entries = period?.entries ?? []
+    setSelectedIds((prev) =>
+      prev.size === entries.length ? new Set() : new Set(entries.map((e) => e.id))
+    )
+  }, [period?.entries])
 
   const handleClose = () => {
     closePeriod(id, {
@@ -427,12 +740,35 @@ export default function PayrollPeriodDetailPage({
         </div>
       )}
 
+      {/* Bulk selection toolbar */}
+      {editable && selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Button size="sm" onClick={() => setBulkOpen(true)}>
+            Apply Adjustment
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {/* Entries table */}
       {entries.length > 0 && (
         <div className="rounded-lg border overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
+                {editable && (
+                  <th className="pl-4 pr-0 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === entries.length && entries.length > 0}
+                      onChange={toggleAll}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left font-medium">Employee</th>
                 <th className="px-4 py-3 text-center font-medium">Days</th>
                 <th className="px-4 py-3 text-right font-medium">Base Salary</th>
@@ -456,12 +792,15 @@ export default function PayrollPeriodDetailPage({
                   entry={entry}
                   editable={editable}
                   periodId={id}
+                  selected={selectedIds.has(entry.id)}
+                  onToggle={toggleEntry}
+                  onNameClick={setDetailEntryId}
                 />
               ))}
             </tbody>
             <tfoot className="border-t bg-muted/50">
               <tr>
-                <td colSpan={3} className="px-4 py-3 font-medium">
+                <td colSpan={editable ? 4 : 3} className="px-4 py-3 font-medium">
                   Totals ({entries.length} employees)
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
@@ -507,6 +846,19 @@ export default function PayrollPeriodDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Employee detail sheet */}
+      <EmployeeDetailSheet entryId={detailEntryId} onClose={() => setDetailEntryId(null)} />
+
+      {/* Bulk apply dialog */}
+      <BulkApplyDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        selectedCount={selectedIds.size}
+        periodId={id}
+        selectedIds={Array.from(selectedIds)}
+        onSuccess={() => setSelectedIds(new Set())}
+      />
 
       {/* Process confirmation */}
       <Dialog open={confirmProcess} onOpenChange={setConfirmProcess}>

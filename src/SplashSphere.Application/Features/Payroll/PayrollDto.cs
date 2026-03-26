@@ -43,3 +43,21 @@ public sealed record PayrollEntryDto(
     decimal Deductions,
     decimal NetPay,
     string? Notes);
+
+// ── Entry detail (drill-down) ───────────────────────────────────────────────
+
+public sealed record PayrollEntryDetailDto(
+    PayrollEntryDto Entry,
+    IReadOnlyList<CommissionLineItemDto> CommissionLineItems,
+    IReadOnlyList<AttendanceLineItemDto> AttendanceRecords);
+
+public sealed record CommissionLineItemDto(
+    string TransactionNumber,
+    string ServiceName,
+    decimal CommissionAmount,
+    DateTime CompletedAt);
+
+public sealed record AttendanceLineItemDto(
+    DateOnly Date,
+    DateTime TimeIn,
+    DateTime? TimeOut);

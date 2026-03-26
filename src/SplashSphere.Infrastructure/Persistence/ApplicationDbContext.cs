@@ -70,6 +70,9 @@ public sealed class ApplicationDbContext(
     public DbSet<ShiftPaymentSummary> ShiftPaymentSummaries => Set<ShiftPaymentSummary>();
     public DbSet<ShiftSettings> ShiftSettings => Set<ShiftSettings>();
 
+    // ── Payroll adjustment templates ────────────────────────────────────────
+    public DbSet<PayrollAdjustmentTemplate> PayrollAdjustmentTemplates => Set<PayrollAdjustmentTemplate>();
+
     // ── Notifications ───────────────────────────────────────────────────────
     public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -194,6 +197,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<ShiftSettings>()
             .HasQueryFilter(ss => ss.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<PayrollAdjustmentTemplate>()
+            .HasQueryFilter(pat => pat.TenantId == tenantContext.TenantId);
 
         modelBuilder.Entity<Notification>()
             .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);

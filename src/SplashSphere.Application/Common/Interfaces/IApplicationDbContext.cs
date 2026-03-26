@@ -82,6 +82,9 @@ public interface IApplicationDbContext
     DbSet<ShiftPaymentSummary> ShiftPaymentSummaries { get; }
     DbSet<ShiftSettings> ShiftSettings { get; }
 
+    // ── Payroll adjustment templates ────────────────────────────────────────
+    DbSet<PayrollAdjustmentTemplate> PayrollAdjustmentTemplates { get; }
+
     // ── Notifications ───────────────────────────────────────────────────────
     DbSet<Notification> Notifications { get; }
 }

@@ -24,7 +24,10 @@ import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/u
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
 import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel, useToggleModel } from '@/hooks/use-cars'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
-import type { VehicleType, Size, Make, VehicleModel, ServiceCategory } from '@splashsphere/types'
+import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate } from '@/hooks/use-payroll'
+import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
+import { AdjustmentType } from '@splashsphere/types'
+import { formatPeso } from '@/lib/format'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -511,6 +514,149 @@ function ShiftConfigTab() {
   )
 }
 
+// ── Payroll Templates tab ────────────────────────────────────────────────────
+
+function PayrollTemplateDialog({
+  open, onOpenChange, title, initial, onSave, isPending,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  title: string
+  initial?: PayrollAdjustmentTemplate
+  onSave: (values: { name: string; type: AdjustmentType; defaultAmount: number; sortOrder: number }) => void
+  isPending: boolean
+}) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [type, setType] = useState<AdjustmentType>(initial?.type ?? AdjustmentType.Deduction)
+  const [amount, setAmount] = useState(String(initial?.defaultAmount ?? ''))
+  const [sortOrder, setSortOrder] = useState(String(initial?.sortOrder ?? '0'))
+
+  const canSave = name.trim() && Number(amount) >= 0
+
+  const handleSave = () => {
+    if (!canSave) return
+    onSave({ name: name.trim(), type, defaultAmount: Number(amount), sortOrder: Number(sortOrder) || 0 })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Name <span className="text-destructive">*</span></Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SSS Contribution" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Type</Label>
+            <Select value={String(type)} onValueChange={(v) => setType(Number(v) as AdjustmentType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(AdjustmentType.Deduction)}>Deduction</SelectItem>
+                <SelectItem value={String(AdjustmentType.Bonus)}>Bonus</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Default Amount (₱)</Label>
+            <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+          </div>
+          {initial && (
+            <div className="space-y-1.5">
+              <Label>Sort Order</Label>
+              <Input type="number" min="0" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={!canSave || isPending}>
+            {isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PayrollTemplatesTab() {
+  const { data: items = [], isLoading } = usePayrollTemplates()
+  const { mutate: create, isPending: creating } = useCreatePayrollTemplate()
+  const { mutate: update, isPending: updating } = useUpdatePayrollTemplate()
+  const { mutate: toggleActive } = useDeletePayrollTemplate()
+  const [addOpen, setAddOpen] = useState(false)
+  const [editing, setEditing] = useState<PayrollAdjustmentTemplate | null>(null)
+
+  const handleCreate = (values: { name: string; type: AdjustmentType; defaultAmount: number }) =>
+    create(values, {
+      onSuccess: () => { toast.success('Template created'); setAddOpen(false) },
+      onError: () => toast.error('Failed to create template'),
+    })
+
+  const handleUpdate = (values: { name: string; type: AdjustmentType; defaultAmount: number; sortOrder: number }) => {
+    if (!editing) return
+    update({ id: editing.id, values }, {
+      onSuccess: () => { toast.success('Updated'); setEditing(null) },
+      onError: () => toast.error('Failed to update'),
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Reusable payroll adjustment presets (e.g. SSS, PhilHealth, Pag-IBIG, overtime) for quick bulk apply
+        </p>
+        <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="mr-1 h-3.5 w-3.5" />Add Template</Button>
+      </div>
+      {isLoading ? <Skeleton className="h-40 w-full" /> : (
+        <div className="rounded-lg border divide-y">
+          {items.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No payroll templates yet</p>}
+          {items.map((item) => (
+            <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-sm">{item.name}</span>
+                <span className={cn(
+                  'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
+                  item.type === AdjustmentType.Bonus
+                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-red-500/15 text-red-700 dark:text-red-400'
+                )}>
+                  {item.type === AdjustmentType.Bonus ? 'Bonus' : 'Deduction'}
+                </span>
+                <span className="text-sm tabular-nums text-muted-foreground">{formatPeso(item.defaultAmount)}</span>
+                <StatusBadge status={item.isActive ? 'Active' : 'Inactive'} />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(item)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost" size="sm" className="h-7 text-xs"
+                  onClick={() => toggleActive(item.id, { onSuccess: () => toast.success('Updated') })}
+                >
+                  {item.isActive ? 'Deactivate' : 'Activate'}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <PayrollTemplateDialog open={addOpen} onOpenChange={setAddOpen} title="Add Payroll Template" onSave={handleCreate} isPending={creating} />
+      {editing && (
+        <PayrollTemplateDialog
+          open
+          onOpenChange={(v) => !v && setEditing(null)}
+          title="Edit Payroll Template"
+          initial={editing}
+          onSave={handleUpdate}
+          isPending={updating}
+        />
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -528,6 +674,7 @@ export default function SettingsPage() {
           <TabsTrigger value="makes-models">Makes & Models</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
+          <TabsTrigger value="payroll">Payroll</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vehicle-types" className="mt-6"><VehicleTypesTab /></TabsContent>
@@ -535,6 +682,7 @@ export default function SettingsPage() {
         <TabsContent value="makes-models" className="mt-6"><MakesModelsTab /></TabsContent>
         <TabsContent value="categories" className="mt-6"><CategoriesTab /></TabsContent>
         <TabsContent value="shift-config" className="mt-6"><ShiftConfigTab /></TabsContent>
+        <TabsContent value="payroll" className="mt-6"><PayrollTemplatesTab /></TabsContent>
       </Tabs>
     </div>
   )

@@ -10,6 +10,7 @@
  */
 
 import type {
+  AdjustmentType,
   CashMovementType,
   CommissionType,
   EmployeeType,
@@ -609,6 +610,34 @@ export interface PayrollPeriodSummary {
 
 export interface PayrollPeriodDetail extends Omit<PayrollPeriodSummary, 'entryCount' | 'totalNetPay'> {
   entries: readonly PayrollEntry[];
+}
+
+export interface PayrollAdjustmentTemplate {
+  id: string;
+  name: string;
+  type: AdjustmentType;
+  defaultAmount: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface PayrollEntryDetail {
+  entry: PayrollEntry;
+  commissionLineItems: readonly CommissionLineItem[];
+  attendanceRecords: readonly AttendanceLineItem[];
+}
+
+export interface CommissionLineItem {
+  transactionNumber: string;
+  serviceName: string;
+  commissionAmount: number;
+  completedAt: string;
+}
+
+export interface AttendanceLineItem {
+  date: string;
+  timeIn: string;
+  timeOut: string | null;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

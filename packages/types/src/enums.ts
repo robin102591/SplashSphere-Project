@@ -155,3 +155,10 @@ export enum NotificationCategory {
   Finance    = 3,
   Queue      = 4,
 }
+
+// ── Payroll ───────────────────────────────────────────────────────────────────
+
+export enum AdjustmentType {
+  Bonus     = 1,
+  Deduction = 2,
+}
