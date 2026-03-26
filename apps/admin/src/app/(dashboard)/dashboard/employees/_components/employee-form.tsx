@@ -33,9 +33,9 @@ const createSchema = z
   })
   .refine(
     (v) =>
-      v.employeeType !== EmployeeType.Daily ||
+      (v.employeeType !== EmployeeType.Daily && v.employeeType !== EmployeeType.Hybrid) ||
       (v.dailyRate !== undefined && v.dailyRate > 0),
-    { message: 'Daily rate is required for daily-rate employees', path: ['dailyRate'] }
+    { message: 'Daily rate is required for daily-rate and hybrid employees', path: ['dailyRate'] }
   )
 
 const updateSchema = z.object({
@@ -136,11 +136,12 @@ export function CreateEmployeeForm({
           <SelectContent>
             <SelectItem value={String(EmployeeType.Commission)}>Commission</SelectItem>
             <SelectItem value={String(EmployeeType.Daily)}>Daily Rate</SelectItem>
+            <SelectItem value={String(EmployeeType.Hybrid)}>Hybrid (Daily + Commission)</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {employeeType === EmployeeType.Daily && (
+      {(employeeType === EmployeeType.Daily || employeeType === EmployeeType.Hybrid) && (
         <div className="space-y-1.5">
           <Label htmlFor="emp-daily-rate">Daily rate (₱) <span className="text-destructive">*</span></Label>
           <Input
@@ -250,7 +251,7 @@ export function EditEmployeeForm({ defaultValues, onSubmit }: EditEmployeeFormPr
       <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2">
         <p className="text-xs text-muted-foreground">Employee type</p>
         <p className="text-sm font-medium">
-          {defaultValues.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily Rate'}
+          {defaultValues.employeeType === EmployeeType.Commission ? 'Commission' : defaultValues.employeeType === EmployeeType.Hybrid ? 'Hybrid' : 'Daily Rate'}
         </p>
         <p className="text-xs text-muted-foreground italic">
           Employee type cannot be changed after creation.

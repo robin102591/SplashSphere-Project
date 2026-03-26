@@ -1,3 +1,5 @@
+using SplashSphere.Domain.Enums;
+
 namespace SplashSphere.Domain.Entities;
 
 /// <summary>
@@ -18,9 +20,15 @@ public sealed class PayrollSettings : IAuditableEntity
     public string TenantId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The day of the week each 7-day payroll period begins.
+    /// How often payroll periods are created: Weekly or SemiMonthly.
+    /// Default: Weekly.
+    /// </summary>
+    public PayrollFrequency Frequency { get; set; } = PayrollFrequency.Weekly;
+
+    /// <summary>
+    /// The day of the week each 7-day payroll period begins (Weekly only).
     /// Default: Monday (preserves ISO week behavior).
-    /// Period spans CutOffStartDay through CutOffStartDay + 6.
+    /// Ignored when <see cref="Frequency"/> is <see cref="PayrollFrequency.SemiMonthly"/>.
     /// </summary>
     public DayOfWeek CutOffStartDay { get; set; } = DayOfWeek.Monday;
 

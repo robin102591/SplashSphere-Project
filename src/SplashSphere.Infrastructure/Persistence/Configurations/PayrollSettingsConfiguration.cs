@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
@@ -19,6 +20,12 @@ public sealed class PayrollSettingsConfiguration : IEntityTypeConfiguration<Payr
         builder.Property(ps => ps.TenantId)
             .IsRequired()
             .HasMaxLength(256);
+
+        // PayrollFrequency stored as int (1=Weekly, 2=SemiMonthly)
+        builder.Property(ps => ps.Frequency)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasDefaultValue(PayrollFrequency.Weekly);
 
         // DayOfWeek stored as int (0=Sunday, 1=Monday, ..., 6=Saturday)
         builder.Property(ps => ps.CutOffStartDay)

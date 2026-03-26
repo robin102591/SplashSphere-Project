@@ -266,19 +266,22 @@ function EntryRow({
         <p className="text-xs text-muted-foreground">{entry.branchName}</p>
       </td>
       <td className="px-4 py-3 text-center text-sm tabular-nums">
-        {entry.employeeTypeSnapshot === EmployeeType.Daily ? (
+        {entry.employeeTypeSnapshot === EmployeeType.Daily || entry.employeeTypeSnapshot === EmployeeType.Hybrid ? (
           <span>{entry.daysWorked}d</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums">
-        {entry.employeeTypeSnapshot === EmployeeType.Daily
+        {entry.employeeTypeSnapshot === EmployeeType.Daily || entry.employeeTypeSnapshot === EmployeeType.Hybrid
           ? formatPeso(entry.baseSalary)
           : <span className="text-muted-foreground">—</span>}
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums">
         {formatPeso(entry.totalCommissions)}
+      </td>
+      <td className="px-4 py-3 text-right text-sm tabular-nums text-muted-foreground italic">
+        {entry.totalTips > 0 ? formatPeso(entry.totalTips) : '—'}
       </td>
       <td className="px-4 py-3 text-right text-sm">
         {editable ? (
@@ -335,7 +338,7 @@ function EmployeeDetailSheet({
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{data.entry.branchName}</span>
                 <Badge variant="outline" className="text-[10px] capitalize">
-                  {data.entry.employeeTypeSnapshot === EmployeeType.Daily ? 'Daily' : 'Commission'}
+                  {data.entry.employeeTypeSnapshot === EmployeeType.Daily ? 'Daily' : data.entry.employeeTypeSnapshot === EmployeeType.Hybrid ? 'Hybrid' : 'Commission'}
                 </Badge>
               </div>
             </SheetHeader>
@@ -345,12 +348,13 @@ function EmployeeDetailSheet({
               {[
                 { label: 'Base Salary', value: data.entry.baseSalary },
                 { label: 'Commissions', value: data.entry.totalCommissions },
+                { label: 'Tips (paid)', value: data.entry.totalTips, muted: true },
                 { label: 'Bonuses', value: data.entry.bonuses },
                 { label: 'Deductions', value: data.entry.deductions },
-              ].map(({ label, value }) => (
+              ].map(({ label, value, muted }) => (
                 <div key={label} className="rounded-lg border px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">{label}</p>
-                  <p className="text-sm font-semibold tabular-nums">{formatPeso(value)}</p>
+                  <p className={`text-sm tabular-nums ${muted ? 'text-muted-foreground italic' : 'font-semibold'}`}>{formatPeso(value)}</p>
                 </div>
               ))}
               <div className="col-span-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
@@ -654,6 +658,7 @@ export default function PayrollPeriodDetailPage({
   const editable = period.status === PayrollStatus.Closed
   const totalNetPay = entries.reduce((s, e) => s + e.netPay, 0)
   const totalCommissions = entries.reduce((s, e) => s + e.totalCommissions, 0)
+  const totalTips = entries.reduce((s, e) => s + e.totalTips, 0)
   const totalBonuses = entries.reduce((s, e) => s + e.bonuses, 0)
   const totalDeductions = entries.reduce((s, e) => s + e.deductions, 0)
 
@@ -670,7 +675,12 @@ export default function PayrollPeriodDetailPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${period.year} — Week ${period.cutOffWeek}`}
+        title={(() => {
+          const s = new Date(period.startDate)
+          const e = new Date(period.endDate)
+          const daysDiff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24))
+          return daysDiff <= 7 ? `${period.year} — Week ${period.cutOffWeek}` : `${period.year} — Period ${period.cutOffWeek}`
+        })()}
         description={`${startDate} – ${endDate} · ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`}
         back
         badge={<StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />}
@@ -773,6 +783,7 @@ export default function PayrollPeriodDetailPage({
                 <th className="px-4 py-3 text-center font-medium">Days</th>
                 <th className="px-4 py-3 text-right font-medium">Base Salary</th>
                 <th className="px-4 py-3 text-right font-medium">Commissions</th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Tips (paid)</th>
                 <th className="px-4 py-3 text-right font-medium">
                   Bonuses
                   {editable && <span className="ml-1 text-xs font-normal text-muted-foreground">(editable)</span>}
@@ -805,6 +816,9 @@ export default function PayrollPeriodDetailPage({
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
                   {formatPeso(totalCommissions)}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums text-muted-foreground italic">
+                  {totalTips > 0 ? formatPeso(totalTips) : '—'}
                 </td>
                 <td className="px-4 py-3 text-right font-medium tabular-nums">
                   {formatPeso(totalBonuses)}

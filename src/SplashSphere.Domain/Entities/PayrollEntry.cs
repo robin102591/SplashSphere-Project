@@ -26,7 +26,8 @@ public sealed class PayrollEntry : IAuditableEntity
         int daysWorked,
         decimal? dailyRateSnapshot,
         decimal baseSalary,
-        decimal totalCommissions)
+        decimal totalCommissions,
+        decimal totalTips = 0m)
     {
         Id = Guid.NewGuid().ToString();
         TenantId = tenantId;
@@ -37,6 +38,7 @@ public sealed class PayrollEntry : IAuditableEntity
         DailyRateSnapshot = dailyRateSnapshot;
         BaseSalary = baseSalary;
         TotalCommissions = totalCommissions;
+        TotalTips = totalTips;
     }
 
     public string Id { get; set; } = string.Empty;
@@ -74,6 +76,13 @@ public sealed class PayrollEntry : IAuditableEntity
     /// this is the rolled-up total. Precision (10, 2).
     /// </summary>
     public decimal TotalCommissions { get; set; }
+
+    /// <summary>
+    /// Sum of tip shares from completed transactions in this period.
+    /// Informational only — tips are paid out immediately to employees after each transaction.
+    /// NOT included in <see cref="NetPay"/>. Precision (10, 2).
+    /// </summary>
+    public decimal TotalTips { get; set; }
 
     /// <summary>
     /// Admin-adjustable bonus amount. Editable while period is Closed. Precision (10, 2).

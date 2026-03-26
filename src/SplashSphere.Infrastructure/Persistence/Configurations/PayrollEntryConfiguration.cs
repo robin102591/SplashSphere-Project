@@ -51,6 +51,12 @@ public sealed class PayrollEntryConfiguration : IEntityTypeConfiguration<Payroll
             .IsRequired()
             .HasPrecision(10, 2);
 
+        // Informational: tips already paid out immediately; not in NetPay
+        builder.Property(pe => pe.TotalTips)
+            .IsRequired()
+            .HasPrecision(10, 2)
+            .HasDefaultValue(0m);
+
         // Admin-adjustable while period is Closed; default 0
         builder.Property(pe => pe.Bonuses)
             .IsRequired()

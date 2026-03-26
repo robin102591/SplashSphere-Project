@@ -16,4 +16,10 @@ public enum EmployeeType
     /// Daily rate is tallied per attendance record in the payroll period.
     /// </summary>
     Daily = 2,
+
+    /// <summary>
+    /// Earns both a fixed daily rate AND service commissions.
+    /// Base salary = dailyRate × daysWorked, plus commission splits from assigned services.
+    /// </summary>
+    Hybrid = 3,
 }

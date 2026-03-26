@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollSettings;
@@ -15,6 +16,12 @@ public sealed class UpdatePayrollSettingsCommandHandler(
         UpdatePayrollSettingsCommand request,
         CancellationToken cancellationToken)
     {
+        if (request.CutOffStartDay < 0 || request.CutOffStartDay > 6)
+            return Result.Failure(Error.Validation("CutOffStartDay must be between 0 and 6."));
+
+        if (request.Frequency is not (1 or 2))
+            return Result.Failure(Error.Validation("Frequency must be 1 (Weekly) or 2 (SemiMonthly)."));
+
         var settings = await db.PayrollSettings
             .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
 
@@ -25,6 +32,7 @@ public sealed class UpdatePayrollSettingsCommandHandler(
         }
 
         settings.CutOffStartDay = (DayOfWeek)request.CutOffStartDay;
+        settings.Frequency = (PayrollFrequency)request.Frequency;
 
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();

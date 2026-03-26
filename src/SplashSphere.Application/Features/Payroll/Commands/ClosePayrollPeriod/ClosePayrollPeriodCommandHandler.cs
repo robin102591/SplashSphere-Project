@@ -82,20 +82,45 @@ public sealed class ClosePayrollPeriodCommandHandler(
 
         var attendanceMap = attendanceByEmployee.ToDictionary(x => x.EmployeeId, x => x.Days);
 
+        // 4. Tip splits per employee from Completed transactions with tips.
+        //    Transaction.TipAmount is split equally among all assigned employees.
+        //    Tips are cashed out immediately — tracked here for reporting only.
+        var tipRows = await context.TransactionEmployees
+            .AsNoTracking()
+            .Where(te =>
+                te.Transaction.Status == TransactionStatus.Completed &&
+                te.Transaction.CompletedAt >= periodFromUtc &&
+                te.Transaction.CompletedAt < periodToUtc &&
+                te.Transaction.TipAmount > 0)
+            .Select(te => new { te.EmployeeId, te.TransactionId, te.Transaction.TipAmount })
+            .ToListAsync(cancellationToken);
+
+        var tipsMap = tipRows
+            .GroupBy(x => x.TransactionId)
+            .SelectMany(txGroup =>
+            {
+                var count = txGroup.Count();
+                var share = Math.Round(txGroup.First().TipAmount / count, 2, MidpointRounding.AwayFromZero);
+                return txGroup.Select(x => new { x.EmployeeId, TipShare = share });
+            })
+            .GroupBy(x => x.EmployeeId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.TipShare));
+
         // ── Build PayrollEntry rows ────────────────────────────────────────────
         // Only create entries for employees who have actual work this period —
-        // at least 1 day worked OR at least ₱0.01 in commissions.
+        // at least 1 day worked OR at least ₱0.01 in commissions or tips.
         var entries = new List<PayrollEntry>();
 
         foreach (var emp in employees)
         {
             var daysWorked   = attendanceMap.GetValueOrDefault(emp.Id, 0);
             var commissions  = commissionsMap.GetValueOrDefault(emp.Id, 0m);
+            var tips         = tipsMap.GetValueOrDefault(emp.Id, 0m);
 
-            if (daysWorked == 0 && commissions == 0m)
+            if (daysWorked == 0 && commissions == 0m && tips == 0m)
                 continue;
 
-            var baseSalary = emp.EmployeeType == EmployeeType.Daily && emp.DailyRate.HasValue
+            var baseSalary = emp.EmployeeType is EmployeeType.Daily or EmployeeType.Hybrid && emp.DailyRate.HasValue
                 ? emp.DailyRate.Value * daysWorked
                 : 0m;
 
@@ -105,9 +130,10 @@ public sealed class ClosePayrollPeriodCommandHandler(
                 emp.Id,
                 emp.EmployeeType,
                 daysWorked,
-                emp.EmployeeType == EmployeeType.Daily ? emp.DailyRate : null,
+                emp.EmployeeType is EmployeeType.Daily or EmployeeType.Hybrid ? emp.DailyRate : null,
                 baseSalary,
-                commissions);
+                commissions,
+                tips);
 
             entries.Add(entry);
             context.PayrollEntries.Add(entry);
@@ -122,7 +148,8 @@ public sealed class ClosePayrollPeriodCommandHandler(
             period.Year,
             period.CutOffWeek,
             period.StartDate,
-            period.EndDate));
+            period.EndDate,
+            entries.Count));
 
         return Result.Success();
     }

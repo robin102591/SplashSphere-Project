@@ -247,7 +247,7 @@ export function useUpdatePayrollSettings() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { cutOffStartDay: number }) => {
+    mutationFn: async (data: { cutOffStartDay: number; frequency: number }) => {
       const token = await getToken()
       return apiClient.put<void>('/settings/payroll-config', data, token ?? undefined)
     },

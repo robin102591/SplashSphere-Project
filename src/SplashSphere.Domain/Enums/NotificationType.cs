@@ -6,4 +6,5 @@ public enum NotificationType
     LowStockAlert        = 2,
     ShiftFlagged         = 3,
     QueueNoShow          = 4,
+    PayrollClosed        = 5,
 }

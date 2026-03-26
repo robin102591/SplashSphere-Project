@@ -75,6 +75,8 @@ export enum EmployeeType {
   Commission = 1,
   /** Fixed daily rate (cashiers, security, maintenance). */
   Daily      = 2,
+  /** Earns both a fixed daily rate AND service commissions. */
+  Hybrid     = 3,
 }
 
 /** How a service commission amount is calculated per transaction line. */
@@ -147,6 +149,7 @@ export enum NotificationType {
   LowStockAlert        = 2,
   ShiftFlagged         = 3,
   QueueNoShow          = 4,
+  PayrollClosed        = 5,
 }
 
 export enum NotificationCategory {
@@ -157,6 +160,11 @@ export enum NotificationCategory {
 }
 
 // ── Payroll ───────────────────────────────────────────────────────────────────
+
+export enum PayrollFrequency {
+  Weekly      = 1,
+  SemiMonthly = 2,
+}
 
 export enum AdjustmentType {
   Bonus     = 1,

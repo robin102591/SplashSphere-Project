@@ -39,6 +39,7 @@ public sealed record PayrollEntryDto(
     decimal? DailyRateSnapshot,
     decimal BaseSalary,
     decimal TotalCommissions,
+    decimal TotalTips,
     decimal Bonuses,
     decimal Deductions,
     decimal NetPay,

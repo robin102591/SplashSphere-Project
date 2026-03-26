@@ -47,6 +47,7 @@ public sealed class GetPayrollPeriodByIdQueryHandler(IApplicationDbContext conte
                 e.DailyRateSnapshot,
                 e.BaseSalary,
                 e.TotalCommissions,
+                e.TotalTips,
                 e.Bonuses,
                 e.Deductions,
                 e.BaseSalary + e.TotalCommissions + e.Bonuses - e.Deductions, // NetPay

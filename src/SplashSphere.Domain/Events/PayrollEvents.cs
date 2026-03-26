@@ -12,7 +12,8 @@ public sealed record PayrollPeriodClosedEvent(
     int Year,
     int CutOffWeek,
     DateOnly StartDate,
-    DateOnly EndDate
+    DateOnly EndDate,
+    int EntryCount
 ) : DomainEventBase;
 
 /// <summary>

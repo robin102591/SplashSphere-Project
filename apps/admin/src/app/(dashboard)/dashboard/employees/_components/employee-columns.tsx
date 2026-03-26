@@ -45,7 +45,7 @@ export function getEmployeeColumns({ onToggleStatus }: ColumnActions): ColumnDef
       accessorKey: 'employeeType',
       header: 'Type',
       cell: ({ row }) => (
-        <StatusBadge status={row.original.employeeType === EmployeeType.Commission ? 'Commission' : 'Daily'} />
+        <StatusBadge status={row.original.employeeType === EmployeeType.Commission ? 'Commission' : row.original.employeeType === EmployeeType.Hybrid ? 'Hybrid' : 'Daily'} />
       ),
     },
     {
@@ -53,7 +53,7 @@ export function getEmployeeColumns({ onToggleStatus }: ColumnActions): ColumnDef
       header: 'Rate',
       cell: ({ row }) => {
         const emp = row.original
-        if (emp.employeeType === EmployeeType.Daily && emp.dailyRate != null) {
+        if ((emp.employeeType === EmployeeType.Daily || emp.employeeType === EmployeeType.Hybrid) && emp.dailyRate != null) {
           return (
             <span className="text-sm">
               {formatPeso(emp.dailyRate)}/day

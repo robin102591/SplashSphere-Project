@@ -28,9 +28,10 @@ function getRoute(n: NotificationDto): string | null {
   switch (n.referenceType) {
     case 'Transaction': return `/dashboard/transactions/${n.referenceId}`
     case 'Merchandise': return '/dashboard/merchandise'
-    case 'Shift':       return `/dashboard/shifts/${n.referenceId}`
-    case 'QueueEntry':  return '/dashboard/queue'
-    default:            return null
+    case 'Shift':          return `/dashboard/shifts/${n.referenceId}`
+    case 'QueueEntry':     return '/dashboard/queue'
+    case 'PayrollPeriod':  return `/dashboard/payroll/${n.referenceId}`
+    default:               return null
   }
 }
 

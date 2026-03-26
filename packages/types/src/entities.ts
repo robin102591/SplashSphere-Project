@@ -587,6 +587,8 @@ export interface PayrollEntry {
   dailyRateSnapshot: number | null;
   baseSalary: number;
   totalCommissions: number;
+  /** Informational only — tips are paid out immediately. NOT included in netPay. */
+  totalTips: number;
   bonuses: number;
   deductions: number;
   netPay: number;
@@ -842,6 +844,7 @@ export interface ShiftReportDto {
 
 export interface PayrollSettingsDto {
   cutOffStartDay: number; // DayOfWeek: 0=Sunday, 1=Monday, ..., 6=Saturday
+  frequency: number;      // PayrollFrequency: 1=Weekly, 2=SemiMonthly
 }
 
 export interface ShiftSettingsDto {

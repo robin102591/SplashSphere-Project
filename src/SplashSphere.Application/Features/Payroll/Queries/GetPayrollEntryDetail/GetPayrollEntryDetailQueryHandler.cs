@@ -34,6 +34,7 @@ public sealed class GetPayrollEntryDetailQueryHandler(IApplicationDbContext cont
             entry.DailyRateSnapshot,
             entry.BaseSalary,
             entry.TotalCommissions,
+            entry.TotalTips,
             entry.Bonuses,
             entry.Deductions,
             entry.NetPay,

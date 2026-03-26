@@ -31,6 +31,14 @@ const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
   [PayrollStatus.Processed]: 'Processed',
 }
 
+function periodLabel(p: PayrollPeriodSummary): string {
+  const start = new Date(p.startDate)
+  const end = new Date(p.endDate)
+  const daysDiff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  if (daysDiff <= 7) return `${p.year} — Week ${p.cutOffWeek}`
+  return `${p.year} — Period ${p.cutOffWeek}`
+}
+
 function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
   const router = useRouter()
 
@@ -50,7 +58,7 @@ function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
       onClick={() => router.push(`/dashboard/payroll/${period.id}`)}
     >
       <td className="px-4 py-3 font-medium">
-        {period.year} — Week {period.cutOffWeek}
+        {periodLabel(period)}
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {startDate} – {endDate}
@@ -77,23 +85,60 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const { data: settings } = usePayrollSettings()
   const { mutate: create, isPending } = useCreatePayrollPeriod()
 
-  // Default: previous 7-day period ending yesterday
+  const isSemiMonthly = settings?.frequency === 2
+
+  // Default dates based on frequency
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   const weekAgo = new Date(yesterday)
   weekAgo.setDate(weekAgo.getDate() - 6)
 
-  const [startDate, setStartDate] = useState(formatDateOnly(weekAgo))
-  const [endDate, setEndDate] = useState(formatDateOnly(yesterday))
+  // Semi-monthly: default to the most recent completed half
+  const defaultSemiMonthlyDates = (): { start: string; end: string } => {
+    const now = new Date()
+    if (now.getDate() >= 16) {
+      // We're in the second half — default to first half (1st–15th)
+      return {
+        start: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`,
+        end: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`,
+      }
+    }
+    // We're in the first half — default to second half of prev month
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 16)
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0).getDate()
+    return {
+      start: `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-16`,
+      end: `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${lastDay}`,
+    }
+  }
 
-  // When start date changes, auto-compute end date (+6 days)
+  const semiDefaults = defaultSemiMonthlyDates()
+  const [startDate, setStartDate] = useState(isSemiMonthly ? semiDefaults.start : formatDateOnly(weekAgo))
+  const [endDate, setEndDate] = useState(isSemiMonthly ? semiDefaults.end : formatDateOnly(yesterday))
+  const [semiHalf, setSemiHalf] = useState<'first' | 'second'>('first')
+
+  // Weekly: auto-compute end date (+6 days)
   const handleStartChange = (val: string) => {
     setStartDate(val)
-    if (val) {
+    if (val && !isSemiMonthly) {
       const d = new Date(val)
       d.setDate(d.getDate() + 6)
       setEndDate(formatDateOnly(d))
+    }
+  }
+
+  // Semi-monthly: pick month + half
+  const handleSemiMonthChange = (month: string, half: 'first' | 'second') => {
+    setSemiHalf(half)
+    const [y, m] = month.split('-').map(Number)
+    if (half === 'first') {
+      setStartDate(`${y}-${String(m).padStart(2, '0')}-01`)
+      setEndDate(`${y}-${String(m).padStart(2, '0')}-15`)
+    } else {
+      const lastDay = new Date(y, m, 0).getDate()
+      setStartDate(`${y}-${String(m).padStart(2, '0')}-16`)
+      setEndDate(`${y}-${String(m).padStart(2, '0')}-${lastDay}`)
     }
   }
 
@@ -114,25 +159,57 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     )
   }
 
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Payroll Period</DialogTitle>
           <DialogDescription>
-            Manually create a 7-day payroll period. The end date is auto-calculated.
+            {isSemiMonthly
+              ? 'Create a semi-monthly payroll period (1st–15th or 16th–end).'
+              : 'Manually create a 7-day payroll period. The end date is auto-calculated.'}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
-          <div className="space-y-1.5">
-            <Label>Start Date</Label>
-            <Input type="date" value={startDate} onChange={(e) => handleStartChange(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>End Date</Label>
-            <Input type="date" value={endDate} disabled />
-            <p className="text-xs text-muted-foreground">Automatically set to 6 days after start date.</p>
-          </div>
+          {isSemiMonthly ? (
+            <>
+              <div className="space-y-1.5">
+                <Label>Month</Label>
+                <Input
+                  type="month"
+                  defaultValue={currentMonth}
+                  onChange={(e) => handleSemiMonthChange(e.target.value, semiHalf)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Half</Label>
+                <Select value={semiHalf} onValueChange={(v) => handleSemiMonthChange(startDate.slice(0, 7), v as 'first' | 'second')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="first">1st – 15th</SelectItem>
+                    <SelectItem value="second">16th – End of month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Period: {startDate} to {endDate}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <Label>Start Date</Label>
+                <Input type="date" value={startDate} onChange={(e) => handleStartChange(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>End Date</Label>
+                <Input type="date" value={endDate} disabled />
+                <p className="text-xs text-muted-foreground">Automatically set to 6 days after start date.</p>
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -166,7 +243,7 @@ export default function PayrollPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Payroll</h1>
           <p className="text-muted-foreground">
-            Weekly payroll periods — review, close, and process
+            Payroll periods — review, close, and process
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -222,7 +299,7 @@ export default function PayrollPage() {
         <EmptyState
           icon={Wallet}
           title="No payroll periods found"
-          description="Periods are created automatically every Monday by the background job"
+          description="Periods are created automatically by the background job"
         />
       )}
 

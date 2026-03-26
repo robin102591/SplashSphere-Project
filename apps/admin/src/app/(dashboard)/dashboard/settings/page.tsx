@@ -593,16 +593,20 @@ function PayrollConfigSection() {
   const { data: settings, isLoading } = usePayrollSettings()
   const { mutate: save, isPending: saving } = useUpdatePayrollSettings()
   const [cutOffDay, setCutOffDay] = useState('')
+  const [frequency, setFrequency] = useState('1')
   const [initialized, setInitialized] = useState(false)
 
   if (settings && !initialized) {
     setCutOffDay(String(settings.cutOffStartDay))
+    setFrequency(String(settings.frequency))
     setInitialized(true)
   }
 
+  const isSemiMonthly = frequency === '2'
+
   const handleSave = () => {
     save(
-      { cutOffStartDay: parseInt(cutOffDay) },
+      { cutOffStartDay: parseInt(cutOffDay), frequency: parseInt(frequency) },
       {
         onSuccess: () => toast.success('Payroll settings saved.'),
         onError: () => toast.error('Failed to save payroll settings.'),
@@ -619,24 +623,41 @@ function PayrollConfigSection() {
       <div>
         <h3 className="text-sm font-medium">Period Configuration</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Configure when each 7-day payroll period begins. New periods are created automatically each week.
+          Configure payroll frequency and when periods are created.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
         <div className="space-y-1.5">
-          <Label>Cut-Off Start Day</Label>
-          <Select value={cutOffDay} onValueChange={setCutOffDay}>
+          <Label>Frequency</Label>
+          <Select value={frequency} onValueChange={setFrequency}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {DAY_NAMES.map((d) => (
-                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-              ))}
+              <SelectItem value="1">Weekly</SelectItem>
+              <SelectItem value="2">Semi-Monthly</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Period runs {DAY_NAMES.find((d) => d.value === cutOffDay)?.label ?? 'Monday'} through {endDay?.label ?? 'Sunday'}.
+            {isSemiMonthly
+              ? 'Periods cover 1st–15th and 16th–end of each month.'
+              : 'Periods run for 7 days starting on the selected day.'}
           </p>
         </div>
+        {!isSemiMonthly && (
+          <div className="space-y-1.5">
+            <Label>Cut-Off Start Day</Label>
+            <Select value={cutOffDay} onValueChange={setCutOffDay}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {DAY_NAMES.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Period runs {DAY_NAMES.find((d) => d.value === cutOffDay)?.label ?? 'Monday'} through {endDay?.label ?? 'Sunday'}.
+            </p>
+          </div>
+        )}
       </div>
       <Button onClick={handleSave} disabled={saving} size="sm">
         {saving ? 'Saving…' : 'Save Payroll Settings'}
