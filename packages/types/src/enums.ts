@@ -139,3 +139,19 @@ export enum CashMovementType {
   CashIn  = 1,
   CashOut = 2,
 }
+
+// ── Notifications ───────────────────────────────────────────────────────────
+
+export enum NotificationType {
+  TransactionCompleted = 1,
+  LowStockAlert        = 2,
+  ShiftFlagged         = 3,
+  QueueNoShow          = 4,
+}
+
+export enum NotificationCategory {
+  Operations = 1,
+  Inventory  = 2,
+  Finance    = 3,
+  Queue      = 4,
+}

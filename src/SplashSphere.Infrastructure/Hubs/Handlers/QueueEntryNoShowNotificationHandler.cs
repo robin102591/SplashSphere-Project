@@ -15,7 +15,8 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// </summary>
 public sealed class QueueEntryNoShowNotificationHandler(
     IHubContext<SplashSphereHub> hub,
-    IApplicationDbContext db)
+    IApplicationDbContext db,
+    INotificationService notificationService)
     : INotificationHandler<DomainEventNotification<QueueEntryNoShowEvent>>
 {
     public async Task Handle(
@@ -41,5 +42,16 @@ public sealed class QueueEntryNoShowNotificationHandler(
         await hub.Clients
             .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
             .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
+
+        // Persist notification for no-show events.
+        await notificationService.CreateAsync(
+            e.TenantId,
+            Domain.Enums.NotificationType.QueueNoShow,
+            Domain.Enums.NotificationCategory.Queue,
+            "Queue No-Show",
+            $"Queue {e.QueueNumber} ({e.PlateNumber}) did not respond when called.",
+            e.QueueEntryId,
+            "QueueEntry",
+            cancellationToken);
     }
 }

@@ -70,6 +70,9 @@ public sealed class ApplicationDbContext(
     public DbSet<ShiftPaymentSummary> ShiftPaymentSummaries => Set<ShiftPaymentSummary>();
     public DbSet<ShiftSettings> ShiftSettings => Set<ShiftSettings>();
 
+    // ── Notifications ───────────────────────────────────────────────────────
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -191,6 +194,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<ShiftSettings>()
             .HasQueryFilter(ss => ss.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Notification>()
+            .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

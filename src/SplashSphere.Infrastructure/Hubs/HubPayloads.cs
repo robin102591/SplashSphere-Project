@@ -69,3 +69,28 @@ public sealed record QueueDisplayUpdatedPayload(
     IReadOnlyList<QueueDisplayEntryPayload> Calling,
     IReadOnlyList<QueueDisplayEntryPayload> InService,
     int WaitingCount);
+
+/// <summary>
+/// Payload sent to clients on the <c>NotificationReceived</c> SignalR event.
+/// Broadcast to <c>tenant:{tenantId}</c> when a new persistent notification is created.
+/// </summary>
+public sealed record NotificationReceivedPayload(
+    string Id,
+    int Type,
+    int Category,
+    string Title,
+    string Message,
+    string? ReferenceId,
+    string? ReferenceType,
+    DateTime CreatedAt);
+
+/// <summary>
+/// Payload sent to clients on the <c>LowStockAlert</c> SignalR event.
+/// Broadcast to <c>tenant:{tenantId}</c> when daily stock check finds low items.
+/// </summary>
+public sealed record LowStockAlertPayload(
+    string MerchandiseId,
+    string MerchandiseName,
+    string Sku,
+    int CurrentStock,
+    int LowStockThreshold);

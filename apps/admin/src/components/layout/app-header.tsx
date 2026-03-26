@@ -20,10 +20,11 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
-  Bell, LogOut, Moon, Search, Settings, Sun, User,
+  LogOut, Moon, Search, Settings, Sun, User,
 } from 'lucide-react'
 import { ConnectionStatusDot } from '@/components/connection-status'
 import { SearchDialog } from '@/components/search-dialog'
+import { NotificationDropdown } from '@/components/layout/notification-dropdown'
 
 export function AppHeader() {
   const { user } = useUser()
@@ -100,17 +101,7 @@ export function AppHeader() {
         <DarkModeToggle />
 
         {/* Notification bell */}
-        <Tooltip>
-          <TooltipTrigger render={
-            <Button variant="ghost" size="icon" className="h-8 w-8 relative" />
-          }>
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-              0
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Notifications</TooltipContent>
-        </Tooltip>
+        <NotificationDropdown />
 
         {/* Profile dropdown */}
         <DropdownMenu>

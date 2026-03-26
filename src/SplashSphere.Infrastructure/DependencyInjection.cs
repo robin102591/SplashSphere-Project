@@ -50,6 +50,9 @@ public static class DependencyInjection
         // ── Clerk backend API (organization management) ───────────────────────
         services.AddScoped<IClerkOrganizationService, ClerkOrganizationService>();
 
+        // ── Notification service (persist + broadcast) ──────────────────────
+        services.AddScoped<INotificationService, NotificationService>();
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();

@@ -81,4 +81,7 @@ public interface IApplicationDbContext
     DbSet<ShiftDenomination> ShiftDenominations { get; }
     DbSet<ShiftPaymentSummary> ShiftPaymentSummaries { get; }
     DbSet<ShiftSettings> ShiftSettings { get; }
+
+    // ── Notifications ───────────────────────────────────────────────────────
+    DbSet<Notification> Notifications { get; }
 }

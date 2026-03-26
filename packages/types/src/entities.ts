@@ -836,3 +836,29 @@ export interface VarianceTrendPointDto {
   variance: number;
   reviewStatus: ReviewStatus;
 }
+
+// ── Notifications ───────────────────────────────────────────────────────────
+
+export interface NotificationDto {
+  id: string;
+  type: number;
+  category: number;
+  title: string;
+  message: string;
+  referenceId: string | null;
+  referenceType: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface UnreadCountDto {
+  count: number;
+}
+
+export interface LowStockItem {
+  id: string;
+  name: string;
+  sku: string;
+  stockQuantity: number;
+  lowStockThreshold: number;
+}

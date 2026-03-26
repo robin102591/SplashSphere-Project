@@ -156,6 +156,31 @@ export interface QueueDisplayUpdatedPayload {
   avgWaitMinutes?: number | null;
 }
 
+/**
+ * Sent to `tenant:{tenantId}` when a persistent notification is created.
+ */
+export interface NotificationReceivedPayload {
+  id: string;
+  type: number;
+  category: number;
+  title: string;
+  message: string;
+  referenceId: string | null;
+  referenceType: string | null;
+  createdAt: string;
+}
+
+/**
+ * Sent to `tenant:{tenantId}` when the daily stock check finds low items.
+ */
+export interface LowStockAlertPayload {
+  merchandiseId: string;
+  merchandiseName: string;
+  sku: string;
+  currentStock: number;
+  lowStockThreshold: number;
+}
+
 // ── Hub event names (type-safe constants) ─────────────────────────────────────
 
 export const HubEvents = {
@@ -164,6 +189,8 @@ export const HubEvents = {
   AttendanceUpdated: 'AttendanceUpdated',
   QueueUpdated: 'QueueUpdated',
   QueueDisplayUpdated: 'QueueDisplayUpdated',
+  NotificationReceived: 'NotificationReceived',
+  LowStockAlert: 'LowStockAlert',
 } as const;
 
 export type HubEventName = (typeof HubEvents)[keyof typeof HubEvents];

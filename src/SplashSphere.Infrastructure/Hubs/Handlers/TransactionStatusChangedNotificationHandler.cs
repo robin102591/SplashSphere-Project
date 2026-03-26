@@ -20,7 +20,8 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// </summary>
 public sealed class TransactionStatusChangedNotificationHandler(
     IHubContext<SplashSphereHub> hub,
-    IApplicationDbContext db)
+    IApplicationDbContext db,
+    INotificationService notificationService)
     : INotificationHandler<DomainEventNotification<TransactionStatusChangedEvent>>
 {
     public async Task Handle(
@@ -55,6 +56,17 @@ public sealed class TransactionStatusChangedNotificationHandler(
                     e.TenantId,
                     e.BranchId),
                     cancellationToken);
+
+            // Persist a notification for completed transactions.
+            await notificationService.CreateAsync(
+                e.TenantId,
+                Domain.Enums.NotificationType.TransactionCompleted,
+                Domain.Enums.NotificationCategory.Operations,
+                "Transaction Completed",
+                $"Transaction {tx?.TransactionNumber ?? e.TransactionId} completed — ₱{tx?.FinalAmount ?? 0:N2}",
+                e.TransactionId,
+                "Transaction",
+                cancellationToken);
 
             // Propagate completion to the queue board and wall TV display.
             if (e.QueueEntryId is not null)

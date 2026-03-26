@@ -120,5 +120,6 @@ app.MapReportEndpoints();
 app.MapShiftEndpoints();
 app.MapShiftSettingsEndpoints();
 app.MapSearchEndpoints();
+app.MapNotificationEndpoints();
 
 app.Run();

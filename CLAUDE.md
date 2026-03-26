@@ -444,6 +444,21 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/search?q=term&limit=5` | Global search across customers, employees, transactions, vehicles, services, merchandise |
 
+### Notifications
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/notifications?page=1&pageSize=20&unreadOnly=false` | Paginated notification list |
+| `GET` | `/notifications/unread-count` | Unread notification count (for badge) |
+| `PATCH` | `/notifications/{id}/read` | Mark one notification as read |
+| `POST` | `/notifications/mark-all-read` | Mark all notifications as read |
+
+### Merchandise (additions)
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/merchandise/low-stock` | List active items below low-stock threshold |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -608,4 +623,6 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 - **Feature: Employee Invitation Flow** — Admin can invite employees to create a user account directly from the employee detail page. **Domain:** Added `InvitedAt` nullable DateTime to `Employee` entity. **Infrastructure:** Added `InviteMemberAsync` to `IClerkOrganizationService` using Clerk's Organization Invitations API (`sdk.OrganizationInvitations.CreateAsync`). **Application:** New `InviteEmployeeCommand` with validation (requires email, active employee, no existing linked user). **Webhook:** Updated `HandleMembershipCreated` to auto-link `Employee.UserId` by matching email within the tenant when an invited user accepts. Restructured early-return logic so employee-linking runs even when tenant is already set. **API:** `POST /employees/{id}/invite`. **Admin Frontend:** Redesigned Security tab on employee detail page — shows invitation status (Not Invited / Pending / Linked) with Send/Resend Invitation buttons (AlertDialog confirmation), plus PIN management when linked. Migration: `AddEmployeeInvitedAt`.
 
 ### 2026-03-26
-- **Feature: Global Search (Cmd+K)** — Full-stack global search across 6 entity types. **Backend:** `GET /search?q=term&limit=5` endpoint with `GlobalSearchQuery`/`GlobalSearchQueryHandler` running 6 parallel `Task.WhenAll` queries (customers, employees, transactions, vehicles, services, merchandise). Case-insensitive via `ToLower().Contains()` which Npgsql translates to `LOWER(col) LIKE`. Clamped limit 1–10. **Types:** Added `SearchHit` and `GlobalSearchResult` interfaces to `@splashsphere/types`. **Frontend:** Command palette dialog (`SearchDialog`) with `⌘K`/`Ctrl+K` shortcut. 250ms debounced search via `useGlobalSearch` hook. Keyboard navigation (↑↓ Enter Esc), grouped results by category with icons, click-to-navigate to detail pages. Replaced placeholder search input in `AppHeader` with styled Cmd+K trigger button.
+- **Feature: Global Search (Cmd+K)** — Full-stack global search across 6 entity types. **Backend:** `GET /search?q=term&limit=5` endpoint with `GlobalSearchQuery`/`GlobalSearchQueryHandler` running 6 sequential queries (customers, employees, transactions, vehicles, services, merchandise). Case-insensitive via `ToLower().Contains()` which Npgsql translates to `LOWER(col) LIKE`. Clamped limit 1–10. **Types:** Added `SearchHit` and `GlobalSearchResult` interfaces to `@splashsphere/types`. **Frontend:** Command palette dialog (`SearchDialog`) with `⌘K`/`Ctrl+K` shortcut. 250ms debounced search via `useGlobalSearch` hook. Keyboard navigation (↑↓ Enter Esc), grouped results by category with icons, click-to-navigate to detail pages. Replaced placeholder search input in `AppHeader` with styled Cmd+K trigger button.
+- **Feature: Persistent Notification System** — Full-stack notification system with persistence and real-time delivery. **Domain:** `Notification` entity with `NotificationType` (TransactionCompleted, LowStockAlert, ShiftFlagged, QueueNoShow) and `NotificationCategory` (Operations, Inventory, Finance, Queue) enums. **Application:** Centralized `INotificationService` interface. CQRS: `GetNotificationsQuery` (paginated), `GetUnreadCountQuery`, `MarkNotificationReadCommand`, `MarkAllNotificationsReadCommand` (bulk `ExecuteUpdateAsync`). **Infrastructure:** `NotificationService` creates entity + broadcasts `NotificationReceived` via SignalR to tenant group. Updated `TransactionStatusChangedNotificationHandler` and `QueueEntryNoShowNotificationHandler` to persist notifications. New `LowStockAlertNotificationHandler` (consumes previously unhandled `LowStockAlertEvent` from Hangfire job) and `ShiftFlaggedNotificationHandler`. **API:** 4 endpoints under `/api/v1/notifications`. **Frontend:** `NotificationDropdown` popover replaces hardcoded bell icon — live unread badge (polled every 60s + incremented via SignalR), scrollable notification list with category icons, click-to-navigate, mark-all-read. Migration: `AddNotifications`.
+- **Feature: Low-Stock Alert UI** — Completed the low-stock alert pipeline (Hangfire job → domain event → handler → UI). **Backend:** `GET /merchandise/low-stock` endpoint with `GetLowStockMerchandiseQuery` returning active items below threshold. **Frontend:** `LowStockAlertBanner` component on admin dashboard — amber warning with item names, stock counts, and link to merchandise page. Listens to `LowStockAlert` SignalR event to auto-refresh. Added `useLowStockItems` hook. **Types:** Added `LowStockItem`, `NotificationDto`, `UnreadCountDto`, `NotificationReceivedPayload`, `LowStockAlertPayload` to `@splashsphere/types`. Extended `HubEvents` with `NotificationReceived` and `LowStockAlert`.

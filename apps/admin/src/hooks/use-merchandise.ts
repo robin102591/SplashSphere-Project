@@ -3,12 +3,13 @@
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Merchandise, PagedResult } from '@splashsphere/types'
+import type { Merchandise, PagedResult, LowStockItem } from '@splashsphere/types'
 
 export const merchandiseKeys = {
   all: ['merchandise'] as const,
   list: (params: MerchandiseListParams) => ['merchandise', 'list', params] as const,
   detail: (id: string) => ['merchandise', id] as const,
+  lowStock: ['merchandise', 'low-stock'] as const,
 }
 
 export interface MerchandiseListParams {
@@ -134,5 +135,18 @@ export function useAdjustStock(id: string) {
       qc.invalidateQueries({ queryKey: merchandiseKeys.detail(id) })
       qc.invalidateQueries({ queryKey: merchandiseKeys.all })
     },
+  })
+}
+
+export function useLowStockItems() {
+  const { getToken } = useAuth()
+
+  return useQuery({
+    queryKey: merchandiseKeys.lowStock,
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<LowStockItem[]>('/merchandise/low-stock', token ?? undefined)
+    },
+    staleTime: 5 * 60_000,
   })
 }

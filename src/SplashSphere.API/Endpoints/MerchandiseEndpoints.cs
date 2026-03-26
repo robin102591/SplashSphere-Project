@@ -5,6 +5,7 @@ using SplashSphere.Application.Features.Merchandise.Commands.CreateMerchandise;
 using SplashSphere.Application.Features.Merchandise.Commands.ToggleMerchandiseStatus;
 using SplashSphere.Application.Features.Merchandise.Commands.UpdateMerchandise;
 using SplashSphere.Application.Features.Merchandise.Queries.GetMerchandise;
+using SplashSphere.Application.Features.Merchandise.Queries.GetLowStockMerchandise;
 using SplashSphere.Application.Features.Merchandise.Queries.GetMerchandiseById;
 
 namespace SplashSphere.API.Endpoints;
@@ -24,9 +25,16 @@ public static class MerchandiseEndpoints
         group.MapPut("/{id}",                  UpdateMerchandise)      .WithName("UpdateMerchandise");
         group.MapPatch("/{id}/status",         ToggleMerchandiseStatus).WithName("ToggleMerchandiseStatus");
         group.MapPost("/{id}/stock-adjustment",AdjustStock)            .WithName("AdjustStock");
+        group.MapGet("/low-stock",             GetLowStock)            .WithName("GetLowStockMerchandise");
 
         return app;
     }
+
+    // ── GET /api/v1/merchandise/low-stock
+
+    private static async Task<IResult> GetLowStock(
+        ISender sender, CancellationToken ct) =>
+        TypedResults.Ok(await sender.Send(new GetLowStockMerchandiseQuery(), ct));
 
     // ── GET /api/v1/merchandise?categoryId=&lowStockOnly=&search=&page=&pageSize=
 

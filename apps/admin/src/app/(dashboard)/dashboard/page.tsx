@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSignalREvent } from '@/lib/signalr-context'
 import type { DashboardMetricsUpdatedPayload } from '@splashsphere/types'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
+import { LowStockAlertBanner } from '@/components/dashboard/low-stock-alert-banner'
 
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
@@ -83,6 +84,9 @@ export default function DashboardPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Low-stock warning banner */}
+      <LowStockAlertBanner />
 
       {/* Primary KPI row */}
       {summaryLoading ? (
