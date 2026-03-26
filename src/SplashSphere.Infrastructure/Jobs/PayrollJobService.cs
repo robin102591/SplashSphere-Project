@@ -1,4 +1,3 @@
-using System.Globalization;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,15 +11,12 @@ using SplashSphere.Infrastructure.Auth;
 namespace SplashSphere.Infrastructure.Jobs;
 
 /// <summary>
-/// Recurring Hangfire jobs for payroll lifecycle management.
+/// Daily Hangfire job for payroll lifecycle management.
+/// Runs once per day (00:05 PHT) and processes each tenant according to
+/// their <see cref="PayrollSettings.CutOffStartDay"/>.
 /// <list type="bullet">
-///   <item><see cref="CreateWeeklyPayrollPeriodsAsync"/> — Monday 00:00 PHT.
-///   Creates one <see cref="PayrollPeriod"/> per tenant for the current ISO week.
-///   Idempotent: skips tenants that already have a period for this week.</item>
-///   <item><see cref="AutoCloseExpiredPeriodsAsync"/> — Sunday 23:55 PHT.
-///   Closes all Open periods whose <c>EndDate</c> is before today (Manila).
-///   Delegates to <see cref="ClosePayrollPeriodCommand"/> so payroll-entry creation
-///   logic is not duplicated.</item>
+///   <item>Auto-closes expired Open periods whose EndDate has passed.</item>
+///   <item>Creates a new period for tenants whose CutOffStartDay matches today.</item>
 /// </list>
 /// </summary>
 public sealed class PayrollJobService(
@@ -29,57 +25,77 @@ public sealed class PayrollJobService(
 {
     private static readonly TimeSpan ManilaOffset = TimeSpan.FromHours(8);
 
-    // ── Create weekly periods ─────────────────────────────────────────────────
-
     [AutomaticRetry(Attempts = 3)]
-    [DisableConcurrentExecution(timeoutInSeconds: 120)]
-    public async Task CreateWeeklyPayrollPeriodsAsync(CancellationToken ct = default)
+    [DisableConcurrentExecution(timeoutInSeconds: 300)]
+    public async Task RunDailyPayrollJobAsync(CancellationToken ct = default)
     {
-        var nowManila   = DateTime.UtcNow + ManilaOffset;
-        var todayManila = DateOnly.FromDateTime(nowManila);
-
-        // ISO week boundaries for the current week (Monday–Sunday).
-        var isoYear = ISOWeek.GetYear(nowManila);
-        var isoWeek = ISOWeek.GetWeekOfYear(nowManila);
-        var monday  = DateOnly.FromDateTime(ISOWeek.ToDateTime(isoYear, isoWeek, DayOfWeek.Monday));
-        var sunday  = monday.AddDays(6);
+        var todayManila = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
+        var todayDow    = todayManila.DayOfWeek;
 
         logger.LogInformation(
-            "PayrollJob: Creating weekly periods for ISO {Year}-W{Week:D2} ({Monday}–{Sunday}).",
-            isoYear, isoWeek, monday, sunday);
+            "PayrollJob: Daily run for {Today} ({DayOfWeek}).", todayManila, todayDow);
 
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
-        // Load all tenant IDs (cross-tenant scan, bypasses global filter).
+        // ── 1. Load all active tenants ────────────────────────────────────────
         var tenantIds = await db.Tenants
             .AsNoTracking()
             .Where(t => t.IsActive)
             .Select(t => t.Id)
             .ToListAsync(ct);
 
-        // Load existing period keys for this week in one query.
-        var existing = await db.PayrollPeriods
+        // ── 2. Load per-tenant payroll settings ───────────────────────────────
+        var settingsMap = await db.PayrollSettings
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(p => p.Year == isoYear && p.CutOffWeek == isoWeek)
+            .Where(ps => tenantIds.Contains(ps.TenantId))
+            .ToDictionaryAsync(ps => ps.TenantId, ps => ps.CutOffStartDay, ct);
+
+        // ── 3. Auto-close expired Open periods (any tenant, any day) ──────────
+        await AutoCloseExpiredPeriodsAsync(todayManila, ct);
+
+        // ── 4. Create new periods for tenants whose start day is today ────────
+        var created = 0;
+
+        // The cut-off day is the day AFTER the period ends.
+        // If today is the cut-off day, the period covers the previous 7 days:
+        //   startDate = today - 7, endDate = today - 1
+        // Example: cut-off Thursday March 26 → period March 19 (Thu) – March 25 (Wed)
+
+        // Load existing periods for the previous week's start date (prevents duplicates)
+        var previousWeekStart = todayManila.AddDays(-7);
+        var existingStartDates = await db.PayrollPeriods
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(p => p.StartDate == previousWeekStart)
             .Select(p => p.TenantId)
             .ToListAsync(ct);
 
-        var existingSet = existing.ToHashSet();
-        var created = 0;
+        var existingSet = existingStartDates.ToHashSet();
 
         foreach (var tenantId in tenantIds)
         {
+            var cutOffDay = settingsMap.GetValueOrDefault(tenantId, DayOfWeek.Monday);
+
+            if (todayDow != cutOffDay)
+                continue;
+
+            var startDate = todayManila.AddDays(-7);
+            var endDate   = todayManila.AddDays(-1);
+
             if (existingSet.Contains(tenantId))
             {
                 logger.LogDebug(
-                    "PayrollJob: Tenant {TenantId} already has a period for W{Week} — skipping.",
-                    tenantId, isoWeek);
+                    "PayrollJob: Tenant {TenantId} already has a period starting {Date} — skipping.",
+                    tenantId, startDate);
                 continue;
             }
 
-            db.PayrollPeriods.Add(new PayrollPeriod(tenantId, isoYear, isoWeek, monday, sunday));
+            var year       = startDate.Year;
+            var cutOffWeek = ComputeCutOffWeek(startDate, cutOffDay);
+
+            db.PayrollPeriods.Add(new PayrollPeriod(tenantId, year, cutOffWeek, startDate, endDate));
             created++;
         }
 
@@ -87,22 +103,13 @@ public sealed class PayrollJobService(
             await db.SaveChangesAsync(ct);
 
         logger.LogInformation(
-            "PayrollJob: Created {Created} new payroll period(s) for W{Week}.",
-            created, isoWeek);
+            "PayrollJob: Daily run complete. Created {Created} new period(s).", created);
     }
 
     // ── Auto-close expired periods ────────────────────────────────────────────
 
-    [AutomaticRetry(Attempts = 3)]
-    [DisableConcurrentExecution(timeoutInSeconds: 300)]
-    public async Task AutoCloseExpiredPeriodsAsync(CancellationToken ct = default)
+    private async Task AutoCloseExpiredPeriodsAsync(DateOnly todayManila, CancellationToken ct)
     {
-        var todayManila = DateOnly.FromDateTime(DateTime.UtcNow + ManilaOffset);
-
-        logger.LogInformation(
-            "PayrollJob: Auto-closing expired Open periods (EndDate < {Today}).", todayManila);
-
-        // Cross-tenant scan: find Open periods whose EndDate has passed.
         List<(string Id, string TenantId)> expired;
         using (var scanScope = scopeFactory.CreateScope())
         {
@@ -119,19 +126,17 @@ public sealed class PayrollJobService(
 
         if (expired.Count == 0)
         {
-            logger.LogInformation("PayrollJob: No expired Open periods found.");
+            logger.LogDebug("PayrollJob: No expired Open periods found.");
             return;
         }
 
         logger.LogInformation("PayrollJob: Closing {Count} expired period(s).", expired.Count);
 
-        var closed  = 0;
-        var failed  = 0;
+        var closed = 0;
+        var failed = 0;
 
         foreach (var (periodId, tenantId) in expired)
         {
-            // Create a dedicated scope per tenant so the global query filter and
-            // PayrollEntry construction both see the correct TenantId.
             using var tenantScope = scopeFactory.CreateScope();
 
             var tenantCtx = tenantScope.ServiceProvider.GetRequiredService<TenantContext>();
@@ -170,5 +175,23 @@ public sealed class PayrollJobService(
         logger.LogInformation(
             "PayrollJob: Auto-close complete. Closed={Closed}, Failed={Failed}.",
             closed, failed);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Computes a sequential week number relative to the tenant's configured
+    /// cut-off start day within the year.
+    /// </summary>
+    private static int ComputeCutOffWeek(DateOnly startDate, DayOfWeek cutOffStartDay)
+    {
+        var jan1 = new DateOnly(startDate.Year, 1, 1);
+        var daysUntilStart = ((int)cutOffStartDay - (int)jan1.DayOfWeek + 7) % 7;
+        var firstCutOff = jan1.AddDays(daysUntilStart);
+
+        if (startDate < firstCutOff)
+            return 1;
+
+        return ((startDate.DayNumber - firstCutOff.DayNumber) / 7) + 1;
     }
 }

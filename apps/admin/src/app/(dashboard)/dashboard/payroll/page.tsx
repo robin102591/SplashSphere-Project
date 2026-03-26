@@ -2,10 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wallet } from 'lucide-react'
+import { Plus, Wallet } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -13,10 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { usePayrollPeriods } from '@/hooks/use-payroll'
+import { usePayrollPeriods, useCreatePayrollPeriod, usePayrollSettings } from '@/hooks/use-payroll'
 import { PayrollStatus } from '@splashsphere/types'
 import type { PayrollPeriodSummary } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
+import { toast } from 'sonner'
 
 const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
   [PayrollStatus.Open]: 'Open',
@@ -59,8 +66,88 @@ function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
   )
 }
 
+function formatDateOnly(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { data: settings } = usePayrollSettings()
+  const { mutate: create, isPending } = useCreatePayrollPeriod()
+
+  // Default: previous 7-day period ending yesterday
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const weekAgo = new Date(yesterday)
+  weekAgo.setDate(weekAgo.getDate() - 6)
+
+  const [startDate, setStartDate] = useState(formatDateOnly(weekAgo))
+  const [endDate, setEndDate] = useState(formatDateOnly(yesterday))
+
+  // When start date changes, auto-compute end date (+6 days)
+  const handleStartChange = (val: string) => {
+    setStartDate(val)
+    if (val) {
+      const d = new Date(val)
+      d.setDate(d.getDate() + 6)
+      setEndDate(formatDateOnly(d))
+    }
+  }
+
+  const handleCreate = () => {
+    if (!startDate || !endDate) return
+    create(
+      { startDate, endDate },
+      {
+        onSuccess: () => {
+          toast.success('Payroll period created')
+          onOpenChange(false)
+        },
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Failed to create payroll period'
+          toast.error(message)
+        },
+      }
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create Payroll Period</DialogTitle>
+          <DialogDescription>
+            Manually create a 7-day payroll period. The end date is auto-calculated.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Start Date</Label>
+            <Input type="date" value={startDate} onChange={(e) => handleStartChange(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>End Date</Label>
+            <Input type="date" value={endDate} disabled />
+            <p className="text-xs text-muted-foreground">Automatically set to 6 days after start date.</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={isPending || !startDate}>
+            {isPending ? 'Creating…' : 'Create Period'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function PayrollPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [createOpen, setCreateOpen] = useState(false)
   const currentYear = new Date().getFullYear()
   const [yearFilter, setYearFilter] = useState<string>(String(currentYear))
 
@@ -75,11 +162,17 @@ export default function PayrollPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Payroll</h1>
-        <p className="text-muted-foreground">
-          Weekly payroll periods — review, close, and process
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Payroll</h1>
+          <p className="text-muted-foreground">
+            Weekly payroll periods — review, close, and process
+          </p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Period
+        </Button>
       </div>
 
       {/* Filters */}
@@ -153,6 +246,8 @@ export default function PayrollPage() {
           </table>
         </div>
       )}
+
+      <CreatePeriodDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }

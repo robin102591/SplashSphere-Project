@@ -33,12 +33,12 @@ public sealed class PayrollPeriodConfiguration : IEntityTypeConfiguration<Payrol
             .IsRequired();
 
         // DateOnly → PostgreSQL "date"
-        // Stores Monday of the payroll week (Asia/Manila calendar)
+        // Stores the first day of the payroll period (Asia/Manila calendar)
         builder.Property(pp => pp.StartDate)
             .IsRequired()
             .HasColumnType("date");
 
-        // Stores Sunday of the payroll week (Asia/Manila calendar)
+        // Stores the last day of the payroll period (Asia/Manila calendar)
         builder.Property(pp => pp.EndDate)
             .IsRequired()
             .HasColumnType("date");
@@ -57,9 +57,9 @@ public sealed class PayrollPeriodConfiguration : IEntityTypeConfiguration<Payrol
             .HasForeignKey(pp => pp.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // ── Unique constraint: one period per ISO week per tenant ─────────────
-        // Prevents the CreateWeeklyPayrollPeriod Hangfire job from double-creating
-        builder.HasIndex(pp => new { pp.TenantId, pp.Year, pp.CutOffWeek })
+        // ── Unique constraint: one period per start date per tenant ────────────
+        // Prevents the daily payroll Hangfire job from double-creating
+        builder.HasIndex(pp => new { pp.TenantId, pp.StartDate })
             .IsUnique();
 
         // ── Additional indexes ────────────────────────────────────────────────

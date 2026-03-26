@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.Application.Features.Payroll.Commands.BulkApplyAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.ClosePayrollPeriod;
+using SplashSphere.Application.Features.Payroll.Commands.CreatePayrollPeriod;
 using SplashSphere.Application.Features.Payroll.Commands.CreatePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Commands.DeletePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Commands.ProcessPayrollPeriod;
@@ -26,6 +27,7 @@ public static class PayrollEndpoints
 
         // ── Periods ───────────────────────────────────────────────────────────
         group.MapGet("/periods",                          GetPayrollPeriods);
+        group.MapPost("/periods",                         CreatePayrollPeriod);
         group.MapGet("/periods/{id}",                     GetPayrollPeriodById);
         group.MapPost("/periods/{id}/close",              ClosePayrollPeriod);
         group.MapPost("/periods/{id}/process",            ProcessPayrollPeriod);
@@ -54,6 +56,22 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new GetPayrollPeriodsQuery(p.Page, p.PageSize, p.Status, p.Year), ct);
         return TypedResults.Ok<object>(result);
+    }
+
+    // ── POST /periods ──────────────────────────────────────────────────────────
+
+    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreatePayrollPeriod(
+        [FromBody] CreatePeriodRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new CreatePayrollPeriodCommand(body.StartDate, body.EndDate), ct);
+
+        if (result.IsFailure)
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+
+        return TypedResults.Created($"/api/v1/payroll/periods/{result.Value}", (object)new { id = result.Value });
     }
 
     // ── GET /periods/{id} ─────────────────────────────────────────────────────
@@ -222,6 +240,10 @@ public static class PayrollEndpoints
         int PageSize = 20,
         PayrollStatus? Status = null,
         int? Year = null);
+
+    private sealed record CreatePeriodRequest(
+        DateOnly StartDate,
+        DateOnly EndDate);
 
     private sealed record UpdateEntryRequest(
         decimal Bonuses,

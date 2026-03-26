@@ -30,18 +30,16 @@ public static class RecurringJobSetup
 
         // ── Payroll ───────────────────────────────────────────────────────────
 
-        // Mon 00:00 PHT — create one period per tenant for the new ISO week.
-        manager.AddOrUpdate<PayrollJobService>(
-            recurringJobId: "payroll-create-weekly",
-            methodCall: job => job.CreateWeeklyPayrollPeriodsAsync(CancellationToken.None),
-            cronExpression: Cron.Weekly(DayOfWeek.Monday, hour: 0, minute: 0),
-            options: new RecurringJobOptions { TimeZone = Manila });
+        // Clean up old weekly jobs (replaced by daily job)
+        manager.RemoveIfExists("payroll-create-weekly");
+        manager.RemoveIfExists("payroll-auto-close");
 
-        // Sun 23:55 PHT — close all Open periods whose EndDate has passed.
+        // Daily 00:05 PHT — per-tenant payroll: auto-close expired periods,
+        // then create new periods for tenants whose CutOffStartDay matches today.
         manager.AddOrUpdate<PayrollJobService>(
-            recurringJobId: "payroll-auto-close",
-            methodCall: job => job.AutoCloseExpiredPeriodsAsync(CancellationToken.None),
-            cronExpression: "55 23 * * 0",          // 23:55 every Sunday
+            recurringJobId: "payroll-daily",
+            methodCall: job => job.RunDailyPayrollJobAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 0, minute: 5),
             options: new RecurringJobOptions { TimeZone = Manila });
 
         // ── Inventory ─────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@ import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/u
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
 import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel, useToggleModel } from '@/hooks/use-cars'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
-import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate } from '@/hooks/use-payroll'
+import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
 import { AdjustmentType } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
@@ -579,6 +579,72 @@ function PayrollTemplateDialog({
   )
 }
 
+const DAY_NAMES = [
+  { value: '0', label: 'Sunday' },
+  { value: '1', label: 'Monday' },
+  { value: '2', label: 'Tuesday' },
+  { value: '3', label: 'Wednesday' },
+  { value: '4', label: 'Thursday' },
+  { value: '5', label: 'Friday' },
+  { value: '6', label: 'Saturday' },
+]
+
+function PayrollConfigSection() {
+  const { data: settings, isLoading } = usePayrollSettings()
+  const { mutate: save, isPending: saving } = useUpdatePayrollSettings()
+  const [cutOffDay, setCutOffDay] = useState('')
+  const [initialized, setInitialized] = useState(false)
+
+  if (settings && !initialized) {
+    setCutOffDay(String(settings.cutOffStartDay))
+    setInitialized(true)
+  }
+
+  const handleSave = () => {
+    save(
+      { cutOffStartDay: parseInt(cutOffDay) },
+      {
+        onSuccess: () => toast.success('Payroll settings saved.'),
+        onError: () => toast.error('Failed to save payroll settings.'),
+      }
+    )
+  }
+
+  if (isLoading) return <Skeleton className="h-32 w-full" />
+
+  const endDay = DAY_NAMES[((parseInt(cutOffDay) || 1) + 6) % 7]
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium">Period Configuration</h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          Configure when each 7-day payroll period begins. New periods are created automatically each week.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
+        <div className="space-y-1.5">
+          <Label>Cut-Off Start Day</Label>
+          <Select value={cutOffDay} onValueChange={setCutOffDay}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {DAY_NAMES.map((d) => (
+                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Period runs {DAY_NAMES.find((d) => d.value === cutOffDay)?.label ?? 'Monday'} through {endDay?.label ?? 'Sunday'}.
+          </p>
+        </div>
+      </div>
+      <Button onClick={handleSave} disabled={saving} size="sm">
+        {saving ? 'Saving…' : 'Save Payroll Settings'}
+      </Button>
+    </div>
+  )
+}
+
 function PayrollTemplatesTab() {
   const { data: items = [], isLoading } = usePayrollTemplates()
   const { mutate: create, isPending: creating } = useCreatePayrollTemplate()
@@ -682,7 +748,11 @@ export default function SettingsPage() {
         <TabsContent value="makes-models" className="mt-6"><MakesModelsTab /></TabsContent>
         <TabsContent value="categories" className="mt-6"><CategoriesTab /></TabsContent>
         <TabsContent value="shift-config" className="mt-6"><ShiftConfigTab /></TabsContent>
-        <TabsContent value="payroll" className="mt-6"><PayrollTemplatesTab /></TabsContent>
+        <TabsContent value="payroll" className="mt-6">
+          <PayrollConfigSection />
+          <div className="my-6 border-t" />
+          <PayrollTemplatesTab />
+        </TabsContent>
       </Tabs>
     </div>
   )

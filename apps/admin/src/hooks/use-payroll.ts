@@ -8,6 +8,7 @@ import type {
   PayrollPeriodDetail,
   PayrollAdjustmentTemplate,
   PayrollEntryDetail,
+  PayrollSettingsDto,
   PagedResult,
 } from '@splashsphere/types'
 import type { AdjustmentType, PayrollStatus } from '@splashsphere/types'
@@ -20,6 +21,7 @@ export const payrollKeys = {
   detail: (id: string) => ['payroll', id] as const,
   entryDetail: (id: string) => ['payroll', 'entry', id] as const,
   templates: ['payroll', 'templates'] as const,
+  settings: ['payroll', 'settings'] as const,
 }
 
 // ── Param / value types ───────────────────────────────────────────────────────
@@ -67,6 +69,20 @@ export function usePayrollPeriod(id: string) {
       return apiClient.get<PayrollPeriodDetail>(`/payroll/periods/${id}`, token ?? undefined)
     },
     enabled: !!id,
+  })
+}
+
+export function useCreatePayrollPeriod() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { startDate: string; endDate: string }) => {
+      const token = await getToken()
+      return apiClient.post<{ id: string }>('/payroll/periods', data, token ?? undefined)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: payrollKeys.all })
+    },
   })
 }
 
@@ -210,5 +226,31 @@ export function useDeletePayrollTemplate() {
       return apiClient.delete<void>(`/payroll/templates/${id}`, token ?? undefined)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: payrollKeys.templates }),
+  })
+}
+
+// ── Payroll Settings ───────────────────────────────────────────────────────
+
+export function usePayrollSettings() {
+  const { getToken } = useAuth()
+  return useQuery({
+    queryKey: payrollKeys.settings,
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<PayrollSettingsDto>('/settings/payroll-config', token ?? undefined)
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useUpdatePayrollSettings() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { cutOffStartDay: number }) => {
+      const token = await getToken()
+      return apiClient.put<void>('/settings/payroll-config', data, token ?? undefined)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: payrollKeys.settings }),
   })
 }

@@ -840,6 +840,10 @@ export interface ShiftReportDto {
   generatedAt: string;
 }
 
+export interface PayrollSettingsDto {
+  cutOffStartDay: number; // DayOfWeek: 0=Sunday, 1=Monday, ..., 6=Saturday
+}
+
 export interface ShiftSettingsDto {
   defaultOpeningFund: number;
   autoApproveThreshold: number;

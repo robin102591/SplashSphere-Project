@@ -119,6 +119,7 @@ app.MapDashboardEndpoints();
 app.MapReportEndpoints();
 app.MapShiftEndpoints();
 app.MapShiftSettingsEndpoints();
+app.MapPayrollSettingsEndpoints();
 app.MapSearchEndpoints();
 app.MapNotificationEndpoints();
 
