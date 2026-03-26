@@ -100,7 +100,7 @@ export function AppHeader() {
           <DropdownMenuTrigger className="focus:outline-none">
             <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarImage src={user?.imageUrl} alt={user?.fullName ?? ''} />
-              <AvatarFallback className="text-xs">{initials || 'U'}</AvatarFallback>
+              <AvatarFallback className="text-xs" suppressHydrationWarning>{initials || 'U'}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

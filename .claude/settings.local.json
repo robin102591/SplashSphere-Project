@@ -110,7 +110,8 @@
       "Bash(npm install:*)",
       "Bash(corepack enable:*)",
       "Bash(node C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs add react-day-picker@9 date-fns)",
-      "Bash(node C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs add @radix-ui/react-popover)"
+      "Bash(node C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs add @radix-ui/react-popover)",
+      "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/lib -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))"
     ]
   }
 }
