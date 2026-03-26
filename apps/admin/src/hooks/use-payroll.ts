@@ -7,6 +7,7 @@ import type {
   PayrollPeriodSummary,
   PayrollPeriodDetail,
   PayrollAdjustmentTemplate,
+  PayrollAdjustment,
   PayrollEntryDetail,
   PayrollSettingsDto,
   PagedResult,
@@ -34,8 +35,6 @@ export interface PayrollListParams {
 }
 
 export interface UpdateEntryValues {
-  bonuses: number
-  deductions: number
   notes?: string
 }
 
@@ -151,6 +150,22 @@ export interface BulkAdjustValues {
   adjustmentType: AdjustmentType
   amount: number
   notes?: string
+  templateId?: string
+}
+
+// ── Adjustment values ──────────────────────────────────────────────────────
+
+export interface AddAdjustmentValues {
+  type: AdjustmentType
+  category: string
+  amount: number
+  notes?: string
+  templateId?: string
+}
+
+export interface UpdateAdjustmentValues {
+  amount: number
+  notes?: string
 }
 
 export function useBulkApplyAdjustment(periodId: string) {
@@ -160,6 +175,51 @@ export function useBulkApplyAdjustment(periodId: string) {
     mutationFn: async (data: BulkAdjustValues) => {
       const token = await getToken()
       return apiClient.post<void>('/payroll/entries/bulk-adjust', data, token ?? undefined)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: payrollKeys.detail(periodId) })
+    },
+  })
+}
+
+// ── Entry Adjustments (CRUD) ────────────────────────────────────────────────
+
+export function useAddAdjustment(periodId: string) {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ entryId, values }: { entryId: string; values: AddAdjustmentValues }) => {
+      const token = await getToken()
+      return apiClient.post<{ id: string }>(`/payroll/entries/${entryId}/adjustments`, values, token ?? undefined)
+    },
+    onSuccess: (_data, { entryId }) => {
+      qc.invalidateQueries({ queryKey: payrollKeys.detail(periodId) })
+      qc.invalidateQueries({ queryKey: payrollKeys.entryDetail(entryId) })
+    },
+  })
+}
+
+export function useUpdateAdjustment(periodId: string) {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ adjustmentId, values }: { adjustmentId: string; values: UpdateAdjustmentValues }) => {
+      const token = await getToken()
+      return apiClient.put<void>(`/payroll/adjustments/${adjustmentId}`, values, token ?? undefined)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: payrollKeys.detail(periodId) })
+    },
+  })
+}
+
+export function useDeleteAdjustment(periodId: string) {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (adjustmentId: string) => {
+      const token = await getToken()
+      return apiClient.delete<void>(`/payroll/adjustments/${adjustmentId}`, token ?? undefined)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: payrollKeys.detail(periodId) })

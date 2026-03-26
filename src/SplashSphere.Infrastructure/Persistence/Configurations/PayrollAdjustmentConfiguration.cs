@@ -4,67 +4,72 @@ using SplashSphere.Domain.Entities;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
-public sealed class PayrollAdjustmentTemplateConfiguration : IEntityTypeConfiguration<PayrollAdjustmentTemplate>
+public sealed class PayrollAdjustmentConfiguration : IEntityTypeConfiguration<PayrollAdjustment>
 {
-    public void Configure(EntityTypeBuilder<PayrollAdjustmentTemplate> builder)
+    public void Configure(EntityTypeBuilder<PayrollAdjustment> builder)
     {
-        builder.ToTable("PayrollAdjustmentTemplates");
+        builder.ToTable("PayrollAdjustments");
 
         // ── Primary key ─────────────────────────────────────────────────────────
-        builder.HasKey(t => t.Id);
-        builder.Property(t => t.Id)
+        builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id)
             .IsRequired()
             .HasMaxLength(36)
             .HasDefaultValueSql("gen_random_uuid()::text");
 
         // ── Scalar properties ───────────────────────────────────────────────────
-        builder.Property(t => t.TenantId)
+        builder.Property(a => a.TenantId)
             .IsRequired()
             .HasMaxLength(256);
 
-        builder.Property(t => t.Name)
+        builder.Property(a => a.PayrollEntryId)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(36);
 
-        builder.Property(t => t.Type)
+        builder.Property(a => a.Type)
             .IsRequired()
             .HasConversion<int>();
 
-        builder.Property(t => t.DefaultAmount)
+        builder.Property(a => a.Category)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(a => a.Amount)
             .IsRequired()
             .HasPrecision(10, 2);
 
-        builder.Property(t => t.IsActive)
-            .IsRequired()
-            .HasDefaultValue(true);
+        builder.Property(a => a.Notes)
+            .HasMaxLength(500);
 
-        builder.Property(t => t.SortOrder)
-            .IsRequired()
-            .HasDefaultValue(0);
-
-        builder.Property(t => t.IsSystemDefault)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(a => a.TemplateId)
+            .HasMaxLength(36);
 
         // ── Audit timestamps ────────────────────────────────────────────────────
-        builder.Property(t => t.CreatedAt)
+        builder.Property(a => a.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");
 
-        builder.Property(t => t.UpdatedAt)
+        builder.Property(a => a.UpdatedAt)
             .IsRequired();
 
         // ── Relationships ───────────────────────────────────────────────────────
-        builder.HasOne(t => t.Tenant)
+        builder.HasOne(a => a.Entry)
+            .WithMany(e => e.Adjustments)
+            .HasForeignKey(a => a.PayrollEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(a => a.Template)
+            .WithMany(t => t.Adjustments)
+            .HasForeignKey(a => a.TemplateId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(a => a.Tenant)
             .WithMany()
-            .HasForeignKey(t => t.TenantId)
+            .HasForeignKey(a => a.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // ── Indexes ─────────────────────────────────────────────────────────────
-        builder.HasIndex(t => t.TenantId);
-
-        // No duplicate names within a tenant
-        builder.HasIndex(t => new { t.TenantId, t.Name })
-            .IsUnique();
+        builder.HasIndex(a => a.PayrollEntryId);
+        builder.HasIndex(a => a.TenantId);
     }
 }

@@ -8,4 +8,5 @@ public sealed record PayrollTemplateDto(
     AdjustmentType Type,
     decimal DefaultAmount,
     bool IsActive,
-    int SortOrder);
+    int SortOrder,
+    bool IsSystemDefault);

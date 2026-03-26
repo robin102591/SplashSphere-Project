@@ -21,7 +21,8 @@ public sealed class GetPayrollTemplatesQueryHandler(IApplicationDbContext contex
                 t.Type,
                 t.DefaultAmount,
                 t.IsActive,
-                t.SortOrder))
+                t.SortOrder,
+                t.IsSystemDefault))
             .ToListAsync(cancellationToken);
     }
 }

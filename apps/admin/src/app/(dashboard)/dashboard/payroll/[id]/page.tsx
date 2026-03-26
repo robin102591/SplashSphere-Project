@@ -1,7 +1,7 @@
 'use client'
 
-import { use, useState, useRef, useCallback } from 'react'
-import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X } from 'lucide-react'
+import { use, useState, useCallback } from 'react'
+import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -32,9 +32,13 @@ import {
   useBulkApplyAdjustment,
   usePayrollTemplates,
   usePayrollEntryDetail,
+  useAddAdjustment,
+  useUpdateAdjustment,
+  useDeleteAdjustment,
 } from '@/hooks/use-payroll'
+import type { AddAdjustmentValues } from '@/hooks/use-payroll'
 import { PayrollStatus, EmployeeType, AdjustmentType } from '@splashsphere/types'
-import type { PayrollEntry } from '@splashsphere/types'
+import type { PayrollEntry, PayrollAdjustment } from '@splashsphere/types'
 import { toast } from 'sonner'
 import { formatPeso } from '@/lib/format'
 
@@ -42,94 +46,6 @@ const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
   [PayrollStatus.Open]: 'Open',
   [PayrollStatus.Closed]: 'Closed',
   [PayrollStatus.Processed]: 'Processed',
-}
-
-// ── Inline-editable cell ──────────────────────────────────────────────────────
-
-function EditableCell({
-  value,
-  onSave,
-}: {
-  value: number
-  onSave: (next: number) => Promise<void>
-}) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(String(value))
-  const [saving, setSaving] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const startEdit = () => {
-    setDraft(String(value))
-    setEditing(true)
-    setTimeout(() => inputRef.current?.select(), 0)
-  }
-
-  const cancel = () => {
-    setEditing(false)
-    setDraft(String(value))
-  }
-
-  const save = async () => {
-    const num = parseFloat(draft)
-    if (isNaN(num) || num < 0) {
-      toast.error('Enter a valid non-negative amount')
-      return
-    }
-    setSaving(true)
-    try {
-      await onSave(num)
-      setEditing(false)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <input
-          ref={inputRef}
-          type="number"
-          step="0.01"
-          min="0"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') save()
-            if (e.key === 'Escape') cancel()
-          }}
-          className="w-24 h-7 rounded border border-input bg-background px-2 text-sm tabular-nums"
-          disabled={saving}
-        />
-        <button
-          onClick={save}
-          disabled={saving}
-          className="h-7 w-7 flex items-center justify-center rounded hover:bg-green-100 text-green-700 disabled:opacity-50"
-        >
-          <Check className="h-3.5 w-3.5" />
-        </button>
-        <button
-          onClick={cancel}
-          disabled={saving}
-          className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted text-muted-foreground disabled:opacity-50"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex items-center gap-1 group">
-      <span className="tabular-nums">{formatPeso(value)}</span>
-      <button
-        onClick={startEdit}
-        className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded hover:bg-muted transition-opacity"
-      >
-        <Pencil className="h-3 w-3 text-muted-foreground" />
-      </button>
-    </div>
-  )
 }
 
 // ── Notes cell ────────────────────────────────────────────────────────────────
@@ -222,25 +138,10 @@ function EntryRow({
 }) {
   const { mutateAsync: updateEntry } = useUpdatePayrollEntry(periodId)
 
-  const saveField = async (field: 'bonuses' | 'deductions', val: number) => {
-    await updateEntry({
-      entryId: entry.id,
-      values: {
-        bonuses: field === 'bonuses' ? val : entry.bonuses,
-        deductions: field === 'deductions' ? val : entry.deductions,
-        notes: entry.notes ?? undefined,
-      },
-    })
-  }
-
   const saveNotes = async (notes: string) => {
     await updateEntry({
       entryId: entry.id,
-      values: {
-        bonuses: entry.bonuses,
-        deductions: entry.deductions,
-        notes: notes || undefined,
-      },
+      values: { notes: notes || undefined },
     })
   }
 
@@ -283,19 +184,11 @@ function EntryRow({
       <td className="px-4 py-3 text-right text-sm tabular-nums text-muted-foreground italic">
         {entry.totalTips > 0 ? formatPeso(entry.totalTips) : '—'}
       </td>
-      <td className="px-4 py-3 text-right text-sm">
-        {editable ? (
-          <EditableCell value={entry.bonuses} onSave={(v) => saveField('bonuses', v)} />
-        ) : (
-          <span className="tabular-nums">{formatPeso(entry.bonuses)}</span>
-        )}
+      <td className="px-4 py-3 text-right text-sm tabular-nums">
+        {formatPeso(entry.bonuses)}
       </td>
-      <td className="px-4 py-3 text-right text-sm">
-        {editable ? (
-          <EditableCell value={entry.deductions} onSave={(v) => saveField('deductions', v)} />
-        ) : (
-          <span className="tabular-nums">{formatPeso(entry.deductions)}</span>
-        )}
+      <td className="px-4 py-3 text-right text-sm tabular-nums">
+        {formatPeso(entry.deductions)}
       </td>
       <td className="px-4 py-3 text-right font-semibold text-sm tabular-nums">
         {formatPeso(entry.netPay)}
@@ -315,16 +208,109 @@ function EntryRow({
 
 function EmployeeDetailSheet({
   entryId,
+  periodId,
+  editable,
   onClose,
 }: {
   entryId: string | null
+  periodId: string
+  editable: boolean
   onClose: () => void
 }) {
   const { data, isLoading } = usePayrollEntryDetail(entryId)
+  const { data: templates = [] } = usePayrollTemplates()
+  const { mutate: addAdj, isPending: isAdding } = useAddAdjustment(periodId)
+  const { mutate: updateAdj } = useUpdateAdjustment(periodId)
+  const { mutate: deleteAdj } = useDeleteAdjustment(periodId)
+
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addType, setAddType] = useState<AdjustmentType>(AdjustmentType.Deduction)
+  const [addCategory, setAddCategory] = useState('')
+  const [addAmount, setAddAmount] = useState('')
+  const [addNotes, setAddNotes] = useState('')
+  const [addTemplateId, setAddTemplateId] = useState<string | null>(null)
+
+  // Inline-edit state for individual adjustment rows
+  const [editingAdjId, setEditingAdjId] = useState<string | null>(null)
+  const [editAmount, setEditAmount] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+
+  const activeTemplates = templates.filter((t) => t.isActive)
+
+  const resetAddForm = () => {
+    setShowAddForm(false)
+    setAddType(AdjustmentType.Deduction)
+    setAddCategory('')
+    setAddAmount('')
+    setAddNotes('')
+    setAddTemplateId(null)
+  }
+
+  const handleTemplateSelect = (templateId: string) => {
+    const tpl = activeTemplates.find((t) => t.id === templateId)
+    if (!tpl) return
+    setAddType(tpl.type)
+    setAddCategory(tpl.name)
+    setAddAmount(String(tpl.defaultAmount))
+    setAddTemplateId(tpl.id)
+  }
+
+  const handleAddAdjustment = () => {
+    if (!entryId) return
+    const amt = parseFloat(addAmount)
+    if (isNaN(amt) || amt <= 0) { toast.error('Amount must be > 0'); return }
+    if (!addCategory.trim()) { toast.error('Category is required'); return }
+    addAdj(
+      {
+        entryId,
+        values: {
+          type: addType,
+          category: addCategory.trim(),
+          amount: amt,
+          notes: addNotes || undefined,
+          templateId: addTemplateId ?? undefined,
+        },
+      },
+      {
+        onSuccess: () => { toast.success('Adjustment added'); resetAddForm() },
+        onError: () => toast.error('Failed to add adjustment'),
+      }
+    )
+  }
+
+  const startEditAdj = (adj: PayrollAdjustment) => {
+    setEditingAdjId(adj.id)
+    setEditAmount(String(adj.amount))
+    setEditNotes(adj.notes ?? '')
+  }
+
+  const saveEditAdj = (adjustmentId: string) => {
+    const amt = parseFloat(editAmount)
+    if (isNaN(amt) || amt <= 0) { toast.error('Amount must be > 0'); return }
+    updateAdj(
+      { adjustmentId, values: { amount: amt, notes: editNotes || undefined } },
+      {
+        onSuccess: () => { toast.success('Adjustment updated'); setEditingAdjId(null) },
+        onError: () => toast.error('Failed to update'),
+      }
+    )
+  }
+
+  const handleDeleteAdj = (adjustmentId: string) => {
+    deleteAdj(adjustmentId, {
+      onSuccess: () => toast.success('Adjustment removed'),
+      onError: () => toast.error('Failed to remove'),
+    })
+  }
+
+  // Detect legacy adjustments (flat values > 0 but no adjustment rows)
+  const hasLegacyAdjustments = data
+    ? (data.entry.bonuses > 0 || data.entry.deductions > 0) && data.adjustments.length === 0
+    : false
 
   return (
-    <Sheet open={!!entryId} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+    <Sheet open={!!entryId} onOpenChange={(open) => { if (!open) { onClose(); resetAddForm(); setEditingAdjId(null) } }}>
+      <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
         {isLoading || !data ? (
           <div className="space-y-4 pt-6">
             <Skeleton className="h-6 w-48" />
@@ -334,7 +320,7 @@ function EmployeeDetailSheet({
         ) : (
           <>
             <SheetHeader>
-              <SheetTitle>{data.entry.employeeName}</SheetTitle>
+              <SheetTitle className="text-lg">{data.entry.employeeName}</SheetTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{data.entry.branchName}</span>
                 <Badge variant="outline" className="text-[10px] capitalize">
@@ -343,29 +329,32 @@ function EmployeeDetailSheet({
               </div>
             </SheetHeader>
 
-            {/* Summary */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            {/* Summary — 3-col grid for wider layout */}
+            <div className="grid grid-cols-3 gap-3 mt-5">
               {[
                 { label: 'Base Salary', value: data.entry.baseSalary },
                 { label: 'Commissions', value: data.entry.totalCommissions },
                 { label: 'Tips (paid)', value: data.entry.totalTips, muted: true },
-                { label: 'Bonuses', value: data.entry.bonuses },
-                { label: 'Deductions', value: data.entry.deductions },
+                { label: `Bonuses (${data.adjustments.filter(a => a.type === AdjustmentType.Bonus).length})`, value: data.entry.bonuses },
+                { label: `Deductions (${data.adjustments.filter(a => a.type === AdjustmentType.Deduction).length})`, value: data.entry.deductions },
               ].map(({ label, value, muted }) => (
-                <div key={label} className="rounded-lg border px-3 py-2">
+                <div key={label} className="rounded-lg border px-3 py-2.5">
                   <p className="text-[11px] text-muted-foreground">{label}</p>
                   <p className={`text-sm tabular-nums ${muted ? 'text-muted-foreground italic' : 'font-semibold'}`}>{formatPeso(value)}</p>
                 </div>
               ))}
-              <div className="col-span-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+              <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
                 <p className="text-[11px] text-muted-foreground">Net Pay</p>
                 <p className="text-lg font-bold tabular-nums text-primary">{formatPeso(data.entry.netPay)}</p>
               </div>
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="commissions" className="mt-4">
+            <Tabs defaultValue="adjustments" className="mt-5">
               <TabsList variant="line">
+                <TabsTrigger value="adjustments">
+                  Adjustments ({data.adjustments.length})
+                </TabsTrigger>
                 <TabsTrigger value="commissions">
                   Commissions ({data.commissionLineItems.length})
                 </TabsTrigger>
@@ -374,27 +363,187 @@ function EmployeeDetailSheet({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="commissions" className="mt-3">
+              {/* ── Adjustments tab ──────────────────────────────────── */}
+              <TabsContent value="adjustments" className="mt-4 space-y-3">
+                {hasLegacyAdjustments && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+                    This entry has {formatPeso(data.entry.bonuses)} in bonuses and {formatPeso(data.entry.deductions)} in
+                    deductions from before itemised tracking. Add individual adjustments to itemise them.
+                  </div>
+                )}
+
+                {editable && !showAddForm && (
+                  <Button size="sm" variant="outline" onClick={() => setShowAddForm(true)}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Add Adjustment
+                  </Button>
+                )}
+
+                {showAddForm && (
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <p className="text-sm font-medium">New Adjustment</p>
+                    {activeTemplates.length > 0 && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Quick template</Label>
+                        <Select onValueChange={handleTemplateSelect}>
+                          <SelectTrigger><SelectValue placeholder="Select template…" /></SelectTrigger>
+                          <SelectContent>
+                            {activeTemplates.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name} — {t.type === AdjustmentType.Bonus ? 'Bonus' : 'Deduction'} ({formatPeso(t.defaultAmount)})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Type</Label>
+                        <Select value={String(addType)} onValueChange={(v) => setAddType(Number(v) as AdjustmentType)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={String(AdjustmentType.Deduction)}>Deduction</SelectItem>
+                            <SelectItem value={String(AdjustmentType.Bonus)}>Bonus</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Category</Label>
+                        <Input value={addCategory} onChange={(e) => setAddCategory(e.target.value)} placeholder="e.g. SSS, PhilHealth" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Amount (₱)</Label>
+                        <Input type="number" min="0.01" step="0.01" value={addAmount} onChange={(e) => setAddAmount(e.target.value)} placeholder="0.00" />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Notes (optional)</Label>
+                      <Input value={addNotes} onChange={(e) => setAddNotes(e.target.value)} placeholder="Optional notes" />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" onClick={handleAddAdjustment} disabled={isAdding}>
+                        {isAdding ? 'Adding…' : 'Add Adjustment'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={resetAddForm}>Cancel</Button>
+                    </div>
+                  </div>
+                )}
+
+                {data.adjustments.length === 0 && !hasLegacyAdjustments ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">No adjustments yet</p>
+                ) : data.adjustments.length > 0 && (
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Category</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Type</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-medium">Amount</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Notes</th>
+                          {editable && <th className="px-4 py-2.5 w-20" />}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.adjustments.map((adj) => (
+                          <tr key={adj.id} className="hover:bg-muted/30">
+                            {editingAdjId === adj.id ? (
+                              <>
+                                <td className="px-4 py-2.5 text-sm">{adj.category}</td>
+                                <td className="px-4 py-2.5">
+                                  <Badge variant={adj.type === AdjustmentType.Bonus ? 'default' : 'destructive'} className="text-[10px]">
+                                    {adj.type === AdjustmentType.Bonus ? 'Bonus' : 'Deduction'}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <input type="number" step="0.01" min="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
+                                    className="w-24 h-7 rounded border border-input bg-background px-2 text-sm tabular-nums" />
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <input type="text" value={editNotes} onChange={(e) => setEditNotes(e.target.value)}
+                                    className="w-full h-7 rounded border border-input bg-background px-2 text-sm" />
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <div className="flex gap-1">
+                                    <button onClick={() => saveEditAdj(adj.id)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-green-100 text-green-700">
+                                      <Check className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => setEditingAdjId(null)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted text-muted-foreground">
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="px-4 py-2.5 text-sm">
+                                  {adj.category}
+                                  {adj.templateName && adj.templateName !== adj.category && (
+                                    <span className="text-muted-foreground text-xs ml-1.5">via {adj.templateName}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <Badge variant={adj.type === AdjustmentType.Bonus ? 'default' : 'destructive'} className="text-[10px]">
+                                    {adj.type === AdjustmentType.Bonus ? 'Bonus' : 'Deduction'}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-sm tabular-nums font-medium">{formatPeso(adj.amount)}</td>
+                                <td className="px-4 py-2.5 text-sm text-muted-foreground">{adj.notes ?? '—'}</td>
+                                {editable && (
+                                  <td className="px-4 py-2.5">
+                                    <div className="flex gap-1">
+                                      <button onClick={() => startEditAdj(adj)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted text-muted-foreground">
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </button>
+                                      <button onClick={() => handleDeleteAdj(adj.id)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-destructive">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                )}
+                              </>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="border-t bg-muted/50">
+                        <tr>
+                          <td colSpan={2} className="px-4 py-2.5 text-sm font-medium">
+                            Net Adjustments
+                          </td>
+                          <td className="px-4 py-2.5 text-right text-sm font-semibold tabular-nums">
+                            {formatPeso(data.adjustments.reduce((s, a) => s + (a.type === AdjustmentType.Bonus ? a.amount : -a.amount), 0))}
+                          </td>
+                          <td colSpan={editable ? 2 : 1} />
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* ── Commissions tab ──────────────────────────────────── */}
+              <TabsContent value="commissions" className="mt-4">
                 {data.commissionLineItems.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">No commissions earned this period</p>
+                  <p className="py-8 text-center text-sm text-muted-foreground">No commissions earned this period</p>
                 ) : (
                   <div className="rounded-lg border overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium">Transaction</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium">Service</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium">Date</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Transaction</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Service / Package</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-medium">Commission</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-medium">Date</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {data.commissionLineItems.map((item, i) => (
                           <tr key={i} className="hover:bg-muted/30">
-                            <td className="px-3 py-2 text-xs font-mono">{item.transactionNumber}</td>
-                            <td className="px-3 py-2 text-xs">{item.serviceName}</td>
-                            <td className="px-3 py-2 text-right text-xs tabular-nums">{formatPeso(item.commissionAmount)}</td>
-                            <td className="px-3 py-2 text-right text-xs text-muted-foreground">
+                            <td className="px-4 py-2.5 text-sm font-mono">{item.transactionNumber}</td>
+                            <td className="px-4 py-2.5 text-sm">{item.serviceName}</td>
+                            <td className="px-4 py-2.5 text-right text-sm tabular-nums font-medium">{formatPeso(item.commissionAmount)}</td>
+                            <td className="px-4 py-2.5 text-right text-sm text-muted-foreground">
                               {new Date(item.completedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
                             </td>
                           </tr>
@@ -402,8 +551,8 @@ function EmployeeDetailSheet({
                       </tbody>
                       <tfoot className="border-t bg-muted/50">
                         <tr>
-                          <td colSpan={2} className="px-3 py-2 text-xs font-medium">Total</td>
-                          <td className="px-3 py-2 text-right text-xs font-semibold tabular-nums">
+                          <td colSpan={2} className="px-4 py-2.5 text-sm font-medium">Total</td>
+                          <td className="px-4 py-2.5 text-right text-sm font-semibold tabular-nums">
                             {formatPeso(data.commissionLineItems.reduce((s, c) => s + c.commissionAmount, 0))}
                           </td>
                           <td />
@@ -414,29 +563,30 @@ function EmployeeDetailSheet({
                 )}
               </TabsContent>
 
-              <TabsContent value="attendance" className="mt-3">
+              {/* ── Attendance tab ──────────────────────────────────── */}
+              <TabsContent value="attendance" className="mt-4">
                 {data.attendanceRecords.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">No attendance recorded this period</p>
+                  <p className="py-8 text-center text-sm text-muted-foreground">No attendance recorded this period</p>
                 ) : (
                   <div className="rounded-lg border overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium">Date</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium">Time In</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium">Time Out</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-medium">Date</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-medium">Time In</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-medium">Time Out</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {data.attendanceRecords.map((rec, i) => (
                           <tr key={i} className="hover:bg-muted/30">
-                            <td className="px-3 py-2 text-xs">
+                            <td className="px-4 py-2.5 text-sm">
                               {new Date(rec.date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}
                             </td>
-                            <td className="px-3 py-2 text-right text-xs tabular-nums">
+                            <td className="px-4 py-2.5 text-right text-sm tabular-nums">
                               {new Date(rec.timeIn).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
                             </td>
-                            <td className="px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
+                            <td className="px-4 py-2.5 text-right text-sm tabular-nums text-muted-foreground">
                               {rec.timeOut
                                 ? new Date(rec.timeOut).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
                                 : '—'}
@@ -446,7 +596,7 @@ function EmployeeDetailSheet({
                       </tbody>
                       <tfoot className="border-t bg-muted/50">
                         <tr>
-                          <td colSpan={3} className="px-3 py-2 text-xs font-medium">
+                          <td colSpan={3} className="px-4 py-2.5 text-sm font-medium">
                             {data.attendanceRecords.length} day{data.attendanceRecords.length !== 1 ? 's' : ''} worked
                           </td>
                         </tr>
@@ -488,12 +638,15 @@ function BulkApplyDialog({
 
   const activeTemplates = templates.filter((t) => t.isActive)
 
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+
   const handleTemplateSelect = (templateId: string) => {
     const tpl = activeTemplates.find((t) => t.id === templateId)
     if (!tpl) return
     setType(tpl.type)
     setAmount(String(tpl.defaultAmount))
     setNotes(tpl.name)
+    setSelectedTemplateId(tpl.id)
   }
 
   const handleApply = () => {
@@ -503,7 +656,7 @@ function BulkApplyDialog({
       return
     }
     bulkApply(
-      { entryIds: selectedIds, adjustmentType: type, amount: num, notes: notes || undefined },
+      { entryIds: selectedIds, adjustmentType: type, amount: num, notes: notes || undefined, templateId: selectedTemplateId ?? undefined },
       {
         onSuccess: () => {
           toast.success(`Adjustment applied to ${selectedCount} entries`)
@@ -559,7 +712,7 @@ function BulkApplyDialog({
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. SSS March 2026" />
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Amounts are <strong>added</strong> to existing bonuses/deductions, not replaced.
+            Each application creates a new itemised adjustment row per entry.
           </div>
         </div>
         <DialogFooter>
@@ -713,8 +866,8 @@ export default function PayrollPeriodDetailPage({
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <Pencil className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
-            Period is <strong>Closed</strong> — hover any Bonuses, Deductions, or Notes cell to
-            edit inline. Changes are saved immediately. Process the payroll when ready to finalise.
+            Period is <strong>Closed</strong> — click an employee name to view details and manage
+            itemised adjustments. Use bulk apply to add deductions to multiple entries. Process the payroll when ready to finalise.
           </span>
         </div>
       )}
@@ -784,14 +937,8 @@ export default function PayrollPeriodDetailPage({
                 <th className="px-4 py-3 text-right font-medium">Base Salary</th>
                 <th className="px-4 py-3 text-right font-medium">Commissions</th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">Tips (paid)</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  Bonuses
-                  {editable && <span className="ml-1 text-xs font-normal text-muted-foreground">(editable)</span>}
-                </th>
-                <th className="px-4 py-3 text-right font-medium">
-                  Deductions
-                  {editable && <span className="ml-1 text-xs font-normal text-muted-foreground">(editable)</span>}
-                </th>
+                <th className="px-4 py-3 text-right font-medium">Bonuses</th>
+                <th className="px-4 py-3 text-right font-medium">Deductions</th>
                 <th className="px-4 py-3 text-right font-medium">Net Pay</th>
                 <th className="px-4 py-3 text-left font-medium">Notes</th>
               </tr>
@@ -862,7 +1009,7 @@ export default function PayrollPeriodDetailPage({
       </Dialog>
 
       {/* Employee detail sheet */}
-      <EmployeeDetailSheet entryId={detailEntryId} onClose={() => setDetailEntryId(null)} />
+      <EmployeeDetailSheet entryId={detailEntryId} periodId={id} editable={editable} onClose={() => setDetailEntryId(null)} />
 
       {/* Bulk apply dialog */}
       <BulkApplyDialog

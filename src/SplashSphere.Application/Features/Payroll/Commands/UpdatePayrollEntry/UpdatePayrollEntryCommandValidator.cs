@@ -7,11 +7,5 @@ public sealed class UpdatePayrollEntryCommandValidator : AbstractValidator<Updat
     public UpdatePayrollEntryCommandValidator()
     {
         RuleFor(x => x.EntryId).NotEmpty().WithMessage("Entry ID is required.");
-
-        RuleFor(x => x.Bonuses)
-            .GreaterThanOrEqualTo(0).WithMessage("Bonuses cannot be negative.");
-
-        RuleFor(x => x.Deductions)
-            .GreaterThanOrEqualTo(0).WithMessage("Deductions cannot be negative.");
     }
 }

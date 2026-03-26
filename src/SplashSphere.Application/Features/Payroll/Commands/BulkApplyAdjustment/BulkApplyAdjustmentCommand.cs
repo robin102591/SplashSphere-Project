@@ -7,4 +7,5 @@ public sealed record BulkApplyAdjustmentCommand(
     IReadOnlyList<string> EntryIds,
     AdjustmentType AdjustmentType,
     decimal Amount,
-    string? Notes) : ICommand;
+    string? Notes,
+    string? TemplateId = null) : ICommand;

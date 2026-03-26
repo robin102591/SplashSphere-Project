@@ -50,7 +50,8 @@ public sealed record PayrollEntryDto(
 public sealed record PayrollEntryDetailDto(
     PayrollEntryDto Entry,
     IReadOnlyList<CommissionLineItemDto> CommissionLineItems,
-    IReadOnlyList<AttendanceLineItemDto> AttendanceRecords);
+    IReadOnlyList<AttendanceLineItemDto> AttendanceRecords,
+    IReadOnlyList<PayrollAdjustmentDto> Adjustments);
 
 public sealed record CommissionLineItemDto(
     string TransactionNumber,
@@ -62,3 +63,15 @@ public sealed record AttendanceLineItemDto(
     DateOnly Date,
     DateTime TimeIn,
     DateTime? TimeOut);
+
+// ── Adjustment line items ──────────────────────────────────────────────────
+
+public sealed record PayrollAdjustmentDto(
+    string Id,
+    AdjustmentType Type,
+    string Category,
+    decimal Amount,
+    string? Notes,
+    string? TemplateId,
+    string? TemplateName,
+    DateTime CreatedAt);

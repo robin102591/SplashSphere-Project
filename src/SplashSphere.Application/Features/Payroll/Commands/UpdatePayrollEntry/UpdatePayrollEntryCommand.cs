@@ -4,11 +4,12 @@ using SplashSphere.SharedKernel.Results;
 namespace SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollEntry;
 
 /// <summary>
-/// Adjusts the bonus and deduction amounts on a single payroll entry.
+/// Updates the notes on a single payroll entry.
 /// Only permitted while the parent period is <c>Closed</c>; rejected for Open or Processed periods.
+/// <para>
+/// Bonuses and deductions are now managed through itemised <c>PayrollAdjustment</c> rows.
+/// </para>
 /// </summary>
 public sealed record UpdatePayrollEntryCommand(
     string EntryId,
-    decimal Bonuses,
-    decimal Deductions,
     string? Notes) : ICommand;

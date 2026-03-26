@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.Domain.Entities;
 using SplashSphere.Domain.Enums;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Payroll.Commands.BulkApplyAdjustment;
 
-public sealed class BulkApplyAdjustmentCommandHandler(IApplicationDbContext context)
+public sealed class BulkApplyAdjustmentCommandHandler(
+    IApplicationDbContext context,
+    ITenantContext tenantContext)
     : IRequestHandler<BulkApplyAdjustmentCommand, Result>
 {
     public async Task<Result> Handle(
@@ -15,6 +18,7 @@ public sealed class BulkApplyAdjustmentCommandHandler(IApplicationDbContext cont
     {
         var entries = await context.PayrollEntries
             .Include(e => e.PayrollPeriod)
+            .Include(e => e.Adjustments)
             .Where(e => request.EntryIds.Contains(e.Id))
             .ToListAsync(cancellationToken);
 
@@ -33,19 +37,31 @@ public sealed class BulkApplyAdjustmentCommandHandler(IApplicationDbContext cont
             return Result.Failure(Error.Validation(
                 $"Entries can only be adjusted when the period is Closed. Current status: '{period.Status}'."));
 
+        // Validate template if provided
+        if (request.TemplateId is not null)
+        {
+            var templateExists = await context.PayrollAdjustmentTemplates
+                .AnyAsync(t => t.Id == request.TemplateId && t.IsActive, cancellationToken);
+            if (!templateExists)
+                return Result.Failure(Error.Validation("Template not found or is inactive."));
+        }
+
+        var category = request.Notes ?? (request.AdjustmentType == AdjustmentType.Bonus ? "Bonus" : "Deduction");
+
         foreach (var entry in entries)
         {
-            if (request.AdjustmentType == AdjustmentType.Bonus)
-                entry.Bonuses += request.Amount;
-            else
-                entry.Deductions += request.Amount;
+            var adjustment = new PayrollAdjustment(
+                tenantContext.TenantId,
+                entry.Id,
+                request.AdjustmentType,
+                category,
+                request.Amount,
+                request.Notes,
+                request.TemplateId);
 
-            if (!string.IsNullOrWhiteSpace(request.Notes))
-            {
-                entry.Notes = string.IsNullOrEmpty(entry.Notes)
-                    ? request.Notes
-                    : $"{entry.Notes}; {request.Notes}";
-            }
+            context.PayrollAdjustments.Add(adjustment);
+            // EF Core relationship fixup auto-adds to entry.Adjustments
+            entry.RecalculateTotals();
         }
 
         return Result.Success();

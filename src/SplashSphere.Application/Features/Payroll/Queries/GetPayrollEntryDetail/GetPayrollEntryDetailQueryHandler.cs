@@ -93,6 +93,17 @@ public sealed class GetPayrollEntryDetailQueryHandler(IApplicationDbContext cont
             .Select(a => new AttendanceLineItemDto(a.Date, a.TimeIn, a.TimeOut))
             .ToListAsync(cancellationToken);
 
-        return new PayrollEntryDetailDto(entryDto, allCommissions, attendance);
+        // ── Adjustment line items ──────────────────────────────────────────────
+        var adjustments = await context.PayrollAdjustments
+            .AsNoTracking()
+            .Where(a => a.PayrollEntryId == entry.Id)
+            .OrderBy(a => a.CreatedAt)
+            .Select(a => new PayrollAdjustmentDto(
+                a.Id, a.Type, a.Category, a.Amount, a.Notes,
+                a.TemplateId, a.Template != null ? a.Template.Name : null,
+                a.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return new PayrollEntryDetailDto(entryDto, allCommissions, attendance, adjustments);
     }
 }

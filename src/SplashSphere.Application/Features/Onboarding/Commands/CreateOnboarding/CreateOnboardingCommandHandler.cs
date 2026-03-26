@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Onboarding.Commands.CreateOnboarding;
@@ -69,6 +70,20 @@ public sealed class CreateOnboardingCommandHandler(
         // ── Link User to Tenant ───────────────────────────────────────────────
         user.TenantId = orgId;
         user.Role     = "org:admin";
+
+        // ── Pre-seed government deduction templates ─────────────────────────
+        var governmentTemplates = new[]
+        {
+            new PayrollAdjustmentTemplate(orgId, "SSS", AdjustmentType.Deduction, 0m)
+                { IsSystemDefault = true, SortOrder = 1 },
+            new PayrollAdjustmentTemplate(orgId, "PhilHealth", AdjustmentType.Deduction, 0m)
+                { IsSystemDefault = true, SortOrder = 2 },
+            new PayrollAdjustmentTemplate(orgId, "Pag-IBIG", AdjustmentType.Deduction, 100m)
+                { IsSystemDefault = true, SortOrder = 3 },
+            new PayrollAdjustmentTemplate(orgId, "Tax (BIR Withholding)", AdjustmentType.Deduction, 0m)
+                { IsSystemDefault = true, SortOrder = 4 },
+        };
+        context.PayrollAdjustmentTemplates.AddRange(governmentTemplates);
 
         // Populate TenantContext so downstream UnitOfWork / query filters work
         // correctly if any subsequent command in this request needs them.

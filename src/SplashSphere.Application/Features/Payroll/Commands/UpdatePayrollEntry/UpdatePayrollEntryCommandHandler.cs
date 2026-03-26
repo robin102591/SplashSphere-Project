@@ -13,7 +13,6 @@ public sealed class UpdatePayrollEntryCommandHandler(IApplicationDbContext conte
         UpdatePayrollEntryCommand request,
         CancellationToken cancellationToken)
     {
-        // Load entry + its parent period in one query
         var entry = await context.PayrollEntries
             .Include(e => e.PayrollPeriod)
             .FirstOrDefaultAsync(e => e.Id == request.EntryId, cancellationToken);
@@ -31,10 +30,7 @@ public sealed class UpdatePayrollEntryCommandHandler(IApplicationDbContext conte
             return Result.Failure(Error.Validation(
                 "Payroll entries cannot be modified after the period has been Processed. The record is immutable."));
 
-        // Period is Closed — adjustments are allowed
-        entry.Bonuses    = request.Bonuses;
-        entry.Deductions = request.Deductions;
-        entry.Notes      = request.Notes;
+        entry.Notes = request.Notes;
 
         return Result.Success();
     }

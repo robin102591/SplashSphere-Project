@@ -621,12 +621,25 @@ export interface PayrollAdjustmentTemplate {
   defaultAmount: number;
   isActive: boolean;
   sortOrder: number;
+  isSystemDefault: boolean;
+}
+
+export interface PayrollAdjustment {
+  id: string;
+  type: AdjustmentType;
+  category: string;
+  amount: number;
+  notes: string | null;
+  templateId: string | null;
+  templateName: string | null;
+  createdAt: string;
 }
 
 export interface PayrollEntryDetail {
   entry: PayrollEntry;
   commissionLineItems: readonly CommissionLineItem[];
   attendanceRecords: readonly AttendanceLineItem[];
+  adjustments: readonly PayrollAdjustment[];
 }
 
 export interface CommissionLineItem {

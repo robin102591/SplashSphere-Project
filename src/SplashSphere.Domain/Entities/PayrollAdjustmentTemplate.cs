@@ -46,10 +46,17 @@ public sealed class PayrollAdjustmentTemplate : IAuditableEntity
     /// <summary>Display order in UI lists. Lower values appear first.</summary>
     public int SortOrder { get; set; }
 
+    /// <summary>
+    /// True for templates auto-created during onboarding (SSS, PhilHealth, Pag-IBIG, Tax).
+    /// System-default templates cannot be hard-deleted.
+    /// </summary>
+    public bool IsSystemDefault { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     // ── Navigations ──────────────────────────────────────────────────────────
 
     public Tenant Tenant { get; set; } = null!;
+    public ICollection<PayrollAdjustment> Adjustments { get; set; } = new List<PayrollAdjustment>();
 }

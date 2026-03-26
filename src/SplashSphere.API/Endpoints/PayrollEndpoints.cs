@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.Application.Features.Payroll.Commands.AddPayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.BulkApplyAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.ClosePayrollPeriod;
 using SplashSphere.Application.Features.Payroll.Commands.CreatePayrollPeriod;
 using SplashSphere.Application.Features.Payroll.Commands.CreatePayrollTemplate;
+using SplashSphere.Application.Features.Payroll.Commands.DeletePayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.DeletePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Commands.ProcessPayrollPeriod;
+using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollEntry;
 using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Queries.GetPayrollEntryDetail;
@@ -36,6 +39,11 @@ public static class PayrollEndpoints
         group.MapPatch("/entries/{id}",                   UpdatePayrollEntry);
         group.MapPost("/entries/bulk-adjust",              BulkApplyAdjustment);
         group.MapGet("/entries/{id}/detail",               GetPayrollEntryDetail);
+
+        // ── Entry adjustments ───────────────────────────────────────────────
+        group.MapPost("/entries/{id}/adjustments",         AddPayrollAdjustment);
+        group.MapPut("/adjustments/{adjustmentId}",        UpdatePayrollAdjustment);
+        group.MapDelete("/adjustments/{adjustmentId}",     DeletePayrollAdjustment);
 
         // ── Adjustment templates ────────────────────────────────────────────
         group.MapGet("/templates",                        GetPayrollTemplates);
@@ -132,7 +140,7 @@ public static class PayrollEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(
-            new UpdatePayrollEntryCommand(id, body.Bonuses, body.Deductions, body.Notes), ct);
+            new UpdatePayrollEntryCommand(id, body.Notes), ct);
 
         if (result.IsFailure)
         {
@@ -163,10 +171,72 @@ public static class PayrollEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(
-            new BulkApplyAdjustmentCommand(body.EntryIds, body.AdjustmentType, body.Amount, body.Notes), ct);
+            new BulkApplyAdjustmentCommand(body.EntryIds, body.AdjustmentType, body.Amount, body.Notes, body.TemplateId), ct);
 
         if (result.IsFailure)
             return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+
+        return TypedResults.NoContent();
+    }
+
+    // ── POST /entries/{id}/adjustments ──────────────────────────────────────
+
+    private static async Task<Results<Created<object>, NotFound, BadRequest<ProblemDetails>>> AddPayrollAdjustment(
+        string id,
+        [FromBody] AddAdjustmentRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new AddPayrollAdjustmentCommand(id, body.Type, body.Category, body.Amount, body.Notes, body.TemplateId), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.Created($"/api/v1/payroll/adjustments/{result.Value}", (object)new { id = result.Value });
+    }
+
+    // ── PUT /adjustments/{adjustmentId} ─────────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdatePayrollAdjustment(
+        string adjustmentId,
+        [FromBody] UpdateAdjustmentRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdatePayrollAdjustmentCommand(adjustmentId, body.Amount, body.Notes), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.NoContent();
+    }
+
+    // ── DELETE /adjustments/{adjustmentId} ──────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> DeletePayrollAdjustment(
+        string adjustmentId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new DeletePayrollAdjustmentCommand(adjustmentId), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
 
         return TypedResults.NoContent();
     }
@@ -246,13 +316,23 @@ public static class PayrollEndpoints
         DateOnly EndDate);
 
     private sealed record UpdateEntryRequest(
-        decimal Bonuses,
-        decimal Deductions,
         string? Notes);
 
     private sealed record BulkAdjustRequest(
         IReadOnlyList<string> EntryIds,
         AdjustmentType AdjustmentType,
+        decimal Amount,
+        string? Notes,
+        string? TemplateId = null);
+
+    private sealed record AddAdjustmentRequest(
+        AdjustmentType Type,
+        string Category,
+        decimal Amount,
+        string? Notes,
+        string? TemplateId);
+
+    private sealed record UpdateAdjustmentRequest(
         decimal Amount,
         string? Notes);
 

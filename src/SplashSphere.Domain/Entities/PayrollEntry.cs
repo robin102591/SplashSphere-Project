@@ -108,9 +108,24 @@ public sealed class PayrollEntry : IAuditableEntity
     /// </summary>
     public decimal NetPay => BaseSalary + TotalCommissions + Bonuses - Deductions;
 
+    // ── Methods ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Recalculates <see cref="Bonuses"/> and <see cref="Deductions"/> from the
+    /// loaded <see cref="Adjustments"/> collection. Call after adding/removing adjustment rows.
+    /// If no adjustment rows exist, preserves the current (legacy) values.
+    /// </summary>
+    public void RecalculateTotals()
+    {
+        if (Adjustments.Count == 0) return; // preserve legacy flat values
+        Bonuses = Adjustments.Where(a => a.Type == AdjustmentType.Bonus).Sum(a => a.Amount);
+        Deductions = Adjustments.Where(a => a.Type == AdjustmentType.Deduction).Sum(a => a.Amount);
+    }
+
     // ── Navigations ──────────────────────────────────────────────────────────
 
     public PayrollPeriod PayrollPeriod { get; set; } = null!;
     public Employee Employee { get; set; } = null!;
     public Tenant Tenant { get; set; } = null!;
+    public ICollection<PayrollAdjustment> Adjustments { get; set; } = new List<PayrollAdjustment>();
 }
