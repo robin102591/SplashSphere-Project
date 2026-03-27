@@ -32,6 +32,19 @@ public sealed class PayrollSettings : IAuditableEntity
     /// </summary>
     public DayOfWeek CutOffStartDay { get; set; } = DayOfWeek.Monday;
 
+    /// <summary>
+    /// Number of days after period end date when pay is released.
+    /// E.g., 3 = pay released 3 days after the period ends.
+    /// Default: 3. Set to 0 to disable scheduled release date calculation.
+    /// </summary>
+    public int PayReleaseDayOffset { get; set; } = 3;
+
+    /// <summary>
+    /// Whether to auto-calculate government deductions (SSS, PhilHealth, Pag-IBIG, Tax)
+    /// when closing a payroll period.
+    /// </summary>
+    public bool AutoCalcGovernmentDeductions { get; set; }
+
     // ── Audit ──────────────────────────────────────────────────────────────────
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

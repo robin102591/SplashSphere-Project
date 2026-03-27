@@ -176,6 +176,69 @@ public sealed class ClosePayrollPeriodCommandHandler(
             entry.RecalculateTotals();
         }
 
+        // ── Auto-calculate government deductions (if enabled) ─────────────────
+        var settings = await context.PayrollSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
+
+        if (settings?.AutoCalcGovernmentDeductions == true)
+        {
+            var currentYear = period.StartDate.Year;
+            var brackets = await context.GovernmentContributionBrackets
+                .AsNoTracking()
+                .Where(b => b.EffectiveYear == currentYear)
+                .OrderBy(b => b.DeductionType)
+                .ThenBy(b => b.SortOrder)
+                .ToListAsync(cancellationToken);
+
+            if (brackets.Count > 0)
+            {
+                var bracketsByType = brackets.GroupBy(b => b.DeductionType)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var entry in entries)
+                {
+                    // Monthly equivalent for bracket lookup: gross × (365/12) / (period days)
+                    var periodDays = (period.EndDate.DayNumber - period.StartDate.DayNumber) + 1;
+                    var grossPay = entry.BaseSalary + entry.TotalCommissions;
+                    var monthlyEquivalent = periodDays > 0
+                        ? grossPay * 30m / periodDays
+                        : grossPay;
+
+                    foreach (var (deductionType, typeBrackets) in bracketsByType)
+                    {
+                        var bracket = typeBrackets.FirstOrDefault(b =>
+                            monthlyEquivalent >= b.MinSalary &&
+                            (!b.MaxSalary.HasValue || monthlyEquivalent <= b.MaxSalary.Value));
+
+                        if (bracket is null) continue;
+
+                        // Compute deduction: fixed share or rate-based (pro-rated to period)
+                        var monthlyDeduction = bracket.EmployeeShare > 0
+                            ? bracket.EmployeeShare
+                            : Math.Round(monthlyEquivalent * bracket.Rate, 2, MidpointRounding.AwayFromZero);
+
+                        // Pro-rate to period length
+                        var periodDeduction = Math.Round(monthlyDeduction * periodDays / 30m, 2, MidpointRounding.AwayFromZero);
+
+                        if (periodDeduction <= 0) continue;
+
+                        var adjustment = new PayrollAdjustment(
+                            tenantContext.TenantId,
+                            entry.Id,
+                            AdjustmentType.Deduction,
+                            deductionType,
+                            periodDeduction,
+                            $"Auto-calculated {deductionType} (monthly basis: {monthlyDeduction:N2})");
+
+                        context.PayrollAdjustments.Add(adjustment);
+                    }
+
+                    entry.RecalculateTotals();
+                }
+            }
+        }
+
         // ── Transition period to Closed ───────────────────────────────────────
         period.Status = PayrollStatus.Closed;
 

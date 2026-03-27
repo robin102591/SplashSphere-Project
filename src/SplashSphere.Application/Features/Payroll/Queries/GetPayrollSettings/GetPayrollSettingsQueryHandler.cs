@@ -16,9 +16,13 @@ public sealed class GetPayrollSettingsQueryHandler(
         var settings = await db.PayrollSettings
             .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
 
-        // Return defaults if no settings record exists yet (Monday = 1, Weekly = 1)
+        // Return defaults if no settings record exists yet
         return settings is null
-            ? new PayrollSettingsDto(1, 1)
-            : new PayrollSettingsDto((int)settings.CutOffStartDay, (int)settings.Frequency);
+            ? new PayrollSettingsDto(1, 1, 3, false)
+            : new PayrollSettingsDto(
+                (int)settings.CutOffStartDay,
+                (int)settings.Frequency,
+                settings.PayReleaseDayOffset,
+                settings.AutoCalcGovernmentDeductions);
     }
 }

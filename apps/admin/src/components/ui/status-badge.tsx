@@ -18,6 +18,7 @@ const STATUS_STYLES: Record<string, [bg: string, text: string, border: string, l
   Open:         ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
   Closed:       ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
   Processed:    ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
+  Released:     ['bg-violet-500/15', 'text-violet-700 dark:text-violet-400', 'border-violet-200 dark:border-violet-800'],
 
   // ── Active / Inactive ────────────────────────────────────────
   Active:       ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],

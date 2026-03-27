@@ -594,11 +594,15 @@ function PayrollConfigSection() {
   const { mutate: save, isPending: saving } = useUpdatePayrollSettings()
   const [cutOffDay, setCutOffDay] = useState('')
   const [frequency, setFrequency] = useState('1')
+  const [releaseOffset, setReleaseOffset] = useState('3')
+  const [autoCalcGov, setAutoCalcGov] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   if (settings && !initialized) {
     setCutOffDay(String(settings.cutOffStartDay))
     setFrequency(String(settings.frequency))
+    setReleaseOffset(String(settings.payReleaseDayOffset))
+    setAutoCalcGov(settings.autoCalcGovernmentDeductions)
     setInitialized(true)
   }
 
@@ -606,7 +610,12 @@ function PayrollConfigSection() {
 
   const handleSave = () => {
     save(
-      { cutOffStartDay: parseInt(cutOffDay), frequency: parseInt(frequency) },
+      {
+        cutOffStartDay: parseInt(cutOffDay),
+        frequency: parseInt(frequency),
+        payReleaseDayOffset: parseInt(releaseOffset) || 0,
+        autoCalcGovernmentDeductions: autoCalcGov,
+      },
       {
         onSuccess: () => toast.success('Payroll settings saved.'),
         onError: () => toast.error('Failed to save payroll settings.'),
@@ -658,6 +667,34 @@ function PayrollConfigSection() {
             </p>
           </div>
         )}
+        <div className="space-y-1.5">
+          <Label>Pay Release Offset (days)</Label>
+          <Input
+            type="number"
+            min={0}
+            max={30}
+            value={releaseOffset}
+            onChange={(e) => setReleaseOffset(e.target.value)}
+            className="max-w-[120px]"
+          />
+          <p className="text-xs text-muted-foreground">
+            {parseInt(releaseOffset) === 0
+              ? 'No scheduled release date will be set.'
+              : `Pay release is scheduled ${releaseOffset} day(s) after period end.`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <input
+            type="checkbox"
+            id="autoCalcGov"
+            checked={autoCalcGov}
+            onChange={(e) => setAutoCalcGov(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor="autoCalcGov" className="cursor-pointer">
+            Auto-calculate government deductions (SSS, PhilHealth, Pag-IBIG, Tax)
+          </Label>
+        </div>
       </div>
       <Button onClick={handleSave} disabled={saving} size="sm">
         {saving ? 'Saving…' : 'Save Payroll Settings'}

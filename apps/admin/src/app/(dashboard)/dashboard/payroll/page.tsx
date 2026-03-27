@@ -29,6 +29,7 @@ const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
   [PayrollStatus.Open]: 'Open',
   [PayrollStatus.Closed]: 'Closed',
   [PayrollStatus.Processed]: 'Processed',
+  [PayrollStatus.Released]: 'Released',
 }
 
 function periodLabel(p: PayrollPeriodSummary): string {

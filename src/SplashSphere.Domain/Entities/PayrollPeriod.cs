@@ -46,6 +46,12 @@ public sealed class PayrollPeriod : IAuditableEntity
     /// <summary>Sunday of the payroll week (Asia/Manila date), stored as SQL <c>date</c>.</summary>
     public DateOnly EndDate { get; set; }
 
+    /// <summary>Scheduled date for pay release (Manila date). Set when period is processed.</summary>
+    public DateOnly? ScheduledReleaseDate { get; set; }
+
+    /// <summary>Actual UTC timestamp when pay was released.</summary>
+    public DateTime? ReleasedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

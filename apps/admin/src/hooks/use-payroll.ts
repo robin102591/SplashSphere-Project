@@ -117,6 +117,21 @@ export function useProcessPayrollPeriod() {
   })
 }
 
+export function useReleasePayrollPeriod() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (periodId: string) => {
+      const token = await getToken()
+      return apiClient.post<void>(`/payroll/periods/${periodId}/release`, {}, token ?? undefined)
+    },
+    onSuccess: (_data, periodId) => {
+      qc.invalidateQueries({ queryKey: payrollKeys.detail(periodId) })
+      qc.invalidateQueries({ queryKey: payrollKeys.all })
+    },
+  })
+}
+
 export function useUpdatePayrollEntry(periodId: string) {
   const { getToken } = useAuth()
   const qc = useQueryClient()
@@ -309,7 +324,7 @@ export function useUpdatePayrollSettings() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { cutOffStartDay: number; frequency: number }) => {
+    mutationFn: async (data: { cutOffStartDay: number; frequency: number; payReleaseDayOffset: number; autoCalcGovernmentDeductions: boolean }) => {
       const token = await getToken()
       return apiClient.put<void>('/settings/payroll-config', data, token ?? undefined)
     },

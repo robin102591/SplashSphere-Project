@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useCallback } from 'react'
-import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer } from 'lucide-react'
+import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer, Banknote, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,7 @@ import {
   usePayrollPeriod,
   useClosePayrollPeriod,
   useProcessPayrollPeriod,
+  useReleasePayrollPeriod,
   useUpdatePayrollEntry,
   useBulkApplyAdjustment,
   usePayrollTemplates,
@@ -38,15 +39,18 @@ import {
   usePayslip,
 } from '@/hooks/use-payroll'
 import type { AddAdjustmentValues } from '@/hooks/use-payroll'
+import { useAuth } from '@clerk/nextjs'
 import { PayrollStatus, EmployeeType, AdjustmentType } from '@splashsphere/types'
 import type { PayrollEntry, PayrollAdjustment } from '@splashsphere/types'
 import { toast } from 'sonner'
 import { formatPeso } from '@/lib/format'
+import { apiClient } from '@/lib/api-client'
 
 const PAYROLL_STATUS_KEYS: Record<PayrollStatus, string> = {
   [PayrollStatus.Open]: 'Open',
   [PayrollStatus.Closed]: 'Closed',
   [PayrollStatus.Processed]: 'Processed',
+  [PayrollStatus.Released]: 'Released',
 }
 
 // ── Notes cell ────────────────────────────────────────────────────────────────
@@ -889,13 +893,16 @@ export default function PayrollPeriodDetailPage({
   const { id } = use(params)
   const [confirmClose, setConfirmClose] = useState(false)
   const [confirmProcess, setConfirmProcess] = useState(false)
+  const [confirmRelease, setConfirmRelease] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkOpen, setBulkOpen] = useState(false)
   const [detailEntryId, setDetailEntryId] = useState<string | null>(null)
 
+  const { getToken } = useAuth()
   const { data: period, isLoading, isError } = usePayrollPeriod(id)
   const { mutate: closePeriod, isPending: isClosing } = useClosePayrollPeriod()
   const { mutate: processPeriod, isPending: isProcessing } = useProcessPayrollPeriod()
+  const { mutate: releasePeriod, isPending: isReleasing } = useReleasePayrollPeriod()
 
   const toggleEntry = useCallback((entryId: string) => {
     setSelectedIds((prev) => {
@@ -935,6 +942,45 @@ export default function PayrollPeriodDetailPage({
       onError: () => {
         toast.error('Failed to process payroll period')
         setConfirmProcess(false)
+      },
+    })
+  }
+
+  const [exporting, setExporting] = useState(false)
+  const handleExportCsv = async () => {
+    setExporting(true)
+    try {
+      const token = await getToken()
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
+      const res = await fetch(`${apiBase}/api/v1/payroll/periods/${id}/export/csv`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error('Export failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = res.headers.get('content-disposition')?.match(/filename="?(.+?)"?$/)?.[1]
+        ?? `payroll_${id}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('CSV exported')
+    } catch {
+      toast.error('Failed to export CSV')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleRelease = () => {
+    releasePeriod(id, {
+      onSuccess: () => {
+        toast.success('Pay has been released to employees')
+        setConfirmRelease(false)
+      },
+      onError: () => {
+        toast.error('Failed to release payroll')
+        setConfirmRelease(false)
       },
     })
   }
@@ -992,6 +1038,12 @@ export default function PayrollPeriodDetailPage({
         badge={<StatusBadge status={PAYROLL_STATUS_KEYS[period.status]} />}
         actions={
           <>
+            {entries.length > 0 && (
+              <Button variant="outline" onClick={handleExportCsv} disabled={exporting}>
+                <Download className="mr-2 h-3.5 w-3.5" />
+                {exporting ? 'Exporting…' : 'Export CSV'}
+              </Button>
+            )}
             {period.status === PayrollStatus.Open && (
               <Button onClick={() => setConfirmClose(true)}>
                 <Lock className="mr-2 h-3.5 w-3.5" />
@@ -1005,9 +1057,15 @@ export default function PayrollPeriodDetailPage({
               </Button>
             )}
             {period.status === PayrollStatus.Processed && (
+              <Button onClick={() => setConfirmRelease(true)} variant="default">
+                <Banknote className="mr-2 h-3.5 w-3.5" />
+                Release Pay
+              </Button>
+            )}
+            {period.status === PayrollStatus.Released && (
               <Badge variant="outline" className="px-3 py-1.5 text-xs">
                 <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-green-600" />
-                Payroll finalised
+                Pay released{period.releasedAt ? ` · ${new Date(period.releasedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}` : ''}
               </Badge>
             )}
           </>
@@ -1201,6 +1259,42 @@ export default function PayrollPeriodDetailPage({
             </Button>
             <Button onClick={handleProcess} disabled={isProcessing}>
               {isProcessing ? 'Processing…' : 'Process Payroll'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Release confirmation */}
+      <Dialog open={confirmRelease} onOpenChange={setConfirmRelease}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Release Pay?</DialogTitle>
+            <DialogDescription>
+              This will mark the payroll as released — confirming that pay has been disbursed to all
+              {' '}{entries.length} employees. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {period.scheduledReleaseDate && (
+            <div className="rounded-lg border bg-muted/50 px-4 py-3 text-sm flex items-start gap-2">
+              <Banknote className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+              <span>
+                Scheduled release date:{' '}
+                <strong>
+                  {new Date(period.scheduledReleaseDate).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </strong>
+              </span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmRelease(false)}
+              disabled={isReleasing}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleRelease} disabled={isReleasing}>
+              {isReleasing ? 'Releasing…' : 'Release Pay'}
             </Button>
           </DialogFooter>
         </DialogContent>

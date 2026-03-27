@@ -34,6 +34,7 @@ import {
   useEmployeeCommissions,
   useAttendance,
   useInviteEmployee,
+  useEmployeePayrollHistory,
 } from '@/hooks/use-employees'
 import { EmployeeType } from '@splashsphere/types'
 import type { Employee, EmployeeCommissionDto, AttendanceDto } from '@splashsphere/types'
@@ -551,6 +552,104 @@ function PinManagementSection({ emp }: { emp: Employee }) {
   )
 }
 
+// ── Payroll History tab ───────────────────────────────────────────────────────
+
+const PAYROLL_STATUS_LABELS: Record<number, string> = {
+  1: 'Open',
+  2: 'Closed',
+  3: 'Processed',
+  4: 'Released',
+}
+
+function PayrollHistoryTab({ employeeId }: { employeeId: string }) {
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useEmployeePayrollHistory(employeeId, page)
+
+  if (isLoading) return <Skeleton className="h-48 w-full" />
+
+  const items = data?.items ?? []
+  const totalPages = data ? Math.ceil(data.totalCount / data.pageSize) : 0
+
+  if (items.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground py-8 text-center">
+        No payroll records found for this employee.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="px-4 py-2">Period</th>
+              <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2 text-center">Days</th>
+              <th className="px-4 py-2 text-right">Base</th>
+              <th className="px-4 py-2 text-right">Commissions</th>
+              <th className="px-4 py-2 text-right">Bonuses</th>
+              <th className="px-4 py-2 text-right">Deductions</th>
+              <th className="px-4 py-2 text-right font-semibold">Net Pay</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {items.map((h) => (
+              <tr key={h.entryId} className="hover:bg-muted/30">
+                <td className="px-4 py-2.5">
+                  <a
+                    href={`/dashboard/payroll/${h.periodId}`}
+                    className="text-primary hover:underline"
+                  >
+                    {new Date(h.periodStart).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                    {' – '}
+                    {new Date(h.periodEnd).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </a>
+                </td>
+                <td className="px-4 py-2.5">
+                  <StatusBadge status={PAYROLL_STATUS_LABELS[h.periodStatus] ?? 'Unknown'} />
+                </td>
+                <td className="px-4 py-2.5 text-center tabular-nums">{h.daysWorked}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(h.baseSalary)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(h.totalCommissions)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(h.bonuses)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatPeso(h.deductions)}</td>
+                <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{formatPeso(h.netPay)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Security tab ─────────────────────────────────────────────────────────────
+
 function SecurityTab({ emp }: { emp: Employee }) {
   return (
     <div className="max-w-lg space-y-6">
@@ -648,6 +747,7 @@ export default function EmployeeDetailPage({
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="commissions">Commission History</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          <TabsTrigger value="payroll">Payroll History</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
@@ -661,6 +761,10 @@ export default function EmployeeDetailPage({
 
         <TabsContent value="attendance" className="mt-6">
           <AttendanceTab employeeId={id} />
+        </TabsContent>
+
+        <TabsContent value="payroll" className="mt-6">
+          <PayrollHistoryTab employeeId={id} />
         </TabsContent>
 
         <TabsContent value="security" className="mt-6">

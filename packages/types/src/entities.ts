@@ -607,6 +607,8 @@ export interface PayrollPeriodSummary {
   endDate: string;
   entryCount: number;
   totalNetPay: number;
+  scheduledReleaseDate: string | null;
+  releasedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -907,6 +909,8 @@ export interface ShiftReportDto {
 export interface PayrollSettingsDto {
   cutOffStartDay: number; // DayOfWeek: 0=Sunday, 1=Monday, ..., 6=Saturday
   frequency: number;      // PayrollFrequency: 1=Weekly, 2=SemiMonthly
+  payReleaseDayOffset: number;
+  autoCalcGovernmentDeductions: boolean;
 }
 
 export interface ShiftSettingsDto {
@@ -959,4 +963,19 @@ export interface LowStockItem {
   sku: string;
   stockQuantity: number;
   lowStockThreshold: number;
+}
+
+export interface EmployeePayrollHistory {
+  entryId: string;
+  periodId: string;
+  periodStart: string;
+  periodEnd: string;
+  periodStatus: number;
+  daysWorked: number;
+  baseSalary: number;
+  totalCommissions: number;
+  totalTips: number;
+  bonuses: number;
+  deductions: number;
+  netPay: number;
 }

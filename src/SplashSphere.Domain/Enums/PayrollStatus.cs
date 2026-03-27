@@ -26,4 +26,10 @@ public enum PayrollStatus
     /// No modifications are permitted. Audit trail is frozen.
     /// </summary>
     Processed = 3,
+
+    /// <summary>
+    /// Pay has been released/disbursed to employees.
+    /// Terminal state after Processed. Fully immutable.
+    /// </summary>
+    Released = 4,
 }

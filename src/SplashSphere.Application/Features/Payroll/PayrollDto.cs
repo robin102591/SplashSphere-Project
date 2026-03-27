@@ -13,6 +13,8 @@ public sealed record PayrollPeriodSummaryDto(
     DateOnly EndDate,
     int EntryCount,
     decimal TotalNetPay,
+    DateOnly? ScheduledReleaseDate,
+    DateTime? ReleasedAt,
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
@@ -25,6 +27,8 @@ public sealed record PayrollPeriodDetailDto(
     int CutOffWeek,
     DateOnly StartDate,
     DateOnly EndDate,
+    DateOnly? ScheduledReleaseDate,
+    DateTime? ReleasedAt,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     IReadOnlyList<PayrollEntryDto> Entries);

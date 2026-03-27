@@ -160,6 +160,10 @@ public static class DataSeeder
         // Batch 3 — transactions and all child records
         AddTransactions(ctx);
         await ctx.SaveChangesAsync();
+
+        // Batch 4 — government contribution brackets (global, not tenant-scoped)
+        SeedGovernmentBrackets(ctx);
+        await ctx.SaveChangesAsync();
     }
 
     // ── Master data ───────────────────────────────────────────────────────────
@@ -614,6 +618,105 @@ public static class DataSeeder
             CompletedAt       = completedAt,
             CancelledAt       = cancelledAt,
         };
+
+    // ── Government contribution brackets (2024-2025 PH rates) ─────────────
+    private static void SeedGovernmentBrackets(ApplicationDbContext ctx)
+    {
+        // Skip if already seeded
+        if (ctx.GovernmentContributionBrackets.Any()) return;
+
+        var year = 2025;
+        var brackets = new List<GovernmentContributionBracket>();
+        var sort = 0;
+
+        // SSS 2025 — simplified employee share brackets
+        // Based on SSS Circular 2023-001 contribution table
+        void AddSss(decimal min, decimal? max, decimal empShare)
+        {
+            brackets.Add(new GovernmentContributionBracket
+            {
+                DeductionType = "SSS", MinSalary = min, MaxSalary = max,
+                EmployeeShare = empShare, Rate = 0, EffectiveYear = year, SortOrder = ++sort,
+            });
+        }
+
+        AddSss(0m,       4_249.99m, 180m);
+        AddSss(4_250m,   4_749.99m, 202.50m);
+        AddSss(4_750m,   5_249.99m, 225m);
+        AddSss(5_250m,   5_749.99m, 247.50m);
+        AddSss(5_750m,   6_249.99m, 270m);
+        AddSss(6_250m,   6_749.99m, 292.50m);
+        AddSss(6_750m,   7_249.99m, 315m);
+        AddSss(7_250m,   7_749.99m, 337.50m);
+        AddSss(7_750m,   8_249.99m, 360m);
+        AddSss(8_250m,   8_749.99m, 382.50m);
+        AddSss(8_750m,   9_249.99m, 405m);
+        AddSss(9_250m,   9_749.99m, 427.50m);
+        AddSss(9_750m,   10_249.99m, 450m);
+        AddSss(10_250m,  10_749.99m, 472.50m);
+        AddSss(10_750m,  11_249.99m, 495m);
+        AddSss(11_250m,  11_749.99m, 517.50m);
+        AddSss(11_750m,  12_249.99m, 540m);
+        AddSss(12_250m,  12_749.99m, 562.50m);
+        AddSss(12_750m,  13_249.99m, 585m);
+        AddSss(13_250m,  13_749.99m, 607.50m);
+        AddSss(13_750m,  14_249.99m, 630m);
+        AddSss(14_250m,  14_749.99m, 652.50m);
+        AddSss(14_750m,  15_249.99m, 675m);
+        AddSss(15_250m,  15_749.99m, 697.50m);
+        AddSss(15_750m,  16_249.99m, 720m);
+        AddSss(16_250m,  16_749.99m, 742.50m);
+        AddSss(16_750m,  17_249.99m, 765m);
+        AddSss(17_250m,  17_749.99m, 787.50m);
+        AddSss(17_750m,  18_249.99m, 810m);
+        AddSss(18_250m,  18_749.99m, 832.50m);
+        AddSss(18_750m,  19_249.99m, 855m);
+        AddSss(19_250m,  19_749.99m, 877.50m);
+        AddSss(19_750m,  24_749.99m, 900m);
+        AddSss(24_750m,  29_749.99m, 1_125m);
+        AddSss(29_750m,  null, 1_350m);
+
+        sort = 0;
+
+        // PhilHealth 2025 — 5% of salary, split 50/50 (employee = 2.5%)
+        // Rate-based: employee share = salary × 0.025, capped at monthly premium ceiling
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PhilHealth", MinSalary = 0m, MaxSalary = 10_000m,
+            EmployeeShare = 250m, Rate = 0, EffectiveYear = year, SortOrder = ++sort,
+        });
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PhilHealth", MinSalary = 10_000.01m, MaxSalary = 100_000m,
+            EmployeeShare = 0m, Rate = 0.025m, EffectiveYear = year, SortOrder = ++sort,
+        });
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PhilHealth", MinSalary = 100_000.01m, MaxSalary = null,
+            EmployeeShare = 2_500m, Rate = 0, EffectiveYear = year, SortOrder = ++sort,
+        });
+
+        sort = 0;
+
+        // Pag-IBIG 2025 — employee contribution
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PagIBIG", MinSalary = 0m, MaxSalary = 1_500m,
+            EmployeeShare = 0m, Rate = 0.01m, EffectiveYear = year, SortOrder = ++sort,
+        });
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PagIBIG", MinSalary = 1_500.01m, MaxSalary = 5_000m,
+            EmployeeShare = 0m, Rate = 0.02m, EffectiveYear = year, SortOrder = ++sort,
+        });
+        brackets.Add(new GovernmentContributionBracket
+        {
+            DeductionType = "PagIBIG", MinSalary = 5_000.01m, MaxSalary = null,
+            EmployeeShare = 100m, Rate = 0, EffectiveYear = year, SortOrder = ++sort,
+        });
+
+        ctx.GovernmentContributionBrackets.AddRange(brackets);
+    }
 
     private static TransactionService Ts(
         string id, string txnId, string svcId, string vtId, string szId,

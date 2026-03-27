@@ -29,3 +29,16 @@ public sealed record PayrollProcessedEvent(
     /// <summary>Sum of all <c>PayrollEntry.NetPay</c> values in the period.</summary>
     decimal TotalNetPay
 ) : DomainEventBase;
+
+/// <summary>
+/// Raised when a payroll period transitions from <c>Processed</c> → <c>Released</c>.
+/// Pay has been disbursed to employees. Terminal state.
+/// </summary>
+public sealed record PayrollReleasedEvent(
+    string PayrollPeriodId,
+    string TenantId,
+    int Year,
+    int CutOffWeek,
+    decimal TotalNetPay,
+    int EntryCount
+) : DomainEventBase;

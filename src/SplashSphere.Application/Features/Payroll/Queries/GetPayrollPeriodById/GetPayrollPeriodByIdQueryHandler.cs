@@ -23,6 +23,8 @@ public sealed class GetPayrollPeriodByIdQueryHandler(IApplicationDbContext conte
                 p.CutOffWeek,
                 p.StartDate,
                 p.EndDate,
+                p.ScheduledReleaseDate,
+                p.ReleasedAt,
                 p.CreatedAt,
                 p.UpdatedAt,
             })
@@ -61,6 +63,8 @@ public sealed class GetPayrollPeriodByIdQueryHandler(IApplicationDbContext conte
             period.CutOffWeek,
             period.StartDate,
             period.EndDate,
+            period.ScheduledReleaseDate,
+            period.ReleasedAt,
             period.CreatedAt,
             period.UpdatedAt,
             entries);

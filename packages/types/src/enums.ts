@@ -89,11 +89,12 @@ export enum CommissionType {
   Hybrid      = 3,
 }
 
-/** Lifecycle states of a weekly payroll period. Open → Closed → Processed. */
+/** Lifecycle states of a payroll period. Open → Closed → Processed → Released. */
 export enum PayrollStatus {
   Open      = 1,
   Closed    = 2,
   Processed = 3,
+  Released  = 4,
 }
 
 // ── Pricing modifiers ─────────────────────────────────────────────────────────

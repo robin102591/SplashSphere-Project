@@ -33,7 +33,8 @@ public static class PayrollSettingsEndpoints
         ISender sender,
         CancellationToken ct)
     {
-        var command = new UpdatePayrollSettingsCommand(body.CutOffStartDay, body.Frequency);
+        var command = new UpdatePayrollSettingsCommand(
+            body.CutOffStartDay, body.Frequency, body.PayReleaseDayOffset, body.AutoCalcGovernmentDeductions);
 
         var result = await sender.Send(command, ct);
 
@@ -43,5 +44,9 @@ public static class PayrollSettingsEndpoints
         return TypedResults.NoContent();
     }
 
-    private sealed record UpdatePayrollSettingsRequest(int CutOffStartDay, int Frequency = 1);
+    private sealed record UpdatePayrollSettingsRequest(
+        int CutOffStartDay,
+        int Frequency = 1,
+        int PayReleaseDayOffset = 3,
+        bool AutoCalcGovernmentDeductions = false);
 }

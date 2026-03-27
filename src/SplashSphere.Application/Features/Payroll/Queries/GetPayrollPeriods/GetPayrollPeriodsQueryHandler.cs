@@ -36,6 +36,8 @@ public sealed class GetPayrollPeriodsQueryHandler(IApplicationDbContext context)
                 p.EndDate,
                 p.Entries.Count,
                 p.Entries.Sum(e => e.BaseSalary + e.TotalCommissions + e.Bonuses - e.Deductions),
+                p.ScheduledReleaseDate,
+                p.ReleasedAt,
                 p.CreatedAt,
                 p.UpdatedAt))
             .ToListAsync(cancellationToken);

@@ -33,6 +33,8 @@ public sealed class UpdatePayrollSettingsCommandHandler(
 
         settings.CutOffStartDay = (DayOfWeek)request.CutOffStartDay;
         settings.Frequency = (PayrollFrequency)request.Frequency;
+        settings.PayReleaseDayOffset = request.PayReleaseDayOffset;
+        settings.AutoCalcGovernmentDeductions = request.AutoCalcGovernmentDeductions;
 
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();

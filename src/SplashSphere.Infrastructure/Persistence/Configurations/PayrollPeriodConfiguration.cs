@@ -43,6 +43,11 @@ public sealed class PayrollPeriodConfiguration : IEntityTypeConfiguration<Payrol
             .IsRequired()
             .HasColumnType("date");
 
+        builder.Property(pp => pp.ScheduledReleaseDate)
+            .HasColumnType("date");
+
+        builder.Property(pp => pp.ReleasedAt);
+
         // ── Audit timestamps ──────────────────────────────────────────────────
         builder.Property(pp => pp.CreatedAt)
             .IsRequired()

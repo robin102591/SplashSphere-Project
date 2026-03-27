@@ -5,16 +5,16 @@ using SplashSphere.Domain.Enums;
 using SplashSphere.Domain.Events;
 using SplashSphere.SharedKernel.Results;
 
-namespace SplashSphere.Application.Features.Payroll.Commands.ProcessPayrollPeriod;
+namespace SplashSphere.Application.Features.Payroll.Commands.ReleasePayrollPeriod;
 
-public sealed class ProcessPayrollPeriodCommandHandler(
+public sealed class ReleasePayrollPeriodCommandHandler(
     IApplicationDbContext context,
     ITenantContext tenantContext,
     IEventPublisher eventPublisher)
-    : IRequestHandler<ProcessPayrollPeriodCommand, Result>
+    : IRequestHandler<ReleasePayrollPeriodCommand, Result>
 {
     public async Task<Result> Handle(
-        ProcessPayrollPeriodCommand request,
+        ReleasePayrollPeriodCommand request,
         CancellationToken cancellationToken)
     {
         var period = await context.PayrollPeriods
@@ -23,34 +23,30 @@ public sealed class ProcessPayrollPeriodCommandHandler(
         if (period is null)
             return Result.Failure(Error.NotFound("PayrollPeriod", request.PeriodId));
 
-        if (period.Status != PayrollStatus.Closed)
+        if (period.Status != PayrollStatus.Processed)
             return Result.Failure(Error.Validation(
-                $"Only Closed periods can be processed. Current status: '{period.Status}'."));
+                $"Only Processed periods can be released. Current status: '{period.Status}'."));
 
-        // Compute total net pay for the event payload — sum across all entries.
+        var entryCount = await context.PayrollEntries
+            .AsNoTracking()
+            .CountAsync(e => e.PayrollPeriodId == request.PeriodId, cancellationToken);
+
         var totalNetPay = await context.PayrollEntries
             .AsNoTracking()
             .Where(e => e.PayrollPeriodId == request.PeriodId)
             .SumAsync(e => e.BaseSalary + e.TotalCommissions + e.Bonuses - e.Deductions,
                 cancellationToken);
 
-        period.Status = PayrollStatus.Processed;
+        period.Status = PayrollStatus.Released;
+        period.ReleasedAt = DateTime.UtcNow;
 
-        // Compute scheduled release date from tenant settings
-        var settings = await context.PayrollSettings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
-
-        var offset = settings?.PayReleaseDayOffset ?? 3;
-        if (offset > 0)
-            period.ScheduledReleaseDate = period.EndDate.AddDays(offset);
-
-        eventPublisher.Enqueue(new PayrollProcessedEvent(
+        eventPublisher.Enqueue(new PayrollReleasedEvent(
             period.Id,
             tenantContext.TenantId,
             period.Year,
             period.CutOffWeek,
-            totalNetPay));
+            totalNetPay,
+            entryCount));
 
         return Result.Success();
     }

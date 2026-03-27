@@ -12,6 +12,7 @@ using SplashSphere.Application.Features.Employees.Queries.GetEmployeeCommissions
 using SplashSphere.Application.Features.Employees.Queries.GetEmployees;
 using SplashSphere.Application.Features.CashAdvances;
 using SplashSphere.Application.Features.CashAdvances.Queries.GetEmployeeCashAdvances;
+using SplashSphere.Application.Features.Employees.Queries.GetEmployeePayrollHistory;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -34,6 +35,7 @@ public static class EmployeeEndpoints
         group.MapPost("/{id}/clock-out",               ClockOut)              .WithName("ClockOut");
         group.MapGet("/{id}/commissions",              GetCommissions)        .WithName("GetEmployeeCommissions");
         group.MapGet("/{id}/cash-advances",            GetCashAdvances)       .WithName("GetEmployeeCashAdvances");
+        group.MapGet("/{id}/payroll-history",           GetPayrollHistory)     .WithName("GetEmployeePayrollHistory");
         group.MapGet("/attendance",                    GetAttendance)         .WithName("GetAttendance");
 
         return app;
@@ -126,6 +128,13 @@ public static class EmployeeEndpoints
         string id, ISender sender, CancellationToken ct) =>
         TypedResults.Ok(await sender.Send(new GetEmployeeCashAdvancesQuery(id), ct));
 
+    // ── GET /api/v1/employees/{id}/payroll-history?page=&pageSize= ────────────
+
+    private static async Task<IResult> GetPayrollHistory(
+        string id, [AsParameters] PayrollHistoryParams p, ISender sender, CancellationToken ct) =>
+        TypedResults.Ok(await sender.Send(
+            new GetEmployeePayrollHistoryQuery(id, p.Page, p.PageSize), ct));
+
     // ── GET /api/v1/employees/attendance?branchId=&employeeId=&from=&to= ─────
 
     private static async Task<IResult> GetAttendance(
@@ -151,4 +160,8 @@ public static class EmployeeEndpoints
         int PageSize = 20,
         DateOnly? From = null,
         DateOnly? To = null);
+
+    private sealed record PayrollHistoryParams(
+        int Page = 1,
+        int PageSize = 20);
 }

@@ -9,6 +9,8 @@ using SplashSphere.Application.Features.Payroll.Commands.CreatePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Commands.DeletePayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.DeletePayrollTemplate;
 using SplashSphere.Application.Features.Payroll.Commands.ProcessPayrollPeriod;
+using SplashSphere.Application.Features.Payroll.Commands.ReleasePayrollPeriod;
+using SplashSphere.Application.Features.Payroll.Queries.ExportPayrollCsv;
 using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollEntry;
 using SplashSphere.Application.Features.Payroll.Commands.UpdatePayrollTemplate;
@@ -35,6 +37,8 @@ public static class PayrollEndpoints
         group.MapGet("/periods/{id}",                     GetPayrollPeriodById);
         group.MapPost("/periods/{id}/close",              ClosePayrollPeriod);
         group.MapPost("/periods/{id}/process",            ProcessPayrollPeriod);
+        group.MapPost("/periods/{id}/release",            ReleasePayrollPeriod);
+        group.MapGet("/periods/{id}/export/csv",          ExportPayrollCsv);
 
         // ── Entries ───────────────────────────────────────────────────────────
         group.MapPatch("/entries/{id}",                   UpdatePayrollEntry);
@@ -131,6 +135,37 @@ public static class PayrollEndpoints
         }
 
         return TypedResults.NoContent();
+    }
+
+    // ── POST /periods/{id}/release ──────────────────────────────────────────────
+
+    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ReleasePayrollPeriod(
+        string id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new ReleasePayrollPeriodCommand(id), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.NoContent();
+    }
+
+    // ── GET /periods/{id}/export/csv ────────────────────────────────────────────
+
+    private static async Task<IResult> ExportPayrollCsv(
+        string id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportPayrollCsvQuery(id), ct);
+        if (result is null) return TypedResults.NotFound();
+        return TypedResults.File(result.Content, "text/csv", result.FileName);
     }
 
     // ── PATCH /entries/{id} ───────────────────────────────────────────────────

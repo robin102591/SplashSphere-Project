@@ -33,6 +33,14 @@ public sealed class PayrollSettingsConfiguration : IEntityTypeConfiguration<Payr
             .HasConversion<int>()
             .HasDefaultValue(DayOfWeek.Monday);
 
+        builder.Property(ps => ps.PayReleaseDayOffset)
+            .IsRequired()
+            .HasDefaultValue(3);
+
+        builder.Property(ps => ps.AutoCalcGovernmentDeductions)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(ps => ps.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");

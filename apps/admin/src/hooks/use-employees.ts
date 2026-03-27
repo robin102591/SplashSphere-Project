@@ -7,6 +7,7 @@ import type {
   Employee,
   EmployeeCommissionDto,
   AttendanceDto,
+  EmployeePayrollHistory,
   PagedResult,
   EmployeeType,
 } from '@splashsphere/types'
@@ -20,6 +21,7 @@ export const employeeKeys = {
   commissions: (id: string, params: CommissionHistoryParams) =>
     ['employees', id, 'commissions', params] as const,
   attendance: (params: AttendanceParams) => ['employees', 'attendance', params] as const,
+  payrollHistory: (id: string, page: number) => ['employees', id, 'payroll-history', page] as const,
 }
 
 // ── Param types ───────────────────────────────────────────────────────────────
@@ -199,6 +201,23 @@ export function useInviteEmployee() {
       qc.invalidateQueries({ queryKey: employeeKeys.detail(employeeId) })
       qc.invalidateQueries({ queryKey: employeeKeys.all })
     },
+  })
+}
+
+// ── Payroll History ───────────────────────────────────────────────────────────
+
+export function useEmployeePayrollHistory(employeeId: string, page = 1) {
+  const { getToken } = useAuth()
+  return useQuery({
+    queryKey: employeeKeys.payrollHistory(employeeId, page),
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<PagedResult<EmployeePayrollHistory>>(
+        `/employees/${employeeId}/payroll-history?page=${page}&pageSize=10`,
+        token ?? undefined
+      )
+    },
+    enabled: !!employeeId,
   })
 }
 
