@@ -114,6 +114,7 @@ app.MapMerchandiseEndpoints();
 app.MapQueueEndpoints();
 app.MapTransactionEndpoints();
 app.MapPayrollEndpoints();
+app.MapCashAdvanceEndpoints();
 app.MapPricingModifierEndpoints();
 app.MapDashboardEndpoints();
 app.MapReportEndpoints();

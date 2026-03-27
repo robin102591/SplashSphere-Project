@@ -87,6 +87,9 @@ public interface IApplicationDbContext
     DbSet<PayrollAdjustment> PayrollAdjustments { get; }
     DbSet<PayrollSettings> PayrollSettings { get; }
 
+    // ── Cash advances ────────────────────────────────────────────────────────
+    DbSet<CashAdvance> CashAdvances { get; }
+
     // ── Notifications ───────────────────────────────────────────────────────
     DbSet<Notification> Notifications { get; }
 }

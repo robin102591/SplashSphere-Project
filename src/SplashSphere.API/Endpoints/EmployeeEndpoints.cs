@@ -10,6 +10,8 @@ using SplashSphere.Application.Features.Employees.Queries.GetAttendance;
 using SplashSphere.Application.Features.Employees.Queries.GetEmployeeById;
 using SplashSphere.Application.Features.Employees.Queries.GetEmployeeCommissions;
 using SplashSphere.Application.Features.Employees.Queries.GetEmployees;
+using SplashSphere.Application.Features.CashAdvances;
+using SplashSphere.Application.Features.CashAdvances.Queries.GetEmployeeCashAdvances;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -31,6 +33,7 @@ public static class EmployeeEndpoints
         group.MapPost("/{id}/clock-in",                ClockIn)               .WithName("ClockIn");
         group.MapPost("/{id}/clock-out",               ClockOut)              .WithName("ClockOut");
         group.MapGet("/{id}/commissions",              GetCommissions)        .WithName("GetEmployeeCommissions");
+        group.MapGet("/{id}/cash-advances",            GetCashAdvances)       .WithName("GetEmployeeCashAdvances");
         group.MapGet("/attendance",                    GetAttendance)         .WithName("GetAttendance");
 
         return app;
@@ -116,6 +119,12 @@ public static class EmployeeEndpoints
         string id, [AsParameters] CommissionsParams p, ISender sender, CancellationToken ct) =>
         TypedResults.Ok(await sender.Send(
             new GetEmployeeCommissionsQuery(id, p.Page, p.PageSize, p.From, p.To), ct));
+
+    // ── GET /api/v1/employees/{id}/cash-advances ─────────────────────────────
+
+    private static async Task<IResult> GetCashAdvances(
+        string id, ISender sender, CancellationToken ct) =>
+        TypedResults.Ok(await sender.Send(new GetEmployeeCashAdvancesQuery(id), ct));
 
     // ── GET /api/v1/employees/attendance?branchId=&employeeId=&from=&to= ─────
 

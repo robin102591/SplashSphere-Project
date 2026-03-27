@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useCallback } from 'react'
-import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus } from 'lucide-react'
+import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,7 @@ import {
   useAddAdjustment,
   useUpdateAdjustment,
   useDeleteAdjustment,
+  usePayslip,
 } from '@/hooks/use-payroll'
 import type { AddAdjustmentValues } from '@/hooks/use-payroll'
 import { PayrollStatus, EmployeeType, AdjustmentType } from '@splashsphere/types'
@@ -206,6 +207,150 @@ function EntryRow({
 
 // ── Employee detail sheet ────────────────────────────────────────────────────
 
+// ── Payslip dialog ──────────────────────────────────────────────────────────
+
+function PayslipDialog({
+  entryId,
+  open,
+  onOpenChange,
+}: {
+  entryId: string | null
+  open: boolean
+  onOpenChange: (v: boolean) => void
+}) {
+  const { data: payslip, isLoading } = usePayslip(open ? entryId : null)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto print:max-w-none print:shadow-none print:border-none">
+        {isLoading || !payslip ? (
+          <div className="space-y-4 py-8">
+            <Skeleton className="h-6 w-48 mx-auto" />
+            <Skeleton className="h-4 w-32 mx-auto" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        ) : (
+          <div className="space-y-6 print:space-y-4">
+            {/* Header */}
+            <div className="text-center border-b pb-4">
+              <h2 className="text-xl font-bold">{payslip.tenantName}</h2>
+              <p className="text-sm text-muted-foreground">{payslip.branchName}</p>
+              <p className="text-sm font-medium mt-2">PAYSLIP</p>
+              <p className="text-sm text-muted-foreground">{payslip.periodLabel}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(payslip.periodStart).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                {' — '}
+                {new Date(payslip.periodEnd).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Employee info */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Employee:</span>{' '}
+                <span className="font-medium">{payslip.employeeName}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Type:</span>{' '}
+                <span className="font-medium">{payslip.employeeType}</span>
+              </div>
+            </div>
+
+            {/* Earnings */}
+            <div>
+              <h3 className="text-sm font-semibold border-b pb-1 mb-2">Earnings</h3>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-dashed">
+                    <td className="py-1.5">Base Salary ({payslip.daysWorked} days)</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(payslip.baseSalary)}</td>
+                  </tr>
+                  <tr className="border-b border-dashed">
+                    <td className="py-1.5">Commissions ({payslip.commissionTransactions} transactions)</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(payslip.totalCommissions)}</td>
+                  </tr>
+                  {payslip.totalTips > 0 && (
+                    <tr className="border-b border-dashed text-muted-foreground italic">
+                      <td className="py-1.5">Tips (paid out separately)</td>
+                      <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(payslip.totalTips)}</td>
+                    </tr>
+                  )}
+                  <tr className="font-semibold">
+                    <td className="py-1.5">Gross Earnings</td>
+                    <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(payslip.grossEarnings)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bonuses */}
+            {payslip.bonuses.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold border-b pb-1 mb-2">Bonuses</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {payslip.bonuses.map((b, i) => (
+                      <tr key={i} className="border-b border-dashed">
+                        <td className="py-1.5">
+                          {b.category}
+                          {b.notes && <span className="text-xs text-muted-foreground ml-2">({b.notes})</span>}
+                        </td>
+                        <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(b.amount)}</td>
+                      </tr>
+                    ))}
+                    <tr className="font-semibold">
+                      <td className="py-1.5">Total Bonuses</td>
+                      <td className="py-1.5 text-right font-mono tabular-nums">{formatPeso(payslip.totalBonuses)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Deductions */}
+            {payslip.deductions.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold border-b pb-1 mb-2">Deductions</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {payslip.deductions.map((d, i) => (
+                      <tr key={i} className="border-b border-dashed">
+                        <td className="py-1.5">
+                          {d.category}
+                          {d.notes && <span className="text-xs text-muted-foreground ml-2">({d.notes})</span>}
+                        </td>
+                        <td className="py-1.5 text-right font-mono tabular-nums text-red-600">({formatPeso(d.amount)})</td>
+                      </tr>
+                    ))}
+                    <tr className="font-semibold">
+                      <td className="py-1.5">Total Deductions</td>
+                      <td className="py-1.5 text-right font-mono tabular-nums text-red-600">({formatPeso(payslip.totalDeductions)})</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Net Pay */}
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 text-center">
+              <p className="text-sm text-muted-foreground">Net Pay</p>
+              <p className="text-2xl font-bold tabular-nums text-primary">{formatPeso(payslip.netPay)}</p>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3 print:hidden">
+              <span>Generated: {new Date(payslip.generatedAt).toLocaleString('en-PH')}</span>
+              <Button size="sm" variant="outline" onClick={() => window.print()}>
+                <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function EmployeeDetailSheet({
   entryId,
   periodId,
@@ -234,6 +379,7 @@ function EmployeeDetailSheet({
   const [editingAdjId, setEditingAdjId] = useState<string | null>(null)
   const [editAmount, setEditAmount] = useState('')
   const [editNotes, setEditNotes] = useState('')
+  const [payslipOpen, setPayslipOpen] = useState(false)
 
   const activeTemplates = templates.filter((t) => t.isActive)
 
@@ -327,7 +473,14 @@ function EmployeeDetailSheet({
                   {data.entry.employeeTypeSnapshot === EmployeeType.Daily ? 'Daily' : data.entry.employeeTypeSnapshot === EmployeeType.Hybrid ? 'Hybrid' : 'Commission'}
                 </Badge>
               </div>
+              <div className="mt-2">
+                <Button size="sm" variant="outline" onClick={() => setPayslipOpen(true)}>
+                  <FileText className="mr-1.5 h-3.5 w-3.5" /> View Payslip
+                </Button>
+              </div>
             </SheetHeader>
+
+            <PayslipDialog entryId={entryId} open={payslipOpen} onOpenChange={setPayslipOpen} />
 
             {/* Summary — 3-col grid for wider layout */}
             <div className="grid grid-cols-3 gap-3 mt-5">

@@ -64,6 +64,35 @@ public sealed record AttendanceLineItemDto(
     DateTime TimeIn,
     DateTime? TimeOut);
 
+// ── Payslip ────────────────────────────────────────────────────────────────
+
+public sealed record PayslipDto(
+    string TenantName,
+    string BranchName,
+    string PeriodLabel,
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd,
+    string EmployeeName,
+    string EmployeeType,
+    string? EmployeeId,
+    decimal BaseSalary,
+    decimal TotalCommissions,
+    decimal TotalTips,
+    decimal GrossEarnings,
+    IReadOnlyList<PayslipAdjustmentLineDto> Bonuses,
+    IReadOnlyList<PayslipAdjustmentLineDto> Deductions,
+    decimal TotalBonuses,
+    decimal TotalDeductions,
+    decimal NetPay,
+    int DaysWorked,
+    int CommissionTransactions,
+    DateTime GeneratedAt);
+
+public sealed record PayslipAdjustmentLineDto(
+    string Category,
+    decimal Amount,
+    string? Notes);
+
 // ── Adjustment line items ──────────────────────────────────────────────────
 
 public sealed record PayrollAdjustmentDto(

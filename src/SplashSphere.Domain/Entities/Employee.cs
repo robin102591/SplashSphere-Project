@@ -84,4 +84,5 @@ public sealed class Employee : IAuditableEntity
     public ICollection<TransactionEmployee> TransactionSummaries { get; set; } = [];
     public ICollection<ServiceEmployeeAssignment> ServiceAssignments { get; set; } = [];
     public ICollection<PackageEmployeeAssignment> PackageAssignments { get; set; } = [];
+    public ICollection<CashAdvance> CashAdvances { get; set; } = [];
 }

@@ -10,6 +10,7 @@ import type {
   PayrollAdjustment,
   PayrollEntryDetail,
   PayrollSettingsDto,
+  Payslip,
   PagedResult,
 } from '@splashsphere/types'
 import type { AdjustmentType, PayrollStatus } from '@splashsphere/types'
@@ -23,6 +24,7 @@ export const payrollKeys = {
   entryDetail: (id: string) => ['payroll', 'entry', id] as const,
   templates: ['payroll', 'templates'] as const,
   settings: ['payroll', 'settings'] as const,
+  payslip: (entryId: string) => ['payroll', 'payslip', entryId] as const,
 }
 
 // ── Param / value types ───────────────────────────────────────────────────────
@@ -312,5 +314,19 @@ export function useUpdatePayrollSettings() {
       return apiClient.put<void>('/settings/payroll-config', data, token ?? undefined)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: payrollKeys.settings }),
+  })
+}
+
+// ── Payslip ─────────────────────────────────────────────────────────────────
+
+export function usePayslip(entryId: string | null) {
+  const { getToken } = useAuth()
+  return useQuery({
+    queryKey: payrollKeys.payslip(entryId ?? ''),
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<Payslip>(`/payroll/entries/${entryId}/payslip`, token ?? undefined)
+    },
+    enabled: !!entryId,
   })
 }

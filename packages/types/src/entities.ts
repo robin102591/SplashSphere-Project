@@ -11,6 +11,7 @@
 
 import type {
   AdjustmentType,
+  CashAdvanceStatus,
   CashMovementType,
   CommissionType,
   EmployeeType,
@@ -653,6 +654,54 @@ export interface AttendanceLineItem {
   date: string;
   timeIn: string;
   timeOut: string | null;
+}
+
+// ── Cash Advances ─────────────────────────────────────────────────────────────
+
+export interface CashAdvance {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  amount: number;
+  remainingBalance: number;
+  status: CashAdvanceStatus;
+  reason: string | null;
+  approvedByName: string | null;
+  approvedAt: string | null;
+  deductionPerPeriod: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Payslip ───────────────────────────────────────────────────────────────────
+
+export interface Payslip {
+  tenantName: string;
+  branchName: string;
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  employeeName: string;
+  employeeType: string;
+  employeeId: string | null;
+  baseSalary: number;
+  totalCommissions: number;
+  totalTips: number;
+  grossEarnings: number;
+  bonuses: readonly PayslipAdjustmentLine[];
+  deductions: readonly PayslipAdjustmentLine[];
+  totalBonuses: number;
+  totalDeductions: number;
+  netPay: number;
+  daysWorked: number;
+  commissionTransactions: number;
+  generatedAt: string;
+}
+
+export interface PayslipAdjustmentLine {
+  category: string;
+  amount: number;
+  notes: string | null;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

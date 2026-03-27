@@ -49,6 +49,10 @@ const STATUS_STYLES: Record<string, [bg: string, text: string, border: string, l
   // ── Stock ────────────────────────────────────────────────────
   'Low Stock':  ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
 
+  // ── Cash advance ────────────────────────────────────────────
+  'Fully Paid': ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
+  Disbursed:    ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
+
   // ── Variance ─────────────────────────────────────────────────
   Watch:        ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
 }

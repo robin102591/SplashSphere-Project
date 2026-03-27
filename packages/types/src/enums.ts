@@ -170,3 +170,11 @@ export enum AdjustmentType {
   Bonus     = 1,
   Deduction = 2,
 }
+
+export enum CashAdvanceStatus {
+  Pending   = 1,
+  Approved  = 2,
+  Active    = 3,
+  FullyPaid = 4,
+  Cancelled = 5,
+}

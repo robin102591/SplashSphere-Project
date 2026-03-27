@@ -16,6 +16,7 @@ using SplashSphere.Application.Features.Payroll.Queries.GetPayrollEntryDetail;
 using SplashSphere.Application.Features.Payroll.Queries.GetPayrollPeriodById;
 using SplashSphere.Application.Features.Payroll.Queries.GetPayrollPeriods;
 using SplashSphere.Application.Features.Payroll.Queries.GetPayrollTemplates;
+using SplashSphere.Application.Features.Payroll.Queries.GetPayslip;
 using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.API.Endpoints;
@@ -39,6 +40,7 @@ public static class PayrollEndpoints
         group.MapPatch("/entries/{id}",                   UpdatePayrollEntry);
         group.MapPost("/entries/bulk-adjust",              BulkApplyAdjustment);
         group.MapGet("/entries/{id}/detail",               GetPayrollEntryDetail);
+        group.MapGet("/entries/{id}/payslip",              GetPayslip);
 
         // ── Entry adjustments ───────────────────────────────────────────────
         group.MapPost("/entries/{id}/adjustments",         AddPayrollAdjustment);
@@ -160,6 +162,17 @@ public static class PayrollEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayrollEntryDetailQuery(id), ct);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+    }
+
+    // ── GET /entries/{id}/payslip ────────────────────────────────────────────
+
+    private static async Task<Results<Ok<object>, NotFound>> GetPayslip(
+        string id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new GetPayslipQuery(id), ct);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
     }
 

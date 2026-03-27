@@ -139,6 +139,43 @@ public sealed class ClosePayrollPeriodCommandHandler(
             context.PayrollEntries.Add(entry);
         }
 
+        // ── Auto-deduct active cash advances (FIFO) ─────────────────────────
+        var activeAdvances = await context.CashAdvances
+            .Where(ca => ca.Status == CashAdvanceStatus.Active && ca.RemainingBalance > 0)
+            .OrderBy(ca => ca.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var advancesByEmployee = activeAdvances
+            .GroupBy(ca => ca.EmployeeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var entry in entries)
+        {
+            if (!advancesByEmployee.TryGetValue(entry.EmployeeId, out var empAdvances))
+                continue;
+
+            foreach (var advance in empAdvances)
+            {
+                var deductAmount = Math.Min(advance.DeductionPerPeriod, advance.RemainingBalance);
+                advance.RemainingBalance -= deductAmount;
+
+                var adjustment = new PayrollAdjustment(
+                    tenantContext.TenantId,
+                    entry.Id,
+                    AdjustmentType.Deduction,
+                    "Cash Advance",
+                    deductAmount,
+                    $"CA #{advance.Id[..8]}… — ₱{deductAmount:N2} of ₱{advance.Amount:N2}");
+
+                context.PayrollAdjustments.Add(adjustment);
+
+                if (advance.RemainingBalance == 0m)
+                    advance.Status = CashAdvanceStatus.FullyPaid;
+            }
+
+            entry.RecalculateTotals();
+        }
+
         // ── Transition period to Closed ───────────────────────────────────────
         period.Status = PayrollStatus.Closed;
 

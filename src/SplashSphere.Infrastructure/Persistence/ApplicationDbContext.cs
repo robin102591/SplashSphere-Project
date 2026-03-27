@@ -75,6 +75,9 @@ public sealed class ApplicationDbContext(
     public DbSet<PayrollAdjustment> PayrollAdjustments => Set<PayrollAdjustment>();
     public DbSet<PayrollSettings> PayrollSettings => Set<PayrollSettings>();
 
+    // ── Cash advances ────────────────────────────────────────────────────────
+    public DbSet<CashAdvance> CashAdvances => Set<CashAdvance>();
+
     // ── Notifications ───────────────────────────────────────────────────────
     public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -208,6 +211,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<PayrollSettings>()
             .HasQueryFilter(ps => ps.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<CashAdvance>()
+            .HasQueryFilter(ca => ca.TenantId == tenantContext.TenantId);
 
         modelBuilder.Entity<Notification>()
             .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);
