@@ -33,9 +33,19 @@ import {
   Percent,
   Banknote,
   CalendarCheck,
+  Lock,
 } from 'lucide-react'
+import { useHasFeature } from '@/hooks/use-plan'
+import { FeatureKeys } from '@splashsphere/types'
 
-const navGroups = [
+interface NavItem {
+  label: string
+  href: string
+  icon: React.ElementType
+  feature?: string | null
+}
+
+const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Overview',
     items: [
@@ -49,7 +59,7 @@ const navGroups = [
       { label: 'Services', href: '/dashboard/services', icon: Wrench },
       { label: 'Packages', href: '/dashboard/packages', icon: Package },
       { label: 'Merchandise', href: '/dashboard/merchandise', icon: ShoppingBag },
-      { label: 'Pricing Rules', href: '/dashboard/pricing-modifiers', icon: Percent },
+      { label: 'Pricing Rules', href: '/dashboard/pricing-modifiers', icon: Percent, feature: FeatureKeys.PricingModifiers },
     ],
   },
   {
@@ -66,9 +76,9 @@ const navGroups = [
     items: [
       { label: 'Transactions', href: '/dashboard/transactions', icon: CreditCard },
       { label: 'Payroll', href: '/dashboard/payroll', icon: CreditCard },
-      { label: 'Cash Advances', href: '/dashboard/cash-advances', icon: Banknote },
-      { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet },
-      { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown },
+      { label: 'Cash Advances', href: '/dashboard/cash-advances', icon: Banknote, feature: FeatureKeys.CashAdvanceTracking },
+      { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet, feature: FeatureKeys.ShiftManagement },
+      { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     ],
   },
@@ -97,6 +107,36 @@ function SidebarLogo() {
   )
 }
 
+function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
+  const hasFeature = useHasFeature(item.feature ?? '')
+  const locked = !!item.feature && !hasFeature
+
+  const active =
+    pathname === item.href ||
+    (item.href !== '/dashboard' && pathname.startsWith(item.href))
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        render={locked ? <span /> : <Link href={item.href} />}
+        isActive={active}
+        tooltip={locked ? `${item.label} (upgrade required)` : item.label}
+        className={
+          locked
+            ? 'opacity-50 cursor-not-allowed'
+            : active
+              ? 'bg-splash-50 text-splash-700 border-l-2 border-splash-500 hover:bg-splash-100'
+              : ''
+        }
+      >
+        <item.icon className="h-4 w-4" />
+        <span className="flex-1">{item.label}</span>
+        {locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
 
@@ -112,24 +152,9 @@ export function AppSidebar() {
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => {
-                  const active =
-                    pathname === item.href ||
-                    (item.href !== '/dashboard' && pathname.startsWith(item.href))
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        render={<Link href={item.href} />}
-                        isActive={active}
-                        tooltip={item.label}
-                        className={active ? 'bg-splash-50 text-splash-700 border-l-2 border-splash-500 hover:bg-splash-100' : ''}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
+                {group.items.map((item) => (
+                  <NavItemRow key={item.href} item={item} pathname={pathname} />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

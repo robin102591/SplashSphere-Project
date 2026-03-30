@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
+import { TrialBanner } from '@/components/plan/trial-banner'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { SignalRProvider } from '@/lib/signalr-context'
 import { auth } from '@clerk/nextjs/server'
@@ -19,6 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <AppSidebar />
       <SignalRProvider>
         <SidebarInset>
+          <TrialBanner />
           <AppHeader />
           <main className="flex-1 p-6">{children}</main>
         </SidebarInset>

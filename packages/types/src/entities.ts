@@ -815,6 +815,86 @@ export interface ServicePopularityReport {
   packages: readonly PackagePopularityItem[];
 }
 
+// ── Subscription & Billing ────────────────────────────────────────────────────
+
+export interface TenantPlan {
+  tier: 'trial' | 'starter' | 'growth' | 'enterprise';
+  status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled';
+  planName: string;
+  monthlyPrice: number;
+  features: string[];
+  limits: PlanLimits;
+  trial: TrialInfo | null;
+  billing: BillingInfo | null;
+}
+
+export interface PlanLimits {
+  maxBranches: number;
+  currentBranches: number;
+  maxEmployees: number;
+  currentEmployees: number;
+  smsPerMonth: number;
+  smsUsedThisMonth: number;
+}
+
+export interface TrialInfo {
+  startDate: string;
+  endDate: string;
+  daysRemaining: number;
+  expired: boolean;
+}
+
+export interface BillingInfo {
+  nextBillingDate: string | null;
+  lastPaymentDate: string | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+}
+
+export interface BillingRecord {
+  id: string;
+  amount: number;
+  currency: string;
+  type: number;
+  status: number;
+  paymentMethod: string | null;
+  invoiceNumber: string | null;
+  billingDate: string;
+  paidDate: string | null;
+  notes: string | null;
+}
+
+export interface CheckoutResult {
+  checkoutUrl: string;
+  sessionId: string;
+}
+
+// ── Feature Keys (must match backend FeatureKeys.cs) ─────────────────────────
+
+export const FeatureKeys = {
+  // Core (all plans)
+  Pos: 'pos',
+  CommissionTracking: 'commission_tracking',
+  WeeklyPayroll: 'weekly_payroll',
+  BasicReports: 'basic_reports',
+  CustomerManagement: 'customer_management',
+  VehicleManagement: 'vehicle_management',
+  EmployeeManagement: 'employee_management',
+  MerchandiseManagement: 'merchandise_management',
+  // Growth
+  QueueManagement: 'queue_management',
+  CustomerLoyalty: 'customer_loyalty',
+  CashAdvanceTracking: 'cash_advance_tracking',
+  ExpenseTracking: 'expense_tracking',
+  ShiftManagement: 'shift_management',
+  ProfitLossReports: 'profit_loss_reports',
+  SmsNotifications: 'sms_notifications',
+  PricingModifiers: 'pricing_modifiers',
+  // Enterprise
+  ApiAccess: 'api_access',
+  CustomIntegrations: 'custom_integrations',
+} as const;
+
 // ── Attendance Reports ────────────────────────────────────────────────────────
 
 export interface AttendanceReportSummary {
