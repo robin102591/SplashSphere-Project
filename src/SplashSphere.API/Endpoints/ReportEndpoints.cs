@@ -1,4 +1,7 @@
 using MediatR;
+using SplashSphere.Application.Features.Reports.Queries.ExportCommissionsCsv;
+using SplashSphere.Application.Features.Reports.Queries.ExportRevenueCsv;
+using SplashSphere.Application.Features.Reports.Queries.ExportServicePopularityCsv;
 using SplashSphere.Application.Features.Reports.Queries.GetCommissionsReport;
 using SplashSphere.Application.Features.Reports.Queries.GetRevenueReport;
 using SplashSphere.Application.Features.Reports.Queries.GetServicePopularityReport;
@@ -15,50 +18,61 @@ public static class ReportEndpoints
             .WithTags("Reports")
             .RequireAuthorization();
 
-        // GET /api/v1/reports/revenue?from=2025-01-01&to=2025-01-31&branchId=
         group.MapGet("/revenue", GetRevenue).WithName("GetRevenueReport");
-
-        // GET /api/v1/reports/commissions?from=2025-01-01&to=2025-01-31&branchId=&employeeId=
         group.MapGet("/commissions", GetCommissions).WithName("GetCommissionsReport");
-
-        // GET /api/v1/reports/service-popularity?from=2025-01-01&to=2025-01-31&branchId=&top=20
         group.MapGet("/service-popularity", GetServicePopularity).WithName("GetServicePopularityReport");
+
+        // CSV exports
+        group.MapGet("/revenue/export/csv", ExportRevenueCsv).WithName("ExportRevenueCsv");
+        group.MapGet("/commissions/export/csv", ExportCommissionsCsv).WithName("ExportCommissionsCsv");
+        group.MapGet("/service-popularity/export/csv", ExportServicePopularityCsv).WithName("ExportServicePopularityCsv");
 
         return app;
     }
 
-    // ── Revenue ───────────────────────────────────────────────────────────────
+    // ── JSON endpoints ──────────────────────────────────────────────────────
 
     private static async Task<IResult> GetRevenue(
-        DateOnly from,
-        DateOnly to,
-        string? branchId,
-        ISender sender,
-        CancellationToken ct)
+        DateOnly from, DateOnly to, string? branchId,
+        ISender sender, CancellationToken ct)
         => TypedResults.Ok(
             await sender.Send(new GetRevenueReportQuery(from, to, branchId), ct));
 
-    // ── Commissions ───────────────────────────────────────────────────────────
-
     private static async Task<IResult> GetCommissions(
-        DateOnly from,
-        DateOnly to,
-        string? branchId,
-        string? employeeId,
-        ISender sender,
-        CancellationToken ct)
+        DateOnly from, DateOnly to, string? branchId, string? employeeId,
+        ISender sender, CancellationToken ct)
         => TypedResults.Ok(
             await sender.Send(new GetCommissionsReportQuery(from, to, branchId, employeeId), ct));
 
-    // ── Service popularity ────────────────────────────────────────────────────
-
     private static async Task<IResult> GetServicePopularity(
-        DateOnly from,
-        DateOnly to,
-        string? branchId,
-        int top,
-        ISender sender,
-        CancellationToken ct)
+        DateOnly from, DateOnly to, string? branchId, int top,
+        ISender sender, CancellationToken ct)
         => TypedResults.Ok(
             await sender.Send(new GetServicePopularityReportQuery(from, to, branchId, top == 0 ? 20 : top), ct));
+
+    // ── CSV exports ─────────────────────────────────────────────────────────
+
+    private static async Task<IResult> ExportRevenueCsv(
+        DateOnly from, DateOnly to, string? branchId,
+        ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportRevenueCsvQuery(from, to, branchId), ct);
+        return TypedResults.File(result.Content, "text/csv", result.FileName);
+    }
+
+    private static async Task<IResult> ExportCommissionsCsv(
+        DateOnly from, DateOnly to, string? branchId, string? employeeId,
+        ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportCommissionsCsvQuery(from, to, branchId, employeeId), ct);
+        return TypedResults.File(result.Content, "text/csv", result.FileName);
+    }
+
+    private static async Task<IResult> ExportServicePopularityCsv(
+        DateOnly from, DateOnly to, string? branchId, int top,
+        ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportServicePopularityCsvQuery(from, to, branchId, top == 0 ? 20 : top), ct);
+        return TypedResults.File(result.Content, "text/csv", result.FileName);
+    }
 }

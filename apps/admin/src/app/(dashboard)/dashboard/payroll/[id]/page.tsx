@@ -1,5 +1,7 @@
 'use client'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
+
 import { use, useState, useCallback } from 'react'
 import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer, Banknote, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -222,6 +224,7 @@ function PayslipDialog({
   open: boolean
   onOpenChange: (v: boolean) => void
 }) {
+  const { getToken } = useAuth()
   const { data: payslip, isLoading } = usePayslip(open ? entryId : null)
 
   return (
@@ -344,9 +347,26 @@ function PayslipDialog({
             {/* Footer */}
             <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3 print:hidden">
               <span>Generated: {new Date(payslip.generatedAt).toLocaleString('en-PH')}</span>
-              <Button size="sm" variant="outline" onClick={() => window.print()}>
-                <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={async () => {
+                  const token = await getToken()
+                  const res = await fetch(`${API_BASE}/api/v1/payroll/entries/${entryId}/payslip/pdf`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  })
+                  if (!res.ok) return
+                  const blob = await res.blob()
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url; a.download = `payslip_${entryId}.pdf`
+                  document.body.appendChild(a); a.click(); a.remove()
+                  URL.revokeObjectURL(url)
+                }}>
+                  <Download className="mr-1.5 h-3.5 w-3.5" /> PDF
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => window.print()}>
+                  <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+                </Button>
+              </div>
             </div>
           </div>
         )}

@@ -513,6 +513,15 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/billing/history` | Paginated payment/billing history |
 | `POST` | `/webhooks/payment` | Payment gateway webhook (no auth) |
 
+### Report Exports
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/reports/revenue/export/csv` | Export revenue report as CSV |
+| `GET` | `/reports/commissions/export/csv` | Export commissions report as CSV |
+| `GET` | `/reports/service-popularity/export/csv` | Export service popularity report as CSV |
+| `GET` | `/payroll/entries/{id}/payslip/pdf` | Download payslip as PDF (QuestPDF) |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---

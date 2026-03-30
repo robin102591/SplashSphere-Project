@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,10 +10,15 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import { useAuth } from '@clerk/nextjs'
+import { Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useRevenueReport, useCommissionsReport, useServicePopularityReport } from '@/hooks/use-reports'
 import { useBranches } from '@/hooks/use-branches'
 import { useEmployees } from '@/hooks/use-employees'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
 
@@ -340,9 +345,33 @@ export default function ReportsPage() {
   const [to, setTo] = useState(defaults.to)
   const [branchId, setBranchId] = useState('')
   const [employeeId, setEmployeeId] = useState('')
+  const [exporting, setExporting] = useState(false)
 
+  const { getToken } = useAuth()
   const { data: branches = [] } = useBranches()
   const { data: employeesPage } = useEmployees({ branchId: branchId || undefined, pageSize: 100 })
+
+  const downloadCsv = useCallback(async (path: string, fallbackName: string) => {
+    setExporting(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${API_BASE}/api/v1${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Export failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fallbackName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }, [getToken])
 
   return (
     <div className="space-y-6">
@@ -380,11 +409,16 @@ export default function ReportsPage() {
         </TabsList>
 
         <TabsContent value="revenue" className="mt-6">
+          <div className="flex justify-end mb-4">
+            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
+              downloadCsv(`/reports/revenue/export/csv?${qs}`, `revenue_${from}_${to}.csv`)
+            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+          </div>
           <RevenueTab from={from} to={to} branchId={branchId || undefined} />
         </TabsContent>
 
         <TabsContent value="commissions" className="mt-6">
-          {/* Employee filter only in commissions tab */}
           <div className="flex items-center gap-3 mb-4">
             <Select value={employeeId || '__all__'} onValueChange={(v) => setEmployeeId(v === '__all__' ? '' : v)}>
               <SelectTrigger className="w-52">
@@ -397,6 +431,11 @@ export default function ReportsPage() {
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex-1" />
+            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId); if (employeeId) qs.set('employeeId', employeeId)
+              downloadCsv(`/reports/commissions/export/csv?${qs}`, `commissions_${from}_${to}.csv`)
+            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
           </div>
           <CommissionsTab
             from={from}
@@ -407,6 +446,12 @@ export default function ReportsPage() {
         </TabsContent>
 
         <TabsContent value="popularity" className="mt-6">
+          <div className="flex justify-end mb-4">
+            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
+              downloadCsv(`/reports/service-popularity/export/csv?${qs}`, `service_popularity_${from}_${to}.csv`)
+            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+          </div>
           <ServicePopularityTab from={from} to={to} branchId={branchId || undefined} />
         </TabsContent>
       </Tabs>
