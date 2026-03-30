@@ -26,7 +26,7 @@ import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel
 import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
-import { usePlan, useBillingHistory, useCancelSubscription } from '@/hooks/use-plan'
+import { usePlan, useBillingHistory, useCancelSubscription, useCreateCheckout } from '@/hooks/use-plan'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
 import { AdjustmentType } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
@@ -810,6 +810,24 @@ function BillingTab() {
   const { data: plan, isLoading } = usePlan()
   const { data: history } = useBillingHistory()
   const { mutate: cancel, isPending: cancelling } = useCancelSubscription()
+  const { mutate: checkout, isPending: checkingOut } = useCreateCheckout()
+
+  const PLAN_TIERS: Record<string, number> = { starter: 1, growth: 2, enterprise: 3 }
+
+  const handleUpgrade = (tier: string) => {
+    const planNum = PLAN_TIERS[tier]
+    if (!planNum) return
+    checkout({
+      targetPlan: planNum,
+      successUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=success`,
+      cancelUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=cancelled`,
+    }, {
+      onSuccess: (result) => {
+        if (result?.checkoutUrl) window.location.href = result.checkoutUrl
+      },
+      onError: () => toast.error('Failed to create checkout session.'),
+    })
+  }
 
   if (isLoading) return <Skeleton className="h-48 w-full" />
   if (!plan) return null
@@ -887,7 +905,13 @@ function BillingTab() {
                   {isCurrent ? (
                     <Button variant="outline" size="sm" className="w-full" disabled>Current Plan</Button>
                   ) : (
-                    <Button variant={p.highlight ? 'default' : 'outline'} size="sm" className="w-full" disabled>
+                    <Button
+                      variant={p.highlight ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full"
+                      disabled={checkingOut}
+                      onClick={() => handleUpgrade(p.tier)}
+                    >
                       {plan.tier === 'enterprise' || (plan.tier === 'growth' && p.tier === 'starter') ? 'Downgrade' : 'Upgrade'}
                     </Button>
                   )}
@@ -897,7 +921,7 @@ function BillingTab() {
           })}
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Plan changes and payment processing will be available with PayMongo integration.
+          Upgrade redirects to the payment page. Downgrade validates branch/employee limits.
         </p>
       </div>
 

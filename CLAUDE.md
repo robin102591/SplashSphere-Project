@@ -648,6 +648,9 @@ Tenant: "SparkleWash Philippines". Branches: Makati + BGC. Vehicle Types: Sedan/
 ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=splashsphere;Username=postgres;Password=postgres
 Clerk__Authority=https://<instance>.clerk.accounts.dev
 Clerk__SecretKey=sk_test_xxxxx
+PayMongo__SecretKey=sk_test_xxxxx          # Optional — omit to use mock gateway
+PayMongo__PublicKey=pk_test_xxxxx
+PayMongo__WebhookSecret=whsec_xxxxx
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxx
 CLERK_SECRET_KEY=sk_test_xxxxx
 NEXT_PUBLIC_API_URL=http://localhost:5000

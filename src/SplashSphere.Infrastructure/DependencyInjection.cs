@@ -59,8 +59,17 @@ public static class DependencyInjection
         // ── Plan enforcement ────────────────────────────────────────────────
         services.AddScoped<IPlanEnforcementService, PlanEnforcementService>();
 
-        // ── Payment gateway (mock for dev — swap to PayMongoPaymentGateway for prod)
-        services.AddScoped<IPaymentGateway, ExternalServices.MockPaymentGateway>();
+        // ── Payment gateway ──────────────────────────────────────────────────
+        // Uses PayMongo when secret key is configured, otherwise falls back to mock.
+        if (!string.IsNullOrEmpty(configuration["PayMongo:SecretKey"]))
+        {
+            services.AddHttpClient("PayMongo");
+            services.AddScoped<IPaymentGateway, ExternalServices.PayMongoPaymentGateway>();
+        }
+        else
+        {
+            services.AddScoped<IPaymentGateway, ExternalServices.MockPaymentGateway>();
+        }
 
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
