@@ -100,4 +100,7 @@ public interface IApplicationDbContext
     DbSet<TenantSubscription> TenantSubscriptions { get; }
     DbSet<BillingRecord> BillingRecords { get; }
     DbSet<PlanChangeLog> PlanChangeLogs { get; }
+
+    // ── Audit logs ──────────────────────────────────────────────────────────
+    DbSet<AuditLog> AuditLogs { get; }
 }

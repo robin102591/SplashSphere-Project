@@ -128,5 +128,6 @@ app.MapSearchEndpoints();
 app.MapNotificationEndpoints();
 app.MapAttendanceEndpoints();
 app.MapBillingEndpoints();
+app.MapAuditLogEndpoints();
 
 app.Run();

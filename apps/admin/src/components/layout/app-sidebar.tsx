@@ -34,6 +34,7 @@ import {
   Banknote,
   CalendarCheck,
   Lock,
+  ScrollText,
 } from 'lucide-react'
 import { useHasFeature } from '@/hooks/use-plan'
 import { FeatureKeys } from '@splashsphere/types'
@@ -86,6 +87,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Configuration',
     items: [
       { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { label: 'Audit Logs', href: '/dashboard/audit-logs', icon: ScrollText },
     ],
   },
 ]

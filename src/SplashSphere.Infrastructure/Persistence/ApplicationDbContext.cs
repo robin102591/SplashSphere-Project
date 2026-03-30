@@ -89,6 +89,9 @@ public sealed class ApplicationDbContext(
     public DbSet<BillingRecord> BillingRecords => Set<BillingRecord>();
     public DbSet<PlanChangeLog> PlanChangeLogs => Set<PlanChangeLog>();
 
+    // ── Audit logs ──────────────────────────────────────────────────────────
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -225,6 +228,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<Notification>()
             .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<AuditLog>()
+            .HasQueryFilter(a => a.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

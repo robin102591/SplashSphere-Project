@@ -522,6 +522,12 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/reports/service-popularity/export/csv` | Export service popularity report as CSV |
 | `GET` | `/payroll/entries/{id}/payslip/pdf` | Download payslip as PDF (QuestPDF) |
 
+### Audit Logs
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/audit-logs` | Paginated audit log list (filter by entityType, entityId, userId, from, to) |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -546,6 +552,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/reports/shift-variance` | Variance report — per-cashier trend chart with thresholds |
 | `/dashboard/cash-advances` | Cash Advances — list with status actions (approve/disburse/cancel) + create dialog |
 | `/dashboard/attendance` | Attendance Report — per-employee stats (days, tardiness, hours) with filters + CSV export |
+| `/dashboard/audit-logs` | Audit Logs — paginated log viewer with entity type/ID/user/date filters + expandable JSON changes |
 
 ### POS App
 

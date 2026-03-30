@@ -815,6 +815,18 @@ export interface ServicePopularityReport {
   packages: readonly PackagePopularityItem[];
 }
 
+// ── Audit Logs ───────────────────────────────────────────────────────────────
+
+export interface AuditLogDto {
+  id: string;
+  userId: string | null;
+  action: string;
+  entityType: string;
+  entityId: string;
+  changes: string | null;
+  timestamp: string;
+}
+
 // ── Subscription & Billing ────────────────────────────────────────────────────
 
 export interface TenantPlan {

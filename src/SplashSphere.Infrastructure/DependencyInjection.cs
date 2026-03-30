@@ -23,10 +23,13 @@ public static class DependencyInjection
     {
         // ── EF Core ───────────────────────────────────────────────────────────
         services.AddSingleton<AuditableEntityInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
-            options.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+            options.AddInterceptors(
+                sp.GetRequiredService<AuditableEntityInterceptor>(),
+                sp.GetRequiredService<AuditLogInterceptor>());
         });
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
