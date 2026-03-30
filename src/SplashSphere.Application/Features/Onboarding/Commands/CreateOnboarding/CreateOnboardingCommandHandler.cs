@@ -71,6 +71,16 @@ public sealed class CreateOnboardingCommandHandler(
         user.TenantId = orgId;
         user.Role     = "org:admin";
 
+        // ── Create Trial subscription (14-day Growth experience) ─────────────
+        var now = DateTime.UtcNow;
+        var subscription = new TenantSubscription(orgId, PlanTier.Trial, SubscriptionStatus.Trial)
+        {
+            TrialStartDate = now,
+            TrialEndDate = now.AddDays(14),
+            SmsCountResetDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+        };
+        context.TenantSubscriptions.Add(subscription);
+
         // ── Pre-seed government deduction templates ─────────────────────────
         var governmentTemplates = new[]
         {
