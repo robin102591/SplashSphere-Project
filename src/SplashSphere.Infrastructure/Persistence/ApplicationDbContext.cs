@@ -84,6 +84,11 @@ public sealed class ApplicationDbContext(
     // ── Government contribution brackets ──────────────────────────────────
     public DbSet<GovernmentContributionBracket> GovernmentContributionBrackets => Set<GovernmentContributionBracket>();
 
+    // ── Subscriptions & billing ─────────────────────────────────────────────
+    public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
+    public DbSet<BillingRecord> BillingRecords => Set<BillingRecord>();
+    public DbSet<PlanChangeLog> PlanChangeLogs => Set<PlanChangeLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

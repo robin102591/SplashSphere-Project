@@ -8,13 +8,20 @@ namespace SplashSphere.Application.Features.Employees.Commands.CreateEmployee;
 
 public sealed class CreateEmployeeCommandHandler(
     IApplicationDbContext context,
-    ITenantContext tenantContext)
+    ITenantContext tenantContext,
+    IPlanEnforcementService planService)
     : IRequestHandler<CreateEmployeeCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(
         CreateEmployeeCommand request,
         CancellationToken cancellationToken)
     {
+        // ── Plan limit check ─────────────────────────────────────────────────
+        var limitCheck = await planService.CheckLimitAsync(
+            tenantContext.TenantId, LimitType.Employees, cancellationToken);
+        if (!limitCheck.Allowed)
+            return Result.Failure<string>(Error.Validation(limitCheck.Message));
+
         var branchExists = await context.Branches
             .AnyAsync(b => b.Id == request.BranchId, cancellationToken);
 

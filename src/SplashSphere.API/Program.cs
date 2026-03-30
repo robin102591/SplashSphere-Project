@@ -81,6 +81,9 @@ app.UseAuthentication();
 // tenantless users (see TenantResolutionMiddleware for allowed-path list).
 app.UseMiddleware<TenantResolutionMiddleware>();
 
+// Enforces plan-based feature gates via [RequiresFeature(...)] endpoint attributes.
+app.UseMiddleware<PlanEnforcementMiddleware>();
+
 app.UseAuthorization();
 
 // ── Hangfire dashboard (dev only) ─────────────────────────────────────────────

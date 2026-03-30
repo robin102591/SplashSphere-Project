@@ -12,6 +12,8 @@ using SplashSphere.Application.Features.Queue.Queries.GetQueueDisplay;
 using SplashSphere.Application.Features.Queue.Queries.GetQueueEntry;
 using SplashSphere.Application.Features.Queue.Queries.GetQueueStats;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Subscription;
+using SplashSphere.Infrastructure.Authentication;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -29,7 +31,8 @@ public static class QueueEndpoints
         var group = app
             .MapGroup("/api/v1/queue")
             .WithTags("Queue")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.QueueManagement));
 
         group.MapGet("/",              GetQueue)       .WithName("GetQueue");
         group.MapGet("/next",          GetNextInQueue) .WithName("GetNextInQueue");

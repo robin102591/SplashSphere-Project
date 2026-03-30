@@ -9,6 +9,8 @@ using SplashSphere.Application.Features.CashAdvances.Commands.DisburseCashAdvanc
 using SplashSphere.Application.Features.CashAdvances.Queries.GetCashAdvanceById;
 using SplashSphere.Application.Features.CashAdvances.Queries.GetCashAdvances;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Subscription;
+using SplashSphere.Infrastructure.Authentication;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -18,7 +20,8 @@ public static class CashAdvanceEndpoints
     {
         var group = app.MapGroup("/api/v1/cash-advances")
             .RequireAuthorization()
-            .WithTags("CashAdvances");
+            .WithTags("CashAdvances")
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.CashAdvanceTracking));
 
         group.MapGet("/",             GetCashAdvances);
         group.MapGet("/{id}",         GetCashAdvanceById);

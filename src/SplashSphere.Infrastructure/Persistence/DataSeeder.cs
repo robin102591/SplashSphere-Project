@@ -164,6 +164,10 @@ public static class DataSeeder
         // Batch 4 — government contribution brackets (global, not tenant-scoped)
         SeedGovernmentBrackets(ctx);
         await ctx.SaveChangesAsync();
+
+        // Batch 5 — subscription (dev tenant gets Growth/Active)
+        SeedSubscription(ctx);
+        await ctx.SaveChangesAsync();
     }
 
     // ── Master data ───────────────────────────────────────────────────────────
@@ -742,4 +746,25 @@ public static class DataSeeder
     private static ServiceCommission Pct(
         string svcId, string vtId, string szId, decimal rate) =>
         new(Ten, svcId, vtId, szId, CommissionType.Percentage, null, rate);
+
+    // ── Subscription seed ───────────────────────────────────────────────────
+
+    private static void SeedSubscription(ApplicationDbContext ctx)
+    {
+        if (ctx.TenantSubscriptions.IgnoreQueryFilters().Any()) return;
+
+        var now = DateTime.UtcNow;
+        var sub = new TenantSubscription(Ten, PlanTier.Growth, SubscriptionStatus.Active)
+        {
+            TrialStartDate = now.AddDays(-30),
+            TrialEndDate = now.AddDays(-16),
+            CurrentPeriodStart = now.AddDays(-15),
+            CurrentPeriodEnd = now.AddDays(15),
+            LastPaymentDate = now.AddDays(-15),
+            NextBillingDate = now.AddDays(15),
+            SmsCountResetDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+        };
+
+        ctx.TenantSubscriptions.Add(sub);
+    }
 }

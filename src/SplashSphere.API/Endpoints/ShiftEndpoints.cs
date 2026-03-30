@@ -13,6 +13,8 @@ using SplashSphere.Application.Features.Shifts.Queries.GetShiftReport;
 using SplashSphere.Application.Features.Shifts.Queries.GetShifts;
 using SplashSphere.Application.Features.Shifts.Queries.GetShiftVarianceReport;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Subscription;
+using SplashSphere.Infrastructure.Authentication;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -22,7 +24,8 @@ public static class ShiftEndpoints
     {
         var group = app.MapGroup("/api/v1/shifts")
             .RequireAuthorization()
-            .WithTags("Shifts");
+            .WithTags("Shifts")
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ShiftManagement));
 
         // Commands
         group.MapPost("/open",               OpenShift);

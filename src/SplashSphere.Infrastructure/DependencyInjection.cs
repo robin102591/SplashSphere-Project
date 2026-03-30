@@ -53,6 +53,9 @@ public static class DependencyInjection
         // ── Notification service (persist + broadcast) ──────────────────────
         services.AddScoped<INotificationService, NotificationService>();
 
+        // ── Plan enforcement ────────────────────────────────────────────────
+        services.AddScoped<IPlanEnforcementService, PlanEnforcementService>();
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();

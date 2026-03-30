@@ -95,4 +95,9 @@ public interface IApplicationDbContext
 
     // ── Government contribution brackets ──────────────────────────────────
     DbSet<GovernmentContributionBracket> GovernmentContributionBrackets { get; }
+
+    // ── Subscriptions & billing ─────────────────────────────────────────────
+    DbSet<TenantSubscription> TenantSubscriptions { get; }
+    DbSet<BillingRecord> BillingRecords { get; }
+    DbSet<PlanChangeLog> PlanChangeLogs { get; }
 }

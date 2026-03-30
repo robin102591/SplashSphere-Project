@@ -7,6 +7,8 @@ using SplashSphere.Application.Features.PricingModifiers.Commands.UpdatePricingM
 using SplashSphere.Application.Features.PricingModifiers.Queries.GetPricingModifierById;
 using SplashSphere.Application.Features.PricingModifiers.Queries.GetPricingModifiers;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Subscription;
+using SplashSphere.Infrastructure.Authentication;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -18,7 +20,8 @@ public static class PricingModifierEndpoints
         var group = app
             .MapGroup("/api/v1/pricing-modifiers")
             .WithTags("PricingModifiers")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.PricingModifiers));
 
         group.MapGet("/",          GetAll)         .WithName("GetPricingModifiers");
         group.MapGet("/{id}",      GetById)        .WithName("GetPricingModifierById");

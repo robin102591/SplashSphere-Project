@@ -41,4 +41,5 @@ public sealed class Tenant : IAuditableEntity
     public ICollection<ServiceCategory> ServiceCategories { get; set; } = [];
     public ICollection<MerchandiseCategory> MerchandiseCategories { get; set; } = [];
     public ICollection<QueueEntry> QueueEntries { get; set; } = [];
+    public TenantSubscription? Subscription { get; set; }
 }

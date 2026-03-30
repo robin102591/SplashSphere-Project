@@ -114,7 +114,17 @@
       "Bash(find /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/lib -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
       "Bash(node \"C:/Users/rnobl/AppData/Local/node/corepack/v1/pnpm/10.32.1/bin/pnpm.cjs\" exec next build)",
       "Bash(curl -s http://localhost:5000/api/v1/notifications/unread-count)",
-      "Bash(curl -sv http://localhost:5000/api/v1/notifications/unread-count)"
+      "Bash(curl -sv http://localhost:5000/api/v1/notifications/unread-count)",
+      "Bash(xargs -I {} find {} -type f -name *payroll* -o -name *cash*)",
+      "Bash(grep -r \"Payslip\\\\|payslip\\\\|export\\\\|component\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/payroll/[id]/page.tsx -n)",
+      "Bash(grep -rn \"export\\\\|csv\\\\|CSV\\\\|download\\\\|Download\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/payroll/[id]/page.tsx)",
+      "Bash(grep -rn \"Commission\\\\|commission\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/payroll/[id]/page.tsx)",
+      "Bash(grep -n \"bulk\\\\|Bulk\\\\|template\\\\|Template\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/payroll/[id]/page.tsx)",
+      "Bash(grep -n \"close\\\\|Close\\\\|process\\\\|Process\\\\|release\\\\|Release\" /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/payroll/[id]/page.tsx)",
+      "Bash(ls -la /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/)",
+      "Bash(ls \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard/attendance\")",
+      "Bash(pnpm --filter admin exec tsc --noEmit)",
+      "Bash(npx pnpm:*)"
     ]
   }
 }
