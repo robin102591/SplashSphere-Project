@@ -69,6 +69,36 @@ public static class RecurringJobSetup
             cronExpression: "*/5 * * * *",
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // ── Billing ──────────────────────────────────────────────────────────
+
+        // Daily 9 AM PHT — remind tenants with trials expiring in 1-3 days.
+        manager.AddOrUpdate<BillingJobService>(
+            recurringJobId: "billing-trial-reminder",
+            methodCall: job => job.SendTrialExpiryReminderAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 9),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // Daily 9 AM PHT — suspend accounts that are PastDue for > 7 days.
+        manager.AddOrUpdate<BillingJobService>(
+            recurringJobId: "billing-suspend-overdue",
+            methodCall: job => job.SuspendOverdueAccountsAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 9, minute: 5),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // 1st of each month 00:30 PHT — reset SMS counters.
+        manager.AddOrUpdate<BillingJobService>(
+            recurringJobId: "billing-sms-reset",
+            methodCall: job => job.ResetMonthlySmsCountAsync(CancellationToken.None),
+            cronExpression: "30 0 1 * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // 1st of each month 01:00 PHT — generate invoice records.
+        manager.AddOrUpdate<BillingJobService>(
+            recurringJobId: "billing-monthly-invoices",
+            methodCall: job => job.GenerateMonthlyInvoicesAsync(CancellationToken.None),
+            cronExpression: "0 1 1 * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         return app;
     }
 }

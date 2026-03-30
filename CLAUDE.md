@@ -502,6 +502,17 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/attendance/report` | Attendance summary report with per-employee stats (days, late, hours) |
 | `GET` | `/attendance/export/csv` | Export attendance records as CSV download |
 
+### Billing & Subscription
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/billing/plan` | Get current tenant's plan, features, limits, trial status |
+| `POST` | `/billing/checkout` | Create payment gateway checkout session for plan upgrade |
+| `POST` | `/billing/change-plan` | Request plan change (upgrade/downgrade with limit validation) |
+| `POST` | `/billing/cancel` | Cancel subscription (effective immediately) |
+| `GET` | `/billing/history` | Paginated payment/billing history |
+| `POST` | `/webhooks/payment` | Payment gateway webhook (no auth) |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---

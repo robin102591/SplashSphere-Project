@@ -15,6 +15,9 @@ public interface IPlanEnforcementService
 
     /// <summary>Get remaining SMS budget for the current month.</summary>
     Task<int> GetSmsBudgetRemainingAsync(string tenantId, CancellationToken ct);
+
+    /// <summary>Evict cached subscription for a tenant (call after plan change).</summary>
+    void EvictCache(string tenantId);
 }
 
 public enum LimitType { Branches, Employees, SmsPerMonth }

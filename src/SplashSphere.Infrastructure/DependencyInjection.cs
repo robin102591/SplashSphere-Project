@@ -56,11 +56,15 @@ public static class DependencyInjection
         // ── Plan enforcement ────────────────────────────────────────────────
         services.AddScoped<IPlanEnforcementService, PlanEnforcementService>();
 
+        // ── Payment gateway (mock for dev — swap to PayMongoPaymentGateway for prod)
+        services.AddScoped<IPaymentGateway, ExternalServices.MockPaymentGateway>();
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();
         services.AddTransient<TransactionJobService>();
         services.AddTransient<QueueJobService>();
+        services.AddTransient<BillingJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────────
         services.AddHangfire(config => config

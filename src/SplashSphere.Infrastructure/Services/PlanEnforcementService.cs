@@ -138,5 +138,5 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
     }
 
     /// <summary>Evict cached subscription for a tenant (call after plan change).</summary>
-    public static void EvictCache(string tenantId) => Cache.TryRemove(tenantId, out _);
+    public void EvictCache(string tenantId) => Cache.TryRemove(tenantId, out _);
 }

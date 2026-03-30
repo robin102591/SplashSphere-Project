@@ -1,0 +1,114 @@
+using MediatR;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using SplashSphere.Application.Features.Billing.Commands.CancelSubscription;
+using SplashSphere.Application.Features.Billing.Commands.ChangePlan;
+using SplashSphere.Application.Features.Billing.Commands.CreateCheckout;
+using SplashSphere.Application.Features.Billing.Commands.ProcessPaymentWebhook;
+using SplashSphere.Application.Features.Billing.Queries.GetBillingHistory;
+using SplashSphere.Application.Features.Billing.Queries.GetCurrentPlan;
+using SplashSphere.Domain.Enums;
+
+namespace SplashSphere.API.Endpoints;
+
+public static class BillingEndpoints
+{
+    public static IEndpointRouteBuilder MapBillingEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/v1/billing")
+            .RequireAuthorization()
+            .WithTags("Billing");
+
+        group.MapGet("/plan", GetCurrentPlan);
+        group.MapPost("/checkout", CreateCheckout);
+        group.MapPost("/change-plan", ChangePlan);
+        group.MapPost("/cancel", CancelSubscription);
+        group.MapGet("/history", GetBillingHistory);
+
+        // ── Payment webhook — NO auth (called by PayMongo) ───────────────────
+        app.MapPost("/api/v1/webhooks/payment", ProcessPaymentWebhook)
+            .WithTags("Webhooks")
+            .AllowAnonymous();
+
+        return app;
+    }
+
+    private static async Task<Ok<object>> GetCurrentPlan(
+        ISender sender, CancellationToken ct)
+        => TypedResults.Ok<object>(
+            await sender.Send(new GetCurrentPlanQuery(), ct));
+
+    private static async Task<Results<Ok<object>, BadRequest<ProblemDetails>>> CreateCheckout(
+        [FromBody] CreateCheckoutRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new CreateCheckoutCommand((PlanTier)body.TargetPlan, body.SuccessUrl, body.CancelUrl), ct);
+
+        if (result.IsFailure)
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+
+        return TypedResults.Ok<object>(result.Value);
+    }
+
+    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> ChangePlan(
+        [FromBody] ChangePlanRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new ChangePlanCommand((PlanTier)body.NewPlan), ct);
+
+        if (result.IsFailure)
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> CancelSubscription(
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new CancelSubscriptionCommand(), ct);
+
+        if (result.IsFailure)
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<Ok<object>> GetBillingHistory(
+        [AsParameters] BillingHistoryParams p,
+        ISender sender,
+        CancellationToken ct)
+        => TypedResults.Ok<object>(
+            await sender.Send(new GetBillingHistoryQuery(p.Page, p.PageSize), ct));
+
+    private static async Task<IResult> ProcessPaymentWebhook(
+        HttpRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var payload = await new StreamReader(request.Body).ReadToEndAsync(ct);
+        var signature = request.Headers["X-Webhook-Signature"].FirstOrDefault() ?? "";
+
+        var result = await sender.Send(
+            new ProcessPaymentWebhookCommand(payload, signature), ct);
+
+        // Always return 200 to the gateway so it doesn't retry
+        return TypedResults.Ok(new { received = true });
+    }
+
+    // ── Request records ─────────────────────────────────────────────────────
+
+    private sealed record CreateCheckoutRequest(
+        int TargetPlan,
+        string SuccessUrl,
+        string CancelUrl);
+
+    private sealed record ChangePlanRequest(int NewPlan);
+
+    private sealed record BillingHistoryParams(
+        int Page = 1,
+        int PageSize = 20);
+}
