@@ -23,7 +23,7 @@ export const payrollKeys = {
   detail: (id: string) => ['payroll', id] as const,
   entryDetail: (id: string) => ['payroll', 'entry', id] as const,
   templates: ['payroll', 'templates'] as const,
-  settings: ['payroll', 'settings'] as const,
+  settings: (branchId?: string) => ['payroll', 'settings', branchId ?? ''] as const,
   payslip: (entryId: string) => ['payroll', 'payslip', entryId] as const,
 }
 
@@ -34,6 +34,7 @@ export interface PayrollListParams {
   year?: number
   page?: number
   pageSize?: number
+  branchId?: string
 }
 
 export interface UpdateEntryValues {
@@ -53,6 +54,7 @@ export function usePayrollPeriods(params: PayrollListParams = {}) {
       if (params.year != null) qs.set('year', String(params.year))
       if (params.page) qs.set('page', String(params.page))
       if (params.pageSize) qs.set('pageSize', String(params.pageSize))
+      if (params.branchId) qs.set('branchId', params.branchId)
       return apiClient.get<PagedResult<PayrollPeriodSummary>>(
         `/payroll/periods?${qs.toString()}`,
         token ?? undefined
@@ -77,7 +79,7 @@ export function useCreatePayrollPeriod() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { startDate: string; endDate: string }) => {
+    mutationFn: async (data: { startDate: string; endDate: string; branchId?: string }) => {
       const token = await getToken()
       return apiClient.post<{ id: string }>('/payroll/periods', data, token ?? undefined)
     },
@@ -308,13 +310,14 @@ export function useDeletePayrollTemplate() {
 
 // ── Payroll Settings ───────────────────────────────────────────────────────
 
-export function usePayrollSettings() {
+export function usePayrollSettings(branchId?: string) {
   const { getToken } = useAuth()
   return useQuery({
-    queryKey: payrollKeys.settings,
+    queryKey: payrollKeys.settings(branchId),
     queryFn: async () => {
       const token = await getToken()
-      return apiClient.get<PayrollSettingsDto>('/settings/payroll-config', token ?? undefined)
+      const qs = branchId ? `?branchId=${branchId}` : ''
+      return apiClient.get<PayrollSettingsDto>(`/settings/payroll-config${qs}`, token ?? undefined)
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -324,11 +327,11 @@ export function useUpdatePayrollSettings() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { cutOffStartDay: number; frequency: number; payReleaseDayOffset: number; autoCalcGovernmentDeductions: boolean }) => {
+    mutationFn: async (data: { cutOffStartDay: number; frequency: number; payReleaseDayOffset: number; autoCalcGovernmentDeductions: boolean; branchId?: string }) => {
       const token = await getToken()
       return apiClient.put<void>('/settings/payroll-config', data, token ?? undefined)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: payrollKeys.settings }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['payroll', 'settings'] }),
   })
 }
 

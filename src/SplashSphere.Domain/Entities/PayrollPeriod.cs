@@ -19,10 +19,11 @@ public sealed class PayrollPeriod : IAuditableEntity
 {
     private PayrollPeriod() { } // EF Core
 
-    public PayrollPeriod(string tenantId, int year, int cutOffWeek, DateOnly startDate, DateOnly endDate)
+    public PayrollPeriod(string tenantId, int year, int cutOffWeek, DateOnly startDate, DateOnly endDate, string? branchId = null)
     {
         Id = Guid.NewGuid().ToString();
         TenantId = tenantId;
+        BranchId = branchId;
         Year = year;
         CutOffWeek = cutOffWeek;
         StartDate = startDate;
@@ -32,6 +33,12 @@ public sealed class PayrollPeriod : IAuditableEntity
 
     public string Id { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// <c>null</c> = tenant-wide period (legacy).
+    /// Non-null = branch-scoped period.
+    /// </summary>
+    public string? BranchId { get; set; }
     public PayrollStatus Status { get; set; }
 
     /// <summary>ISO calendar year (e.g. 2025).</summary>
@@ -58,5 +65,6 @@ public sealed class PayrollPeriod : IAuditableEntity
     // ── Navigations ──────────────────────────────────────────────────────────
 
     public Tenant Tenant { get; set; } = null!;
+    public Branch? Branch { get; set; }
     public ICollection<PayrollEntry> Entries { get; set; } = [];
 }

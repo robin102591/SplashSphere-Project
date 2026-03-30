@@ -8,4 +8,5 @@ namespace SplashSphere.Application.Features.Payroll.Commands.CreatePayrollPeriod
 /// </summary>
 public sealed record CreatePayrollPeriodCommand(
     DateOnly StartDate,
-    DateOnly EndDate) : ICommand<string>;
+    DateOnly EndDate,
+    string? BranchId = null) : ICommand<string>;

@@ -68,7 +68,7 @@ public static class PayrollEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(
-            new GetPayrollPeriodsQuery(p.Page, p.PageSize, p.Status, p.Year), ct);
+            new GetPayrollPeriodsQuery(p.Page, p.PageSize, p.Status, p.Year, p.BranchId), ct);
         return TypedResults.Ok<object>(result);
     }
 
@@ -80,7 +80,7 @@ public static class PayrollEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(
-            new CreatePayrollPeriodCommand(body.StartDate, body.EndDate), ct);
+            new CreatePayrollPeriodCommand(body.StartDate, body.EndDate, body.BranchId), ct);
 
         if (result.IsFailure)
             return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
@@ -357,11 +357,13 @@ public static class PayrollEndpoints
         int Page = 1,
         int PageSize = 20,
         PayrollStatus? Status = null,
-        int? Year = null);
+        int? Year = null,
+        string? BranchId = null);
 
     private sealed record CreatePeriodRequest(
         DateOnly StartDate,
-        DateOnly EndDate);
+        DateOnly EndDate,
+        string? BranchId = null);
 
     private sealed record UpdateEntryRequest(
         string? Notes);

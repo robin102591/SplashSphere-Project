@@ -22,6 +22,9 @@ public sealed class PayrollPeriodConfiguration : IEntityTypeConfiguration<Payrol
             .IsRequired()
             .HasMaxLength(256);
 
+        builder.Property(pp => pp.BranchId)
+            .HasMaxLength(36);
+
         builder.Property(pp => pp.Status)
             .IsRequired()
             .HasConversion<int>();
@@ -62,10 +65,16 @@ public sealed class PayrollPeriodConfiguration : IEntityTypeConfiguration<Payrol
             .HasForeignKey(pp => pp.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // ── Unique constraint: one period per start date per tenant ────────────
-        // Prevents the daily payroll Hangfire job from double-creating
-        builder.HasIndex(pp => new { pp.TenantId, pp.StartDate })
-            .IsUnique();
+        // FK to Branch (optional)
+        builder.HasOne(pp => pp.Branch)
+            .WithMany()
+            .HasForeignKey(pp => pp.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ── Unique constraint: one period per start date per tenant+branch ────
+        builder.HasIndex(pp => new { pp.TenantId, pp.BranchId, pp.StartDate })
+            .IsUnique()
+            .AreNullsDistinct(false);
 
         // ── Additional indexes ────────────────────────────────────────────────
         builder.HasIndex(pp => pp.TenantId);

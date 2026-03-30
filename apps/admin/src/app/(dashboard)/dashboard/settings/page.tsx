@@ -23,6 +23,7 @@ import { useVehicleTypes, useCreateVehicleType, useUpdateVehicleType, useToggleV
 import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/use-sizes'
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
 import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel, useToggleModel } from '@/hooks/use-cars'
+import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
@@ -590,20 +591,23 @@ const DAY_NAMES = [
 ]
 
 function PayrollConfigSection() {
-  const { data: settings, isLoading } = usePayrollSettings()
+  const { data: branches } = useBranches()
+  const [selectedBranch, setSelectedBranch] = useState<string>('')
+  const { data: settings, isLoading } = usePayrollSettings(selectedBranch || undefined)
   const { mutate: save, isPending: saving } = useUpdatePayrollSettings()
   const [cutOffDay, setCutOffDay] = useState('')
   const [frequency, setFrequency] = useState('1')
   const [releaseOffset, setReleaseOffset] = useState('3')
   const [autoCalcGov, setAutoCalcGov] = useState(false)
-  const [initialized, setInitialized] = useState(false)
+  const [lastBranch, setLastBranch] = useState<string>('')
 
-  if (settings && !initialized) {
+  // Re-initialize when settings change (branch switch)
+  if (settings && lastBranch !== (selectedBranch || '__default__')) {
     setCutOffDay(String(settings.cutOffStartDay))
     setFrequency(String(settings.frequency))
     setReleaseOffset(String(settings.payReleaseDayOffset))
     setAutoCalcGov(settings.autoCalcGovernmentDeductions)
-    setInitialized(true)
+    setLastBranch(selectedBranch || '__default__')
   }
 
   const isSemiMonthly = frequency === '2'
@@ -615,6 +619,7 @@ function PayrollConfigSection() {
         frequency: parseInt(frequency),
         payReleaseDayOffset: parseInt(releaseOffset) || 0,
         autoCalcGovernmentDeductions: autoCalcGov,
+        branchId: selectedBranch || undefined,
       },
       {
         onSuccess: () => toast.success('Payroll settings saved.'),
@@ -632,8 +637,25 @@ function PayrollConfigSection() {
       <div>
         <h3 className="text-sm font-medium">Period Configuration</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Configure payroll frequency and when periods are created.
+          Configure payroll frequency and when periods are created. Select a branch to set per-branch overrides, or keep "Default" for tenant-wide settings.
         </p>
+      </div>
+      <div className="max-w-lg space-y-1.5">
+        <Label>Branch</Label>
+        <Select value={selectedBranch || 'default'} onValueChange={(v) => setSelectedBranch(v === 'default' ? '' : v)}>
+          <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">Default (All Branches)</SelectItem>
+            {branches?.map((b) => (
+              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {settings?.isInherited && selectedBranch && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            This branch has no override — showing inherited defaults. Save to create a branch-specific override.
+          </p>
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
         <div className="space-y-1.5">

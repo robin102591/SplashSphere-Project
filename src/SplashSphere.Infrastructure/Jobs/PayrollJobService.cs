@@ -12,11 +12,11 @@ namespace SplashSphere.Infrastructure.Jobs;
 
 /// <summary>
 /// Daily Hangfire job for payroll lifecycle management.
-/// Runs once per day (00:05 PHT) and processes each tenant according to
-/// their <see cref="PayrollSettings.Frequency"/> and <see cref="PayrollSettings.CutOffStartDay"/>.
+/// Runs once per day (00:05 PHT) and processes each tenant's branches according to
+/// their effective <see cref="PayrollSettings"/> (branch override → tenant default).
 /// <list type="bullet">
 ///   <item>Auto-closes expired Open periods whose EndDate has passed.</item>
-///   <item>Creates new periods: weekly (on CutOffStartDay) or semi-monthly (on 1st and 16th).</item>
+///   <item>Creates new per-branch periods: weekly (on CutOffStartDay) or semi-monthly (on 1st and 16th).</item>
 /// </list>
 /// </summary>
 public sealed class PayrollJobService(
@@ -38,64 +38,64 @@ public sealed class PayrollJobService(
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
-        // ── 1. Load all active tenants ────────────────────────────────────────
-        var tenantIds = await db.Tenants
+        // ── 1. Load all active tenants and their branches ────────────────────
+        var tenantBranches = await db.Branches
+            .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(t => t.IsActive)
-            .Select(t => t.Id)
+            .Where(b => b.IsActive && b.Tenant.IsActive)
+            .Select(b => new { b.TenantId, BranchId = b.Id })
             .ToListAsync(ct);
 
-        // ── 2. Load per-tenant payroll settings ───────────────────────────────
-        var settingsMap = await db.PayrollSettings
+        var tenantIds = tenantBranches.Select(x => x.TenantId).Distinct().ToList();
+
+        // ── 2. Load all payroll settings (tenant defaults + branch overrides) ─
+        var allSettings = await db.PayrollSettings
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(ps => tenantIds.Contains(ps.TenantId))
-            .ToDictionaryAsync(
-                ps => ps.TenantId,
-                ps => (ps.CutOffStartDay, ps.Frequency),
-                ct);
+            .Select(ps => new { ps.TenantId, ps.BranchId, ps.CutOffStartDay, ps.Frequency })
+            .ToListAsync(ct);
 
-        // ── 3. Auto-close expired Open periods (any tenant, any day) ──────────
+        var settingsMap = allSettings.ToDictionary(
+            s => (s.TenantId, s.BranchId ?? ""),
+            s => (s.CutOffStartDay, s.Frequency));
+
+        // ── 3. Auto-close expired Open periods (any tenant/branch, any day) ──
         await AutoCloseExpiredPeriodsAsync(todayManila, ct);
 
-        // ── 4. Create new periods per tenant ────────────────────────────────
+        // ── 4. Create new per-branch periods ─────────────────────────────────
         var created = 0;
 
         // Pre-load existing period start dates for duplicate prevention
-        // Check both possible start dates: previous week and semi-monthly boundaries
         var possibleStartDates = ComputePossibleStartDates(todayManila);
-        var existingTenants = await db.PayrollPeriods
+        var existingPeriods = await db.PayrollPeriods
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(p => possibleStartDates.Contains(p.StartDate))
-            .Select(p => new { p.TenantId, p.StartDate })
+            .Select(p => new { p.TenantId, p.BranchId, p.StartDate })
             .ToListAsync(ct);
 
-        var existingSet = existingTenants
-            .Select(x => $"{x.TenantId}|{x.StartDate}")
+        var existingSet = existingPeriods
+            .Select(x => $"{x.TenantId}|{x.BranchId ?? ""}|{x.StartDate}")
             .ToHashSet();
 
-        foreach (var tenantId in tenantIds)
+        foreach (var tb in tenantBranches)
         {
-            var (cutOffDay, frequency) = settingsMap.TryGetValue(tenantId, out var settings)
-                ? settings
-                : (DayOfWeek.Monday, PayrollFrequency.Weekly);
+            // Resolve effective settings: branch override → tenant default → hardcoded
+            var (cutOffDay, frequency) = ResolveEffectiveSettings(settingsMap, tb.TenantId, tb.BranchId);
 
             DateOnly startDate, endDate;
             int cutOffWeek;
 
             if (frequency == PayrollFrequency.SemiMonthly)
             {
-                // Semi-monthly: create on the 1st (for prev month 16th–last) and 16th (for 1st–15th)
                 if (todayManila.Day == 16)
                 {
-                    // Period covers 1st–15th of current month
                     startDate = new DateOnly(todayManila.Year, todayManila.Month, 1);
                     endDate   = new DateOnly(todayManila.Year, todayManila.Month, 15);
                 }
                 else if (todayManila.Day == 1)
                 {
-                    // Period covers 16th–last day of previous month
                     var prevMonth = todayManila.AddMonths(-1);
                     startDate = new DateOnly(prevMonth.Year, prevMonth.Month, 16);
                     endDate   = new DateOnly(prevMonth.Year, prevMonth.Month,
@@ -103,14 +103,13 @@ public sealed class PayrollJobService(
                 }
                 else
                 {
-                    continue; // Not a semi-monthly trigger day
+                    continue;
                 }
 
                 cutOffWeek = ComputeSemiMonthlyCutOffWeek(startDate);
             }
             else
             {
-                // Weekly: create on CutOffStartDay for previous 7 days
                 if (todayDow != cutOffDay)
                     continue;
 
@@ -119,17 +118,17 @@ public sealed class PayrollJobService(
                 cutOffWeek = ComputeWeeklyCutOffWeek(startDate, cutOffDay);
             }
 
-            var key = $"{tenantId}|{startDate}";
+            var key = $"{tb.TenantId}|{tb.BranchId}|{startDate}";
             if (existingSet.Contains(key))
             {
                 logger.LogDebug(
-                    "PayrollJob: Tenant {TenantId} already has a period starting {Date} — skipping.",
-                    tenantId, startDate);
+                    "PayrollJob: Tenant {TenantId} branch {BranchId} already has a period starting {Date} — skipping.",
+                    tb.TenantId, tb.BranchId, startDate);
                 continue;
             }
 
             var year = startDate.Year;
-            db.PayrollPeriods.Add(new PayrollPeriod(tenantId, year, cutOffWeek, startDate, endDate));
+            db.PayrollPeriods.Add(new PayrollPeriod(tb.TenantId, year, cutOffWeek, startDate, endDate, tb.BranchId));
             created++;
         }
 
@@ -140,7 +139,26 @@ public sealed class PayrollJobService(
             "PayrollJob: Daily run complete. Created {Created} new period(s).", created);
     }
 
-    // ── Auto-close expired periods ────────────────────────────────────────────
+    // ── Resolve effective settings ──────────────────────────────────────────
+
+    private static (DayOfWeek CutOffDay, PayrollFrequency Frequency) ResolveEffectiveSettings(
+        Dictionary<(string, string), (DayOfWeek, PayrollFrequency)> settingsMap,
+        string tenantId,
+        string branchId)
+    {
+        // Branch override
+        if (settingsMap.TryGetValue((tenantId, branchId), out var branchSettings))
+            return branchSettings;
+
+        // Tenant default
+        if (settingsMap.TryGetValue((tenantId, ""), out var tenantSettings))
+            return tenantSettings;
+
+        // Hardcoded default
+        return (DayOfWeek.Monday, PayrollFrequency.Weekly);
+    }
+
+    // ── Auto-close expired periods ──────────────────────────────────────────
 
     private async Task AutoCloseExpiredPeriodsAsync(DateOnly todayManila, CancellationToken ct)
     {
@@ -211,20 +229,15 @@ public sealed class PayrollJobService(
             closed, failed);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Computes all possible period start dates for today to check duplicates in a single query.
-    /// </summary>
     private static List<DateOnly> ComputePossibleStartDates(DateOnly todayManila)
     {
         var dates = new List<DateOnly>
         {
-            // Weekly: always previous 7 days
             todayManila.AddDays(-7),
         };
 
-        // Semi-monthly: 1st–15th or 16th–last
         if (todayManila.Day == 16)
             dates.Add(new DateOnly(todayManila.Year, todayManila.Month, 1));
         else if (todayManila.Day == 1)
@@ -236,10 +249,6 @@ public sealed class PayrollJobService(
         return dates;
     }
 
-    /// <summary>
-    /// Computes a sequential week number relative to the tenant's configured
-    /// cut-off start day within the year.
-    /// </summary>
     private static int ComputeWeeklyCutOffWeek(DateOnly startDate, DayOfWeek cutOffStartDay)
     {
         var jan1 = new DateOnly(startDate.Year, 1, 1);
@@ -252,10 +261,6 @@ public sealed class PayrollJobService(
         return ((startDate.DayNumber - firstCutOff.DayNumber) / 7) + 1;
     }
 
-    /// <summary>
-    /// Computes a period number (1–24) for semi-monthly payroll.
-    /// January 1st–15th = 1, January 16th–31st = 2, February 1st–15th = 3, etc.
-    /// </summary>
     private static int ComputeSemiMonthlyCutOffWeek(DateOnly startDate)
     {
         return (startDate.Month - 1) * 2 + (startDate.Day <= 15 ? 1 : 2);

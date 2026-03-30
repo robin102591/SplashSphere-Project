@@ -20,6 +20,9 @@ public sealed class GetPayrollPeriodsQueryHandler(IApplicationDbContext context)
         if (request.Year.HasValue)
             query = query.Where(p => p.Year == request.Year.Value);
 
+        if (!string.IsNullOrWhiteSpace(request.BranchId))
+            query = query.Where(p => p.BranchId == request.BranchId);
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
@@ -34,6 +37,8 @@ public sealed class GetPayrollPeriodsQueryHandler(IApplicationDbContext context)
                 p.CutOffWeek,
                 p.StartDate,
                 p.EndDate,
+                p.BranchId,
+                p.Branch != null ? p.Branch.Name : null,
                 p.Entries.Count,
                 p.Entries.Sum(e => e.BaseSalary + e.TotalCommissions + e.Bonuses - e.Deductions),
                 p.ScheduledReleaseDate,

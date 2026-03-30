@@ -43,6 +43,7 @@ public sealed class ReleasePayrollPeriodCommandHandler(
         eventPublisher.Enqueue(new PayrollReleasedEvent(
             period.Id,
             tenantContext.TenantId,
+            period.BranchId,
             period.Year,
             period.CutOffWeek,
             totalNetPay,

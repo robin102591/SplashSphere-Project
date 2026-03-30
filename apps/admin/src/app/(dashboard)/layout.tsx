@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
@@ -9,8 +10,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
+  const cookieStore = await cookies()
+  const sidebarState = cookieStore.get('sidebar_state')?.value
+  const defaultOpen = sidebarState !== 'false'
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
       <SignalRProvider>
         <SidebarInset>

@@ -3,21 +3,30 @@ using SplashSphere.Domain.Enums;
 namespace SplashSphere.Domain.Entities;
 
 /// <summary>
-/// Tenant-level configuration for payroll period scheduling.
-/// One record per tenant; created on demand (upsert).
+/// Payroll period scheduling configuration. One record per tenant (default) or
+/// per branch (override). When <see cref="BranchId"/> is <c>null</c> the row
+/// represents the tenant-wide default; otherwise it overrides settings for that
+/// specific branch.
 /// </summary>
 public sealed class PayrollSettings : IAuditableEntity
 {
     private PayrollSettings() { } // EF Core
 
-    public PayrollSettings(string tenantId)
+    public PayrollSettings(string tenantId, string? branchId = null)
     {
         Id       = Guid.NewGuid().ToString();
         TenantId = tenantId;
+        BranchId = branchId;
     }
 
     public string Id       { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// <c>null</c> = tenant-wide default.
+    /// Non-null = branch-specific override.
+    /// </summary>
+    public string? BranchId { get; set; }
 
     /// <summary>
     /// How often payroll periods are created: Weekly or SemiMonthly.
@@ -51,4 +60,5 @@ public sealed class PayrollSettings : IAuditableEntity
 
     // ── Navigation ─────────────────────────────────────────────────────────────
     public Tenant Tenant { get; set; } = null!;
+    public Branch? Branch { get; set; }
 }

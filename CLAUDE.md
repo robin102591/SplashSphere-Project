@@ -595,6 +595,7 @@ Events: `TransactionUpdated`, `DashboardMetricsUpdated`, `AttendanceUpdated`, `Q
 13. **Shift Gate**: Cashier must have an open shift before adding to queue or creating a transaction. Enforced in both backend (handler validation) and frontend (page-level gate).
 14. **POS Lock Screen**: POS auto-locks after configurable inactivity (default 5 min) or manual lock. Requires 4–6 digit PIN to unlock. PINs are BCrypt-hashed, stored on User entity, set by admins only. Max PIN attempts before 30s cooldown (configurable via ShiftSettings).
 15. **Cash Advance FIFO Deduction**: Active cash advances are automatically deducted during payroll close, oldest first. Each deduction creates a `PayrollAdjustment` row with category "Cash Advance". Deduction amount = `min(DeductionPerPeriod, RemainingBalance)`. Advance marked `FullyPaid` when balance reaches zero.
+16. **Per-Branch Payroll**: Payroll periods and settings are branch-scoped. Each branch can have its own cut-off day and frequency (overrides tenant default). The Hangfire job creates one period per branch per cycle. `ClosePayrollPeriod` scopes employees to the period's branch. Settings resolve: branch override → tenant default → hardcoded (Monday/Weekly).
 
 ---
 

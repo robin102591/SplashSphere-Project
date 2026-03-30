@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { usePayrollPeriods, useCreatePayrollPeriod, usePayrollSettings } from '@/hooks/use-payroll'
+import { useBranches } from '@/hooks/use-branches'
 import { PayrollStatus } from '@splashsphere/types'
 import type { PayrollPeriodSummary } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
@@ -62,6 +63,9 @@ function PeriodRow({ period }: { period: PayrollPeriodSummary }) {
         {periodLabel(period)}
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
+        {period.branchName ?? 'All Branches'}
+      </td>
+      <td className="px-4 py-3 text-sm text-muted-foreground">
         {startDate} – {endDate}
       </td>
       <td className="px-4 py-3">
@@ -83,7 +87,9 @@ function formatDateOnly(date: Date): string {
 }
 
 function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { data: settings } = usePayrollSettings()
+  const { data: branches } = useBranches()
+  const [selectedBranch, setSelectedBranch] = useState<string>('')
+  const { data: settings } = usePayrollSettings(selectedBranch || undefined)
   const { mutate: create, isPending } = useCreatePayrollPeriod()
 
   const isSemiMonthly = settings?.frequency === 2
@@ -146,7 +152,7 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const handleCreate = () => {
     if (!startDate || !endDate) return
     create(
-      { startDate, endDate },
+      { startDate, endDate, branchId: selectedBranch || undefined },
       {
         onSuccess: () => {
           toast.success('Payroll period created')
@@ -174,6 +180,18 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Branch</Label>
+            <Select value={selectedBranch || 'none'} onValueChange={(v) => setSelectedBranch(v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select a branch</SelectItem>
+                {branches?.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {isSemiMonthly ? (
             <>
               <div className="space-y-1.5">
@@ -214,7 +232,7 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleCreate} disabled={isPending || !startDate}>
+          <Button onClick={handleCreate} disabled={isPending || !startDate || !selectedBranch}>
             {isPending ? 'Creating…' : 'Create Period'}
           </Button>
         </DialogFooter>
@@ -225,13 +243,17 @@ function CreatePeriodDialog({ open, onOpenChange }: { open: boolean; onOpenChang
 
 export default function PayrollPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [branchFilter, setBranchFilter] = useState<string>('all')
   const [createOpen, setCreateOpen] = useState(false)
   const currentYear = new Date().getFullYear()
   const [yearFilter, setYearFilter] = useState<string>(String(currentYear))
 
+  const { data: branches } = useBranches()
+
   const { data, isLoading, isError } = usePayrollPeriods({
     status: statusFilter !== 'all' ? (Number(statusFilter) as PayrollStatus) : undefined,
     year: yearFilter !== 'all' ? Number(yearFilter) : undefined,
+    branchId: branchFilter !== 'all' ? branchFilter : undefined,
     pageSize: 52,
   })
 
@@ -280,6 +302,18 @@ export default function PayrollPage() {
             <SelectItem value={String(PayrollStatus.Processed)}>Processed</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={branchFilter} onValueChange={setBranchFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All branches" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Branches</SelectItem>
+            {branches?.map((b) => (
+              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading && (
@@ -310,6 +344,7 @@ export default function PayrollPage() {
             <thead className="bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Period</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Branch</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Dates</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
                 <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Entries</th>

@@ -41,6 +41,9 @@ public sealed class PayrollSettingsConfiguration : IEntityTypeConfiguration<Payr
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(ps => ps.BranchId)
+            .HasMaxLength(36);
+
         builder.Property(ps => ps.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");
@@ -48,14 +51,24 @@ public sealed class PayrollSettingsConfiguration : IEntityTypeConfiguration<Payr
         builder.Property(ps => ps.UpdatedAt)
             .IsRequired();
 
-        // One record per tenant
-        builder.HasIndex(ps => ps.TenantId).IsUnique();
+        // Unique: one row per (tenant, branch). PostgreSQL treats NULLs as distinct
+        // by default, so we use NULLS NOT DISTINCT to allow only one default row.
+        builder.HasIndex(ps => new { ps.TenantId, ps.BranchId })
+            .IsUnique()
+            .HasDatabaseName("IX_PayrollSettings_TenantId_BranchId")
+            .AreNullsDistinct(false);
 
         // FK to Tenant
         builder.HasOne(ps => ps.Tenant)
             .WithMany()
             .HasForeignKey(ps => ps.TenantId)
             .HasPrincipalKey(t => t.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // FK to Branch (optional)
+        builder.HasOne(ps => ps.Branch)
+            .WithMany()
+            .HasForeignKey(ps => ps.BranchId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

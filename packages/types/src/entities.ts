@@ -605,6 +605,8 @@ export interface PayrollPeriodSummary {
   startDate: string;
   /** YYYY-MM-DD */
   endDate: string;
+  branchId: string | null;
+  branchName: string | null;
   entryCount: number;
   totalNetPay: number;
   scheduledReleaseDate: string | null;
@@ -944,6 +946,9 @@ export interface PayrollSettingsDto {
   frequency: number;      // PayrollFrequency: 1=Weekly, 2=SemiMonthly
   payReleaseDayOffset: number;
   autoCalcGovernmentDeductions: boolean;
+  branchId: string | null;
+  branchName: string | null;
+  isInherited: boolean;
 }
 
 export interface ShiftSettingsDto {

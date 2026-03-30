@@ -21,10 +21,11 @@ public static class PayrollSettingsEndpoints
     }
 
     private static async Task<Ok<object>> GetPayrollSettings(
+        string? branchId,
         ISender sender,
         CancellationToken ct)
     {
-        var result = await sender.Send(new GetPayrollSettingsQuery(), ct);
+        var result = await sender.Send(new GetPayrollSettingsQuery(branchId), ct);
         return TypedResults.Ok<object>(result);
     }
 
@@ -34,7 +35,8 @@ public static class PayrollSettingsEndpoints
         CancellationToken ct)
     {
         var command = new UpdatePayrollSettingsCommand(
-            body.CutOffStartDay, body.Frequency, body.PayReleaseDayOffset, body.AutoCalcGovernmentDeductions);
+            body.CutOffStartDay, body.Frequency, body.PayReleaseDayOffset,
+            body.AutoCalcGovernmentDeductions, body.BranchId);
 
         var result = await sender.Send(command, ct);
 
@@ -48,5 +50,6 @@ public static class PayrollSettingsEndpoints
         int CutOffStartDay,
         int Frequency = 1,
         int PayReleaseDayOffset = 3,
-        bool AutoCalcGovernmentDeductions = false);
+        bool AutoCalcGovernmentDeductions = false,
+        string? BranchId = null);
 }

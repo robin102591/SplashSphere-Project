@@ -9,6 +9,7 @@ namespace SplashSphere.Domain.Events;
 public sealed record PayrollPeriodClosedEvent(
     string PayrollPeriodId,
     string TenantId,
+    string? BranchId,
     int Year,
     int CutOffWeek,
     DateOnly StartDate,
@@ -24,6 +25,7 @@ public sealed record PayrollPeriodClosedEvent(
 public sealed record PayrollProcessedEvent(
     string PayrollPeriodId,
     string TenantId,
+    string? BranchId,
     int Year,
     int CutOffWeek,
     /// <summary>Sum of all <c>PayrollEntry.NetPay</c> values in the period.</summary>
@@ -37,6 +39,7 @@ public sealed record PayrollProcessedEvent(
 public sealed record PayrollReleasedEvent(
     string PayrollPeriodId,
     string TenantId,
+    string? BranchId,
     int Year,
     int CutOffWeek,
     decimal TotalNetPay,

@@ -36,10 +36,14 @@ public sealed class ProcessPayrollPeriodCommandHandler(
 
         period.Status = PayrollStatus.Processed;
 
-        // Compute scheduled release date from tenant settings
-        var settings = await context.PayrollSettings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
+        // Resolve effective settings: branch override → tenant default
+        var settings = period.BranchId is not null
+            ? await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.BranchId == period.BranchId, cancellationToken)
+              ?? await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId && s.BranchId == null, cancellationToken)
+            : await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId && s.BranchId == null, cancellationToken);
 
         var offset = settings?.PayReleaseDayOffset ?? 3;
         if (offset > 0)
@@ -48,6 +52,7 @@ public sealed class ProcessPayrollPeriodCommandHandler(
         eventPublisher.Enqueue(new PayrollProcessedEvent(
             period.Id,
             tenantContext.TenantId,
+            period.BranchId,
             period.Year,
             period.CutOffWeek,
             totalNetPay));

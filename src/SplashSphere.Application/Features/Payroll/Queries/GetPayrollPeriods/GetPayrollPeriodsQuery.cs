@@ -9,4 +9,5 @@ public sealed record GetPayrollPeriodsQuery(
     int Page = 1,
     int PageSize = 20,
     PayrollStatus? Status = null,
-    int? Year = null) : IQuery<PagedResult<PayrollPeriodSummaryDto>>;
+    int? Year = null,
+    string? BranchId = null) : IQuery<PagedResult<PayrollPeriodSummaryDto>>;

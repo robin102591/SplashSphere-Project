@@ -40,10 +40,15 @@ public sealed class ClosePayrollPeriodCommandHandler(
 
         // ── Bulk-load per-employee aggregates (3 queries) ─────────────────────
 
-        // 1. All active employees for the tenant
-        var employees = await context.Employees
+        // 1. Active employees — scoped to branch when period is branch-specific
+        var employeeQuery = context.Employees
             .AsNoTracking()
-            .Where(e => e.IsActive)
+            .Where(e => e.IsActive);
+
+        if (period.BranchId is not null)
+            employeeQuery = employeeQuery.Where(e => e.BranchId == period.BranchId);
+
+        var employees = await employeeQuery
             .Select(e => new
             {
                 e.Id,
@@ -177,9 +182,14 @@ public sealed class ClosePayrollPeriodCommandHandler(
         }
 
         // ── Auto-calculate government deductions (if enabled) ─────────────────
-        var settings = await context.PayrollSettings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
+        // Resolve effective settings: branch override → tenant default
+        var settings = period.BranchId is not null
+            ? await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.BranchId == period.BranchId, cancellationToken)
+              ?? await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId && s.BranchId == null, cancellationToken)
+            : await context.PayrollSettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId && s.BranchId == null, cancellationToken);
 
         if (settings?.AutoCalcGovernmentDeductions == true)
         {
@@ -245,6 +255,7 @@ public sealed class ClosePayrollPeriodCommandHandler(
         eventPublisher.Enqueue(new PayrollPeriodClosedEvent(
             period.Id,
             tenantContext.TenantId,
+            period.BranchId,
             period.Year,
             period.CutOffWeek,
             period.StartDate,

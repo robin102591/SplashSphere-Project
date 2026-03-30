@@ -32,21 +32,22 @@ public sealed class CreatePayrollPeriodCommandHandler(
                 Error.Validation("Period must be either 7 days (weekly) or a valid semi-monthly boundary (1st–15th or 16th–last day)."));
         }
 
-        // Check for duplicate: same tenant + same start date
+        // Check for duplicate: same tenant + branch + start date
         var exists = await db.PayrollPeriods
-            .AnyAsync(p => p.StartDate == request.StartDate, cancellationToken);
+            .AnyAsync(p => p.BranchId == request.BranchId && p.StartDate == request.StartDate, cancellationToken);
 
         if (exists)
             return Result.Failure<string>(
-                Error.Validation($"A payroll period starting on {request.StartDate} already exists."));
+                Error.Validation($"A payroll period starting on {request.StartDate} already exists for this branch."));
 
-        // Check for overlapping periods
+        // Check for overlapping periods within the same branch
         var overlapping = await db.PayrollPeriods
-            .AnyAsync(p => p.StartDate <= request.EndDate && p.EndDate >= request.StartDate, cancellationToken);
+            .AnyAsync(p => p.BranchId == request.BranchId &&
+                           p.StartDate <= request.EndDate && p.EndDate >= request.StartDate, cancellationToken);
 
         if (overlapping)
             return Result.Failure<string>(
-                Error.Validation("This date range overlaps with an existing payroll period."));
+                Error.Validation("This date range overlaps with an existing payroll period for this branch."));
 
         var year = request.StartDate.Year;
         var cutOffWeek = ComputeCutOffWeek(request.StartDate, request.EndDate);
@@ -56,7 +57,8 @@ public sealed class CreatePayrollPeriodCommandHandler(
             year,
             cutOffWeek,
             request.StartDate,
-            request.EndDate);
+            request.EndDate,
+            request.BranchId);
 
         db.PayrollPeriods.Add(period);
         await db.SaveChangesAsync(cancellationToken);

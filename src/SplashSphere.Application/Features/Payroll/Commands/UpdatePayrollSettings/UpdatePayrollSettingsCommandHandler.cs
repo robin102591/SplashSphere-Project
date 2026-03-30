@@ -23,11 +23,11 @@ public sealed class UpdatePayrollSettingsCommandHandler(
             return Result.Failure(Error.Validation("Frequency must be 1 (Weekly) or 2 (SemiMonthly)."));
 
         var settings = await db.PayrollSettings
-            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId == tenantContext.TenantId && s.BranchId == request.BranchId, cancellationToken);
 
         if (settings is null)
         {
-            settings = new PayrollSettings(tenantContext.TenantId);
+            settings = new PayrollSettings(tenantContext.TenantId, request.BranchId);
             db.PayrollSettings.Add(settings);
         }
 
