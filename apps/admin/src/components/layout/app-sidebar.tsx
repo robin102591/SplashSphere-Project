@@ -32,6 +32,7 @@ import {
   TrendingDown,
   Percent,
   Banknote,
+  CalendarCheck,
 } from 'lucide-react'
 
 const navGroups = [
@@ -55,6 +56,7 @@ const navGroups = [
     label: 'People',
     items: [
       { label: 'Employees', href: '/dashboard/employees', icon: Users },
+      { label: 'Attendance', href: '/dashboard/attendance', icon: CalendarCheck },
       { label: 'Customers', href: '/dashboard/customers', icon: Users },
       { label: 'Vehicles', href: '/dashboard/vehicles', icon: Car },
     ],

@@ -123,5 +123,6 @@ app.MapShiftSettingsEndpoints();
 app.MapPayrollSettingsEndpoints();
 app.MapSearchEndpoints();
 app.MapNotificationEndpoints();
+app.MapAttendanceEndpoints();
 
 app.Run();

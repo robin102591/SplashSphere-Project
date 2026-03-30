@@ -813,6 +813,39 @@ export interface ServicePopularityReport {
   packages: readonly PackagePopularityItem[];
 }
 
+// ── Attendance Reports ────────────────────────────────────────────────────────
+
+export interface AttendanceReportSummary {
+  totalEmployees: number;
+  averageAttendanceRate: number;
+  totalLateArrivals: number;
+  averageHoursPerDay: number;
+}
+
+export interface EmployeeAttendanceRow {
+  employeeId: string;
+  employeeName: string;
+  branchName: string;
+  employeeType: string;
+  daysPresent: number;
+  daysAbsent: number;
+  lateCount: number;
+  earlyOutCount: number;
+  totalHours: number;
+  averageHoursPerDay: number;
+}
+
+export interface AttendanceReport {
+  /** YYYY-MM-DD */
+  from: string;
+  /** YYYY-MM-DD */
+  to: string;
+  branchId: string | null;
+  employeeId: string | null;
+  summary: AttendanceReportSummary;
+  employees: readonly EmployeeAttendanceRow[];
+}
+
 // ── Cashier Shifts ────────────────────────────────────────────────────────────
 
 export interface CashMovementDto {

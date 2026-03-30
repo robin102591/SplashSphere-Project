@@ -495,6 +495,13 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/merchandise/low-stock` | List active items below low-stock threshold |
 
+### Attendance Reports
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/attendance/report` | Attendance summary report with per-employee stats (days, late, hours) |
+| `GET` | `/attendance/export/csv` | Export attendance records as CSV download |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -518,6 +525,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/shifts/[id]` | Shift detail — EOD report + manager review actions |
 | `/dashboard/reports/shift-variance` | Variance report — per-cashier trend chart with thresholds |
 | `/dashboard/cash-advances` | Cash Advances — list with status actions (approve/disburse/cancel) + create dialog |
+| `/dashboard/attendance` | Attendance Report — per-employee stats (days, tardiness, hours) with filters + CSV export |
 
 ### POS App
 
