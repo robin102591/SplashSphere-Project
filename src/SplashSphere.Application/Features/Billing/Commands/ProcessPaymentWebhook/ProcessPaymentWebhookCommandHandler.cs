@@ -65,22 +65,43 @@ public sealed class ProcessPaymentWebhookCommandHandler(
             sub.CurrentPeriodEnd = now.AddDays(30);
             sub.NextBillingDate = now.AddDays(30);
 
-            var billingType = oldPlan != sub.PlanTier ? BillingType.Upgrade : BillingType.Subscription;
-            var billing = new BillingRecord(
-                sub.TenantId,
-                sub.Id,
-                webhookEvent.Amount,
-                billingType,
-                now)
-            {
-                Status = BillingStatus.Paid,
-                PaidDate = now,
-                PaymentGatewayId = webhookEvent.PaymentId,
-                PaymentMethod = webhookEvent.PaymentMethod,
-                Currency = webhookEvent.Currency,
-            };
+            // Try to find an existing pending invoice linked to this checkout session
+            var existingInvoice = await db.BillingRecords
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(b =>
+                    b.TenantId == sub.TenantId &&
+                    b.Status == BillingStatus.Pending &&
+                    b.PaymentGatewayId != null &&
+                    b.PaymentGatewayId == webhookEvent.PaymentId,
+                    cancellationToken);
 
-            db.BillingRecords.Add(billing);
+            if (existingInvoice is not null)
+            {
+                // Mark existing invoice as paid
+                existingInvoice.Status = BillingStatus.Paid;
+                existingInvoice.PaidDate = now;
+                existingInvoice.PaymentMethod = webhookEvent.PaymentMethod;
+            }
+            else
+            {
+                // Create a new billing record (direct checkout, not from invoice)
+                var billingType = oldPlan != sub.PlanTier ? BillingType.Upgrade : BillingType.Subscription;
+                var billing = new BillingRecord(
+                    sub.TenantId,
+                    sub.Id,
+                    webhookEvent.Amount,
+                    billingType,
+                    now)
+                {
+                    Status = BillingStatus.Paid,
+                    PaidDate = now,
+                    PaymentGatewayId = webhookEvent.PaymentId,
+                    PaymentMethod = webhookEvent.PaymentMethod,
+                    Currency = webhookEvent.Currency,
+                };
+
+                db.BillingRecords.Add(billing);
+            }
 
             logger.LogInformation(
                 "Payment succeeded for tenant {TenantId}: ₱{Amount} via {Method}, Plan: {OldPlan} → {NewPlan}",

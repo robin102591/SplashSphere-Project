@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using SplashSphere.Application.Features.Billing.Commands.CancelSubscription;
 using SplashSphere.Application.Features.Billing.Commands.ChangePlan;
 using SplashSphere.Application.Features.Billing.Commands.CreateCheckout;
+using SplashSphere.Application.Features.Billing.Commands.PayInvoice;
 using SplashSphere.Application.Features.Billing.Commands.ProcessPaymentWebhook;
+using SplashSphere.Application.Features.Billing.Queries.ExportInvoicePdf;
 using SplashSphere.Application.Features.Billing.Queries.GetBillingHistory;
 using SplashSphere.Application.Features.Billing.Queries.GetCurrentPlan;
 using SplashSphere.Domain.Enums;
@@ -24,6 +26,8 @@ public static class BillingEndpoints
         group.MapPost("/change-plan", ChangePlan);
         group.MapPost("/cancel", CancelSubscription);
         group.MapGet("/history", GetBillingHistory);
+        group.MapGet("/invoices/{id}/pdf", ExportInvoicePdf);
+        group.MapPost("/invoices/{id}/pay", PayInvoice);
 
         // ── Payment webhook — NO auth (called by PayMongo) ───────────────────
         app.MapPost("/api/v1/webhooks/payment", ProcessPaymentWebhook)
@@ -99,6 +103,37 @@ public static class BillingEndpoints
         return TypedResults.Ok(new { received = true });
     }
 
+    // ── GET /invoices/{id}/pdf ───────────────────────────────────────────
+
+    private static async Task<IResult> ExportInvoicePdf(
+        string id, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportInvoicePdfQuery(id), ct);
+        if (result is null) return TypedResults.NotFound();
+        return TypedResults.File(result.Content, "application/pdf", result.FileName);
+    }
+
+    // ── POST /invoices/{id}/pay ──────────────────────────────────────────
+
+    private static async Task<Results<Ok<object>, NotFound, BadRequest<ProblemDetails>>> PayInvoice(
+        string id,
+        [FromBody] PayInvoiceRequest body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new PayInvoiceCommand(id, body.SuccessUrl, body.CancelUrl), ct);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "NotFound")
+                return TypedResults.NotFound();
+            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
+        }
+
+        return TypedResults.Ok<object>(result.Value);
+    }
+
     // ── Request records ─────────────────────────────────────────────────────
 
     private sealed record CreateCheckoutRequest(
@@ -107,6 +142,10 @@ public static class BillingEndpoints
         string CancelUrl);
 
     private sealed record ChangePlanRequest(int NewPlan);
+
+    private sealed record PayInvoiceRequest(
+        string SuccessUrl,
+        string CancelUrl);
 
     private sealed record BillingHistoryParams(
         int Page = 1,

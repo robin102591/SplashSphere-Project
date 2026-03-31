@@ -511,6 +511,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `POST` | `/billing/change-plan` | Request plan change (upgrade/downgrade with limit validation) |
 | `POST` | `/billing/cancel` | Cancel subscription (effective immediately) |
 | `GET` | `/billing/history` | Paginated payment/billing history |
+| `GET` | `/billing/invoices/{id}/pdf` | Download invoice as PDF |
+| `POST` | `/billing/invoices/{id}/pay` | Create checkout session to pay a pending invoice |
 | `POST` | `/webhooks/payment` | Payment gateway webhook (no auth) |
 
 ### Report Exports

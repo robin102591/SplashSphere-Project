@@ -26,7 +26,9 @@ import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel
 import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
-import { usePlan, useBillingHistory, useCancelSubscription, useCreateCheckout } from '@/hooks/use-plan'
+import { usePlan, useBillingHistory, useCancelSubscription, useCreateCheckout, usePayInvoice } from '@/hooks/use-plan'
+import { useAuth } from '@clerk/nextjs'
+import { Download } from 'lucide-react'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
 import { AdjustmentType } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
@@ -807,10 +809,41 @@ function PayrollTemplatesTab() {
 // ── Billing Tab ───────────────────────────────────────────────────────────────
 
 function BillingTab() {
+  const { getToken } = useAuth()
   const { data: plan, isLoading } = usePlan()
   const { data: history } = useBillingHistory()
   const { mutate: cancel, isPending: cancelling } = useCancelSubscription()
   const { mutate: checkout, isPending: checkingOut } = useCreateCheckout()
+  const { mutate: payInvoice, isPending: paying } = usePayInvoice()
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
+
+  const downloadInvoicePdf = async (billingRecordId: string) => {
+    const token = await getToken()
+    const res = await fetch(`${API_BASE}/api/v1/billing/invoices/${billingRecordId}/pdf`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `invoice_${billingRecordId.slice(0, 8)}.pdf`
+    document.body.appendChild(a); a.click(); a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const handlePayInvoice = (billingRecordId: string) => {
+    payInvoice({
+      billingRecordId,
+      successUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=success`,
+      cancelUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=cancelled`,
+    }, {
+      onSuccess: (result) => {
+        if (result?.checkoutUrl) window.location.href = result.checkoutUrl
+      },
+      onError: () => toast.error('Failed to create payment session.'),
+    })
+  }
 
   const PLAN_TIERS: Record<string, number> = { starter: 1, growth: 2, enterprise: 3 }
 
@@ -938,6 +971,7 @@ function BillingTab() {
                   <th className="px-4 py-2.5 text-right font-medium">Amount</th>
                   <th className="px-4 py-2.5 text-left font-medium">Method</th>
                   <th className="px-4 py-2.5 text-left font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -954,6 +988,18 @@ function BillingTab() {
                       )}>
                         {b.status === 0 ? 'Pending' : b.status === 1 ? 'Paid' : b.status === 2 ? 'Failed' : b.status === 3 ? 'Refunded' : 'Voided'}
                       </span>
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => downloadInvoicePdf(b.id)}>
+                          <Download className="h-3 w-3 mr-1" />PDF
+                        </Button>
+                        {b.status === 0 && (
+                          <Button variant="default" size="sm" className="h-7 text-xs" disabled={paying} onClick={() => handlePayInvoice(b.id)}>
+                            Pay Now
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

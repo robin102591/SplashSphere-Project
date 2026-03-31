@@ -65,6 +65,21 @@ export function useChangePlan() {
   })
 }
 
+export function usePayInvoice() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { billingRecordId: string; successUrl: string; cancelUrl: string }) => {
+      const token = await getToken()
+      return apiClient.post<CheckoutResult>(
+        `/billing/invoices/${data.billingRecordId}/pay`,
+        { successUrl: data.successUrl, cancelUrl: data.cancelUrl },
+        token ?? undefined)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['billing'] }),
+  })
+}
+
 export function useCancelSubscription() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
