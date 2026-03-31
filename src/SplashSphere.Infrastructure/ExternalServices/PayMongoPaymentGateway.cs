@@ -159,14 +159,18 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
             var currencyValue = paymentAttributes.GetProperty("currency").GetString() ?? "PHP";
             var status = paymentAttributes.GetProperty("status").GetString() ?? "";
 
-            // Extract tenant ID from metadata
+            // Extract tenant ID and plan tier from metadata
             string? tenantId = null;
+            PlanTier? targetPlan = null;
             string? paymentMethod = null;
 
             if (paymentAttributes.TryGetProperty("metadata", out var metadata))
             {
                 if (metadata.TryGetProperty("tenant_id", out var tid))
                     tenantId = tid.GetString();
+                if (metadata.TryGetProperty("plan_tier", out var pt) &&
+                    Enum.TryParse<PlanTier>(pt.GetString(), true, out var parsed))
+                    targetPlan = parsed;
             }
 
             if (paymentAttributes.TryGetProperty("source", out var source) &&
@@ -178,7 +182,7 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
             var succeeded = eventType.Contains("paid") && status == "paid";
 
             return Task.FromResult<WebhookEvent?>(new WebhookEvent(
-                eventType, paymentId, tenantId, amount, currencyValue,
+                eventType, paymentId, tenantId, targetPlan, amount, currencyValue,
                 paymentMethod, succeeded));
         }
         catch (Exception ex)
@@ -201,9 +205,11 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
         if (!parts.TryGetValue("t", out var timestamp))
             return false;
 
-        // Use test or live signature based on what's present
-        var expectedSig = parts.GetValueOrDefault("li") ?? parts.GetValueOrDefault("te");
-        if (expectedSig is null) return false;
+        // Use live signature if present, otherwise test signature
+        parts.TryGetValue("li", out var liveSig);
+        parts.TryGetValue("te", out var testSig);
+        var expectedSig = !string.IsNullOrEmpty(liveSig) ? liveSig : testSig;
+        if (string.IsNullOrEmpty(expectedSig)) return false;
 
         // Compute HMAC-SHA256(webhook_secret, "{timestamp}.{payload}")
         var signedPayload = $"{timestamp}.{payload}";
@@ -211,6 +217,12 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(signedPayload));
         var computedSig = Convert.ToHexString(computedHash).ToLowerInvariant();
 
-        return string.Equals(computedSig, expectedSig, StringComparison.OrdinalIgnoreCase);
+        var match = string.Equals(computedSig, expectedSig, StringComparison.OrdinalIgnoreCase);
+        if (!match)
+            _logger.LogWarning(
+                "PayMongo signature mismatch. Expected: {Expected}, Computed: {Computed}, Timestamp: {Timestamp}",
+                expectedSig, computedSig, timestamp);
+
+        return match;
     }
 }

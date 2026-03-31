@@ -90,7 +90,7 @@ public static class BillingEndpoints
         CancellationToken ct)
     {
         var payload = await new StreamReader(request.Body).ReadToEndAsync(ct);
-        var signature = request.Headers["X-Webhook-Signature"].FirstOrDefault() ?? "";
+        var signature = request.Headers["Paymongo-Signature"].FirstOrDefault() ?? "";
 
         var result = await sender.Send(
             new ProcessPaymentWebhookCommand(payload, signature), ct);

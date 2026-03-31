@@ -44,6 +44,20 @@ public sealed class ProcessPaymentWebhookCommandHandler(
         if (webhookEvent.Succeeded)
         {
             var now = DateTime.UtcNow;
+            var oldPlan = sub.PlanTier;
+
+            // Update plan tier if the payment was for a plan upgrade/change
+            if (webhookEvent.TargetPlan.HasValue && webhookEvent.TargetPlan.Value != sub.PlanTier)
+            {
+                sub.PlanTier = webhookEvent.TargetPlan.Value;
+
+                db.PlanChangeLogs.Add(new PlanChangeLog(
+                    sub.TenantId,
+                    oldPlan,
+                    webhookEvent.TargetPlan.Value,
+                    "system",
+                    $"Plan upgraded via payment ({webhookEvent.PaymentMethod})"));
+            }
 
             sub.Status = SubscriptionStatus.Active;
             sub.LastPaymentDate = now;
@@ -51,11 +65,12 @@ public sealed class ProcessPaymentWebhookCommandHandler(
             sub.CurrentPeriodEnd = now.AddDays(30);
             sub.NextBillingDate = now.AddDays(30);
 
+            var billingType = oldPlan != sub.PlanTier ? BillingType.Upgrade : BillingType.Subscription;
             var billing = new BillingRecord(
                 sub.TenantId,
                 sub.Id,
                 webhookEvent.Amount,
-                BillingType.Subscription,
+                billingType,
                 now)
             {
                 Status = BillingStatus.Paid,
@@ -68,8 +83,8 @@ public sealed class ProcessPaymentWebhookCommandHandler(
             db.BillingRecords.Add(billing);
 
             logger.LogInformation(
-                "Payment succeeded for tenant {TenantId}: ₱{Amount} via {Method}",
-                sub.TenantId, webhookEvent.Amount, webhookEvent.PaymentMethod);
+                "Payment succeeded for tenant {TenantId}: ₱{Amount} via {Method}, Plan: {OldPlan} → {NewPlan}",
+                sub.TenantId, webhookEvent.Amount, webhookEvent.PaymentMethod, oldPlan, sub.PlanTier);
         }
         else
         {

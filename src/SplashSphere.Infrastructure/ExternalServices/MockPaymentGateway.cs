@@ -40,10 +40,16 @@ public sealed class MockPaymentGateway : IPaymentGateway
             var doc = System.Text.Json.JsonDocument.Parse(payload);
             var root = doc.RootElement;
 
+            PlanTier? targetPlan = null;
+            if (root.TryGetProperty("planTier", out var ptVal) &&
+                Enum.TryParse<PlanTier>(ptVal.GetString(), true, out var parsed))
+                targetPlan = parsed;
+
             return Task.FromResult<WebhookEvent?>(new WebhookEvent(
                 EventType: root.GetProperty("eventType").GetString() ?? "payment.paid",
                 PaymentId: root.GetProperty("paymentId").GetString() ?? $"mock_{Guid.NewGuid():N}",
                 TenantId: root.TryGetProperty("tenantId", out var tid) ? tid.GetString() : null,
+                TargetPlan: targetPlan,
                 Amount: root.TryGetProperty("amount", out var amt) ? amt.GetDecimal() : 0,
                 Currency: root.TryGetProperty("currency", out var cur) ? cur.GetString() ?? "PHP" : "PHP",
                 PaymentMethod: root.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() : "mock",

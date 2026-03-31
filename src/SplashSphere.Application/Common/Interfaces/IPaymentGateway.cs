@@ -28,6 +28,7 @@ public sealed record WebhookEvent(
     string EventType,
     string PaymentId,
     string? TenantId,
+    PlanTier? TargetPlan,
     decimal Amount,
     string Currency,
     string? PaymentMethod,
