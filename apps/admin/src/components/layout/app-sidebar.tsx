@@ -35,6 +35,8 @@ import {
   CalendarCheck,
   Lock,
   ScrollText,
+  Crown,
+  Receipt,
 } from 'lucide-react'
 import { useHasFeature } from '@/hooks/use-plan'
 import { FeatureKeys } from '@splashsphere/types'
@@ -81,6 +83,13 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet, feature: FeatureKeys.ShiftManagement },
       { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { label: 'Subscription', href: '/dashboard/subscription', icon: Crown },
+      { label: 'Billing', href: '/dashboard/billing', icon: Receipt },
     ],
   },
   {

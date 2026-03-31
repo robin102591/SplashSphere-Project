@@ -555,6 +555,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/cash-advances` | Cash Advances — list with status actions (approve/disburse/cancel) + create dialog |
 | `/dashboard/attendance` | Attendance Report — per-employee stats (days, tardiness, hours) with filters + CSV export |
 | `/dashboard/audit-logs` | Audit Logs — paginated log viewer with entity type/ID/user/date filters + expandable JSON changes |
+| `/dashboard/subscription` | Subscription — current plan card with usage meters, plan comparison grid with upgrade buttons |
+| `/dashboard/billing` | Billing — next billing date, payment history with PDF download + Pay Now, cancel subscription |
 
 ### POS App
 

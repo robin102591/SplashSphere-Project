@@ -24,7 +24,7 @@ export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
         This feature is available on the Growth plan and above.
       </p>
       <a
-        href="/dashboard/settings?tab=billing"
+        href="/dashboard/subscription"
         className="text-sm font-semibold text-primary hover:underline"
       >
         View Plans &rarr;

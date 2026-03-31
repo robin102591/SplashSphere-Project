@@ -26,9 +26,6 @@ import { useMakes, useModelsByMake, useCreateMake, useToggleMake, useCreateModel
 import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
-import { usePlan, useBillingHistory, useCancelSubscription, useCreateCheckout, usePayInvoice } from '@/hooks/use-plan'
-import { useAuth } from '@clerk/nextjs'
-import { Download } from 'lucide-react'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
 import { AdjustmentType } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
@@ -806,233 +803,6 @@ function PayrollTemplatesTab() {
   )
 }
 
-// ── Billing Tab ───────────────────────────────────────────────────────────────
-
-function BillingTab() {
-  const { getToken } = useAuth()
-  const { data: plan, isLoading } = usePlan()
-  const { data: history } = useBillingHistory()
-  const { mutate: cancel, isPending: cancelling } = useCancelSubscription()
-  const { mutate: checkout, isPending: checkingOut } = useCreateCheckout()
-  const { mutate: payInvoice, isPending: paying } = usePayInvoice()
-
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-
-  const downloadInvoicePdf = async (billingRecordId: string) => {
-    const token = await getToken()
-    const res = await fetch(`${API_BASE}/api/v1/billing/invoices/${billingRecordId}/pdf`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = `invoice_${billingRecordId.slice(0, 8)}.pdf`
-    document.body.appendChild(a); a.click(); a.remove()
-    URL.revokeObjectURL(url)
-  }
-
-  const handlePayInvoice = (billingRecordId: string) => {
-    payInvoice({
-      billingRecordId,
-      successUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=success`,
-      cancelUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=cancelled`,
-    }, {
-      onSuccess: (result) => {
-        if (result?.checkoutUrl) window.location.href = result.checkoutUrl
-      },
-      onError: () => toast.error('Failed to create payment session.'),
-    })
-  }
-
-  const PLAN_TIERS: Record<string, number> = { starter: 1, growth: 2, enterprise: 3 }
-
-  const handleUpgrade = (tier: string) => {
-    const planNum = PLAN_TIERS[tier]
-    if (!planNum) return
-    checkout({
-      targetPlan: planNum,
-      successUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=success`,
-      cancelUrl: `${window.location.origin}/dashboard/settings?tab=billing&payment=cancelled`,
-    }, {
-      onSuccess: (result) => {
-        if (result?.checkoutUrl) window.location.href = result.checkoutUrl
-      },
-      onError: () => toast.error('Failed to create checkout session.'),
-    })
-  }
-
-  if (isLoading) return <Skeleton className="h-48 w-full" />
-  if (!plan) return null
-
-  const PLANS = [
-    { tier: 'starter', name: 'Starter', price: 1499, branches: 1, employees: 5, highlight: false },
-    { tier: 'growth', name: 'Growth', price: 2999, branches: 3, employees: 15, highlight: true },
-    { tier: 'enterprise', name: 'Enterprise', price: 4999, branches: 'Unlimited', employees: 'Unlimited', highlight: false },
-  ]
-
-  return (
-    <div className="space-y-8">
-      {/* Current Plan Card */}
-      <div className="rounded-lg border p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Current Plan</h3>
-            <p className="text-2xl font-bold mt-1">{plan.planName}</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {plan.status === 'trial' ? (
-                <>Trial — {plan.trial?.daysRemaining ?? 0} day(s) remaining</>
-              ) : plan.status === 'active' ? (
-                <>₱{plan.monthlyPrice.toLocaleString()}/month — Next billing: {plan.billing?.nextBillingDate ? new Date(plan.billing.nextBillingDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</>
-              ) : (
-                <>Status: {plan.status.replace('_', ' ')}</>
-              )}
-            </p>
-          </div>
-          <div className="text-right">
-            <span className={cn(
-              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-              plan.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-              plan.status === 'trial' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' :
-              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-            )}>
-              {plan.status === 'past_due' ? 'Past Due' : plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
-          <div>
-            <p className="text-xs text-muted-foreground">Branches</p>
-            <p className="text-sm font-medium">{plan.limits.currentBranches} / {plan.limits.maxBranches === 2147483647 ? '∞' : plan.limits.maxBranches}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Employees</p>
-            <p className="text-sm font-medium">{plan.limits.currentEmployees} / {plan.limits.maxEmployees === 2147483647 ? '∞' : plan.limits.maxEmployees}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">SMS</p>
-            <p className="text-sm font-medium">{plan.limits.smsUsedThisMonth} / {plan.limits.smsPerMonth}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Plan Comparison */}
-      <div>
-        <h3 className="text-sm font-medium mb-4">Plan Comparison</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PLANS.map((p) => {
-            const isCurrent = plan.tier === p.tier
-            return (
-              <div key={p.tier} className={cn(
-                'rounded-lg border p-5',
-                p.highlight && 'border-primary ring-1 ring-primary',
-                isCurrent && 'bg-muted/50'
-              )}>
-                <p className="font-semibold">{p.name}</p>
-                <p className="text-2xl font-bold mt-1">₱{p.price.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-                <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-                  <li>{typeof p.branches === 'number' ? `${p.branches} branch${p.branches > 1 ? 'es' : ''}` : `${p.branches} branches`}</li>
-                  <li>{typeof p.employees === 'number' ? `${p.employees} employees` : `${p.employees} employees`}</li>
-                </ul>
-                <div className="mt-4">
-                  {isCurrent ? (
-                    <Button variant="outline" size="sm" className="w-full" disabled>Current Plan</Button>
-                  ) : (
-                    <Button
-                      variant={p.highlight ? 'default' : 'outline'}
-                      size="sm"
-                      className="w-full"
-                      disabled={checkingOut}
-                      onClick={() => handleUpgrade(p.tier)}
-                    >
-                      {plan.tier === 'enterprise' || (plan.tier === 'growth' && p.tier === 'starter') ? 'Downgrade' : 'Upgrade'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Upgrade redirects to the payment page. Downgrade validates branch/employee limits.
-        </p>
-      </div>
-
-      {/* Billing History */}
-      {history && history.items.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium mb-4">Payment History</h3>
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="px-4 py-2.5 text-left font-medium">Invoice</th>
-                  <th className="px-4 py-2.5 text-left font-medium">Date</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Amount</th>
-                  <th className="px-4 py-2.5 text-left font-medium">Method</th>
-                  <th className="px-4 py-2.5 text-left font-medium">Status</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {history.items.map((b) => (
-                  <tr key={b.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-2 font-medium">{b.invoiceNumber ?? '—'}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{new Date(b.billingDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">₱{b.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{b.paymentMethod ?? '—'}</td>
-                    <td className="px-4 py-2">
-                      <span className={cn(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                        b.status === 1 ? 'bg-green-100 text-green-800' : b.status === 2 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                      )}>
-                        {b.status === 0 ? 'Pending' : b.status === 1 ? 'Paid' : b.status === 2 ? 'Failed' : b.status === 3 ? 'Refunded' : 'Voided'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => downloadInvoicePdf(b.id)}>
-                          <Download className="h-3 w-3 mr-1" />PDF
-                        </Button>
-                        {b.status === 0 && (
-                          <Button variant="default" size="sm" className="h-7 text-xs" disabled={paying} onClick={() => handlePayInvoice(b.id)}>
-                            Pay Now
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Cancel */}
-      {plan.status === 'active' && (
-        <div className="pt-4 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => {
-              if (confirm('Are you sure you want to cancel your subscription? You will lose access to plan features.'))
-                cancel(undefined, {
-                  onSuccess: () => toast.success('Subscription cancelled.'),
-                  onError: () => toast.error('Failed to cancel subscription.'),
-                })
-            }}
-            disabled={cancelling}
-          >
-            {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
-          </Button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -1051,7 +821,6 @@ export default function SettingsPage() {
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
           <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vehicle-types" className="mt-6"><VehicleTypesTab /></TabsContent>
@@ -1064,7 +833,6 @@ export default function SettingsPage() {
           <div className="my-6 border-t" />
           <PayrollTemplatesTab />
         </TabsContent>
-        <TabsContent value="billing" className="mt-6"><BillingTab /></TabsContent>
       </Tabs>
     </div>
   )
