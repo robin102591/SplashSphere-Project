@@ -35,10 +35,8 @@ public sealed class PayInvoiceCommandHandler(
             record.Currency,
             request.SuccessUrl,
             request.CancelUrl,
-            cancellationToken);
-
-        // Store the checkout session ID on the billing record so the webhook can link them
-        record.PaymentGatewayId = session.SessionId;
+            cancellationToken,
+            invoiceId: record.Id);
 
         return Result.Success(new CheckoutResultDto(session.CheckoutUrl, session.SessionId));
     }

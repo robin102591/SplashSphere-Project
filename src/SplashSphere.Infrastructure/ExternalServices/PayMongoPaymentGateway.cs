@@ -54,7 +54,8 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
         string currency,
         string successUrl,
         string cancelUrl,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? invoiceId = null)
     {
         var plan = PlanCatalog.GetPlan(targetPlan);
 
@@ -85,11 +86,7 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
                     },
                     success_url = successUrl,
                     cancel_url = cancelUrl,
-                    metadata = new Dictionary<string, string>
-                    {
-                        ["tenant_id"] = tenantId,
-                        ["plan_tier"] = targetPlan.ToString(),
-                    }
+                    metadata = BuildMetadata(tenantId, targetPlan, invoiceId)
                 }
             }
         };
@@ -162,6 +159,7 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
             // Extract tenant ID and plan tier from metadata
             string? tenantId = null;
             PlanTier? targetPlan = null;
+            string? invoiceId = null;
             string? paymentMethod = null;
 
             if (paymentAttributes.TryGetProperty("metadata", out var metadata))
@@ -171,6 +169,8 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
                 if (metadata.TryGetProperty("plan_tier", out var pt) &&
                     Enum.TryParse<PlanTier>(pt.GetString(), true, out var parsed))
                     targetPlan = parsed;
+                if (metadata.TryGetProperty("invoice_id", out var inv))
+                    invoiceId = inv.GetString();
             }
 
             if (paymentAttributes.TryGetProperty("source", out var source) &&
@@ -182,8 +182,8 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
             var succeeded = eventType.Contains("paid") && status == "paid";
 
             return Task.FromResult<WebhookEvent?>(new WebhookEvent(
-                eventType, paymentId, tenantId, targetPlan, amount, currencyValue,
-                paymentMethod, succeeded));
+                eventType, paymentId, tenantId, targetPlan, invoiceId,
+                amount, currencyValue, paymentMethod, succeeded));
         }
         catch (Exception ex)
         {
@@ -224,5 +224,18 @@ public sealed class PayMongoPaymentGateway : IPaymentGateway
                 expectedSig, computedSig, timestamp);
 
         return match;
+    }
+
+    private static Dictionary<string, string> BuildMetadata(
+        string tenantId, PlanTier targetPlan, string? invoiceId)
+    {
+        var meta = new Dictionary<string, string>
+        {
+            ["tenant_id"] = tenantId,
+            ["plan_tier"] = targetPlan.ToString(),
+        };
+        if (!string.IsNullOrEmpty(invoiceId))
+            meta["invoice_id"] = invoiceId;
+        return meta;
     }
 }

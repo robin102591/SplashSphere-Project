@@ -16,7 +16,8 @@ public interface IPaymentGateway
         string currency,
         string successUrl,
         string cancelUrl,
-        CancellationToken ct);
+        CancellationToken ct,
+        string? invoiceId = null);
 
     /// <summary>Verify webhook signature and parse the payload.</summary>
     Task<WebhookEvent?> ParseWebhookAsync(string payload, string signature, CancellationToken ct);
@@ -29,6 +30,7 @@ public sealed record WebhookEvent(
     string PaymentId,
     string? TenantId,
     PlanTier? TargetPlan,
+    string? InvoiceId,
     decimal Amount,
     string Currency,
     string? PaymentMethod,

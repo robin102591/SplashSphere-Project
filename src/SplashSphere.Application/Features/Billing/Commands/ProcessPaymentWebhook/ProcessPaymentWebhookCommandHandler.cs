@@ -65,21 +65,25 @@ public sealed class ProcessPaymentWebhookCommandHandler(
             sub.CurrentPeriodEnd = now.AddDays(30);
             sub.NextBillingDate = now.AddDays(30);
 
-            // Try to find an existing pending invoice linked to this checkout session
-            var existingInvoice = await db.BillingRecords
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(b =>
-                    b.TenantId == sub.TenantId &&
-                    b.Status == BillingStatus.Pending &&
-                    b.PaymentGatewayId != null &&
-                    b.PaymentGatewayId == webhookEvent.PaymentId,
-                    cancellationToken);
+            // Try to find the pending invoice this payment is for (via invoice_id metadata)
+            Domain.Entities.BillingRecord? existingInvoice = null;
+
+            if (!string.IsNullOrEmpty(webhookEvent.InvoiceId))
+            {
+                existingInvoice = await db.BillingRecords
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(b =>
+                        b.Id == webhookEvent.InvoiceId &&
+                        b.Status == BillingStatus.Pending,
+                        cancellationToken);
+            }
 
             if (existingInvoice is not null)
             {
                 // Mark existing invoice as paid
                 existingInvoice.Status = BillingStatus.Paid;
                 existingInvoice.PaidDate = now;
+                existingInvoice.PaymentGatewayId = webhookEvent.PaymentId;
                 existingInvoice.PaymentMethod = webhookEvent.PaymentMethod;
             }
             else
