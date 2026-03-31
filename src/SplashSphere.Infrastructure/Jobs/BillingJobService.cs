@@ -64,7 +64,8 @@ public sealed class BillingJobService(
         var overdue = await db.TenantSubscriptions
             .IgnoreQueryFilters()
             .Where(s => s.Status == SubscriptionStatus.PastDue &&
-                        s.UpdatedAt <= cutoff)
+                        s.PastDueSince != null &&
+                        s.PastDueSince <= cutoff)
             .ToListAsync(ct);
 
         if (overdue.Count == 0) return;

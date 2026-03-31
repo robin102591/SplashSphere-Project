@@ -60,6 +60,7 @@ public sealed class ProcessPaymentWebhookCommandHandler(
             }
 
             sub.Status = SubscriptionStatus.Active;
+            sub.PastDueSince = null; // Clear grace period on successful payment
             sub.LastPaymentDate = now;
             sub.CurrentPeriodStart = now;
             sub.CurrentPeriodEnd = now.AddDays(30);
@@ -114,7 +115,10 @@ public sealed class ProcessPaymentWebhookCommandHandler(
         else
         {
             if (sub.Status == SubscriptionStatus.Active)
+            {
                 sub.Status = SubscriptionStatus.PastDue;
+                sub.PastDueSince = DateTime.UtcNow;
+            }
 
             var billing = new BillingRecord(
                 sub.TenantId,

@@ -35,6 +35,9 @@ public sealed class TenantSubscription : IAuditableEntity
     public DateTime? LastPaymentDate { get; set; }
     public DateTime? NextBillingDate { get; set; }
 
+    /// <summary>UTC timestamp when the subscription entered PastDue. Used for 7-day grace period.</summary>
+    public DateTime? PastDueSince { get; set; }
+
     // ── SaaS admin overrides ─────────────────────────────────────────────────
     public int? MaxBranchesOverride { get; set; }
     public int? MaxEmployeesOverride { get; set; }
