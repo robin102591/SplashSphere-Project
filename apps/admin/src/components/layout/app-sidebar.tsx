@@ -37,6 +37,8 @@ import {
   ScrollText,
   Crown,
   Receipt,
+  Coins,
+  PieChart,
 } from 'lucide-react'
 import { useHasFeature } from '@/hooks/use-plan'
 import { FeatureKeys } from '@splashsphere/types'
@@ -80,9 +82,11 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { label: 'Transactions', href: '/dashboard/transactions', icon: CreditCard },
       { label: 'Payroll', href: '/dashboard/payroll', icon: CreditCard },
       { label: 'Cash Advances', href: '/dashboard/cash-advances', icon: Banknote, feature: FeatureKeys.CashAdvanceTracking },
+      { label: 'Expenses', href: '/dashboard/expenses', icon: Coins, feature: FeatureKeys.ExpenseTracking },
       { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet, feature: FeatureKeys.ShiftManagement },
       { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
       { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+      { label: 'Profit & Loss', href: '/dashboard/reports/profit-loss', icon: PieChart, feature: FeatureKeys.ProfitLossReports },
     ],
   },
   {

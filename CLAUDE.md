@@ -530,6 +530,18 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/audit-logs` | Paginated audit log list (filter by entityType, entityId, userId, from, to) |
 
+### Expenses
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/expenses` | Record an expense |
+| `GET` | `/expenses` | List expenses (filter by branch, category, date range, paginated) |
+| `PUT` | `/expenses/{id}` | Update expense |
+| `DELETE` | `/expenses/{id}` | Soft delete expense |
+| `GET` | `/expense-categories` | List expense categories |
+| `POST` | `/expense-categories` | Create expense category |
+| `GET` | `/reports/profit-loss` | P&L report (revenue, COGS, expenses by category, net profit) |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -557,6 +569,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/audit-logs` | Audit Logs — paginated log viewer with entity type/ID/user/date filters + expandable JSON changes |
 | `/dashboard/subscription` | Subscription — current plan card with usage meters, plan comparison grid with upgrade buttons |
 | `/dashboard/billing` | Billing — next billing date, payment history with PDF download + Pay Now, cancel subscription |
+| `/dashboard/expenses` | Expenses — list with filters, record expense dialog, category/branch/date filters |
+| `/dashboard/reports/profit-loss` | P&L Dashboard — revenue/expenses/net profit KPI cards, trend chart, category breakdown, daily table |
 
 ### POS App
 

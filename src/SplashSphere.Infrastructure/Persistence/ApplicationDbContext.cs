@@ -92,6 +92,10 @@ public sealed class ApplicationDbContext(
     // ── Audit logs ──────────────────────────────────────────────────────────
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // ── Expenses ────────────────────────────────────────────────────────────
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -231,6 +235,12 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<AuditLog>()
             .HasQueryFilter(a => a.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<ExpenseCategory>()
+            .HasQueryFilter(ec => ec.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Expense>()
+            .HasQueryFilter(e => e.TenantId == tenantContext.TenantId && !e.IsDeleted);
 
         base.OnModelCreating(modelBuilder);
     }

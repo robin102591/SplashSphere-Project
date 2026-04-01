@@ -179,3 +179,10 @@ export enum CashAdvanceStatus {
   FullyPaid = 4,
   Cancelled = 5,
 }
+
+export enum ExpenseFrequency {
+  OneTime = 0,
+  Daily   = 1,
+  Weekly  = 2,
+  Monthly = 3,
+}

@@ -168,6 +168,10 @@ public static class DataSeeder
         // Batch 5 — subscription (dev tenant gets Growth/Active)
         SeedSubscription(ctx);
         await ctx.SaveChangesAsync();
+
+        // Batch 6 — expense categories
+        SeedExpenseCategories(ctx);
+        await ctx.SaveChangesAsync();
     }
 
     // ── Master data ───────────────────────────────────────────────────────────
@@ -766,5 +770,22 @@ public static class DataSeeder
         };
 
         ctx.TenantSubscriptions.Add(sub);
+    }
+
+    // ── Expense categories seed ─────────────────────────────────────────────
+
+    private static void SeedExpenseCategories(ApplicationDbContext ctx)
+    {
+        if (ctx.ExpenseCategories.IgnoreQueryFilters().Any()) return;
+
+        var categories = new[]
+        {
+            "Water Bill", "Electricity", "Rent", "Soap & Chemicals",
+            "Equipment Maintenance", "Employee Meals/Snacks", "Transportation",
+            "Supplies (towels, sponges)", "Miscellaneous", "Insurance", "Taxes & Permits"
+        };
+
+        foreach (var name in categories)
+            ctx.ExpenseCategories.Add(new ExpenseCategory(Ten, name));
     }
 }

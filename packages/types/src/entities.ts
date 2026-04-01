@@ -15,6 +15,7 @@ import type {
   CashMovementType,
   CommissionType,
   EmployeeType,
+  ExpenseFrequency,
   ModifierType,
   PaymentMethod,
   PayrollStatus,
@@ -813,6 +814,58 @@ export interface ServicePopularityReport {
   branchName: string | null;
   services: readonly ServicePopularityItem[];
   packages: readonly PackagePopularityItem[];
+}
+
+// ── Expenses ─────────────────────────────────────────────────────────────────
+
+export interface ExpenseDto {
+  id: string;
+  branchName: string;
+  categoryName: string;
+  categoryIcon: string | null;
+  amount: number;
+  description: string;
+  vendor: string | null;
+  receiptReference: string | null;
+  expenseDate: string;
+  frequency: ExpenseFrequency;
+  isRecurring: boolean;
+  recordedByName: string;
+  createdAt: string;
+}
+
+export interface ExpenseCategoryDto {
+  id: string;
+  name: string;
+  icon: string | null;
+  isActive: boolean;
+}
+
+export interface ProfitLossReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  branchName: string | null;
+  revenue: number;
+  cogs: number;
+  grossProfit: number;
+  totalExpenses: number;
+  netProfit: number;
+  marginPercent: number;
+  expensesByCategory: readonly ExpenseByCategoryDto[];
+  dailyBreakdown: readonly ProfitLossDayDto[];
+}
+
+export interface ExpenseByCategoryDto {
+  categoryName: string;
+  amount: number;
+}
+
+export interface ProfitLossDayDto {
+  date: string;
+  revenue: number;
+  expenses: number;
+  netProfit: number;
 }
 
 // ── Audit Logs ───────────────────────────────────────────────────────────────

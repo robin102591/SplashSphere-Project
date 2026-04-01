@@ -103,4 +103,8 @@ public interface IApplicationDbContext
 
     // ── Audit logs ──────────────────────────────────────────────────────────
     DbSet<AuditLog> AuditLogs { get; }
+
+    // ── Expenses ────────────────────────────────────────────────────────────
+    DbSet<ExpenseCategory> ExpenseCategories { get; }
+    DbSet<Expense> Expenses { get; }
 }

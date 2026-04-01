@@ -95,6 +95,16 @@ public sealed class CreateOnboardingCommandHandler(
         };
         context.PayrollAdjustmentTemplates.AddRange(governmentTemplates);
 
+        // ── Pre-seed default expense categories ──────────────────────────────
+        var defaultCategories = new[]
+        {
+            "Water Bill", "Electricity", "Rent", "Soap & Chemicals",
+            "Equipment Maintenance", "Employee Meals/Snacks", "Transportation",
+            "Supplies (towels, sponges)", "Miscellaneous", "Insurance", "Taxes & Permits"
+        };
+        foreach (var name in defaultCategories)
+            context.ExpenseCategories.Add(new ExpenseCategory(orgId, name));
+
         // Populate TenantContext so downstream UnitOfWork / query filters work
         // correctly if any subsequent command in this request needs them.
         tenantContext.TenantId = orgId;
