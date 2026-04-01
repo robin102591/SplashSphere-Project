@@ -124,7 +124,10 @@
       "Bash(ls -la /c/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\\\\\(dashboard\\\\\\)/dashboard/)",
       "Bash(ls \"C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/src/app/\\(dashboard\\)/dashboard/attendance\")",
       "Bash(pnpm --filter admin exec tsc --noEmit)",
-      "Bash(npx pnpm:*)"
+      "Bash(npx pnpm:*)",
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\")",
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\")",
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\pos\\\\src\\\\app\\\\\\(terminal\\)\")"
     ]
   }
 }

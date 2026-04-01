@@ -676,6 +676,18 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ---
 
+## Multi-Agent System
+
+Specialized subagents and slash commands are available in `.claude/`:
+
+- **Agents** (`.claude/agents/`): `backend`, `frontend`, `database`, `devops`, `qa`, `uiux`, `docs` — each carries focused context and skills for its domain. Use via the Agent tool for delegated tasks.
+- **Skills** (`.claude/skills/`): Shared knowledge packages loaded by agents — project context, .NET patterns, Next.js patterns, EF Core patterns, Philippine car wash domain, and living API/page inventories.
+- **Commands** (`.claude/commands/`): `/implement-feature`, `/fix-bug`, `/add-endpoint`, `/add-page`, `/review` — workflow shortcuts that orchestrate multi-agent tasks.
+
+This system complements CLAUDE.md (which remains the authoritative project spec). Agents load their own skill subsets instead of the full CLAUDE.md.
+
+---
+
 ## Important Reminders
 
 - **Always scope data by tenant.** TenantId from JWT `org_id` claim.
