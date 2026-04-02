@@ -99,6 +99,15 @@ public static class RecurringJobSetup
             cronExpression: "0 1 1 * *",
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // ── Expenses ─────────────────────────────────────────────────────────
+
+        // Daily 00:30 PHT — auto-generate records for recurring expenses.
+        manager.AddOrUpdate<ExpenseJobService>(
+            recurringJobId: "expense-recurring-generation",
+            methodCall: job => job.GenerateRecurringExpensesAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 0, minute: 30),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         return app;
     }
 }

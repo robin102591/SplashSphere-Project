@@ -610,6 +610,7 @@ When `queueEntryId` is present: pre-fill vehicle/customer from queue entry, pre-
 | `RunDailyPayrollJob` | Daily 00:05 PHT | Per-tenant: auto-close expired periods + create new periods based on tenant's CutOffStartDay |
 | `CheckLowStockAlerts` | Daily 08:00 PHT | Scan low inventory |
 | `CleanupStaleTransactions` | Hourly | Cancel PENDING transactions older than 4h |
+| `GenerateRecurringExpenses` | Daily 00:30 PHT | Auto-generate expense records for recurring expenses (Daily/Weekly/Monthly) |
 
 **Queue No-Show Timer:** Fire-and-forget, triggered when customer is CALLED. `BackgroundJob.Schedule` 5-minute delay. Only marks NO_SHOW if status still CALLED.
 
