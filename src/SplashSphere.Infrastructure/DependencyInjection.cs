@@ -83,6 +83,18 @@ public static class DependencyInjection
             services.AddScoped<IEmailService, ExternalServices.MockEmailService>();
         }
 
+        // ── SMS service ─────────────────────────────────────────────────────
+        // Uses Semaphore (PH gateway) when API key is configured, otherwise logs to console.
+        if (!string.IsNullOrEmpty(configuration["Semaphore:ApiKey"]))
+        {
+            services.AddHttpClient("Semaphore");
+            services.AddScoped<ISmsService, ExternalServices.SemaphoreSmsService>();
+        }
+        else
+        {
+            services.AddScoped<ISmsService, ExternalServices.MockSmsService>();
+        }
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();
