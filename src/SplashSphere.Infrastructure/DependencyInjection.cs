@@ -71,6 +71,18 @@ public static class DependencyInjection
             services.AddScoped<IPaymentGateway, ExternalServices.MockPaymentGateway>();
         }
 
+        // ── Email service ───────────────────────────────────────────────────
+        // Uses Resend when API key is configured, otherwise logs to console.
+        if (!string.IsNullOrEmpty(configuration["Resend:ApiKey"]))
+        {
+            services.AddHttpClient("Resend");
+            services.AddScoped<IEmailService, ExternalServices.ResendEmailService>();
+        }
+        else
+        {
+            services.AddScoped<IEmailService, ExternalServices.MockEmailService>();
+        }
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();

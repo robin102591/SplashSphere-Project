@@ -13,7 +13,8 @@ namespace SplashSphere.Infrastructure.Jobs;
 /// </summary>
 public sealed class BillingJobService(
     IServiceScopeFactory scopeFactory,
-    ILogger<BillingJobService> logger)
+    ILogger<BillingJobService> logger,
+    IEmailService emailService)
 {
     private static readonly TimeSpan ManilaOffset = TimeSpan.FromHours(8);
 
@@ -38,13 +39,35 @@ public sealed class BillingJobService(
 
         if (expiring.Count == 0) return;
 
+        // Load tenant emails for sending reminders
+        var tenantIds = expiring.Select(e => e.TenantId).ToList();
+        var tenantEmails = await db.Tenants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(t => tenantIds.Contains(t.Id))
+            .Select(t => new { t.Id, t.Email, t.Name })
+            .ToDictionaryAsync(t => t.Id, ct);
+
         foreach (var sub in expiring)
         {
             var daysLeft = (int)(sub.TrialEndDate - now).TotalDays;
             logger.LogInformation(
                 "BillingJob: Trial expiry reminder for tenant {TenantId} — {Days} day(s) remaining.",
                 sub.TenantId, daysLeft);
-            // TODO: Send email/notification via notification service
+
+            if (tenantEmails.TryGetValue(sub.TenantId, out var tenant) && !string.IsNullOrEmpty(tenant.Email))
+            {
+                await emailService.SendAsync(new EmailMessage(
+                    To: tenant.Email,
+                    Subject: $"Your SplashSphere trial ends in {daysLeft} day{(daysLeft != 1 ? "s" : "")}",
+                    HtmlBody: $"""
+                        <h2>Hi {tenant.Name},</h2>
+                        <p>Your SplashSphere free trial expires in <strong>{daysLeft} day{(daysLeft != 1 ? "s" : "")}</strong>.</p>
+                        <p>Upgrade now to keep all your data and continue using SplashSphere without interruption.</p>
+                        <p>If you have any questions, just reply to this email — we're happy to help.</p>
+                        <p>— The SplashSphere Team</p>
+                        """), ct);
+            }
         }
 
         logger.LogInformation(
@@ -141,6 +164,17 @@ public sealed class BillingJobService(
         var created = 0;
         var sequence = existingInvoiceSet.Count + 1;
 
+        // Load tenant info for invoice emails
+        var allTenantIds = activeSubscriptions.Select(s => s.TenantId).ToList();
+        var tenantInfo = await db.Tenants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(t => allTenantIds.Contains(t.Id))
+            .Select(t => new { t.Id, t.Email, t.Name })
+            .ToDictionaryAsync(t => t.Id, ct);
+
+        var invoicesToEmail = new List<(string TenantId, string InvoiceNumber, decimal Amount)>();
+
         foreach (var sub in activeSubscriptions)
         {
             if (existingInvoiceSet.Contains(sub.TenantId))
@@ -161,12 +195,33 @@ public sealed class BillingJobService(
             };
 
             db.BillingRecords.Add(billing);
+            invoicesToEmail.Add((sub.TenantId, invoiceNumber, plan.MonthlyPrice));
             created++;
             sequence++;
         }
 
         if (created > 0)
             await db.SaveChangesAsync(ct);
+
+        // Send invoice emails after successful save
+        foreach (var (tenantId, invoiceNumber, amount) in invoicesToEmail)
+        {
+            if (tenantInfo.TryGetValue(tenantId, out var tenant) && !string.IsNullOrEmpty(tenant.Email))
+            {
+                await emailService.SendAsync(new EmailMessage(
+                    To: tenant.Email,
+                    Subject: $"SplashSphere Invoice {invoiceNumber}",
+                    HtmlBody: $"""
+                        <h2>Hi {tenant.Name},</h2>
+                        <p>Your monthly SplashSphere invoice is ready.</p>
+                        <p><strong>Invoice:</strong> {invoiceNumber}<br/>
+                        <strong>Amount:</strong> ₱{amount:N2}<br/>
+                        <strong>Due:</strong> {DateTime.UtcNow.AddDays(7):MMMM d, yyyy}</p>
+                        <p>Log in to your dashboard to view details or make a payment.</p>
+                        <p>— The SplashSphere Team</p>
+                        """), ct);
+            }
+        }
 
         logger.LogInformation(
             "BillingJob: Generated {Count} invoice(s) for {Month}.", created, invoiceMonth);
