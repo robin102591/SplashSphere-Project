@@ -26,10 +26,10 @@ public sealed class CreateTransactionCommandValidator : AbstractValidator<Create
         RuleFor(x => x.TaxAmount)
             .GreaterThanOrEqualTo(0).WithMessage("Tax amount cannot be negative.");
 
-        // At least one service or package must be present
+        // At least one item must be present (service, package, or merchandise)
         RuleFor(x => x)
-            .Must(x => x.Services.Count > 0 || x.Packages.Count > 0)
-            .WithMessage("At least one service or package is required.")
+            .Must(x => x.Services.Count > 0 || x.Packages.Count > 0 || x.Merchandise.Count > 0)
+            .WithMessage("At least one service, package, or merchandise item is required.")
             .OverridePropertyName("Services");
 
         // Services
