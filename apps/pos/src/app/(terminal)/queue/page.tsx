@@ -279,6 +279,7 @@ export default function QueuePage() {
       )
       return res.items as QueueEntry[]
     },
+    staleTime: 3_000,
     refetchInterval: 30_000,
   })
 

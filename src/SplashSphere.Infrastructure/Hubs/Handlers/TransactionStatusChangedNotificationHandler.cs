@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Enums;
 using SplashSphere.Domain.Events;
@@ -21,7 +22,8 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 public sealed class TransactionStatusChangedNotificationHandler(
     IHubContext<SplashSphereHub> hub,
     IApplicationDbContext db,
-    INotificationService notificationService)
+    INotificationService notificationService,
+    ILogger<TransactionStatusChangedNotificationHandler> logger)
     : INotificationHandler<DomainEventNotification<TransactionStatusChangedEvent>>
 {
     public async Task Handle(
@@ -91,12 +93,24 @@ public sealed class TransactionStatusChangedNotificationHandler(
                             EstimatedWaitMinutes: null),
                             cancellationToken);
 
-                    var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
-                    await hub.Clients
-                        .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
-                        .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
+                    _ = BuildAndSendDisplaySnapshotAsync(e.BranchId);
                 }
             }
+        }
+    }
+
+    private async Task BuildAndSendDisplaySnapshotAsync(string branchId)
+    {
+        try
+        {
+            var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, branchId, CancellationToken.None);
+            await hub.Clients
+                .Group(SplashSphereHub.QueueDisplayGroup(branchId))
+                .SendAsync("QueueDisplayUpdated", snapshot, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send queue display snapshot for branch {BranchId}.", branchId);
         }
     }
 }

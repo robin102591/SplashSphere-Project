@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { ArrowLeft, Search, Check, Car, User, AlertCircle, RefreshCw } from 'lucide-react'
 import { QueuePriority } from '@splashsphere/types'
@@ -56,6 +56,7 @@ const PRIORITY_OPTIONS = [
 export default function AddToQueuePage() {
   const router = useRouter()
   const { getToken } = useAuth()
+  const queryClient = useQueryClient()
 
   const [foundCar, setFoundCar] = useState<CarType | null>(null)
   const [lookupMsg, setLookupMsg] = useState<{ text: string; ok: boolean } | null>(null)
@@ -136,6 +137,8 @@ export default function AddToQueuePage() {
         notes: values.notes?.trim() || null,
       }
       await apiClient.post('/queue', body, token ?? undefined)
+      await queryClient.invalidateQueries({ queryKey: ['queue'] })
+      await queryClient.invalidateQueries({ queryKey: ['queue-stats'] })
       router.push('/queue')
     } catch (err) {
       const apiErr = err as ApiError

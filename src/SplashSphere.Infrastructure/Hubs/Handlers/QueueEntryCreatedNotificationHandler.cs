@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Events;
 using SplashSphere.Infrastructure.Services;
@@ -10,12 +11,13 @@ namespace SplashSphere.Infrastructure.Hubs.Handlers;
 /// Handles <see cref="QueueEntryCreatedEvent"/> and broadcasts:
 /// <list type="bullet">
 ///   <item><c>QueueUpdated</c> → branch group — queue board refreshes with the new entry.</item>
-///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV receives full snapshot.</item>
+///   <item><c>QueueDisplayUpdated</c> → public display group — wall TV receives full snapshot (non-blocking).</item>
 /// </list>
 /// </summary>
 public sealed class QueueEntryCreatedNotificationHandler(
     IHubContext<SplashSphereHub> hub,
-    IApplicationDbContext db)
+    IApplicationDbContext db,
+    ILogger<QueueEntryCreatedNotificationHandler> logger)
     : INotificationHandler<DomainEventNotification<QueueEntryCreatedEvent>>
 {
     public async Task Handle(
@@ -37,10 +39,22 @@ public sealed class QueueEntryCreatedNotificationHandler(
                 e.EstimatedWaitMinutes),
                 cancellationToken);
 
-        // Send full display snapshot to public wall TV
-        var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, e.BranchId, cancellationToken);
-        await hub.Clients
-            .Group(SplashSphereHub.QueueDisplayGroup(e.BranchId))
-            .SendAsync("QueueDisplayUpdated", snapshot, cancellationToken);
+        // Build + send public display snapshot without blocking the response pipeline
+        _ = BuildAndSendDisplaySnapshotAsync(e.BranchId);
+    }
+
+    private async Task BuildAndSendDisplaySnapshotAsync(string branchId)
+    {
+        try
+        {
+            var snapshot = await QueueDisplaySnapshotBuilder.BuildAsync(db, branchId, CancellationToken.None);
+            await hub.Clients
+                .Group(SplashSphereHub.QueueDisplayGroup(branchId))
+                .SendAsync("QueueDisplayUpdated", snapshot, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send queue display snapshot for branch {BranchId}.", branchId);
+        }
     }
 }
