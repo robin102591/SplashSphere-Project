@@ -3,7 +3,7 @@
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Pencil, Power, PowerOff, Car, Mail, Phone, FileText, Plus,
+  Pencil, Power, PowerOff, Car, Mail, Phone, FileText, Plus, Award, Star, TrendingUp,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,10 +23,14 @@ import {
 import {
   useCustomer, useUpdateCustomer, useToggleCustomerStatus,
 } from '@/hooks/use-customers'
+import { useCustomerLoyaltySummary, useEnrollMember, usePointHistory } from '@/hooks/use-loyalty'
 import { useCreateCar, useMakes, useModelsByMake } from '@/hooks/use-cars'
 import { useVehicleTypes } from '@/hooks/use-vehicle-types'
 import { useSizes } from '@/hooks/use-sizes'
 import type { CustomerDetail, CustomerCar } from '@splashsphere/types'
+import { LoyaltyTier } from '@splashsphere/types'
+import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -312,6 +316,147 @@ function VehiclesTab({ customer }: { customer: CustomerDetail }) {
   )
 }
 
+// ── Loyalty tab ──────────────────────────────────────────────────────────────
+
+const TIER_LABELS: Record<number, string> = {
+  [LoyaltyTier.Standard]: 'Standard',
+  [LoyaltyTier.Silver]: 'Silver',
+  [LoyaltyTier.Gold]: 'Gold',
+  [LoyaltyTier.Platinum]: 'Platinum',
+}
+
+const TIER_COLORS: Record<number, string> = {
+  [LoyaltyTier.Standard]: 'bg-gray-100 text-gray-700 border-gray-200',
+  [LoyaltyTier.Silver]: 'bg-slate-100 text-slate-700 border-slate-300',
+  [LoyaltyTier.Gold]: 'bg-amber-50 text-amber-700 border-amber-200',
+  [LoyaltyTier.Platinum]: 'bg-violet-50 text-violet-700 border-violet-200',
+}
+
+function LoyaltyTab({ customerId }: { customerId: string }) {
+  const { data: summary, isLoading, isError } = useCustomerLoyaltySummary(customerId)
+  const { mutate: enroll, isPending: enrolling } = useEnrollMember()
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        Failed to load loyalty info. The loyalty feature may not be enabled on your plan.
+      </div>
+    )
+  }
+
+  // Not enrolled — show enroll button
+  if (!summary) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center gap-3">
+        <Award className="h-10 w-10 text-muted-foreground/40" />
+        <div>
+          <p className="font-medium">Not a loyalty member</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Enroll this customer to start earning points on every transaction.
+          </p>
+        </div>
+        <Button
+          onClick={() => enroll(customerId, {
+            onSuccess: () => toast.success('Customer enrolled in loyalty program'),
+            onError: () => toast.error('Failed to enroll customer'),
+          })}
+          disabled={enrolling}
+        >
+          <Award className="mr-2 h-4 w-4" />
+          {enrolling ? 'Enrolling...' : 'Enroll in Loyalty Program'}
+        </Button>
+      </div>
+    )
+  }
+
+  // Enrolled — show membership card info
+  const tierProgress = summary.pointsToNextTier != null
+    ? Math.round(
+        (summary.lifetimePointsEarned /
+          (summary.lifetimePointsEarned + summary.pointsToNextTier)) *
+          100
+      )
+    : 100
+
+  return (
+    <div className="space-y-6 max-w-lg">
+      {/* Membership card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Membership Card</p>
+              <p className="text-lg font-mono font-bold mt-0.5">{summary.cardNumber}</p>
+            </div>
+            <Badge
+              variant="outline"
+              className={`text-xs font-semibold ${TIER_COLORS[summary.currentTier] ?? ''}`}
+            >
+              {summary.tierName}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            <div>
+              <p className="text-xs text-muted-foreground">Available Points</p>
+              <p className="text-2xl font-bold tabular-nums">{summary.pointsBalance.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Lifetime Earned</p>
+              <p className="text-2xl font-bold tabular-nums">{summary.lifetimePointsEarned.toLocaleString()}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tier progress */}
+      {summary.nextTierName && summary.pointsToNextTier != null && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+                Next tier: {summary.nextTierName}
+              </span>
+              <span className="text-muted-foreground">
+                {summary.pointsToNextTier.toLocaleString()} pts to go
+              </span>
+            </div>
+            <Progress value={tierProgress} className="mt-2 h-2" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Available rewards */}
+      {summary.availableRewards.length > 0 && (
+        <div>
+          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+            <Star className="h-3.5 w-3.5 text-muted-foreground" />
+            Rewards available to redeem
+          </p>
+          <div className="rounded-lg border divide-y">
+            {summary.availableRewards.map((r) => (
+              <div key={r.id} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-sm">{r.name}</span>
+                <span className="text-xs font-mono text-muted-foreground">{r.pointsCost.toLocaleString()} pts</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -401,6 +546,10 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="loyalty">
+            <Award className="mr-1.5 h-3.5 w-3.5" />
+            Loyalty
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-6">
@@ -444,6 +593,10 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
         <TabsContent value="vehicles" className="mt-6">
           <VehiclesTab customer={customer} />
+        </TabsContent>
+
+        <TabsContent value="loyalty" className="mt-6">
+          <LoyaltyTab customerId={customer.id} />
         </TabsContent>
       </Tabs>
 

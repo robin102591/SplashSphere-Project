@@ -16,13 +16,16 @@ import type {
   CommissionType,
   EmployeeType,
   ExpenseFrequency,
+  LoyaltyTier,
   ModifierType,
   PaymentMethod,
   PayrollStatus,
+  PointTransactionType,
   QueuePriority,
   QueueStatus,
   ReceiptLineType,
   ReviewStatus,
+  RewardType,
   ShiftStatus,
   TransactionStatus,
 } from './enums';
@@ -469,6 +472,7 @@ export interface TransactionSummary {
   tipAmount: number;
   cashierName: string;
   queueEntryId: string | null;
+  pointsEarned: number;
   createdAt: string;
 }
 
@@ -1161,4 +1165,112 @@ export interface EmployeePayrollHistory {
   bonuses: number;
   deductions: number;
   netPay: number;
+}
+
+// ── Loyalty ──────────────────────────────────────────────────────────────────
+
+export interface LoyaltyTierConfigDto {
+  id: string;
+  tier: LoyaltyTier;
+  name: string;
+  minimumLifetimePoints: number;
+  pointsMultiplier: number;
+}
+
+export interface LoyaltyProgramSettingsDto {
+  id: string;
+  pointsPerCurrencyUnit: number;
+  currencyUnitAmount: number;
+  isActive: boolean;
+  pointsExpirationMonths: number | null;
+  autoEnroll: boolean;
+  tiers: readonly LoyaltyTierConfigDto[];
+}
+
+export interface LoyaltyRewardDto {
+  id: string;
+  name: string;
+  description: string | null;
+  rewardType: RewardType;
+  pointsCost: number;
+  serviceId: string | null;
+  serviceName: string | null;
+  packageId: string | null;
+  packageName: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface MembershipCardDto {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  cardNumber: string;
+  currentTier: LoyaltyTier;
+  tierName: string;
+  pointsBalance: number;
+  lifetimePointsEarned: number;
+  lifetimePointsRedeemed: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PointTransactionDto {
+  id: string;
+  type: PointTransactionType;
+  points: number;
+  balanceAfter: number;
+  description: string;
+  transactionId: string | null;
+  rewardName: string | null;
+  createdAt: string;
+}
+
+export interface AvailableRewardDto {
+  id: string;
+  name: string;
+  rewardType: RewardType;
+  pointsCost: number;
+  discountAmount: number | null;
+  discountPercent: number | null;
+}
+
+export interface CustomerLoyaltySummaryDto {
+  membershipCardId: string;
+  cardNumber: string;
+  currentTier: LoyaltyTier;
+  tierName: string;
+  pointsBalance: number;
+  lifetimePointsEarned: number;
+  pointsToNextTier: number | null;
+  nextTierName: string | null;
+  availableRewards: readonly AvailableRewardDto[];
+}
+
+export interface TierDistributionDto {
+  tier: LoyaltyTier;
+  tierName: string;
+  count: number;
+}
+
+export interface TopLoyalCustomerDto {
+  customerId: string;
+  customerName: string;
+  cardNumber: string;
+  currentTier: LoyaltyTier;
+  lifetimePointsEarned: number;
+  pointsBalance: number;
+}
+
+export interface LoyaltyDashboardDto {
+  totalMembers: number;
+  totalPointsEarnedInPeriod: number;
+  totalPointsRedeemedInPeriod: number;
+  totalRedemptionsInPeriod: number;
+  tierDistribution: readonly TierDistributionDto[];
+  topCustomers: readonly TopLoyalCustomerDto[];
 }

@@ -72,6 +72,7 @@ public sealed class GetTransactionsQueryHandler(IApplicationDbContext context)
                 t.FinalAmount,
                 t.Cashier.FirstName + " " + t.Cashier.LastName,
                 t.QueueEntry != null ? t.QueueEntry.Id : null,
+                t.PointsEarned,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
 

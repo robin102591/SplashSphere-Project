@@ -186,3 +186,29 @@ export enum ExpenseFrequency {
   Weekly  = 2,
   Monthly = 3,
 }
+
+// ── Loyalty ──────────────────────────────────────────────────────────────────
+
+/** Membership tier levels. Progression is one-directional (upgrades only). */
+export enum LoyaltyTier {
+  Standard = 0,
+  Silver   = 1,
+  Gold     = 2,
+  Platinum = 3,
+}
+
+/** Type of point transaction in the loyalty ledger. */
+export enum PointTransactionType {
+  Earned     = 0,
+  Redeemed   = 1,
+  Expired    = 2,
+  Adjustment = 3,
+}
+
+/** What a loyalty reward grants when redeemed. */
+export enum RewardType {
+  FreeService     = 0,
+  FreePackage     = 1,
+  DiscountAmount  = 2,
+  DiscountPercent = 3,
+}

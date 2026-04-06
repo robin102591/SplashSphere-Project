@@ -905,6 +905,173 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("GovernmentContributionBrackets", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyProgramSettings", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<bool>("AutoEnroll")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<decimal>("CurrencyUnitAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int?>("PointsExpirationMonths")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PointsPerCurrencyUnit")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyProgramSettings", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyReward", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal?>("DiscountAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PackageId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("PointsCost")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RewardType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServiceId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("LoyaltyRewards", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyTierConfig", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("LoyaltyProgramSettingsId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("MinimumLifetimePoints")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("PointsMultiplier")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Tier")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoyaltyProgramSettingsId", "Tier")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyTierConfigs", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Make", b =>
                 {
                     b.Property<string>("Id")
@@ -944,6 +1111,74 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Makes", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.MembershipCard", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("CurrentTier")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("LifetimePointsEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("LifetimePointsRedeemed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("PointsBalance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardNumber")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "CustomerId")
+                        .IsUnique();
+
+                    b.ToTable("MembershipCards", (string)null);
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Merchandise", b =>
@@ -1785,6 +2020,67 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("PlanChangeLogs", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PointTransaction", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<int>("BalanceAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MembershipCardId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RewardId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TransactionId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MembershipCardId");
+
+                    b.HasIndex("RewardId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.HasIndex("MembershipCardId", "CreatedAt");
+
+                    b.ToTable("PointTransactions", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.PricingModifier", b =>
                 {
                     b.Property<string>("Id")
@@ -2624,8 +2920,14 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<string>("LoyaltyRedemptionId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Notes")
                         .HasColumnType("text");
+
+                    b.Property<int>("PointsEarned")
+                        .HasColumnType("integer");
 
                     b.Property<string>("RefundReason")
                         .HasMaxLength(500)
@@ -3273,6 +3575,53 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyProgramSettings", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyReward", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.ServicePackage", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Package");
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyTierConfig", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.LoyaltyProgramSettings", "Settings")
+                        .WithMany("Tiers")
+                        .HasForeignKey("LoyaltyProgramSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Settings");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Make", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
@@ -3280,6 +3629,25 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.MembershipCard", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Customer", "Customer")
+                        .WithOne("MembershipCard")
+                        .HasForeignKey("SplashSphere.Domain.Entities.MembershipCard", "CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Tenant");
                 });
@@ -3544,6 +3912,31 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PointTransaction", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.MembershipCard", "MembershipCard")
+                        .WithMany("PointTransactions")
+                        .HasForeignKey("MembershipCardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.LoyaltyReward", "Reward")
+                        .WithMany()
+                        .HasForeignKey("RewardId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Transaction", "Transaction")
+                        .WithMany()
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("MembershipCard");
+
+                    b.Navigation("Reward");
+
+                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.PricingModifier", b =>
@@ -3973,6 +4366,8 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("Cars");
 
+                    b.Navigation("MembershipCard");
+
                     b.Navigation("QueueEntries");
 
                     b.Navigation("Transactions");
@@ -3998,9 +4393,19 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Expenses");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyProgramSettings", b =>
+                {
+                    b.Navigation("Tiers");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Make", b =>
                 {
                     b.Navigation("Models");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.MembershipCard", b =>
+                {
+                    b.Navigation("PointTransactions");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Merchandise", b =>

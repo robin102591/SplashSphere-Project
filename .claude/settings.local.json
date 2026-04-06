@@ -127,7 +127,9 @@
       "Bash(npx pnpm:*)",
       "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\")",
       "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\admin\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\")",
-      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\pos\\\\src\\\\app\\\\\\(terminal\\)\")"
+      "Bash(ls \"C:\\\\PROJECTS\\\\carwash\\\\SplashSphere-Claude\\\\apps\\\\pos\\\\src\\\\app\\\\\\(terminal\\)\")",
+      "Bash(pnpm:*)",
+      "Bash(\"/c/Program Files/nodejs/npx.cmd\" --yes pnpm --filter @splashsphere/types build)"
     ]
   }
 }

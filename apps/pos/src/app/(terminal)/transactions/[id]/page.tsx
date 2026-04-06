@@ -313,6 +313,9 @@ export default function TransactionDetailPage({ params }: Props) {
         {tx.customerName && (
           <Section icon={<User2 className="h-4 w-4" />} title="Customer">
             <p className="text-white">{tx.customerName}</p>
+            {tx.pointsEarned > 0 && (
+              <p className="text-xs text-amber-400 mt-1">+{tx.pointsEarned.toLocaleString()} loyalty points earned</p>
+            )}
           </Section>
         )}
 

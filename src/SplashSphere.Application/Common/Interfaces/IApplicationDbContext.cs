@@ -107,4 +107,11 @@ public interface IApplicationDbContext
     // ── Expenses ────────────────────────────────────────────────────────────
     DbSet<ExpenseCategory> ExpenseCategories { get; }
     DbSet<Expense> Expenses { get; }
+
+    // ── Loyalty ───────────────────────────────────────────────────────────
+    DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings { get; }
+    DbSet<LoyaltyTierConfig> LoyaltyTierConfigs { get; }
+    DbSet<LoyaltyReward> LoyaltyRewards { get; }
+    DbSet<MembershipCard> MembershipCards { get; }
+    DbSet<PointTransaction> PointTransactions { get; }
 }

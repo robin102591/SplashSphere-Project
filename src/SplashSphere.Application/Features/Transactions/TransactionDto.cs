@@ -32,6 +32,7 @@ public sealed record TransactionDetailDto(
     DateTime? CancelledAt,
     DateTime? RefundedAt,
     string? RefundReason,
+    int PointsEarned,
     IReadOnlyList<TransactionServiceLineDto> Services,
     IReadOnlyList<TransactionPackageLineDto> Packages,
     IReadOnlyList<TransactionMerchandiseLineDto> Merchandise,

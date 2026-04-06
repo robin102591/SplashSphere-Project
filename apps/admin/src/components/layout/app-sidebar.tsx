@@ -39,6 +39,7 @@ import {
   Receipt,
   Coins,
   PieChart,
+  Award,
 } from 'lucide-react'
 import { useHasFeature } from '@/hooks/use-plan'
 import { FeatureKeys } from '@splashsphere/types'
@@ -73,6 +74,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { label: 'Employees', href: '/dashboard/employees', icon: Users },
       { label: 'Attendance', href: '/dashboard/attendance', icon: CalendarCheck },
       { label: 'Customers', href: '/dashboard/customers', icon: Users },
+      { label: 'Loyalty', href: '/dashboard/loyalty', icon: Award, feature: FeatureKeys.CustomerLoyalty },
       { label: 'Vehicles', href: '/dashboard/vehicles', icon: Car },
     ],
   },

@@ -20,4 +20,5 @@ public sealed record TransactionSummaryDto(
     decimal FinalAmount,
     string CashierName,
     string? QueueEntryId,
+    int PointsEarned,
     DateTime CreatedAt);

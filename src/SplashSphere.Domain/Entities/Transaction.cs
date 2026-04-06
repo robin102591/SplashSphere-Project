@@ -98,6 +98,12 @@ public sealed class Transaction : IAuditableEntity
 
     public string? Notes { get; set; }
 
+    /// <summary>Loyalty points earned from this transaction (set by the loyalty handler).</summary>
+    public int PointsEarned { get; set; }
+
+    /// <summary>Loyalty reward redemption applied to this transaction, if any.</summary>
+    public string? LoyaltyRedemptionId { get; set; }
+
     /// <summary>UTC timestamp when status transitioned to <see cref="TransactionStatus.Completed"/>.</summary>
     public DateTime? CompletedAt { get; set; }
 

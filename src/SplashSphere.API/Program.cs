@@ -130,5 +130,6 @@ app.MapAttendanceEndpoints();
 app.MapBillingEndpoints();
 app.MapExpenseEndpoints();
 app.MapAuditLogEndpoints();
+app.MapLoyaltyEndpoints();
 
 app.Run();

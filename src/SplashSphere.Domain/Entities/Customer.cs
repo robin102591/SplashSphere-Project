@@ -42,4 +42,5 @@ public sealed class Customer : IAuditableEntity
     public ICollection<Car> Cars { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
     public ICollection<QueueEntry> QueueEntries { get; set; } = [];
+    public MembershipCard? MembershipCard { get; set; }
 }

@@ -96,6 +96,13 @@ public sealed class ApplicationDbContext(
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<Expense> Expenses => Set<Expense>();
 
+    // ── Loyalty ───────────────────────────────────────────────────────────
+    public DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings => Set<LoyaltyProgramSettings>();
+    public DbSet<LoyaltyTierConfig> LoyaltyTierConfigs => Set<LoyaltyTierConfig>();
+    public DbSet<LoyaltyReward> LoyaltyRewards => Set<LoyaltyReward>();
+    public DbSet<MembershipCard> MembershipCards => Set<MembershipCard>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -241,6 +248,21 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<Expense>()
             .HasQueryFilter(e => e.TenantId == tenantContext.TenantId && !e.IsDeleted);
+
+        modelBuilder.Entity<LoyaltyProgramSettings>()
+            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<LoyaltyTierConfig>()
+            .HasQueryFilter(t => t.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<LoyaltyReward>()
+            .HasQueryFilter(r => r.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<MembershipCard>()
+            .HasQueryFilter(m => m.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<PointTransaction>()
+            .HasQueryFilter(p => p.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

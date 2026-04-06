@@ -172,6 +172,10 @@ public static class DataSeeder
         // Batch 6 — expense categories
         SeedExpenseCategories(ctx);
         await ctx.SaveChangesAsync();
+
+        // Batch 7 — loyalty program
+        SeedLoyaltyProgram(ctx);
+        await ctx.SaveChangesAsync();
     }
 
     // ── Master data ───────────────────────────────────────────────────────────
@@ -787,5 +791,71 @@ public static class DataSeeder
 
         foreach (var name in categories)
             ctx.ExpenseCategories.Add(new ExpenseCategory(Ten, name));
+    }
+
+    // ── Loyalty program seed ──────────────────────────────────────────────────
+
+    private static void SeedLoyaltyProgram(ApplicationDbContext ctx)
+    {
+        if (ctx.LoyaltyProgramSettings.IgnoreQueryFilters().Any()) return;
+
+        // Settings — 1 point per ₱100 spent, active, auto-enroll, 12-month expiry
+        var settingsId = "loyalty-settings-1";
+        var settings = new LoyaltyProgramSettings(Ten)
+        {
+            Id = settingsId,
+            PointsPerCurrencyUnit = 1m,
+            CurrencyUnitAmount = 100m,
+            IsActive = true,
+            AutoEnroll = true,
+            PointsExpirationMonths = 12,
+        };
+        ctx.LoyaltyProgramSettings.Add(settings);
+
+        // Tier configs
+        ctx.LoyaltyTierConfigs.Add(new LoyaltyTierConfig(Ten, settingsId, LoyaltyTier.Standard, "Standard", 0, 1.0m));
+        ctx.LoyaltyTierConfigs.Add(new LoyaltyTierConfig(Ten, settingsId, LoyaltyTier.Silver, "Silver", 500, 1.25m));
+        ctx.LoyaltyTierConfigs.Add(new LoyaltyTierConfig(Ten, settingsId, LoyaltyTier.Gold, "Gold", 2000, 1.5m));
+        ctx.LoyaltyTierConfigs.Add(new LoyaltyTierConfig(Ten, settingsId, LoyaltyTier.Platinum, "Platinum", 5000, 2.0m));
+
+        // Rewards catalogue
+        ctx.LoyaltyRewards.Add(new LoyaltyReward(Ten, "10% Off Next Wash", RewardType.DiscountPercent, 200) { Description = "10% discount on any single service", DiscountPercent = 10m });
+        ctx.LoyaltyRewards.Add(new LoyaltyReward(Ten, "₱50 Off", RewardType.DiscountAmount, 100) { Description = "₱50 discount on any order", DiscountAmount = 50m });
+        ctx.LoyaltyRewards.Add(new LoyaltyReward(Ten, "₱200 Off Premium", RewardType.DiscountAmount, 500) { Description = "₱200 off any premium service", DiscountAmount = 200m });
+
+        // Membership cards for 2 existing customers
+        var cardJose = new MembershipCard(Ten, CJose, "SS-00001")
+        {
+            CurrentTier = LoyaltyTier.Silver,
+            PointsBalance = 650,
+            LifetimePointsEarned = 850,
+            LifetimePointsRedeemed = 200,
+        };
+        ctx.MembershipCards.Add(cardJose);
+
+        var cardMaria = new MembershipCard(Ten, CMaria, "SS-00002")
+        {
+            CurrentTier = LoyaltyTier.Standard,
+            PointsBalance = 120,
+            LifetimePointsEarned = 120,
+        };
+        ctx.MembershipCards.Add(cardMaria);
+
+        // Sample point transactions for Jose
+        ctx.PointTransactions.Add(new PointTransaction(Ten, cardJose.Id, PointTransactionType.Earned, 350, 350, "Earned from MKT-20260315-001")
+        {
+            ExpiresAt = DateTime.UtcNow.AddMonths(12),
+        });
+        ctx.PointTransactions.Add(new PointTransaction(Ten, cardJose.Id, PointTransactionType.Earned, 500, 850, "Earned from MKT-20260320-003")
+        {
+            ExpiresAt = DateTime.UtcNow.AddMonths(12),
+        });
+        ctx.PointTransactions.Add(new PointTransaction(Ten, cardJose.Id, PointTransactionType.Redeemed, -200, 650, "Redeemed: ₱50 Off"));
+
+        // Sample point transaction for Maria
+        ctx.PointTransactions.Add(new PointTransaction(Ten, cardMaria.Id, PointTransactionType.Earned, 120, 120, "Earned from BGC-20260325-002")
+        {
+            ExpiresAt = DateTime.UtcNow.AddMonths(12),
+        });
     }
 }

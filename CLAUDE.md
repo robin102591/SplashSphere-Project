@@ -542,6 +542,26 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `POST` | `/expense-categories` | Create expense category |
 | `GET` | `/reports/profit-loss` | P&L report (revenue, COGS, expenses by category, net profit) |
 
+### Loyalty Program
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/loyalty/settings` | Get loyalty program settings + tier configs |
+| `PUT` | `/loyalty/settings` | Upsert loyalty program settings |
+| `PUT` | `/loyalty/tiers` | Upsert tier configurations |
+| `GET` | `/loyalty/rewards` | List rewards (paginated, optional activeOnly filter) |
+| `POST` | `/loyalty/rewards` | Create reward |
+| `PUT` | `/loyalty/rewards/{id}` | Update reward |
+| `PATCH` | `/loyalty/rewards/{id}/status` | Toggle reward active/inactive |
+| `GET` | `/loyalty/dashboard` | Loyalty dashboard (members, points, tiers, top customers) |
+| `POST` | `/loyalty/members` | Enroll customer in loyalty program |
+| `GET` | `/loyalty/members/by-customer/{customerId}` | Get membership card by customer |
+| `GET` | `/loyalty/members/by-card/{cardNumber}` | Get membership card by card number |
+| `GET` | `/loyalty/members/{membershipCardId}/points` | Point history (paginated) |
+| `POST` | `/loyalty/members/{membershipCardId}/redeem` | Redeem points for reward |
+| `POST` | `/loyalty/members/{membershipCardId}/adjust` | Admin manual point adjustment |
+| `GET` | `/loyalty/members/by-customer/{customerId}/summary` | Lightweight loyalty summary for POS |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ---
@@ -571,6 +591,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/billing` | Billing — next billing date, payment history with PDF download + Pay Now, cancel subscription |
 | `/dashboard/expenses` | Expenses — list with filters, record expense dialog, category/branch/date filters |
 | `/dashboard/reports/profit-loss` | P&L Dashboard — revenue/expenses/net profit KPI cards, trend chart, category breakdown, daily table |
+| `/dashboard/loyalty` | Loyalty Program — dashboard (members, points, tiers), rewards catalogue CRUD, program settings + tier config |
 
 ### POS App
 
@@ -642,6 +663,8 @@ Events: `TransactionUpdated`, `DashboardMetricsUpdated`, `AttendanceUpdated`, `Q
 14. **POS Lock Screen**: POS auto-locks after configurable inactivity (default 5 min) or manual lock. Requires 4–6 digit PIN to unlock. PINs are BCrypt-hashed, stored on User entity, set by admins only. Max PIN attempts before 30s cooldown (configurable via ShiftSettings).
 15. **Cash Advance FIFO Deduction**: Active cash advances are automatically deducted during payroll close, oldest first. Each deduction creates a `PayrollAdjustment` row with category "Cash Advance". Deduction amount = `min(DeductionPerPeriod, RemainingBalance)`. Advance marked `FullyPaid` when balance reaches zero.
 16. **Per-Branch Payroll**: Payroll periods and settings are branch-scoped. Each branch can have its own cut-off day and frequency (overrides tenant default). The Hangfire job creates one period per branch per cycle. `ClosePayrollPeriod` scopes employees to the period's branch. Settings resolve: branch override → tenant default → hardcoded (Monday/Weekly).
+17. **Loyalty Points**: Points are whole integers. Earned via `floor(FinalAmount / CurrencyUnitAmount) * PointsPerCurrencyUnit * tierMultiplier`. Auto-awarded on transaction completion via `TransactionCompletedLoyaltyHandler`. MembershipCard is separate from Customer (requires feature gate). Tier progression is one-directional (upgrades only). Auto-enrollment when `AutoEnroll` is enabled.
+18. **Loyalty Feature Gate**: All loyalty endpoints require `FeatureKeys.CustomerLoyalty` (Growth + Enterprise + Trial plans). The `RequiresFeatureAttribute` middleware enforces this.
 
 ---
 

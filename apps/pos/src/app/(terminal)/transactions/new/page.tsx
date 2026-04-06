@@ -22,6 +22,7 @@ import type { PagedResult } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
 import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
+import { useCustomerLoyalty } from '@/lib/use-loyalty'
 import {
   useTransactionStore,
   type ServiceLineItem,
@@ -414,6 +415,9 @@ function NewTransactionContent() {
   const [payMethod, setPayMethod] = useState<PaymentMethod>(PaymentMethod.Cash)
   const [payAmount, setPayAmount] = useState('')
   const [payRef, setPayRef] = useState('')
+
+  // ── Loyalty ───────────────────────────────────────────────────────────────
+  const { data: loyaltySummary } = useCustomerLoyalty(customerId)
 
   const vehicleInitDone = useRef(false)
   const servicesInitDone = useRef(false)
@@ -1117,7 +1121,17 @@ function NewTransactionContent() {
                   <span className="text-sm font-bold text-white font-mono">{plateNumber}</span>
                   <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{vehicleTypeName}</span>
                   <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{sizeName}</span>
-                  {customerId && <span className="text-xs text-blue-400 ml-auto">Linked customer</span>}
+                  {customerId && (
+                    <span className="flex items-center gap-1.5 text-xs ml-auto">
+                      <span className="text-blue-400">Linked customer</span>
+                      {loyaltySummary && (
+                        <>
+                          <span className="bg-amber-600/30 text-amber-400 px-1.5 py-0.5 rounded-full">{loyaltySummary.tierName}</span>
+                          <span className="font-mono text-gray-400">{loyaltySummary.pointsBalance.toLocaleString()} pts</span>
+                        </>
+                      )}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -1377,6 +1391,12 @@ function NewTransactionContent() {
                 />
               </div>
             </div>
+            {loyaltySummary && customerPayable > 0 && (
+              <div className="flex items-center justify-between text-xs text-amber-400/80">
+                <span>{loyaltySummary.tierName} Member</span>
+                <span className="font-mono">~{Math.floor(customerPayable / 100).toLocaleString()} pts estimated</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-white pt-0.5 border-t border-gray-800/60">
               <span className="text-base">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
               <span className="font-mono tabular-nums text-2xl font-bold text-white">{peso(customerPayable)}</span>
