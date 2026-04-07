@@ -8,6 +8,7 @@ using SplashSphere.Application.Features.Transactions.Commands.UpdateDiscountTip;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionItems;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionStatus;
 using SplashSphere.Application.Features.Transactions.Queries.GetDailySummary;
+using SplashSphere.Application.Features.Transactions.Queries.ExportReceiptPdf;
 using SplashSphere.Application.Features.Transactions.Queries.GetReceipt;
 using SplashSphere.Application.Features.Transactions.Queries.GetTransactionById;
 using SplashSphere.Application.Features.Transactions.Queries.GetTransactions;
@@ -37,6 +38,7 @@ public static class TransactionEndpoints
         group.MapGet("/",                            GetTransactions);
         group.MapGet("/{id}",                        GetTransactionById);
         group.MapGet("/{id}/receipt",                GetReceipt);
+        group.MapGet("/{id}/receipt/pdf",            ExportReceiptPdf);
 
         return app;
     }
@@ -234,6 +236,21 @@ public static class TransactionEndpoints
         return result is null
             ? TypedResults.NotFound()
             : TypedResults.Ok<object>(result);
+    }
+
+    // ── GET /{id}/receipt/pdf ──────────────────────────────────────────────
+
+    private static async Task<IResult> ExportReceiptPdf(
+        string id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportReceiptPdfQuery(id), ct);
+
+        if (result is null)
+            return TypedResults.NotFound();
+
+        return TypedResults.File(result.Content, "application/pdf", result.FileName);
     }
 
     // ── GET /daily-summary ────────────────────────────────────────────────────

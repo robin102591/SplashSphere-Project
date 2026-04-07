@@ -477,6 +477,8 @@ export interface TransactionSummary {
 }
 
 export interface TransactionDetail extends TransactionSummary {
+  branchAddress: string;
+  branchContactNumber: string;
   cashierId: string;
   vehicleTypeId: string;
   sizeId: string;

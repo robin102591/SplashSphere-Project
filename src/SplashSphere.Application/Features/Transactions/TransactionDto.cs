@@ -9,6 +9,8 @@ public sealed record TransactionDetailDto(
     string TransactionNumber,
     string BranchId,
     string BranchName,
+    string BranchAddress,
+    string BranchContactNumber,
     string CarId,
     string PlateNumber,
     string VehicleTypeName,

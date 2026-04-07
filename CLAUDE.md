@@ -412,6 +412,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `PATCH` | `/transactions/{id}/status` | Update status |
 | `PATCH` | `/transactions/{id}/discount-tip` | Update discount and/or tip on Pending/InProgress transaction |
 | `POST` | `/transactions/{id}/payments` | Add payment |
+| `GET` | `/transactions/{id}/receipt` | Receipt-formatted transaction data (JSON) |
+| `GET` | `/transactions/{id}/receipt/pdf` | Download receipt as PDF (QuestPDF, 80mm thermal) |
 | `GET` | `/transactions/daily-summary` | Daily branch summary |
 
 ### Merchandise — CRUD + stock adjustment
@@ -601,7 +603,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/queue` | **Queue Board** — Kanban: WAITING / CALLED / IN_SERVICE columns |
 | `/queue/add` | **Add to Queue** — plate lookup, priority, preferred services |
 | `/transactions/new` | New Transaction (supports direct OR from-queue entry) |
-| `/transactions/[id]` | Transaction detail + receipt |
+| `/transactions/[id]` | Transaction detail + receipt + auto-print prompt |
+| `/receipt/[id]` | Standalone receipt page — screen preview, print/PDF download, auto-print via `?print=1` |
 | `/history` | Today's transactions |
 | `/customers/lookup` | Plate/customer search |
 | `/attendance` | Clock in/out |

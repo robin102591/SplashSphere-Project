@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -80,6 +80,10 @@ export default function TransactionDetailPage({ params }: Props) {
   const [discountTipError, setDiscountTipError] = useState<string | null>(null)
   const [isSavingDiscountTip, setIsSavingDiscountTip] = useState(false)
 
+  // ── Print receipt prompt state ─────────────────────────────────────────────
+  const [showPrintPrompt, setShowPrintPrompt] = useState(false)
+  const prevStatusRef = useRef<number | null>(null)
+
   // ── Refund dialog state ────────────────────────────────────────────────────
   const [showRefundDialog, setShowRefundDialog] = useState(false)
   const [refundReason, setRefundReason] = useState('')
@@ -94,6 +98,18 @@ export default function TransactionDetailPage({ params }: Props) {
       return apiClient.get<TransactionDetail>(`/transactions/${id}`, token ?? undefined)
     },
   })
+
+  // ── Auto-show print prompt when transaction becomes Completed ──────────────
+  useEffect(() => {
+    if (!tx) return
+    // If previous status was not Completed but now it is → offer to print
+    if (prevStatusRef.current !== null &&
+        prevStatusRef.current !== TransactionStatus.Completed &&
+        tx.status === TransactionStatus.Completed) {
+      setShowPrintPrompt(true)
+    }
+    prevStatusRef.current = tx.status
+  }, [tx?.status])
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const cancelMutation = useMutation({
@@ -713,67 +729,163 @@ export default function TransactionDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Print / Receipt view ───────────────────────────────────────────── */}
-      <div className="hidden print:block p-8 max-w-sm mx-auto text-black font-mono text-sm leading-relaxed">
-        <div className="text-center mb-4">
-          <p className="text-lg font-bold">SplashSphere</p>
-          <p className="text-xs">{tx.branchName}</p>
-          <p className="text-xs mt-1">{fmtDateTime(tx.createdAt)}</p>
+      {/* ── Print receipt prompt ────────────────────────────────────────────── */}
+      {showPrintPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-6 w-6 text-green-400" />
+              <h2 className="text-base font-bold text-white">Transaction Complete</h2>
+            </div>
+            <p className="text-sm text-gray-400">
+              Would you like to print a receipt for <span className="text-white font-semibold">{tx.transactionNumber}</span>?
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setShowPrintPrompt(false)}
+                className="flex-1 min-h-[44px] rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-white hover:border-gray-500 transition-colors duration-150 active:scale-[0.97]"
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => {
+                  setShowPrintPrompt(false)
+                  window.print()
+                }}
+                className="flex-1 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
+              >
+                <Printer className="h-4 w-4" />
+                Print Receipt
+              </button>
+            </div>
+            <a
+              href={`/receipt/${id}?print=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              Open in new window
+            </a>
+          </div>
         </div>
-        <div className="border-t border-b border-black border-dashed py-2 my-2 text-center">
-          <p className="font-bold">{tx.transactionNumber}</p>
+      )}
+
+      {/* ── Print / Receipt view (thermal 80mm) ────────────────────────────── */}
+      <div id="receipt-content" className="hidden print:block">
+        <div className="receipt-header">
+          <p className="receipt-brand">SplashSphere</p>
+          <p className="receipt-branch">{tx.branchName}</p>
+          {tx.branchAddress && <p className="receipt-address">{tx.branchAddress}</p>}
+          {tx.branchContactNumber && <p className="receipt-address">{tx.branchContactNumber}</p>}
         </div>
-        <div className="my-2">
+
+        <div className="receipt-separator" />
+        <div className="receipt-txn-number">{tx.transactionNumber}</div>
+        <p className="receipt-date">{fmtDateTime(tx.createdAt)}</p>
+        <div className="receipt-separator" />
+
+        <div className="receipt-info">
           <p>Plate: <strong>{tx.plateNumber}</strong></p>
-          <p>Vehicle: {tx.vehicleTypeName} · {tx.sizeName}</p>
+          <p>Vehicle: {tx.vehicleTypeName} &middot; {tx.sizeName}</p>
           {tx.customerName && <p>Customer: {tx.customerName}</p>}
           <p>Cashier: {tx.cashierName}</p>
         </div>
-        <div className="border-t border-dashed border-black my-2 pt-2">
+
+        <div className="receipt-separator" />
+
+        {/* Line items */}
+        <div className="receipt-items">
           {tx.services.map((svc) => (
-            <div key={svc.id} className="flex justify-between">
+            <div key={svc.id} className="receipt-line">
               <span>{svc.serviceName}</span>
               <span>{fmt(svc.unitPrice)}</span>
             </div>
           ))}
           {tx.packages.map((pkg) => (
-            <div key={pkg.id} className="flex justify-between">
+            <div key={pkg.id} className="receipt-line">
               <span>{pkg.packageName}</span>
               <span>{fmt(pkg.unitPrice)}</span>
             </div>
           ))}
           {tx.merchandise.map((m) => (
-            <div key={m.id} className="flex justify-between">
-              <span>{m.merchandiseName} ×{m.quantity}</span>
+            <div key={m.id} className="receipt-line">
+              <span>{m.merchandiseName} x{m.quantity}</span>
               <span>{fmt(m.lineTotal)}</span>
             </div>
           ))}
         </div>
-        <div className="border-t border-dashed border-black my-2 pt-2 space-y-0.5">
-          <div className="flex justify-between"><span>Subtotal</span><span>{fmt(tx.totalAmount)}</span></div>
+
+        <div className="receipt-separator" />
+
+        {/* Totals */}
+        <div className="receipt-totals">
+          <div className="receipt-line">
+            <span>Subtotal</span><span>{fmt(tx.totalAmount)}</span>
+          </div>
           {tx.discountAmount > 0 && (
-            <div className="flex justify-between"><span>Discount</span><span>-{fmt(tx.discountAmount)}</span></div>
+            <div className="receipt-line">
+              <span>Discount</span><span>-{fmt(tx.discountAmount)}</span>
+            </div>
           )}
           {tx.taxAmount > 0 && (
-            <div className="flex justify-between"><span>Tax</span><span>{fmt(tx.taxAmount)}</span></div>
+            <div className="receipt-line">
+              <span>Tax</span><span>{fmt(tx.taxAmount)}</span>
+            </div>
           )}
-          <div className="flex justify-between font-bold border-t border-black pt-1 mt-1">
+          <div className="receipt-separator-solid" />
+          <div className="receipt-line receipt-total-line">
             <span>TOTAL</span><span>{fmt(tx.finalAmount)}</span>
           </div>
-        </div>
-        {tx.payments.length > 0 && (
-          <div className="border-t border-dashed border-black my-2 pt-2">
-            {tx.payments.map((p) => (
-              <div key={p.id} className="flex justify-between">
-                <span>{PAYMENT_LABEL[p.method] ?? 'Payment'}</span>
-                <span>{fmt(p.amount)}</span>
+          {tx.tipAmount > 0 && (
+            <>
+              <div className="receipt-line">
+                <span>Tip</span><span>{fmt(tx.tipAmount)}</span>
               </div>
-            ))}
-          </div>
+              <div className="receipt-line receipt-total-line">
+                <span>AMOUNT DUE</span><span>{fmt(tx.finalAmount + tx.tipAmount)}</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Payments */}
+        {tx.payments.length > 0 && (
+          <>
+            <div className="receipt-separator" />
+            <div className="receipt-payments">
+              {tx.payments.map((p) => (
+                <div key={p.id} className="receipt-line">
+                  <span>{PAYMENT_LABEL[p.method] ?? 'Payment'}</span>
+                  <span>{fmt(p.amount)}</span>
+                </div>
+              ))}
+              {(() => {
+                const change = alreadyPaid - customerOwes
+                return change > 0.01 ? (
+                  <div className="receipt-line receipt-total-line">
+                    <span>CHANGE</span><span>{fmt(change)}</span>
+                  </div>
+                ) : null
+              })()}
+            </div>
+          </>
         )}
-        <div className="text-center mt-4 text-xs">
-          <p>Thank you for choosing SplashSphere!</p>
-          <p className="mt-1">Status: {TX_STATUS[tx.status]?.label}</p>
+
+        {/* Loyalty points */}
+        {tx.pointsEarned > 0 && (
+          <>
+            <div className="receipt-separator" />
+            <div className="receipt-loyalty">
+              Points earned: +{tx.pointsEarned.toLocaleString()}
+            </div>
+          </>
+        )}
+
+        <div className="receipt-separator" />
+        <div className="receipt-footer">
+          <p>Thank you for choosing</p>
+          <p>SplashSphere!</p>
+          <p className="receipt-footer-sub">*** {TX_STATUS[tx.status]?.label?.toUpperCase()} ***</p>
         </div>
       </div>
     </>

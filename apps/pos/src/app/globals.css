@@ -46,20 +46,136 @@ body {
   animation: calling-flash 2s ease-in-out infinite;
 }
 
-/* Print styles — only show receipt content */
+/* ── Print styles — thermal receipt (80mm) ─────────────────────────────────── */
 @media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+    background: white !important;
+  }
+
   body * {
     visibility: hidden;
   }
+
   #receipt-content,
   #receipt-content * {
     visibility: visible;
   }
+
   #receipt-content {
     position: absolute;
     left: 0;
     top: 0;
-    width: 80mm;
+    width: 72mm;
     padding: 4mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #000;
+  }
+
+  /* Header */
+  .receipt-brand {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .receipt-branch {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .receipt-address {
+    font-size: 10px;
+    text-align: center;
+    color: #333;
+  }
+
+  /* Transaction number */
+  .receipt-txn-number {
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .receipt-date {
+    font-size: 10px;
+    text-align: center;
+    color: #333;
+    margin-top: 2px;
+  }
+
+  /* Separators */
+  .receipt-separator {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+  .receipt-separator-solid {
+    border-top: 1px solid #000;
+    margin: 4px 0;
+  }
+
+  /* Info block */
+  .receipt-info {
+    font-size: 11px;
+    margin: 4px 0;
+  }
+  .receipt-info p {
+    margin: 1px 0;
+  }
+
+  /* Line items & totals */
+  .receipt-items,
+  .receipt-totals,
+  .receipt-payments {
+    margin: 4px 0;
+  }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+    margin: 1px 0;
+  }
+  .receipt-line span:first-child {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 8px;
+  }
+  .receipt-line span:last-child {
+    white-space: nowrap;
+    text-align: right;
+  }
+  .receipt-total-line {
+    font-weight: bold;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* Loyalty */
+  .receipt-loyalty {
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+  }
+
+  /* Footer */
+  .receipt-footer {
+    text-align: center;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .receipt-footer-sub {
+    font-size: 10px;
+    margin-top: 4px;
+    letter-spacing: 1px;
   }
 }
