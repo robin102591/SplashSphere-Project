@@ -24,6 +24,13 @@ dist/
 out/
 .pnpm-store/
 
+# PWA — generated service worker
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+public/workbox-*.js
+public/workbox-*.js.map
+
 # Logs
 logs/
 *.log

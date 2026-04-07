@@ -1,0 +1,151 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "loading": "Loading...",
+    "tryAgain": "Try Again",
+    "somethingWentWrong": "Something went wrong",
+    "yes": "Yes",
+    "no": "No",
+    "total": "Total",
+    "search": "Search",
+    "noResults": "No results found",
+    "print": "Print",
+    "skip": "Skip"
+  },
+  "nav": {
+    "home": "Home",
+    "queue": "Queue",
+    "transaction": "Transaction",
+    "history": "History",
+    "customers": "Customers",
+    "attendance": "Attendance",
+    "shift": "Shift"
+  },
+  "status": {
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded",
+    "waiting": "Waiting",
+    "called": "Called",
+    "inService": "In Service",
+    "noShow": "No Show"
+  },
+  "payment": {
+    "cash": "Cash",
+    "gcash": "GCash",
+    "creditCard": "Credit",
+    "debitCard": "Debit",
+    "bankTransfer": "Bank"
+  },
+  "queue": {
+    "title": "Queue Board",
+    "addToQueue": "Add to Queue",
+    "waitingColumn": "Waiting",
+    "calledColumn": "Called",
+    "inServiceColumn": "In Service",
+    "callNext": "Call Next",
+    "startService": "Start Service",
+    "markNoShow": "No Show",
+    "requeue": "Re-queue",
+    "cancelEntry": "Cancel",
+    "estimatedWait": "Est. wait",
+    "priority": "Priority",
+    "regular": "Regular",
+    "vip": "VIP",
+    "express": "Express",
+    "noVehiclesWaiting": "No vehicles waiting",
+    "plateNumber": "Plate Number"
+  },
+  "transaction": {
+    "new": "New Transaction",
+    "detail": "Transaction Detail",
+    "selectService": "Select Services",
+    "selectPackage": "Select Packages",
+    "selectMerchandise": "Merchandise",
+    "assignEmployees": "Assign Employees",
+    "vehicleInfo": "Vehicle Info",
+    "customer": "Customer",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "tax": "Tax",
+    "tip": "Tip",
+    "finalTotal": "Total",
+    "amountDue": "Amount Due",
+    "addPayment": "Add Payment",
+    "confirmPayment": "Confirm Payment",
+    "remaining": "Remaining",
+    "paid": "Paid",
+    "change": "Change",
+    "editItems": "Edit Items",
+    "cancelTransaction": "Cancel",
+    "refund": "Refund",
+    "confirmRefund": "Confirm Refund",
+    "refundReason": "Reason",
+    "printReceipt": "Print Receipt",
+    "transactionComplete": "Transaction Complete",
+    "printPrompt": "Would you like to print a receipt?",
+    "openInNewWindow": "Open in new window",
+    "pointsEarned": "+{points} loyalty points earned",
+    "cashier": "Cashier"
+  },
+  "shift": {
+    "openShift": "Open Shift",
+    "closeShift": "Close Shift",
+    "myShift": "My Shift",
+    "openingFund": "Opening Fund",
+    "cashMovement": "Cash Movement",
+    "cashIn": "Cash In",
+    "cashOut": "Cash Out",
+    "shiftRequired": "Shift Required",
+    "shiftRequiredMsg": "You need to open a shift before processing transactions.",
+    "endOfDay": "End of Day Report"
+  },
+  "receipt": {
+    "title": "Receipt",
+    "downloadPdf": "Download PDF",
+    "printReceipt": "Print Receipt",
+    "thankYou": "Thank you for choosing",
+    "brand": "SplashSphere!",
+    "plate": "Plate",
+    "vehicle": "Vehicle",
+    "cashier": "Cashier"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "quickActions": "Quick Actions",
+    "newTransaction": "New Transaction",
+    "addToQueue": "Add to Queue",
+    "viewQueue": "View Queue",
+    "todaysSummary": "Today's Summary"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "clockIn": "Clock In",
+    "clockOut": "Clock Out",
+    "alreadyClockedIn": "Already clocked in",
+    "notClockedIn": "Not clocked in yet"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "email": "Email",
+    "password": "Password"
+  },
+  "language": {
+    "title": "Language",
+    "english": "English",
+    "filipino": "Filipino"
+  },
+  "lock": {
+    "locked": "Terminal Locked",
+    "enterPin": "Enter your PIN to unlock",
+    "unlock": "Unlock",
+    "invalidPin": "Invalid PIN",
+    "tooManyAttempts": "Too many attempts. Please wait.",
+    "noPinConfigured": "No PIN configured. Contact your admin."
+  }
+}

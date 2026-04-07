@@ -58,6 +58,8 @@ SplashSphere is a multi-tenant, multi-branch car wash management platform compos
 - **Forms**: `react-hook-form` ^7.x + `zod` ^3.x + `@hookform/resolvers`
 - **UI Components**: `shadcn/ui`, **Tables**: `@tanstack/react-table` ^8.x, **Charts**: `recharts` ^2.x
 - **Real-time**: `@microsoft/signalr` ^8.x
+- **i18n**: `next-intl` ^4.x — cookie-based locale detection (`NEXT_LOCALE` cookie), no URL prefix. Supports English (`en`) and Filipino (`fil`). Translation files in `apps/{app}/messages/{locale}.json`. Use `useTranslations()` hook in components.
+- **PWA**: `@serwist/next` ^9.x — service worker with precaching, runtime caching, offline fallback. Manifests in `public/manifest.json`. Install prompt via `usePwaInstall` hook.
 - **HTTP Client**: Built-in `fetch` wrapped in a typed API client (no axios)
 
 ---
@@ -79,20 +81,26 @@ SplashSphere/
 │   └── SplashSphere.SharedKernel/          # Result<T>, PagedResult, exceptions
 ├── apps/
 │   ├── admin/                              # Next.js 16 — Admin Dashboard
-│   │   └── src/app/
-│   │       ├── (auth)/                     # CUSTOM sign-in/sign-up (headless Clerk)
-│   │       │   ├── sign-in/, sign-up/, sso-callback/, forgot-password/
-│   │       ├── (onboarding)/               # Tenant onboarding wizard
-│   │       │   └── onboarding/page.tsx
-│   │       └── (dashboard)/                # Authenticated pages
+│   │   ├── messages/en.json, fil.json      # i18n translation files
+│   │   └── src/
+│   │       ├── i18n/config.ts, request.ts  # next-intl config
+│   │       └── app/
+│   │           ├── (auth)/                 # CUSTOM sign-in/sign-up (headless Clerk)
+│   │           │   ├── sign-in/, sign-up/, sso-callback/, forgot-password/
+│   │           ├── (onboarding)/           # Tenant onboarding wizard
+│   │           │   └── onboarding/page.tsx
+│   │           └── (dashboard)/            # Authenticated pages
 │   └── pos/                                # Next.js 16 — POS Application
-│       └── src/app/
-│           ├── (auth)/sign-in/             # CUSTOM sign-in only (no sign-up on POS)
-│           ├── (terminal)/                 # POS pages
-│           │   ├── queue/                  # Queue board + add-to-queue
-│           │   ├── transactions/
-│           │   ├── history/, customers/, attendance/
-│           └── queue-display/page.tsx      # PUBLIC (no auth) wall TV display
+│       ├── messages/en.json, fil.json      # i18n translation files
+│       └── src/
+│           ├── i18n/config.ts, request.ts  # next-intl config
+│           └── app/
+│               ├── (auth)/sign-in/         # CUSTOM sign-in only (no sign-up on POS)
+│               ├── (terminal)/             # POS pages
+│               │   ├── queue/              # Queue board + add-to-queue
+│               │   ├── transactions/
+│               │   ├── history/, customers/, attendance/
+│               └── queue-display/page.tsx  # PUBLIC (no auth) wall TV display
 ├── packages/types/                         # Shared TypeScript types
 ├── docker-compose.yml
 ├── pnpm-workspace.yaml
@@ -729,6 +737,7 @@ This system complements CLAUDE.md (which remains the authoritative project spec)
 - **Next.js 16 uses `proxy.ts`** not `middleware.ts`. Turbopack default. React Compiler stable.
 - **All times in Asia/Manila (UTC+8).** Store as UTC, convert for display.
 - **Currency: Philippine Peso (₱ / PHP).** Decimal with 2 places.
+- **i18n: English + Filipino.** Use `useTranslations()` from `next-intl` for all user-facing strings. Translation files in `messages/en.json` and `messages/fil.json`. Cookie-based locale (`NEXT_LOCALE`), no URL prefix. Navigation strings are fully extracted; remaining pages should follow the same pattern incrementally.
 
 ## Living Documentation Rules
 

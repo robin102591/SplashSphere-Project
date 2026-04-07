@@ -22,15 +22,18 @@ import { useState, useEffect, useRef } from 'react'
 import { ConnectionStatusDot } from '@/components/connection-status'
 import { useBranch } from '@/lib/branch-context'
 import { useLockStore } from '@/lib/use-lock-store'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
+import { PwaInstallBanner } from '@/components/pwa-install-banner'
+import { useTranslations } from 'next-intl'
 
 const navItems = [
-  { label: 'Home', href: '/home', icon: Home },
-  { label: 'Queue', href: '/queue', icon: ListOrdered },
-  { label: 'Transaction', href: '/transactions/new', icon: LayoutGrid },
-  { label: 'History', href: '/history', icon: Clock },
-  { label: 'Customers', href: '/customers/lookup', icon: Users },
-  { label: 'Attendance', href: '/attendance', icon: Fingerprint },
-  { label: 'Shift', href: '/shift', icon: Wallet },
+  { labelKey: 'home', href: '/home', icon: Home },
+  { labelKey: 'queue', href: '/queue', icon: ListOrdered },
+  { labelKey: 'transaction', href: '/transactions/new', icon: LayoutGrid },
+  { labelKey: 'history', href: '/history', icon: Clock },
+  { labelKey: 'customers', href: '/customers/lookup', icon: Users },
+  { labelKey: 'attendance', href: '/attendance', icon: Fingerprint },
+  { labelKey: 'shift', href: '/shift', icon: Wallet },
 ]
 
 // ── Live clock ─────────────────────────────────────────────────────────────────
@@ -203,6 +206,10 @@ function TopBar() {
                     {user?.primaryEmailAddress?.emailAddress}
                   </p>
                 </div>
+                <div className="px-3 py-2.5 border-b border-gray-700 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Language</span>
+                  <LanguageSwitcher />
+                </div>
                 <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-2 px-3 py-3 text-sm text-red-400 hover:bg-gray-700 transition-colors duration-150"
@@ -223,6 +230,7 @@ function TopBar() {
 
 function NavPills() {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   return (
     <nav className="hidden md:flex items-center gap-2 bg-gray-900/60 border-b border-gray-800 px-4 py-2">
@@ -242,7 +250,7 @@ function NavPills() {
             )}
           >
             <item.icon className="h-5 w-5 shrink-0" />
-            <span>{item.label}</span>
+            <span>{t(item.labelKey)}</span>
           </Link>
         )
       })}
@@ -254,6 +262,7 @@ function NavPills() {
 
 function MobileTabBar() {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-900 border-t border-gray-800 h-16 flex items-stretch px-1 safe-area-pb">
@@ -273,7 +282,7 @@ function MobileTabBar() {
             )}
           >
             <item.icon className={cn('h-5 w-5', active && 'text-blue-400')} />
-            <span className="truncate">{item.label}</span>
+            <span className="truncate">{t(item.labelKey)}</span>
           </Link>
         )
       })}
@@ -286,6 +295,7 @@ function MobileTabBar() {
 export function PosNavbar() {
   return (
     <>
+      <PwaInstallBanner />
       <TopBar />
       <NavPills />
       <MobileTabBar />

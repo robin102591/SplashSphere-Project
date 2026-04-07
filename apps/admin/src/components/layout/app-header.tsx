@@ -25,6 +25,7 @@ import {
 import { ConnectionStatusDot } from '@/components/connection-status'
 import { SearchDialog } from '@/components/search-dialog'
 import { NotificationDropdown } from '@/components/layout/notification-dropdown'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 
 export function AppHeader() {
   const { user } = useUser()
@@ -96,6 +97,9 @@ export function AppHeader() {
 
       <div className="flex items-center gap-1.5">
         <ConnectionStatusDot className="hidden sm:block" />
+
+        {/* Language switcher */}
+        <LanguageSwitcher />
 
         {/* Dark mode toggle */}
         <DarkModeToggle />

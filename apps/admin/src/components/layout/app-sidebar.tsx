@@ -41,68 +41,70 @@ import {
   PieChart,
   Award,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useHasFeature } from '@/hooks/use-plan'
 import { FeatureKeys } from '@splashsphere/types'
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 
 interface NavItem {
-  label: string
+  labelKey: string
   href: string
   icon: React.ElementType
   feature?: string | null
 }
 
-const navGroups: { label: string; items: NavItem[] }[] = [
+const navGroups: { labelKey: string; items: NavItem[] }[] = [
   {
-    label: 'Overview',
+    labelKey: 'overview',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { labelKey: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
     ],
   },
   {
-    label: 'Operations',
+    labelKey: 'operations',
     items: [
-      { label: 'Branches', href: '/dashboard/branches', icon: GitBranch },
-      { label: 'Services', href: '/dashboard/services', icon: Wrench },
-      { label: 'Packages', href: '/dashboard/packages', icon: Package },
-      { label: 'Merchandise', href: '/dashboard/merchandise', icon: ShoppingBag },
-      { label: 'Pricing Rules', href: '/dashboard/pricing-modifiers', icon: Percent, feature: FeatureKeys.PricingModifiers },
+      { labelKey: 'branches', href: '/dashboard/branches', icon: GitBranch },
+      { labelKey: 'services', href: '/dashboard/services', icon: Wrench },
+      { labelKey: 'packages', href: '/dashboard/packages', icon: Package },
+      { labelKey: 'merchandise', href: '/dashboard/merchandise', icon: ShoppingBag },
+      { labelKey: 'pricingRules', href: '/dashboard/pricing-modifiers', icon: Percent, feature: FeatureKeys.PricingModifiers },
     ],
   },
   {
-    label: 'People',
+    labelKey: 'people',
     items: [
-      { label: 'Employees', href: '/dashboard/employees', icon: Users },
-      { label: 'Attendance', href: '/dashboard/attendance', icon: CalendarCheck },
-      { label: 'Customers', href: '/dashboard/customers', icon: Users },
-      { label: 'Loyalty', href: '/dashboard/loyalty', icon: Award, feature: FeatureKeys.CustomerLoyalty },
-      { label: 'Vehicles', href: '/dashboard/vehicles', icon: Car },
+      { labelKey: 'employees', href: '/dashboard/employees', icon: Users },
+      { labelKey: 'attendance', href: '/dashboard/attendance', icon: CalendarCheck },
+      { labelKey: 'customers', href: '/dashboard/customers', icon: Users },
+      { labelKey: 'loyalty', href: '/dashboard/loyalty', icon: Award, feature: FeatureKeys.CustomerLoyalty },
+      { labelKey: 'vehicles', href: '/dashboard/vehicles', icon: Car },
     ],
   },
   {
-    label: 'Finance',
+    labelKey: 'finance',
     items: [
-      { label: 'Transactions', href: '/dashboard/transactions', icon: CreditCard },
-      { label: 'Payroll', href: '/dashboard/payroll', icon: CreditCard },
-      { label: 'Cash Advances', href: '/dashboard/cash-advances', icon: Banknote, feature: FeatureKeys.CashAdvanceTracking },
-      { label: 'Expenses', href: '/dashboard/expenses', icon: Coins, feature: FeatureKeys.ExpenseTracking },
-      { label: 'Shifts', href: '/dashboard/shifts', icon: Wallet, feature: FeatureKeys.ShiftManagement },
-      { label: 'Shift Variance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
-      { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
-      { label: 'Profit & Loss', href: '/dashboard/reports/profit-loss', icon: PieChart, feature: FeatureKeys.ProfitLossReports },
+      { labelKey: 'transactions', href: '/dashboard/transactions', icon: CreditCard },
+      { labelKey: 'payroll', href: '/dashboard/payroll', icon: CreditCard },
+      { labelKey: 'cashAdvances', href: '/dashboard/cash-advances', icon: Banknote, feature: FeatureKeys.CashAdvanceTracking },
+      { labelKey: 'expenses', href: '/dashboard/expenses', icon: Coins, feature: FeatureKeys.ExpenseTracking },
+      { labelKey: 'shifts', href: '/dashboard/shifts', icon: Wallet, feature: FeatureKeys.ShiftManagement },
+      { labelKey: 'shiftVariance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
+      { labelKey: 'reports', href: '/dashboard/reports', icon: BarChart3 },
+      { labelKey: 'profitLoss', href: '/dashboard/reports/profit-loss', icon: PieChart, feature: FeatureKeys.ProfitLossReports },
     ],
   },
   {
-    label: 'Account',
+    labelKey: 'account',
     items: [
-      { label: 'Subscription', href: '/dashboard/subscription', icon: Crown },
-      { label: 'Billing', href: '/dashboard/billing', icon: Receipt },
+      { labelKey: 'subscription', href: '/dashboard/subscription', icon: Crown },
+      { labelKey: 'billing', href: '/dashboard/billing', icon: Receipt },
     ],
   },
   {
-    label: 'Configuration',
+    labelKey: 'configuration',
     items: [
-      { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-      { label: 'Audit Logs', href: '/dashboard/audit-logs', icon: ScrollText },
+      { labelKey: 'settings', href: '/dashboard/settings', icon: Settings },
+      { labelKey: 'auditLogs', href: '/dashboard/audit-logs', icon: ScrollText },
     ],
   },
 ]
@@ -124,9 +126,10 @@ function SidebarLogo() {
   )
 }
 
-function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
+function NavItemRow({ item, pathname, t }: { item: NavItem; pathname: string; t: (key: string) => string }) {
   const hasFeature = useHasFeature(item.feature ?? '')
   const locked = !!item.feature && !hasFeature
+  const label = t(item.labelKey)
 
   const active =
     pathname === item.href ||
@@ -137,7 +140,7 @@ function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
       <SidebarMenuButton
         render={locked ? <span /> : <Link href={item.href} />}
         isActive={active}
-        tooltip={locked ? `${item.label} (upgrade required)` : item.label}
+        tooltip={locked ? `${label} (upgrade required)` : label}
         className={
           locked
             ? 'opacity-50 cursor-not-allowed'
@@ -147,7 +150,7 @@ function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
         }
       >
         <item.icon className="h-4 w-4" />
-        <span className="flex-1">{item.label}</span>
+        <span className="flex-1">{label}</span>
         {locked && <Lock className="h-3 w-3 text-muted-foreground" />}
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -156,6 +159,7 @@ function NavItemRow({ item, pathname }: { item: NavItem; pathname: string }) {
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   return (
     <Sidebar collapsible="icon">
@@ -165,12 +169,12 @@ export function AppSidebar() {
 
       <SidebarContent>
         {navGroups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroup key={group.labelKey}>
+            <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
-                  <NavItemRow key={item.href} item={item} pathname={pathname} />
+                  <NavItemRow key={item.href} item={item} pathname={pathname} t={t} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -178,7 +182,9 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter />
+      <SidebarFooter>
+        <PwaInstallPrompt />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

@@ -1,0 +1,151 @@
+{
+  "common": {
+    "save": "I-save",
+    "cancel": "Kanselahin",
+    "confirm": "Kumpirmahin",
+    "back": "Bumalik",
+    "loading": "Naglo-load...",
+    "tryAgain": "Subukan Muli",
+    "somethingWentWrong": "May nangyaring problema",
+    "yes": "Oo",
+    "no": "Hindi",
+    "total": "Kabuuan",
+    "search": "Maghanap",
+    "noResults": "Walang resulta",
+    "print": "I-print",
+    "skip": "Laktawan"
+  },
+  "nav": {
+    "home": "Home",
+    "queue": "Pila",
+    "transaction": "Transaksyon",
+    "history": "Kasaysayan",
+    "customers": "Mga Customer",
+    "attendance": "Attendance",
+    "shift": "Shift"
+  },
+  "status": {
+    "pending": "Naghihintay",
+    "inProgress": "Ginagawa",
+    "completed": "Tapos Na",
+    "cancelled": "Kinansela",
+    "refunded": "Na-refund",
+    "waiting": "Naghihintay",
+    "called": "Tinawag",
+    "inService": "Ginagawa",
+    "noShow": "Hindi Dumating"
+  },
+  "payment": {
+    "cash": "Cash",
+    "gcash": "GCash",
+    "creditCard": "Credit",
+    "debitCard": "Debit",
+    "bankTransfer": "Bank"
+  },
+  "queue": {
+    "title": "Queue Board",
+    "addToQueue": "Idagdag sa Pila",
+    "waitingColumn": "Naghihintay",
+    "calledColumn": "Tinawag",
+    "inServiceColumn": "Ginagawa",
+    "callNext": "Tawagin ang Susunod",
+    "startService": "Simulan ang Serbisyo",
+    "markNoShow": "Hindi Dumating",
+    "requeue": "Ibalik sa Pila",
+    "cancelEntry": "Kanselahin",
+    "estimatedWait": "Tinatayang hintay",
+    "priority": "Priyoridad",
+    "regular": "Regular",
+    "vip": "VIP",
+    "express": "Express",
+    "noVehiclesWaiting": "Walang naghihintay na sasakyan",
+    "plateNumber": "Plate Number"
+  },
+  "transaction": {
+    "new": "Bagong Transaksyon",
+    "detail": "Detalye ng Transaksyon",
+    "selectService": "Pumili ng Serbisyo",
+    "selectPackage": "Pumili ng Package",
+    "selectMerchandise": "Mga Paninda",
+    "assignEmployees": "Mag-assign ng Empleyado",
+    "vehicleInfo": "Impormasyon ng Sasakyan",
+    "customer": "Customer",
+    "subtotal": "Subtotal",
+    "discount": "Diskwento",
+    "tax": "Buwis",
+    "tip": "Tip",
+    "finalTotal": "Kabuuan",
+    "amountDue": "Dapat Bayaran",
+    "addPayment": "Magdagdag ng Bayad",
+    "confirmPayment": "Kumpirmahin ang Bayad",
+    "remaining": "Natitira",
+    "paid": "Nabayaran",
+    "change": "Sukli",
+    "editItems": "I-edit ang Items",
+    "cancelTransaction": "Kanselahin",
+    "refund": "I-refund",
+    "confirmRefund": "Kumpirmahin ang Refund",
+    "refundReason": "Dahilan",
+    "printReceipt": "I-print ang Resibo",
+    "transactionComplete": "Tapos na ang Transaksyon",
+    "printPrompt": "Gusto mo bang mag-print ng resibo?",
+    "openInNewWindow": "Buksan sa bagong window",
+    "pointsEarned": "+{points} loyalty points na nakuha",
+    "cashier": "Cashier"
+  },
+  "shift": {
+    "openShift": "Buksan ang Shift",
+    "closeShift": "Isara ang Shift",
+    "myShift": "Aking Shift",
+    "openingFund": "Pambungad na Pondo",
+    "cashMovement": "Galaw ng Cash",
+    "cashIn": "Cash In",
+    "cashOut": "Cash Out",
+    "shiftRequired": "Kailangan ng Shift",
+    "shiftRequiredMsg": "Kailangan mong magbukas ng shift bago mag-proseso ng transaksyon.",
+    "endOfDay": "Ulat sa Katapusan ng Araw"
+  },
+  "receipt": {
+    "title": "Resibo",
+    "downloadPdf": "I-download ang PDF",
+    "printReceipt": "I-print ang Resibo",
+    "thankYou": "Salamat sa pagpili ng",
+    "brand": "SplashSphere!",
+    "plate": "Plate",
+    "vehicle": "Sasakyan",
+    "cashier": "Cashier"
+  },
+  "home": {
+    "welcome": "Maligayang pagdating",
+    "quickActions": "Mabilisang Aksyon",
+    "newTransaction": "Bagong Transaksyon",
+    "addToQueue": "Idagdag sa Pila",
+    "viewQueue": "Tingnan ang Pila",
+    "todaysSummary": "Buod Ngayong Araw"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "clockIn": "Mag-clock In",
+    "clockOut": "Mag-clock Out",
+    "alreadyClockedIn": "Naka-clock in na",
+    "notClockedIn": "Hindi pa naka-clock in"
+  },
+  "auth": {
+    "signIn": "Mag-sign In",
+    "email": "Email",
+    "password": "Password"
+  },
+  "language": {
+    "title": "Wika",
+    "english": "English",
+    "filipino": "Filipino"
+  },
+  "lock": {
+    "locked": "Naka-lock ang Terminal",
+    "enterPin": "Ilagay ang iyong PIN para ma-unlock",
+    "unlock": "I-unlock",
+    "invalidPin": "Maling PIN",
+    "tooManyAttempts": "Sobrang dami ng pagsubok. Maghintay muna.",
+    "noPinConfigured": "Walang PIN na naka-set. Makipag-ugnayan sa admin."
+  }
+}
