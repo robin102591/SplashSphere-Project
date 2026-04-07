@@ -64,7 +64,7 @@ public sealed class TransactionCompletedSmsHandler(
             if (sub is not null)
             {
                 sub.SmsUsedThisMonth++;
-                await db.SaveChangesAsync(cancellationToken);
+                // No SaveChangesAsync here — EventPublisher.FlushAsync persists after all handlers.
                 planService.EvictCache(e.TenantId);
             }
         }

@@ -159,7 +159,7 @@ public sealed class TransactionCompletedLoyaltyHandler(
                 tx.CustomerId, previousTier, newTierConfig.Tier);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        // No SaveChangesAsync here — EventPublisher.FlushAsync persists after all handlers.
 
         eventPublisher.Enqueue(new PointsEarnedEvent(
             card.Id, e.TenantId, tx.BranchId, tx.CustomerId!,

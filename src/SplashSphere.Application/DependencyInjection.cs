@@ -28,6 +28,13 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
             cfg.AddOpenBehavior(typeof(UnitOfWorkBehavior<,>));
+
+            // CRITICAL: Use sequential notification publishing.
+            // The default (TaskWhenAll) runs handlers concurrently, which causes
+            // DbContext concurrency errors because notification handlers share
+            // the same scoped DbContext. ForeachAwaitPublisher runs them one at
+            // a time, which is safe for EF Core's single-threaded model.
+            cfg.NotificationPublisherType = typeof(MediatR.NotificationPublishers.ForeachAwaitPublisher);
         });
 
         services.AddValidatorsFromAssembly(

@@ -1,5 +1,6 @@
 using MediatR;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.Domain.Interfaces;
 using SplashSphere.SharedKernel.Abstractions;
 
 namespace SplashSphere.Infrastructure.Services;
@@ -8,8 +9,15 @@ namespace SplashSphere.Infrastructure.Services;
 /// Queues domain events and flushes them via MediatR after <c>SaveChangesAsync</c>.
 /// Events are wrapped in <see cref="DomainEventNotification{TEvent}"/> so Domain
 /// stays free of MediatR references.
+/// <para>
+/// After publishing each event (and running all its handlers sequentially),
+/// a <c>SaveChangesAsync</c> is issued to persist any changes the handlers made.
+/// Then any newly-enqueued events are flushed in a subsequent loop.
+/// This means notification handlers do NOT need to call <c>SaveChangesAsync</c>
+/// themselves — the publisher handles it.
+/// </para>
 /// </summary>
-public sealed class EventPublisher(IPublisher publisher) : IEventPublisher
+public sealed class EventPublisher(IPublisher publisher, IUnitOfWork unitOfWork) : IEventPublisher
 {
     private readonly List<IDomainEvent> _pending = [];
 
@@ -17,16 +25,26 @@ public sealed class EventPublisher(IPublisher publisher) : IEventPublisher
 
     public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
-        // Copy and clear before publishing so re-entrant Enqueue calls in handlers
-        // are collected for the next flush rather than processed in this batch.
-        var batch = _pending.ToList();
-        _pending.Clear();
+        // Loop until no more events are enqueued. Handlers may enqueue follow-up
+        // events (e.g. TierUpgradedEvent), which are processed in the next iteration.
+        const int maxIterations = 10; // safety net against infinite loops
+        var iteration = 0;
 
-        foreach (var domainEvent in batch)
+        while (_pending.Count > 0 && iteration++ < maxIterations)
         {
-            var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-            var notification = (INotification)Activator.CreateInstance(notificationType, domainEvent)!;
-            await publisher.Publish(notification, cancellationToken);
+            var batch = _pending.ToList();
+            _pending.Clear();
+
+            foreach (var domainEvent in batch)
+            {
+                var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+                var notification = (INotification)Activator.CreateInstance(notificationType, domainEvent)!;
+                await publisher.Publish(notification, cancellationToken);
+            }
+
+            // Persist any changes made by notification handlers in this batch.
+            // This replaces individual SaveChangesAsync calls in handlers.
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

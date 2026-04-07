@@ -33,7 +33,8 @@ public sealed class NotificationService(
             tenantId, type, category, title, message, referenceId, referenceType);
 
         db.Notifications.Add(notification);
-        await db.SaveChangesAsync(cancellationToken);
+        // No SaveChangesAsync here — EventPublisher.FlushAsync persists after all handlers.
+        // The entity has its Id set in the constructor, so SignalR broadcast below is safe.
 
         await hub.Clients
             .Group(SplashSphereHub.TenantGroup(tenantId))
