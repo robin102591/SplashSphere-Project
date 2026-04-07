@@ -574,6 +574,14 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
+### Analytics
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/reports/customer-analytics` | Customer analytics (retention, visit frequency, top customers, trend) |
+| `GET` | `/reports/peak-hours` | Peak hours heatmap (7×24 grid, transaction count + revenue per slot) |
+| `GET` | `/reports/employee-performance` | Employee performance rankings (revenue, services, commissions, attendance) |
+
 ---
 
 ## Frontend Page Inventory
@@ -602,6 +610,9 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/expenses` | Expenses — list with filters, record expense dialog, category/branch/date filters |
 | `/dashboard/reports/profit-loss` | P&L Dashboard — revenue/expenses/net profit KPI cards, trend chart, category breakdown, daily table |
 | `/dashboard/loyalty` | Loyalty Program — dashboard (members, points, tiers), rewards catalogue CRUD, program settings + tier config |
+| `/dashboard/reports/customer-analytics` | Customer Analytics — retention rate, new vs returning trend, visit frequency distribution, top 20 customers table |
+| `/dashboard/reports/peak-hours` | Peak Hours Heatmap — 7×24 day-of-week × hour grid, transaction/revenue toggle, color intensity legend |
+| `/dashboard/reports/employee-performance` | Employee Performance — leaderboard rankings, top 10 chart, sortable by revenue/services/commissions/attendance |
 
 ### POS App
 

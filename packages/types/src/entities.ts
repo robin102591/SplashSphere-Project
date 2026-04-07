@@ -739,6 +739,14 @@ export interface DashboardSummary {
   clockedInToday: number;
   /** Null when the query was scoped to a single branch. */
   branches: readonly BranchKpi[] | null;
+  /** Week-over-week revenue % change. Null if no prior data. */
+  revenueWeekChange: number | null;
+  /** Month-over-month revenue % change. Null if no prior data. */
+  revenueMonthChange: number | null;
+  /** Week-over-week transaction count % change. */
+  transactionsWeekChange: number | null;
+  /** Month-over-month transaction count % change. */
+  transactionsMonthChange: number | null;
 }
 
 // ── Reports ───────────────────────────────────────────────────────────────────
@@ -1275,4 +1283,86 @@ export interface LoyaltyDashboardDto {
   totalRedemptionsInPeriod: number;
   tierDistribution: readonly TierDistributionDto[];
   topCustomers: readonly TopLoyalCustomerDto[];
+}
+
+// ── Analytics Reports ────────────────────────────────────────────────────────
+
+export interface CustomerAnalytics {
+  from: string;
+  to: string;
+  branchId: string | null;
+  totalCustomers: number;
+  newCustomers: number;
+  returningCustomers: number;
+  retentionRate: number;
+  averageVisitsPerCustomer: number;
+  averageSpendPerVisit: number;
+  topCustomers: readonly TopAnalyticsCustomer[];
+  visitFrequencyDistribution: readonly VisitFrequencyBucket[];
+  dailyTrend: readonly CustomerTrendDay[];
+}
+
+export interface TopAnalyticsCustomer {
+  customerId: string;
+  customerName: string;
+  plateNumber: string | null;
+  visitCount: number;
+  totalSpent: number;
+  averageSpend: number;
+  lastVisit: string;
+}
+
+export interface VisitFrequencyBucket {
+  bucket: string;
+  customerCount: number;
+}
+
+export interface CustomerTrendDay {
+  date: string;
+  newCustomers: number;
+  returningCustomers: number;
+  totalTransactions: number;
+}
+
+export interface PeakHoursReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  totalTransactions: number;
+  peakDay: string;
+  peakHour: number;
+  slots: readonly HourlySlot[];
+}
+
+export interface HourlySlot {
+  /** 0 = Sunday … 6 = Saturday */
+  dayOfWeek: number;
+  /** 0–23 (Manila time) */
+  hour: number;
+  transactionCount: number;
+  revenue: number;
+}
+
+export interface EmployeePerformanceReport {
+  from: string;
+  to: string;
+  branchId: string | null;
+  totalEmployees: number;
+  totalCommissions: number;
+  totalServicesPerformed: number;
+  rankings: readonly EmployeeRanking[];
+}
+
+export interface EmployeeRanking {
+  employeeId: string;
+  employeeName: string;
+  branchName: string;
+  employeeType: string;
+  servicesPerformed: number;
+  revenueGenerated: number;
+  commissionsEarned: number;
+  daysWorked: number;
+  daysLate: number;
+  averageRevenuePerService: number;
+  attendanceRate: number;
 }

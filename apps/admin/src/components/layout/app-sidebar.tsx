@@ -40,6 +40,9 @@ import {
   Coins,
   PieChart,
   Award,
+  UserCheck,
+  Clock,
+  Trophy,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useHasFeature } from '@/hooks/use-plan'
@@ -91,6 +94,9 @@ const navGroups: { labelKey: string; items: NavItem[] }[] = [
       { labelKey: 'shiftVariance', href: '/dashboard/reports/shift-variance', icon: TrendingDown, feature: FeatureKeys.ShiftManagement },
       { labelKey: 'reports', href: '/dashboard/reports', icon: BarChart3 },
       { labelKey: 'profitLoss', href: '/dashboard/reports/profit-loss', icon: PieChart, feature: FeatureKeys.ProfitLossReports },
+      { labelKey: 'customerAnalytics', href: '/dashboard/reports/customer-analytics', icon: UserCheck },
+      { labelKey: 'peakHours', href: '/dashboard/reports/peak-hours', icon: Clock },
+      { labelKey: 'employeePerformance', href: '/dashboard/reports/employee-performance', icon: Trophy },
     ],
   },
   {

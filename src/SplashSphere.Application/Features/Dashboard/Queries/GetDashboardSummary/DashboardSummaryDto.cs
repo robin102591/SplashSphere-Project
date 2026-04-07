@@ -24,7 +24,13 @@ public sealed record DashboardSummaryDto(
     int ClockedInToday,
 
     // ── Branch breakdown (null when filtered to a single branch) ──────────────
-    IReadOnlyList<BranchKpiDto>? Branches);
+    IReadOnlyList<BranchKpiDto>? Branches,
+
+    // ── Period comparison (percentage change) ─────────────────────────────────
+    decimal? RevenueWeekChange = null,
+    decimal? RevenueMonthChange = null,
+    decimal? TransactionsWeekChange = null,
+    decimal? TransactionsMonthChange = null);
 
 public sealed record BranchKpiDto(
     string BranchId,

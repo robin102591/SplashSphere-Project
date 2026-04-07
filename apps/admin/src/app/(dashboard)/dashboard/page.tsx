@@ -123,25 +123,33 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Secondary KPI row */}
+      {/* Secondary KPI row — with period comparisons */}
       {!summaryLoading && (
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border px-4 py-3">
-            <p className="text-xs text-muted-foreground">Revenue This Month</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{formatPeso(summary?.revenueThisMonth ?? 0)}</p>
-          </div>
-          <div className="rounded-lg border px-4 py-3">
-            <p className="text-xs text-muted-foreground">Transactions This Month</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{summary?.transactionsThisMonth ?? 0}</p>
-          </div>
-          <div className="rounded-lg border px-4 py-3">
-            <p className="text-xs text-muted-foreground">Revenue This Week</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{formatPeso(summary?.revenueThisWeek ?? 0)}</p>
-          </div>
-          <div className="rounded-lg border px-4 py-3">
-            <p className="text-xs text-muted-foreground">Transactions This Week</p>
-            <p className="text-lg font-bold tabular-nums mt-0.5">{summary?.transactionsThisWeek ?? 0}</p>
-          </div>
+          <StatCard
+            title="Revenue This Week"
+            value={formatPeso(summary?.revenueThisWeek ?? 0)}
+            trend={summary?.revenueWeekChange != null ? { value: summary.revenueWeekChange, label: 'vs last week' } : undefined}
+            icon={TrendingUp}
+          />
+          <StatCard
+            title="Revenue This Month"
+            value={formatPeso(summary?.revenueThisMonth ?? 0)}
+            trend={summary?.revenueMonthChange != null ? { value: summary.revenueMonthChange, label: 'vs last month' } : undefined}
+            icon={TrendingUp}
+          />
+          <StatCard
+            title="Transactions This Week"
+            value={String(summary?.transactionsThisWeek ?? 0)}
+            trend={summary?.transactionsWeekChange != null ? { value: summary.transactionsWeekChange, label: 'vs last week' } : undefined}
+            icon={Activity}
+          />
+          <StatCard
+            title="Transactions This Month"
+            value={String(summary?.transactionsThisMonth ?? 0)}
+            trend={summary?.transactionsMonthChange != null ? { value: summary.transactionsMonthChange, label: 'vs last month' } : undefined}
+            icon={Activity}
+          />
         </div>
       )}
 

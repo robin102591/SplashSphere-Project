@@ -63,6 +63,40 @@ public sealed class GetDashboardSummaryQueryHandler(
         var txMonth = await txBase
             .CountAsync(t => t.CompletedAt >= monthStart && t.CompletedAt < monthEnd, cancellationToken);
 
+        // ── Previous period comparison ─────────────────────────────────────────
+        // Last week: same 7-day window shifted back one week
+        var prevWeekStart = weekStart.AddDays(-7);
+        var prevWeekEnd = weekStart;
+
+        // Last month: same month shifted back one month
+        var prevMonthStart = monthStart.AddMonths(-1);
+        var prevMonthEnd = monthStart;
+
+        var revenuePrevWeek = await txBase
+            .Where(t => t.CompletedAt >= prevWeekStart && t.CompletedAt < prevWeekEnd)
+            .SumAsync(t => t.FinalAmount, cancellationToken);
+
+        var revenuePrevMonth = await txBase
+            .Where(t => t.CompletedAt >= prevMonthStart && t.CompletedAt < prevMonthEnd)
+            .SumAsync(t => t.FinalAmount, cancellationToken);
+
+        var txPrevWeek = await txBase
+            .CountAsync(t => t.CompletedAt >= prevWeekStart && t.CompletedAt < prevWeekEnd, cancellationToken);
+
+        var txPrevMonth = await txBase
+            .CountAsync(t => t.CompletedAt >= prevMonthStart && t.CompletedAt < prevMonthEnd, cancellationToken);
+
+        static decimal? CalcChange(decimal current, decimal previous) =>
+            previous != 0 ? Math.Round((current - previous) / previous * 100, 1) : null;
+
+        static decimal? CalcChangeInt(int current, int previous) =>
+            previous != 0 ? Math.Round((decimal)(current - previous) / previous * 100, 1) : null;
+
+        var revenueWeekChange = CalcChange(revenueWeek, revenuePrevWeek);
+        var revenueMonthChange = CalcChange(revenueMonth, revenuePrevMonth);
+        var txWeekChange = CalcChangeInt(txWeek, txPrevWeek);
+        var txMonthChange = CalcChangeInt(txMonth, txPrevMonth);
+
         // ── Queue (current snapshot — not time-bounded) ───────────────────────
         var queueBase = context.QueueEntries.AsNoTracking();
 
@@ -150,6 +184,10 @@ public sealed class GetDashboardSummaryQueryHandler(
             queueInService,
             activeEmployees,
             clockedInToday,
-            branches);
+            branches,
+            revenueWeekChange,
+            revenueMonthChange,
+            txWeekChange,
+            txMonthChange);
     }
 }

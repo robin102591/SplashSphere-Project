@@ -3,6 +3,9 @@ using SplashSphere.Application.Features.Reports.Queries.ExportCommissionsCsv;
 using SplashSphere.Application.Features.Reports.Queries.ExportRevenueCsv;
 using SplashSphere.Application.Features.Reports.Queries.ExportServicePopularityCsv;
 using SplashSphere.Application.Features.Reports.Queries.GetCommissionsReport;
+using SplashSphere.Application.Features.Reports.Queries.GetCustomerAnalytics;
+using SplashSphere.Application.Features.Reports.Queries.GetEmployeePerformance;
+using SplashSphere.Application.Features.Reports.Queries.GetPeakHours;
 using SplashSphere.Application.Features.Reports.Queries.GetRevenueReport;
 using SplashSphere.Application.Features.Reports.Queries.GetServicePopularityReport;
 
@@ -21,6 +24,11 @@ public static class ReportEndpoints
         group.MapGet("/revenue", GetRevenue).WithName("GetRevenueReport");
         group.MapGet("/commissions", GetCommissions).WithName("GetCommissionsReport");
         group.MapGet("/service-popularity", GetServicePopularity).WithName("GetServicePopularityReport");
+
+        // Analytics
+        group.MapGet("/customer-analytics", GetCustomerAnalytics).WithName("GetCustomerAnalytics");
+        group.MapGet("/peak-hours", GetPeakHours).WithName("GetPeakHours");
+        group.MapGet("/employee-performance", GetEmployeePerformance).WithName("GetEmployeePerformance");
 
         // CSV exports
         group.MapGet("/revenue/export/csv", ExportRevenueCsv).WithName("ExportRevenueCsv");
@@ -49,6 +57,26 @@ public static class ReportEndpoints
         ISender sender, CancellationToken ct)
         => TypedResults.Ok(
             await sender.Send(new GetServicePopularityReportQuery(from, to, branchId, top == 0 ? 20 : top), ct));
+
+    // ── Analytics endpoints ──────────────────────────────────────────────────
+
+    private static async Task<IResult> GetCustomerAnalytics(
+        DateOnly from, DateOnly to, string? branchId,
+        ISender sender, CancellationToken ct)
+        => TypedResults.Ok(
+            await sender.Send(new GetCustomerAnalyticsQuery(from, to, branchId), ct));
+
+    private static async Task<IResult> GetPeakHours(
+        DateOnly from, DateOnly to, string? branchId,
+        ISender sender, CancellationToken ct)
+        => TypedResults.Ok(
+            await sender.Send(new GetPeakHoursQuery(from, to, branchId), ct));
+
+    private static async Task<IResult> GetEmployeePerformance(
+        DateOnly from, DateOnly to, string? branchId,
+        ISender sender, CancellationToken ct)
+        => TypedResults.Ok(
+            await sender.Send(new GetEmployeePerformanceQuery(from, to, branchId), ct));
 
     // ── CSV exports ─────────────────────────────────────────────────────────
 
