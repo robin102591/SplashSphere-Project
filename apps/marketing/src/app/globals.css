@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  /* ── SplashSphere brand palette ─────────────────────────────── */
+  --splash-50: oklch(0.97 0.014 237);
+  --splash-100: oklch(0.94 0.028 237);
+  --splash-200: oklch(0.88 0.056 237);
+  --splash-300: oklch(0.78 0.098 230);
+  --splash-400: oklch(0.66 0.14 230);
+  --splash-500: oklch(0.55 0.17 230);
+  --splash-600: oklch(0.47 0.17 235);
+  --splash-700: oklch(0.40 0.14 235);
+  --splash-800: oklch(0.35 0.11 235);
+  --splash-900: oklch(0.30 0.08 235);
+  --splash-950: oklch(0.22 0.06 235);
+  --aqua-400: oklch(0.65 0.12 180);
+  --aqua-500: oklch(0.55 0.12 180);
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.02 260);
+  --muted: oklch(0.97 0.005 260);
+  --muted-foreground: oklch(0.50 0.02 260);
+  --border: oklch(0.92 0.005 260);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-splash-50: var(--splash-50);
+  --color-splash-100: var(--splash-100);
+  --color-splash-200: var(--splash-200);
+  --color-splash-300: var(--splash-300);
+  --color-splash-400: var(--splash-400);
+  --color-splash-500: var(--splash-500);
+  --color-splash-600: var(--splash-600);
+  --color-splash-700: var(--splash-700);
+  --color-splash-800: var(--splash-800);
+  --color-splash-900: var(--splash-900);
+  --color-splash-950: var(--splash-950);
+  --color-aqua-400: var(--aqua-400);
+  --color-aqua-500: var(--aqua-500);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Money formatting utility */
+@utility money {
+  font-variant-numeric: tabular-nums;
+}

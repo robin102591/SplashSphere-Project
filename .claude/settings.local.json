@@ -132,7 +132,13 @@
       "Bash(\"/c/Program Files/nodejs/npx.cmd\" --yes pnpm --filter @splashsphere/types build)",
       "Bash(npm --version)",
       "Bash(export PATH=\"$PATH:/c/Users/rnobl/AppData/Local/pnpm:/c/Users/rnobl/.local/share/pnpm\")",
-      "Bash(corepack prepare:*)"
+      "Bash(corepack prepare:*)",
+      "Bash(export PATH=\"/c/Users/rnobl/AppData/Local/pnpm:$PATH\")",
+      "Bash(where.exe pnpm:*)",
+      "Bash(npm --prefix apps/marketing exec -- tsc --noEmit)",
+      "Bash(/c/PROJECTS/carwash/SplashSphere-Claude/apps/marketing/node_modules/.bin/tsc --noEmit --project /c/PROJECTS/carwash/SplashSphere-Claude/apps/marketing/tsconfig.json)",
+      "Bash(export PATH=\"$PATH:/c/Users/rnobl/AppData/Local/pnpm:/c/Users/rnobl/AppData/Roaming/npm\")",
+      "Bash(npm exec:*)"
     ]
   }
 }
