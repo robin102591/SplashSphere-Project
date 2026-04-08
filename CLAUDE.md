@@ -650,6 +650,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/franchise/my-agreement` | Franchisee: read-only agreement view |
 | `/dashboard/franchise/my-royalties` | Franchisee: paginated royalty statements |
 | `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
+| `/franchise/accept` | **Public** — franchise invitation acceptance (token validation + onboarding form) |
 
 ### POS App
 

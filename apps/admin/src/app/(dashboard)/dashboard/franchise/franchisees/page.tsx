@@ -11,6 +11,7 @@ import { useFranchisees } from '@/hooks/use-franchise'
 import { formatPeso } from '@/lib/format'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { InviteFranchiseeDialog } from './_components/invite-franchisee-dialog'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ function TableSkeleton() {
 export default function FranchiseesPage() {
   const t = useTranslations('franchise')
   const [page, setPage] = useState(1)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const { data, isLoading } = useFranchisees(page)
 
   const franchisees = data?.items ?? []
@@ -57,7 +59,7 @@ export default function FranchiseesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('franchisees')}</h1>
           <p className="text-muted-foreground">Manage your franchise network members.</p>
         </div>
-        <Button disabled>
+        <Button onClick={() => setInviteOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           {t('inviteFranchisee')}
         </Button>
@@ -146,6 +148,8 @@ export default function FranchiseesPage() {
           )}
         </CardContent>
       </Card>
+
+      <InviteFranchiseeDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }

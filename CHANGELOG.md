@@ -1,5 +1,15 @@
 ## Changelog
 
+## [Phase 17.4] — 2026-04-08
+### Added — Franchise Invitation Flow
+- **InviteFranchiseeCommandHandler**: Guard franchisor, check duplicate active invitations, generate 64-char hex token (256-bit entropy), create FranchiseInvitation (7-day expiry), send HTML invitation email via IEmailService
+- **ValidateInvitationQueryHandler**: Public endpoint, load by token with IgnoreQueryFilters, verify not used/expired, return InvitationDetailsDto with franchisor name
+- **AcceptInvitationCommandHandler**: Full onboarding flow mirroring CreateOnboardingCommandHandler — validate token, create Clerk org, add user as admin, create Tenant (Franchisee type, linked to franchisor via ParentTenantId), create first Branch, link User, create Trial subscription, seed payroll templates + expense categories, clone service templates if EnforceStandardServices enabled, create FranchiseAgreement (Active), mark invitation used
+- Frontend: `invite-franchisee-dialog.tsx` — form dialog (email, business name, owner name, franchise code, territory) with react-hook-form + zod validation
+- Frontend: `/franchise/accept` public page — token validation, sign-in gate, two-section acceptance form (business details + first branch), redirects to dashboard on success
+- Updated `use-franchise.ts` — fixed invite mutation params, added `useValidateInvitation` (public query) and `useAcceptInvitation` (auth mutation) hooks
+- Added `(public)/layout.tsx` minimal layout for standalone pages
+
 ## [Phase 17.3] — 2026-04-08
 ### Added — Franchise Frontend (Admin Dashboard)
 - Backend: `GET /auth/me` now returns `tenantType`, `parentTenantId`, `franchiseCode` in tenant DTO

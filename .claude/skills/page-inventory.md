@@ -13,6 +13,11 @@ description: Current frontend page inventory — updated by agents after each ta
 | /sso-callback | OAuth redirect handler |
 | /onboarding | Tenant onboarding wizard (admin only) |
 
+## Public Pages (Admin App)
+| Route | Page |
+|---|---|
+| /franchise/accept?token=... | Franchise invitation acceptance — token validation, sign-in gate, acceptance form |
+
 ## Admin Dashboard
 | Route | Page |
 |---|---|

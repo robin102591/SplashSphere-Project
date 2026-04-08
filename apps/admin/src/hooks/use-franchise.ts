@@ -7,7 +7,7 @@ import type {
   FranchiseSettingsDto, FranchiseeListItem, FranchiseeDetail,
   FranchiseAgreementDto, RoyaltyPeriodDto, NetworkSummaryDto,
   FranchiseComplianceItem, FranchiseBenchmarkDto, FranchiseServiceTemplateDto,
-  PagedResult,
+  InvitationDetailsDto, PagedResult,
 } from '@splashsphere/types'
 
 export const franchiseKeys = {
@@ -227,9 +227,15 @@ export function useInviteFranchisee() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { email: string; businessName: string; contactPerson: string }) => {
+    mutationFn: async (data: {
+      email: string
+      businessName: string
+      ownerName?: string
+      franchiseCode?: string
+      territoryName?: string
+    }) => {
       const token = await getToken()
-      return apiClient.post<void>('/franchise/invite', data, token ?? undefined)
+      return apiClient.post<{ id: string }>('/franchise/invite', data, token ?? undefined)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['franchise', 'franchisees'] }),
   })
@@ -267,6 +273,41 @@ export function useBenchmarks() {
     queryFn: async () => {
       const token = await getToken()
       return apiClient.get<FranchiseBenchmarkDto>('/franchise/benchmarks', token ?? undefined)
+    },
+  })
+}
+
+// ── Invitation (public + auth) ────────────────────────────────────────────
+
+export function useValidateInvitation(token: string) {
+  return useQuery({
+    queryKey: ['franchise', 'invitation', token] as const,
+    queryFn: () =>
+      apiClient.get<InvitationDetailsDto>(`/franchise/invitations/${token}/validate`),
+    enabled: !!token,
+    retry: false,
+  })
+}
+
+export function useAcceptInvitation() {
+  const { getToken } = useAuth()
+  return useMutation({
+    mutationFn: async (data: {
+      token: string
+      businessName: string
+      email: string
+      contactNumber: string
+      address: string
+      branchName: string
+      branchCode: string
+      branchAddress: string
+      branchContactNumber: string
+    }) => {
+      const authToken = await getToken()
+      return apiClient.post<{ id: string }>(
+        `/franchise/invitations/${data.token}/accept`,
+        data,
+        authToken ?? undefined)
     },
   })
 }

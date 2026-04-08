@@ -144,7 +144,9 @@
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/messages/fil.json','utf8'\\)\\); console.log\\('fil.json: valid'\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)[:20]\\)\")",
       "Bash(node:*)",
-      "Bash(cmd.exe /c \"pnpm --filter admin exec tsc --noEmit\")"
+      "Bash(cmd.exe /c \"pnpm --filter admin exec tsc --noEmit\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('franchise',{}\\), indent=2\\)\\)\")",
+      "Bash(./node_modules/.bin/tsc --noEmit)"
     ]
   }
 }
