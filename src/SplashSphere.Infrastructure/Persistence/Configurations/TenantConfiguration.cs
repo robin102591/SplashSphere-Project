@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
@@ -51,5 +52,35 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         // ── Indexes ───────────────────────────────────────────────────────────
         builder.HasIndex(t => t.Email).IsUnique();
+
+        // ── Franchise properties ──────────────────────────────────────────────
+        builder.Property(t => t.TenantType)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasDefaultValue(TenantType.Independent);
+
+        builder.Property(t => t.ParentTenantId)
+            .HasMaxLength(256);
+
+        builder.Property(t => t.FranchiseCode)
+            .HasMaxLength(50);
+
+        builder.Property(t => t.TaxId)
+            .HasMaxLength(50);
+
+        builder.Property(t => t.BusinessPermitNo)
+            .HasMaxLength(100);
+
+        // ── Franchise relationships ───────────────────────────────────────────
+        builder.HasOne(t => t.ParentTenant)
+            .WithMany(t => t.ChildTenants)
+            .HasForeignKey(t => t.ParentTenantId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        builder.HasIndex(t => t.ParentTenantId);
+        builder.HasIndex(t => t.FranchiseCode)
+            .IsUnique()
+            .HasFilter("\"FranchiseCode\" IS NOT NULL");
     }
 }

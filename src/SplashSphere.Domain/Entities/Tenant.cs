@@ -1,3 +1,5 @@
+using SplashSphere.Domain.Enums;
+
 namespace SplashSphere.Domain.Entities;
 
 /// <summary>
@@ -28,6 +30,13 @@ public sealed class Tenant : IAuditableEntity
     public string Address { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 
+    // ── Franchise ────────────────────────────────────────────────────────────
+    public TenantType TenantType { get; set; } = TenantType.Independent;
+    public string? ParentTenantId { get; set; }
+    public string? FranchiseCode { get; set; }
+    public string? TaxId { get; set; }
+    public string? BusinessPermitNo { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
@@ -42,4 +51,9 @@ public sealed class Tenant : IAuditableEntity
     public ICollection<MerchandiseCategory> MerchandiseCategories { get; set; } = [];
     public ICollection<QueueEntry> QueueEntries { get; set; } = [];
     public TenantSubscription? Subscription { get; set; }
+
+    // ── Franchise navigations ────────────────────────────────────────────────
+    public Tenant? ParentTenant { get; set; }
+    public ICollection<Tenant> ChildTenants { get; set; } = [];
+    public FranchiseSettings? FranchiseSettings { get; set; }
 }

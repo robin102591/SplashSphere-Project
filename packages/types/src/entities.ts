@@ -28,6 +28,7 @@ import type {
   RewardType,
   ShiftStatus,
   TransactionStatus,
+  TenantType,
 } from './enums';
 
 // ── Auth / User ───────────────────────────────────────────────────────────────
@@ -39,6 +40,9 @@ export interface CurrentUserTenant {
   contactNumber: string;
   address: string;
   isActive: boolean;
+  tenantType: number;
+  parentTenantId: string | null;
+  franchiseCode: string | null;
 }
 
 export interface CurrentUser {
@@ -1365,4 +1369,144 @@ export interface EmployeeRanking {
   daysLate: number;
   averageRevenuePerService: number;
   attendanceRate: number;
+}
+
+// ── Franchise ───────────────────────────────────────────────────────────────
+
+export interface FranchiseSettingsDto {
+  id: string;
+  tenantId: string;
+  royaltyRate: number;
+  marketingFeeRate: number;
+  technologyFeeRate: number;
+  royaltyBasis: number;
+  royaltyFrequency: number;
+  enforceStandardServices: boolean;
+  enforceStandardPricing: boolean;
+  allowLocalServices: boolean;
+  maxPriceVariance: number | null;
+  enforceBranding: boolean;
+  defaultFranchiseePlan: number;
+  maxBranchesPerFranchisee: number;
+}
+
+export interface FranchiseeListItem {
+  tenantId: string;
+  name: string;
+  franchiseCode: string | null;
+  territoryName: string;
+  branchCount: number;
+  isActive: boolean;
+  agreementStatus: number;
+  revenueThisMonth: number;
+  royaltyDue: number;
+}
+
+export interface FranchiseeDetail extends FranchiseeListItem {
+  email: string;
+  contactNumber: string;
+  address: string;
+  agreement: FranchiseAgreementDto | null;
+  recentRoyalties: readonly RoyaltyPeriodDto[];
+}
+
+export interface FranchiseAgreementDto {
+  id: string;
+  franchisorTenantId: string;
+  franchiseeTenantId: string;
+  agreementNumber: string;
+  territoryName: string;
+  territoryDescription: string | null;
+  exclusiveTerritory: boolean;
+  startDate: string;
+  endDate: string | null;
+  initialFranchiseFee: number;
+  status: number;
+  customRoyaltyRate: number | null;
+  customMarketingFeeRate: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface RoyaltyPeriodDto {
+  id: string;
+  franchiseeTenantId: string;
+  franchiseeName: string;
+  agreementId: string;
+  periodStart: string;
+  periodEnd: string;
+  grossRevenue: number;
+  royaltyRate: number;
+  royaltyAmount: number;
+  marketingFeeRate: number;
+  marketingFeeAmount: number;
+  technologyFeeRate: number;
+  technologyFeeAmount: number;
+  totalDue: number;
+  status: number;
+  paidDate: string | null;
+  paymentReference: string | null;
+}
+
+export interface NetworkSummaryDto {
+  totalFranchisees: number;
+  activeFranchisees: number;
+  suspendedFranchisees: number;
+  pendingFranchisees: number;
+  networkRevenueThisMonth: number;
+  totalRoyaltiesCollected: number;
+  pendingRoyalties: number;
+  overdueRoyalties: number;
+  averageRevenuePerFranchisee: number;
+}
+
+export interface FranchiseComplianceItem {
+  tenantId: string;
+  name: string;
+  territoryName: string;
+  usingStandardServices: boolean;
+  pricingCompliant: boolean;
+  royaltiesCurrent: boolean;
+  agreementExpiringSoon: boolean;
+  complianceScore: number;
+}
+
+export interface FranchiseBenchmarkDto {
+  metric: string;
+  yourValue: number;
+  networkAverage: number;
+  rank: number;
+  totalInNetwork: number;
+}
+
+export interface FranchiseServiceTemplateDto {
+  id: string;
+  serviceName: string;
+  description: string | null;
+  categoryName: string | null;
+  basePrice: number;
+  durationMinutes: number;
+  isRequired: boolean;
+  isActive: boolean;
+}
+
+export interface FranchiseInvitationDto {
+  id: string;
+  email: string;
+  businessName: string;
+  ownerName: string | null;
+  franchiseCode: string | null;
+  territoryName: string | null;
+  expiresAt: string;
+  isUsed: boolean;
+  createdAt: string;
+}
+
+export interface InvitationDetailsDto {
+  franchisorName: string;
+  businessName: string;
+  email: string;
+  franchiseCode: string | null;
+  territoryName: string | null;
+  expiresAt: string;
 }

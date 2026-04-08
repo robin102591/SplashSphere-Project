@@ -212,3 +212,43 @@ export enum RewardType {
   DiscountAmount  = 2,
   DiscountPercent = 3,
 }
+
+// ── Franchise ───────────────────────────────────────────────────────────────
+
+/** Classification of a tenant within the platform. */
+export enum TenantType {
+  Independent    = 0,
+  CorporateChain = 1,
+  Franchisor     = 2,
+  Franchisee     = 3,
+}
+
+/** How royalty amounts are calculated from franchisee revenue. */
+export enum RoyaltyBasis {
+  GrossRevenue       = 0,
+  NetRevenue         = 1,
+  ServiceRevenueOnly = 2,
+}
+
+/** How often royalties are calculated. */
+export enum RoyaltyFrequency {
+  Weekly  = 0,
+  Monthly = 1,
+}
+
+/** Lifecycle states of a franchise agreement. */
+export enum AgreementStatus {
+  Draft      = 0,
+  Active     = 1,
+  Expired    = 2,
+  Terminated = 3,
+  Suspended  = 4,
+}
+
+/** Lifecycle states of a royalty period payment. */
+export enum RoyaltyStatus {
+  Pending  = 0,
+  Invoiced = 1,
+  Paid     = 2,
+  Overdue  = 3,
+}

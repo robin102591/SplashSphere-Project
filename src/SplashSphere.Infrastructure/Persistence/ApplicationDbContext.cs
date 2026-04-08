@@ -103,6 +103,13 @@ public sealed class ApplicationDbContext(
     public DbSet<MembershipCard> MembershipCards => Set<MembershipCard>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
+    // ── Franchise ────────────────────────────────────────────────────────────
+    public DbSet<FranchiseSettings> FranchiseSettings => Set<FranchiseSettings>();
+    public DbSet<FranchiseAgreement> FranchiseAgreements => Set<FranchiseAgreement>();
+    public DbSet<RoyaltyPeriod> RoyaltyPeriods => Set<RoyaltyPeriod>();
+    public DbSet<FranchiseServiceTemplate> FranchiseServiceTemplates => Set<FranchiseServiceTemplate>();
+    public DbSet<FranchiseInvitation> FranchiseInvitations => Set<FranchiseInvitation>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -263,6 +270,15 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<PointTransaction>()
             .HasQueryFilter(p => p.TenantId == tenantContext.TenantId);
+
+        // ── Franchise (tenant-scoped only) ───────────────────────────────────
+        // NOTE: FranchiseAgreement, RoyaltyPeriod, and FranchiseInvitation are
+        // explicitly NOT filtered — they bridge tenants or need public access.
+        modelBuilder.Entity<FranchiseSettings>()
+            .HasQueryFilter(fs => fs.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<FranchiseServiceTemplate>()
+            .HasQueryFilter(fst => fst.FranchisorTenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

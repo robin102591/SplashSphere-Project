@@ -114,4 +114,11 @@ public interface IApplicationDbContext
     DbSet<LoyaltyReward> LoyaltyRewards { get; }
     DbSet<MembershipCard> MembershipCards { get; }
     DbSet<PointTransaction> PointTransactions { get; }
+
+    // ── Franchise ────────────────────────────────────────────────────────────
+    DbSet<FranchiseSettings> FranchiseSettings { get; }
+    DbSet<FranchiseAgreement> FranchiseAgreements { get; }
+    DbSet<RoyaltyPeriod> RoyaltyPeriods { get; }
+    DbSet<FranchiseServiceTemplate> FranchiseServiceTemplates { get; }
+    DbSet<FranchiseInvitation> FranchiseInvitations { get; }
 }
