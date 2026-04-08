@@ -30,4 +30,5 @@ public static class FeatureKeys
     // ── Enterprise only ──────────────────────────────────────────────────────
     public const string ApiAccess = "api_access";
     public const string CustomIntegrations = "custom_integrations";
+    public const string FranchiseManagement = "franchise_management";
 }

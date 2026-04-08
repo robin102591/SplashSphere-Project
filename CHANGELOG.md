@@ -1,5 +1,14 @@
 ## Changelog
 
+## [Franchise Feature Gate] — 2026-04-08
+### Added
+- `FeatureKeys.FranchiseManagement` (`franchise_management`) — Enterprise plan only
+- Added to `PlanCatalog.EnterpriseFeatures` set
+- Franchise endpoint group gated with `RequiresFeatureAttribute` (public invitation routes excluded)
+- Sidebar franchise nav groups gated by both `tenantType` AND plan feature
+- TypeScript `FeatureKeys.FranchiseManagement` added to shared types
+- Business rule: franchisees pay their own independent subscriptions (14-day Trial → self-service upgrade)
+
 ## [Phase 17.4] — 2026-04-08
 ### Added — Franchise Invitation Flow
 - **InviteFranchiseeCommandHandler**: Guard franchisor, check duplicate active invitations, generate 64-char hex token (256-bit entropy), create FranchiseInvitation (7-day expiry), send HTML invitation email via IEmailService

@@ -23,6 +23,8 @@ using SplashSphere.Application.Features.Franchise.Queries.GetNetworkSummary;
 using SplashSphere.Application.Features.Franchise.Queries.GetRoyaltyPeriods;
 using SplashSphere.Application.Features.Franchise.Queries.GetServiceTemplates;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Subscription;
+using SplashSphere.Infrastructure.Authentication;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -33,7 +35,8 @@ public static class FranchiseEndpoints
         var group = app
             .MapGroup("/api/v1/franchise")
             .WithTags("Franchise")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.FranchiseManagement));
 
         // ── Franchisor: Settings ─────────────────────────────────────────────────
         group.MapGet("/settings",  GetSettings)    .WithName("GetFranchiseSettings");

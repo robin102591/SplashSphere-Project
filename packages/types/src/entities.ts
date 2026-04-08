@@ -976,6 +976,7 @@ export const FeatureKeys = {
   // Enterprise
   ApiAccess: 'api_access',
   CustomIntegrations: 'custom_integrations',
+  FranchiseManagement: 'franchise_management',
 } as const;
 
 // ── Attendance Reports ────────────────────────────────────────────────────────

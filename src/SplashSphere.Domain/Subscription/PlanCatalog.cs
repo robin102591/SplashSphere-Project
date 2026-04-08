@@ -26,7 +26,8 @@ public static class PlanCatalog
     private static readonly HashSet<string> EnterpriseFeatures =
     [
         ..GrowthFeatures,
-        FeatureKeys.ApiAccess, FeatureKeys.CustomIntegrations
+        FeatureKeys.ApiAccess, FeatureKeys.CustomIntegrations,
+        FeatureKeys.FranchiseManagement
     ];
 
     public static readonly PlanDefinition Trial = new()

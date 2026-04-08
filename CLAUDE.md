@@ -727,6 +727,7 @@ Events: `TransactionUpdated`, `DashboardMetricsUpdated`, `AttendanceUpdated`, `Q
 16. **Per-Branch Payroll**: Payroll periods and settings are branch-scoped. Each branch can have its own cut-off day and frequency (overrides tenant default). The Hangfire job creates one period per branch per cycle. `ClosePayrollPeriod` scopes employees to the period's branch. Settings resolve: branch override → tenant default → hardcoded (Monday/Weekly).
 17. **Loyalty Points**: Points are whole integers. Earned via `floor(FinalAmount / CurrencyUnitAmount) * PointsPerCurrencyUnit * tierMultiplier`. Auto-awarded on transaction completion via `TransactionCompletedLoyaltyHandler`. MembershipCard is separate from Customer (requires feature gate). Tier progression is one-directional (upgrades only). Auto-enrollment when `AutoEnroll` is enabled.
 18. **Loyalty Feature Gate**: All loyalty endpoints require `FeatureKeys.CustomerLoyalty` (Growth + Enterprise + Trial plans). The `RequiresFeatureAttribute` middleware enforces this.
+19. **Franchise Feature Gate**: All franchise endpoints (except public invitation validate/accept) require `FeatureKeys.FranchiseManagement` (Enterprise plan only). Franchisees pay their own independent subscriptions — each franchisee tenant has its own `TenantSubscription` starting with a 14-day Trial, then upgrades to any plan independently.
 
 ---
 

@@ -53,7 +53,7 @@ import {
   Network,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useHasFeature } from '@/hooks/use-plan'
+import { useHasFeature, usePlan } from '@/hooks/use-plan'
 import { useTenantType } from '@/hooks/use-me'
 import { FeatureKeys, TenantType } from '@splashsphere/types'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
@@ -65,7 +65,7 @@ interface NavItem {
   feature?: string | null
 }
 
-const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[] }[] = [
+const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[]; feature?: string }[] = [
   {
     labelKey: 'overview',
     items: [
@@ -111,6 +111,7 @@ const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[] }[
   {
     labelKey: 'franchise',
     tenantTypes: [TenantType.Franchisor],
+    feature: FeatureKeys.FranchiseManagement,
     items: [
       { labelKey: 'networkOverview', href: '/dashboard/franchise', icon: Network },
       { labelKey: 'franchisees', href: '/dashboard/franchise/franchisees', icon: Building2 },
@@ -123,6 +124,7 @@ const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[] }[
   {
     labelKey: 'myFranchise',
     tenantTypes: [TenantType.Franchisee],
+    feature: FeatureKeys.FranchiseManagement,
     items: [
       { labelKey: 'myAgreement', href: '/dashboard/franchise/my-agreement', icon: FileText },
       { labelKey: 'myRoyalties', href: '/dashboard/franchise/my-royalties', icon: DollarSign },
@@ -197,8 +199,11 @@ export function AppSidebar() {
   const pathname = usePathname()
   const t = useTranslations('nav')
   const { tenantType } = useTenantType()
+  const { data: plan } = usePlan()
+  const planFeatures = plan?.features ?? []
 
   const visibleGroups = navGroups.filter((group) => {
+    if (group.feature && !planFeatures.includes(group.feature)) return false
     if (!group.tenantTypes) return true
     if (tenantType === null) return false
     return group.tenantTypes.includes(tenantType)
