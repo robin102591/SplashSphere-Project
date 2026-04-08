@@ -102,6 +102,7 @@ public static class DependencyInjection
         services.AddTransient<QueueJobService>();
         services.AddTransient<BillingJobService>();
         services.AddTransient<ExpenseJobService>();
+        services.AddTransient<FranchiseJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────────
         services.AddHangfire(config => config

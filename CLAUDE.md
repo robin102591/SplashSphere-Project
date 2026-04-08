@@ -572,6 +572,33 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `POST` | `/loyalty/members/{membershipCardId}/adjust` | Admin manual point adjustment |
 | `GET` | `/loyalty/members/by-customer/{customerId}/summary` | Lightweight loyalty summary for POS |
 
+### Franchise
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/franchise/settings` | Get franchise network settings |
+| `PUT` | `/franchise/settings` | Update franchise settings |
+| `GET` | `/franchise/franchisees` | List all franchisees (paginated) |
+| `GET` | `/franchise/franchisees/{id}` | Franchisee detail with agreement + royalties |
+| `POST` | `/franchise/franchisees/{id}/suspend` | Suspend a franchisee |
+| `POST` | `/franchise/franchisees/{id}/reactivate` | Reactivate a suspended franchisee |
+| `POST` | `/franchise/franchisees/{id}/push-templates` | Push service templates to franchisee |
+| `POST` | `/franchise/agreements` | Create franchise agreement |
+| `GET` | `/franchise/royalties` | List royalty periods (paginated, filterable) |
+| `POST` | `/franchise/royalties/calculate` | Calculate royalties for a period |
+| `PATCH` | `/franchise/royalties/{id}/paid` | Mark royalty as paid |
+| `GET` | `/franchise/network-summary` | Network KPIs |
+| `GET` | `/franchise/compliance` | Compliance report per franchisee |
+| `GET` | `/franchise/templates` | List service templates |
+| `POST` | `/franchise/templates` | Create service template |
+| `PUT` | `/franchise/templates/{id}` | Update service template |
+| `POST` | `/franchise/invite` | Send franchise invitation |
+| `GET` | `/franchise/my-agreement` | Franchisee: get my agreement |
+| `GET` | `/franchise/my-royalties` | Franchisee: my royalty statements |
+| `GET` | `/franchise/benchmarks` | Franchisee: network benchmarks |
+| `GET` | `/franchise/invitations/{token}/validate` | **Public** — validate invitation token |
+| `POST` | `/franchise/invitations/{token}/accept` | Accept invitation and create franchisee |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ### Analytics
@@ -654,6 +681,8 @@ When `queueEntryId` is present: pre-fill vehicle/customer from queue entry, pre-
 | `CheckLowStockAlerts` | Daily 08:00 PHT | Scan low inventory |
 | `CleanupStaleTransactions` | Hourly | Cancel PENDING transactions older than 4h |
 | `GenerateRecurringExpenses` | Daily 00:30 PHT | Auto-generate expense records for recurring expenses (Daily/Weekly/Monthly) |
+| `CalculateMonthlyRoyaltiesJob` | Monthly 1st 02:00 PHT | Per-franchise-network: sum franchisee revenue, calculate royalty/marketing/tech fees |
+| `SendRoyaltyRemindersJob` | Monthly 5th 09:00 PHT | Mark unpaid royalties as overdue |
 
 **Queue No-Show Timer:** Fire-and-forget, triggered when customer is CALLED. `BackgroundJob.Schedule` 5-minute delay. Only marks NO_SHOW if status still CALLED.
 

@@ -108,6 +108,22 @@ public static class RecurringJobSetup
             cronExpression: Cron.Daily(hour: 0, minute: 30),
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // ── Franchise ────────────────────────────────────────────────────────
+
+        // 1st of each month 02:00 PHT — calculate royalties for previous month.
+        manager.AddOrUpdate<FranchiseJobService>(
+            recurringJobId: "franchise-monthly-royalties",
+            methodCall: job => job.CalculateMonthlyRoyaltiesAsync(CancellationToken.None),
+            cronExpression: "0 2 1 * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // 5th of each month 09:00 PHT — mark overdue royalties and send reminders.
+        manager.AddOrUpdate<FranchiseJobService>(
+            recurringJobId: "franchise-royalty-reminders",
+            methodCall: job => job.SendRoyaltyRemindersAsync(CancellationToken.None),
+            cronExpression: "0 9 5 * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         return app;
     }
 }

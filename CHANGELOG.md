@@ -78,3 +78,21 @@
 - FranchiseSettings and FranchiseServiceTemplate are tenant-scoped (filtered to franchisor's tenant)
 - Self-referencing Tenant FK uses OnDelete(Restrict) — cannot delete franchisor with existing franchisees
 - Zero-impact migration: existing tenants default to TenantType=Independent, all new columns nullable
+
+### 2026-04-08 — Phase 17.2: Franchise Application Layer (CQRS + Endpoints + Jobs)
+
+#### Added
+- **11 franchise DTOs** in `Application/Features/Franchise/FranchiseDtos.cs`
+- **8 franchisor commands** — UpdateFranchiseSettings, CreateFranchiseAgreement, SuspendFranchisee, ReactivateFranchisee, UpsertServiceTemplate, PushServiceTemplates, CalculateRoyalties, MarkRoyaltyPaid
+- **7 franchisor queries** — GetFranchiseSettings, GetFranchisees, GetFranchiseeDetail, GetRoyaltyPeriods, GetNetworkSummary, GetComplianceReport, GetServiceTemplates
+- **3 franchisee queries** — GetMyAgreement, GetMyRoyalties, GetBenchmarks
+- **3 invitation stubs** — InviteFranchisee, ValidateInvitation, AcceptInvitation (to be completed in Phase 17.4)
+- **22 API endpoints** in `FranchiseEndpoints.cs` under `/api/v1/franchise`
+- **2 Hangfire jobs** — CalculateMonthlyRoyaltiesJob (1st of month), SendRoyaltyRemindersJob (5th of month)
+- **FranchiseJobService** registered in DI
+
+#### Architecture Notes
+- All cross-tenant queries use `IgnoreQueryFilters()` with manual franchisor tenant ID checks
+- Royalty calculation uses `Math.Round(..., 2, MidpointRounding.AwayFromZero)` for PHP precision
+- Agreement custom rates override franchisor default settings
+- Monthly royalty job is idempotent (skips if period already exists)
