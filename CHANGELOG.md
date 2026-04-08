@@ -1,5 +1,25 @@
 ## Changelog
 
+## [Phase 17.3] — 2026-04-08
+### Added — Franchise Frontend (Admin Dashboard)
+- Backend: `GET /auth/me` now returns `tenantType`, `parentTenantId`, `franchiseCode` in tenant DTO
+- Hook: `use-me.ts` — `useMe()` fetches current user profile, `useTenantType()` derives franchisor/franchisee booleans
+- Hook: `use-franchise.ts` — 7 franchisor queries, 9 franchisor mutations, 3 franchisee queries for all franchise endpoints
+- Sidebar: Franchise nav group (6 items) visible only to Franchisor tenants; My Franchise nav group (3 items) visible only to Franchisee tenants
+- **Franchisor pages** (7):
+  - Network Overview — KPI stat cards + franchisee performance table
+  - Franchisees list — paginated DataTable with invite button (stub)
+  - Franchisee detail — business info, agreement, royalty history, suspend/reactivate actions
+  - Royalties — paginated with franchisee/status filters, mark-paid action
+  - Service Templates — CRUD dialog + push-to-franchisees confirmation
+  - Compliance Report — color-coded compliance matrix per franchisee
+  - Franchise Settings — royalty config, service standards, branding & plan settings form
+- **Franchisee pages** (3):
+  - My Agreement — read-only agreement details
+  - My Royalties — paginated royalty statements
+  - Benchmarks — your value vs network average with visual comparison bars
+- i18n: Added 80+ franchise keys to `en.json` and `fil.json` (nav + franchise namespace)
+
 ### 2026-03-20
 - **Fix: Queue number daily reset (duplicate key bug)** — Added `QueueDate` (DateOnly, Manila local date) column to `QueueEntry`. Updated unique constraint from `(BranchId, QueueNumber, TenantId)` to `(TenantId, BranchId, QueueDate, QueueNumber)` so Q-001 on different days never collide. Both `AddToQueueCommandHandler` and the walk-in path in `CreateTransactionCommandHandler` now filter by `QueueDate` instead of CreatedAt UTC range. Migration: `AddQueueEntryQueueDate`.
 

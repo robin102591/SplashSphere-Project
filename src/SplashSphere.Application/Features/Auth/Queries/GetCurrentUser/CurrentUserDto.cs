@@ -18,4 +18,7 @@ public sealed record CurrentUserTenantDto(
     string Email,
     string ContactNumber,
     string Address,
-    bool IsActive);
+    bool IsActive,
+    int TenantType,
+    string? ParentTenantId,
+    string? FranchiseCode);

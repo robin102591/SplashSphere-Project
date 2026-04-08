@@ -56,6 +56,15 @@ const STATUS_STYLES: Record<string, [bg: string, text: string, border: string, l
 
   // ── Variance ─────────────────────────────────────────────────
   Watch:        ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
+
+  // ── Franchise ───────────────────────────────────────────────
+  Draft:        ['bg-gray-500/15', 'text-gray-600 dark:text-gray-400', 'border-gray-200 dark:border-gray-700'],
+  Expired:      ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
+  Terminated:   ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
+  Suspended:    ['bg-amber-500/15', 'text-amber-700 dark:text-amber-400', 'border-amber-200 dark:border-amber-800'],
+  Invoiced:     ['bg-blue-500/15', 'text-blue-700 dark:text-blue-400', 'border-blue-200 dark:border-blue-800'],
+  Overdue:      ['bg-red-500/15', 'text-red-700 dark:text-red-400', 'border-red-200 dark:border-red-800'],
+  Paid:         ['bg-emerald-500/15', 'text-emerald-700 dark:text-emerald-400', 'border-emerald-200 dark:border-emerald-800'],
 }
 
 interface StatusBadgeProps {

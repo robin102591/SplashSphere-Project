@@ -640,6 +640,16 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/reports/customer-analytics` | Customer Analytics — retention rate, new vs returning trend, visit frequency distribution, top 20 customers table |
 | `/dashboard/reports/peak-hours` | Peak Hours Heatmap — 7×24 day-of-week × hour grid, transaction/revenue toggle, color intensity legend |
 | `/dashboard/reports/employee-performance` | Employee Performance — leaderboard rankings, top 10 chart, sortable by revenue/services/commissions/attendance |
+| `/dashboard/franchise` | Franchise Network Overview — KPI cards + franchisee performance table |
+| `/dashboard/franchise/franchisees` | Franchisees list with invite button |
+| `/dashboard/franchise/franchisees/[id]` | Franchisee detail — agreement, royalties, actions |
+| `/dashboard/franchise/royalties` | Royalty periods — paginated, filterable, mark-paid |
+| `/dashboard/franchise/templates` | Service template CRUD + push to franchisees |
+| `/dashboard/franchise/compliance` | Compliance report — color-coded matrix |
+| `/dashboard/franchise/settings` | Franchise settings form |
+| `/dashboard/franchise/my-agreement` | Franchisee: read-only agreement view |
+| `/dashboard/franchise/my-royalties` | Franchisee: paginated royalty statements |
+| `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
 
 ### POS App
 

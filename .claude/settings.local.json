@@ -138,7 +138,13 @@
       "Bash(npm --prefix apps/marketing exec -- tsc --noEmit)",
       "Bash(/c/PROJECTS/carwash/SplashSphere-Claude/apps/marketing/node_modules/.bin/tsc --noEmit --project /c/PROJECTS/carwash/SplashSphere-Claude/apps/marketing/tsconfig.json)",
       "Bash(export PATH=\"$PATH:/c/Users/rnobl/AppData/Local/pnpm:/c/Users/rnobl/AppData/Roaming/npm\")",
-      "Bash(npm exec:*)"
+      "Bash(npm exec:*)",
+      "Bash(node -e \"const j=require\\('./apps/admin/messages/en.json'\\); console.log\\(JSON.stringify\\(j.nav, null, 2\\)\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/messages/en.json','utf8'\\)\\); console.log\\('en.json: valid'\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/PROJECTS/carwash/SplashSphere-Claude/apps/admin/messages/fil.json','utf8'\\)\\); console.log\\('fil.json: valid'\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)[:20]\\)\")",
+      "Bash(node:*)",
+      "Bash(cmd.exe /c \"pnpm --filter admin exec tsc --noEmit\")"
     ]
   }
 }

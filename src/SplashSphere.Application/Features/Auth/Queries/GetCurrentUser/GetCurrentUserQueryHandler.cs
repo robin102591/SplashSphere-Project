@@ -34,6 +34,9 @@ public sealed class GetCurrentUserQueryHandler(
                 TenantContactNumber   = u.Tenant != null ? u.Tenant.ContactNumber   : null,
                 TenantAddress         = u.Tenant != null ? u.Tenant.Address         : null,
                 TenantIsActive        = u.Tenant != null ? (bool?)u.Tenant.IsActive  : null,
+                TenantType            = u.Tenant != null ? (int?)u.Tenant.TenantType : null,
+                TenantParentId        = u.Tenant != null ? u.Tenant.ParentTenantId  : null,
+                TenantFranchiseCode   = u.Tenant != null ? u.Tenant.FranchiseCode   : null,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -47,7 +50,10 @@ public sealed class GetCurrentUserQueryHandler(
                 user.TenantEmail!,
                 user.TenantContactNumber!,
                 user.TenantAddress!,
-                user.TenantIsActive!.Value)
+                user.TenantIsActive!.Value,
+                user.TenantType ?? 0,
+                user.TenantParentId,
+                user.TenantFranchiseCode)
             : null;
 
         return new CurrentUserDto(

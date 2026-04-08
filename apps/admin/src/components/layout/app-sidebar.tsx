@@ -43,10 +43,19 @@ import {
   UserCheck,
   Clock,
   Trophy,
+  Building2,
+  FileText,
+  DollarSign,
+  CheckCircle,
+  LayoutTemplate,
+  Settings2,
+  BarChart2,
+  Network,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useHasFeature } from '@/hooks/use-plan'
-import { FeatureKeys } from '@splashsphere/types'
+import { useTenantType } from '@/hooks/use-me'
+import { FeatureKeys, TenantType } from '@splashsphere/types'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 
 interface NavItem {
@@ -56,7 +65,7 @@ interface NavItem {
   feature?: string | null
 }
 
-const navGroups: { labelKey: string; items: NavItem[] }[] = [
+const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[] }[] = [
   {
     labelKey: 'overview',
     items: [
@@ -97,6 +106,27 @@ const navGroups: { labelKey: string; items: NavItem[] }[] = [
       { labelKey: 'customerAnalytics', href: '/dashboard/reports/customer-analytics', icon: UserCheck },
       { labelKey: 'peakHours', href: '/dashboard/reports/peak-hours', icon: Clock },
       { labelKey: 'employeePerformance', href: '/dashboard/reports/employee-performance', icon: Trophy },
+    ],
+  },
+  {
+    labelKey: 'franchise',
+    tenantTypes: [TenantType.Franchisor],
+    items: [
+      { labelKey: 'networkOverview', href: '/dashboard/franchise', icon: Network },
+      { labelKey: 'franchisees', href: '/dashboard/franchise/franchisees', icon: Building2 },
+      { labelKey: 'royalties', href: '/dashboard/franchise/royalties', icon: DollarSign },
+      { labelKey: 'serviceTemplates', href: '/dashboard/franchise/templates', icon: LayoutTemplate },
+      { labelKey: 'compliance', href: '/dashboard/franchise/compliance', icon: CheckCircle },
+      { labelKey: 'franchiseSettings', href: '/dashboard/franchise/settings', icon: Settings2 },
+    ],
+  },
+  {
+    labelKey: 'myFranchise',
+    tenantTypes: [TenantType.Franchisee],
+    items: [
+      { labelKey: 'myAgreement', href: '/dashboard/franchise/my-agreement', icon: FileText },
+      { labelKey: 'myRoyalties', href: '/dashboard/franchise/my-royalties', icon: DollarSign },
+      { labelKey: 'benchmarks', href: '/dashboard/franchise/benchmarks', icon: BarChart2 },
     ],
   },
   {
@@ -166,6 +196,13 @@ function NavItemRow({ item, pathname, t }: { item: NavItem; pathname: string; t:
 export function AppSidebar() {
   const pathname = usePathname()
   const t = useTranslations('nav')
+  const { tenantType } = useTenantType()
+
+  const visibleGroups = navGroups.filter((group) => {
+    if (!group.tenantTypes) return true
+    if (tenantType === null) return false
+    return group.tenantTypes.includes(tenantType)
+  })
 
   return (
     <Sidebar collapsible="icon">
@@ -174,7 +211,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <SidebarGroup key={group.labelKey}>
             <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
             <SidebarGroupContent>

@@ -48,6 +48,17 @@ description: Current frontend page inventory — updated by agents after each ta
 | /dashboard/billing | Payment history + invoice download + cancel |
 | /dashboard/settings | Settings (vehicle types, sizes, makes, categories, shifts, payroll) |
 | /dashboard/audit-logs | Audit log viewer |
+| /dashboard/loyalty | Loyalty program — dashboard, rewards CRUD, settings + tier config |
+| /dashboard/franchise | Franchise network overview — KPI stat cards + franchisee table |
+| /dashboard/franchise/franchisees | Franchisees list — paginated, invite button (stub) |
+| /dashboard/franchise/franchisees/[id] | Franchisee detail — business info, agreement, actions, recent royalties |
+| /dashboard/franchise/royalties | Royalties — paginated list with filters, mark-paid action |
+| /dashboard/franchise/my-agreement | Franchisee: my agreement details (read-only) |
+| /dashboard/franchise/my-royalties | Franchisee: paginated royalty periods list |
+| /dashboard/franchise/benchmarks | Franchisee: network performance benchmarks |
+| /dashboard/franchise/templates | Service templates CRUD + push-to-franchisees |
+| /dashboard/franchise/compliance | Compliance report — color-coded matrix per franchisee |
+| /dashboard/franchise/settings | Franchise settings form — royalties, standards, branding |
 
 ## POS App
 | Route | Page |
