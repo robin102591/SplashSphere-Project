@@ -1,5 +1,15 @@
 ## Changelog
 
+## [Onboarding Franchise Support] — 2026-04-08
+### Added
+- Backend: `CreateOnboardingCommand` now accepts `BusinessType` parameter (0=Independent, 1=CorporateChain, 2=Franchisor) with default 0 for backward compatibility
+- Backend: Handler sets `Tenant.TenantType` from BusinessType; if Franchisor, auto-creates empty `FranchiseSettings` row
+- Frontend: Business type radio selector on onboarding Step 2 (business details) with icons and descriptions
+- Frontend: "Have a franchise invitation?" link on onboarding welcome step, linking to `/franchise/accept`
+- TypeScript: `CreateOnboardingRequest.businessType` optional field added
+- i18n: Added business type labels and descriptions in English and Filipino
+- shadcn RadioGroup component added
+
 ## [Franchise Feature Gate] — 2026-04-08
 ### Added
 - `FeatureKeys.FranchiseManagement` (`franchise_management`) — Enterprise plan only

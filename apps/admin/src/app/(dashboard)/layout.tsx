@@ -8,8 +8,9 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth()
+  const { userId, orgId } = await auth()
   if (!userId) redirect('/sign-in')
+  if (!orgId) redirect('/onboarding')
 
   const cookieStore = await cookies()
   const sidebarState = cookieStore.get('sidebar_state')?.value

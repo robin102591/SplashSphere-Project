@@ -71,6 +71,7 @@ export interface CreateOnboardingRequest {
   branchCode: string;
   branchAddress: string;
   branchContactNumber: string;
+  businessType?: number;
 }
 
 export interface CreateOnboardingResponse {

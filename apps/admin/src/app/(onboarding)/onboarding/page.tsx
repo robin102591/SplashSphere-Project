@@ -11,16 +11,27 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { apiClient } from '@/lib/api-client'
+import { TenantType } from '@splashsphere/types'
 import type { CreateOnboardingRequest } from '@splashsphere/types'
+import { Building2, Store, Network } from 'lucide-react'
+import Link from 'next/link'
 
 const businessSchema = z.object({
   businessName: z.string().min(2, 'Business name is required'),
   businessEmail: z.string().email('Invalid email'),
   contactNumber: z.string().min(7, 'Contact number is required'),
   address: z.string().min(5, 'Address is required'),
+  businessType: z.coerce.number().min(0).max(2),
 })
 type BusinessValues = z.infer<typeof businessSchema>
+
+const BUSINESS_TYPES = [
+  { value: TenantType.Independent, label: 'Independent', description: 'Single car wash business or small chain', icon: Store },
+  { value: TenantType.CorporateChain, label: 'Corporate Chain', description: 'Multi-branch corporate-owned business', icon: Building2 },
+  { value: TenantType.Franchisor, label: 'Franchisor', description: 'Franchise network — manage franchisees, royalties, and standards', icon: Network },
+] as const
 
 const branchSchema = z.object({
   branchName: z.string().min(2, 'Branch name is required'),
@@ -56,6 +67,7 @@ export default function OnboardingPage() {
     businessEmail: '',
     contactNumber: '',
     address: '',
+    businessType: TenantType.Independent,
   })
   const [branchData, setBranchData] = useState<BranchValues>({
     branchName: '',
@@ -89,7 +101,7 @@ export default function OnboardingPage() {
     setIsSubmitting(true)
     try {
       const token = await getToken()
-      const payload: CreateOnboardingRequest = { ...businessData, ...branchData }
+      const payload: CreateOnboardingRequest = { ...businessData, ...branchData, businessType: businessData.businessType }
       const { tenantId } = await apiClient.post<{ tenantId: string }>(
         '/onboarding',
         payload,
@@ -133,10 +145,16 @@ export default function OnboardingPage() {
               <li>Start managing your queue and transactions</li>
             </ul>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col gap-3">
             <Button className="w-full" onClick={() => setStep('business')}>
               Get started
             </Button>
+            <p className="text-sm text-muted-foreground">
+              Have a franchise invitation?{' '}
+              <Link href="/franchise/accept" className="text-primary underline hover:no-underline">
+                Accept invitation
+              </Link>
+            </p>
           </CardFooter>
         </Card>
       )}
@@ -176,6 +194,34 @@ export default function OnboardingPage() {
                 {businessForm.formState.errors.address && (
                   <p className="text-xs text-destructive">{businessForm.formState.errors.address.message}</p>
                 )}
+              </div>
+              <div className="space-y-2">
+                <Label>Business type</Label>
+                <RadioGroup
+                  value={String(businessForm.watch('businessType'))}
+                  onValueChange={(val) => businessForm.setValue('businessType', Number(val))}
+                  className="grid gap-2"
+                >
+                  {BUSINESS_TYPES.map((bt) => (
+                    <label
+                      key={bt.value}
+                      className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                        businessForm.watch('businessType') === bt.value
+                          ? 'border-primary bg-primary/5'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <RadioGroupItem value={String(bt.value)} className="mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <bt.icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{bt.label}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{bt.description}</p>
+                      </div>
+                    </label>
+                  ))}
+                </RadioGroup>
               </div>
             </form>
           </CardContent>
@@ -256,6 +302,9 @@ export default function OnboardingPage() {
               <p className="font-medium">{businessData.businessName}</p>
               <p className="text-sm text-muted-foreground">{businessData.businessEmail}</p>
               <p className="text-sm text-muted-foreground">{businessData.address}</p>
+              <p className="text-xs text-muted-foreground">
+                Type: {BUSINESS_TYPES.find((bt) => bt.value === businessData.businessType)?.label ?? 'Independent'}
+              </p>
             </div>
             <div className="rounded-lg border p-4 space-y-2">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">First Branch</p>

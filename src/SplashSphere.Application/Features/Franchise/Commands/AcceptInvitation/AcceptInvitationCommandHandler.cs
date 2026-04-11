@@ -127,6 +127,44 @@ public sealed class AcceptInvitationCommandHandler(
         foreach (var name in defaultCategories)
             context.ExpenseCategories.Add(new ExpenseCategory(orgId, name));
 
+        // ── 10b. Pre-seed reference data ────────────────────────────────────
+        var vehicleTypeNames = new[] { "Sedan", "SUV", "Van", "Truck", "Hatchback", "Pickup", "Motorcycle" };
+        foreach (var vtName in vehicleTypeNames)
+            context.VehicleTypes.Add(new VehicleType(orgId, vtName));
+
+        var sizeNames = new[] { "Small", "Medium", "Large", "XL" };
+        foreach (var sName in sizeNames)
+            context.Sizes.Add(new Size(orgId, sName));
+
+        var makeModels = new Dictionary<string, string[]>
+        {
+            ["Toyota"] = ["Vios", "Innova", "Fortuner", "Hilux", "Wigo", "Avanza"],
+            ["Honda"] = ["City", "Civic", "CR-V", "BR-V", "Jazz"],
+            ["Mitsubishi"] = ["Mirage", "Xpander", "Montero Sport", "Strada"],
+            ["Nissan"] = ["Almera", "Navara", "Terra", "Kicks"],
+            ["Suzuki"] = ["Ertiga", "Swift", "Celerio", "Jimny", "Dzire"],
+            ["Ford"] = ["EcoSport", "Territory", "Ranger", "Everest"],
+        };
+        foreach (var (makeName, models) in makeModels)
+        {
+            var make = new Make(orgId, makeName);
+            context.Makes.Add(make);
+            foreach (var modelName in models)
+                context.Models.Add(new Model(orgId, make.Id, modelName));
+        }
+
+        var serviceCategories = new[] { "Basic Services", "Premium Services", "Add-Ons", "Detailing" };
+        foreach (var scName in serviceCategories)
+            context.ServiceCategories.Add(new ServiceCategory(orgId, scName));
+
+        var merchCategories = new[]
+        {
+            "Cleaning Chemicals", "Wax & Polish", "Tire & Trim",
+            "Towels & Cloths", "Brushes & Tools", "Packaging & Miscellaneous"
+        };
+        foreach (var mcName in merchCategories)
+            context.MerchandiseCategories.Add(new MerchandiseCategory(orgId, mcName));
+
         // ── 11. Clone service templates if enforced ─────────────────────────
         var settings = invitation.FranchisorTenant.FranchiseSettings;
         if (settings is { EnforceStandardServices: true })

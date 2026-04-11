@@ -20,4 +20,5 @@ public sealed record CreateOnboardingCommand(
     string BranchName,
     string BranchCode,
     string BranchAddress,
-    string BranchContactNumber) : ICommand<string>;
+    string BranchContactNumber,
+    int BusinessType = 0) : ICommand<string>;

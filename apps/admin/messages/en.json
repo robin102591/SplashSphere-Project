@@ -156,7 +156,16 @@
     "businessEmail": "Business Email",
     "contactNumber": "Contact Number",
     "address": "Address",
-    "branchName": "Branch Name"
+    "branchName": "Branch Name",
+    "businessType": "Business Type",
+    "independent": "Independent",
+    "independentDesc": "Single car wash business or small chain",
+    "corporateChain": "Corporate Chain",
+    "corporateChainDesc": "Multi-branch corporate-owned business",
+    "franchisor": "Franchisor",
+    "franchisorDesc": "Franchise network — manage franchisees, royalties, and standards",
+    "haveFranchiseInvitation": "Have a franchise invitation?",
+    "acceptInvitation": "Accept invitation"
   },
   "language": {
     "title": "Language",

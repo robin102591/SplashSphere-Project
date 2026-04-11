@@ -38,5 +38,9 @@ public sealed class CreateOnboardingCommandValidator : AbstractValidator<CreateO
         RuleFor(x => x.BranchContactNumber)
             .NotEmpty().WithMessage("Branch contact number is required.")
             .MaximumLength(30);
+
+        RuleFor(x => x.BusinessType)
+            .InclusiveBetween(0, 2)
+            .WithMessage("Business type must be Independent (0), Corporate Chain (1), or Franchisor (2).");
     }
 }

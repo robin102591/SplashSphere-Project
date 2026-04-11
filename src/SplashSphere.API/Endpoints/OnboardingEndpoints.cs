@@ -27,7 +27,8 @@ public static class OnboardingEndpoints
                 request.BranchName,
                 request.BranchCode,
                 request.BranchAddress,
-                request.BranchContactNumber);
+                request.BranchContactNumber,
+                request.BusinessType);
 
             var result = await sender.Send(command, ct);
 
@@ -50,4 +51,5 @@ public sealed record CreateOnboardingRequest(
     string BranchName,
     string BranchCode,
     string BranchAddress,
-    string BranchContactNumber);
+    string BranchContactNumber,
+    int BusinessType = 0);

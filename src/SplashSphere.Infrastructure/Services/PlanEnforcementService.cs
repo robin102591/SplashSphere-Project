@@ -31,7 +31,8 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
         if (sub.Status == SubscriptionStatus.Cancelled)
             return false;
 
-        var plan = PlanCatalog.GetPlan(sub.PlanTier);
+        var tenantType = await GetTenantTypeAsync(tenantId, ct);
+        var plan = PlanCatalog.GetEffectivePlan(sub.PlanTier, tenantType);
 
         // Check feature overrides first (SaaS admin can grant/revoke)
         if (!string.IsNullOrEmpty(sub.FeatureOverrides))
@@ -63,7 +64,8 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
     public async Task<PlanDefinition> GetActivePlanAsync(string tenantId, CancellationToken ct)
     {
         var sub = await GetSubscriptionAsync(tenantId, ct);
-        return PlanCatalog.GetPlan(sub?.PlanTier ?? PlanTier.Starter);
+        var tenantType = await GetTenantTypeAsync(tenantId, ct);
+        return PlanCatalog.GetEffectivePlan(sub?.PlanTier ?? PlanTier.Starter, tenantType);
     }
 
     public async Task<int> GetSmsBudgetRemainingAsync(string tenantId, CancellationToken ct)
@@ -77,6 +79,25 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
+
+    private static readonly ConcurrentDictionary<string, (TenantType Type, DateTime Expiry)> TenantTypeCache = new();
+
+    private async Task<TenantType> GetTenantTypeAsync(string tenantId, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(tenantId)) return TenantType.Independent;
+
+        if (TenantTypeCache.TryGetValue(tenantId, out var cached) && cached.Expiry > DateTime.UtcNow)
+            return cached.Type;
+
+        var tenantType = await db.Tenants
+            .IgnoreQueryFilters()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.TenantType)
+            .FirstOrDefaultAsync(ct);
+
+        TenantTypeCache[tenantId] = (tenantType, DateTime.UtcNow + CacheDuration);
+        return tenantType;
+    }
 
     private async Task<TenantSubscription?> GetSubscriptionAsync(string tenantId, CancellationToken ct)
     {

@@ -146,7 +146,8 @@
       "Bash(node:*)",
       "Bash(cmd.exe /c \"pnpm --filter admin exec tsc --noEmit\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('franchise',{}\\), indent=2\\)\\)\")",
-      "Bash(./node_modules/.bin/tsc --noEmit)"
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npx shadcn@latest:*)"
     ]
   }
 }

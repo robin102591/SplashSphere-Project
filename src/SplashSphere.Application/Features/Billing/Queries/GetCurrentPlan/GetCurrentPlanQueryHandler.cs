@@ -21,7 +21,12 @@ public sealed class GetCurrentPlanQueryHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.TenantId == tenantId, cancellationToken);
 
-        var plan = PlanCatalog.GetPlan(sub?.PlanTier ?? PlanTier.Starter);
+        var tenantType = await db.Tenants
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.TenantType)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var plan = PlanCatalog.GetEffectivePlan(sub?.PlanTier ?? PlanTier.Starter, tenantType);
 
         var branchCount = await db.Branches
             .CountAsync(b => b.IsActive, cancellationToken);

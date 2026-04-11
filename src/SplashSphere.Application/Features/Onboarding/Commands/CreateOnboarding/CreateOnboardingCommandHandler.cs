@@ -62,6 +62,15 @@ public sealed class CreateOnboardingCommandHandler(
             request.ContactNumber, request.Address);
         context.Tenants.Add(tenant);
 
+        // ── Set tenant type ──────────────────────────────────────────────────
+        tenant.TenantType = (TenantType)request.BusinessType;
+
+        // ── If Franchisor, create default FranchiseSettings ──────────────────
+        if (tenant.TenantType == TenantType.Franchisor)
+        {
+            context.FranchiseSettings.Add(new FranchiseSettings(orgId));
+        }
+
         // ── Create first Branch ───────────────────────────────────────────────
         var branch = new Branch(orgId, request.BranchName, request.BranchCode,
             request.BranchAddress, request.BranchContactNumber);
@@ -104,6 +113,48 @@ public sealed class CreateOnboardingCommandHandler(
         };
         foreach (var name in defaultCategories)
             context.ExpenseCategories.Add(new ExpenseCategory(orgId, name));
+
+        // ── Pre-seed vehicle types ──────────────────────────────────────────
+        var vehicleTypeNames = new[] { "Sedan", "SUV", "Van", "Truck", "Hatchback", "Pickup", "Motorcycle" };
+        foreach (var name in vehicleTypeNames)
+            context.VehicleTypes.Add(new VehicleType(orgId, name));
+
+        // ── Pre-seed vehicle sizes ──────────────────────────────────────────
+        var sizeNames = new[] { "Small", "Medium", "Large", "XL" };
+        foreach (var name in sizeNames)
+            context.Sizes.Add(new Size(orgId, name));
+
+        // ── Pre-seed makes + common models ──────────────────────────────────
+        var makeModels = new Dictionary<string, string[]>
+        {
+            ["Toyota"] = ["Vios", "Innova", "Fortuner", "Hilux", "Wigo", "Avanza"],
+            ["Honda"] = ["City", "Civic", "CR-V", "BR-V", "Jazz"],
+            ["Mitsubishi"] = ["Mirage", "Xpander", "Montero Sport", "Strada"],
+            ["Nissan"] = ["Almera", "Navara", "Terra", "Kicks"],
+            ["Suzuki"] = ["Ertiga", "Swift", "Celerio", "Jimny", "Dzire"],
+            ["Ford"] = ["EcoSport", "Territory", "Ranger", "Everest"],
+        };
+        foreach (var (makeName, models) in makeModels)
+        {
+            var make = new Make(orgId, makeName);
+            context.Makes.Add(make);
+            foreach (var modelName in models)
+                context.Models.Add(new Model(orgId, make.Id, modelName));
+        }
+
+        // ── Pre-seed service categories ─────────────────────────────────────
+        var serviceCategories = new[] { "Basic Services", "Premium Services", "Add-Ons", "Detailing" };
+        foreach (var name in serviceCategories)
+            context.ServiceCategories.Add(new ServiceCategory(orgId, name));
+
+        // ── Pre-seed merchandise categories ─────────────────────────────────
+        var merchCategories = new[]
+        {
+            "Cleaning Chemicals", "Wax & Polish", "Tire & Trim",
+            "Towels & Cloths", "Brushes & Tools", "Packaging & Miscellaneous"
+        };
+        foreach (var name in merchCategories)
+            context.MerchandiseCategories.Add(new MerchandiseCategory(orgId, name));
 
         // Populate TenantContext so downstream UnitOfWork / query filters work
         // correctly if any subsequent command in this request needs them.

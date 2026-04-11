@@ -156,7 +156,16 @@
     "businessEmail": "Email ng Negosyo",
     "contactNumber": "Contact Number",
     "address": "Address",
-    "branchName": "Pangalan ng Branch"
+    "branchName": "Pangalan ng Branch",
+    "businessType": "Uri ng Negosyo",
+    "independent": "Independent",
+    "independentDesc": "Isang car wash o maliit na chain",
+    "corporateChain": "Corporate Chain",
+    "corporateChainDesc": "Multi-branch na corporate-owned na negosyo",
+    "franchisor": "Franchisor",
+    "franchisorDesc": "Franchise network — pamahalaan ang mga franchisee, royalties, at standards",
+    "haveFranchiseInvitation": "May franchise invitation ka?",
+    "acceptInvitation": "Tanggapin ang imbitasyon"
   },
   "language": {
     "title": "Wika",

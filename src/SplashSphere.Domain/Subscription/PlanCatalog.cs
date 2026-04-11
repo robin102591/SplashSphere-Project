@@ -82,4 +82,26 @@ public static class PlanCatalog
         PlanTier.Enterprise => Enterprise,
         _ => Starter
     };
+
+    /// <summary>
+    /// Returns the effective plan for a tenant, accounting for tenant type.
+    /// Franchisors on Trial get Enterprise-level features so they can explore
+    /// franchise management during their trial period.
+    /// </summary>
+    public static PlanDefinition GetEffectivePlan(PlanTier tier, TenantType tenantType)
+    {
+        if (tier == PlanTier.Trial && tenantType == TenantType.Franchisor)
+            return new PlanDefinition
+            {
+                Tier = Trial.Tier,
+                Name = Trial.Name,
+                MonthlyPrice = Trial.MonthlyPrice,
+                MaxBranches = Trial.MaxBranches,
+                MaxEmployees = Trial.MaxEmployees,
+                SmsPerMonth = Trial.SmsPerMonth,
+                Features = [..EnterpriseFeatures]
+            };
+
+        return GetPlan(tier);
+    }
 }
