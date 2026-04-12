@@ -90,18 +90,11 @@ public sealed class AddToQueueCommandHandler(
 
         for (var attempt = 0; attempt < MaxRetries; attempt++)
         {
-            var todayNumbers = await context.QueueEntries
-                .Where(q => q.BranchId == request.BranchId
-                          && q.QueueDate == localToday)
-                .Select(q => q.QueueNumber)
-                .ToListAsync(cancellationToken);
+            var todayCount = await context.QueueEntries
+                .CountAsync(q => q.BranchId == request.BranchId
+                              && q.QueueDate == localToday, cancellationToken);
 
-            var maxSeq = todayNumbers
-                .Select(n => n.StartsWith("Q-") && int.TryParse(n[2..], out var s) ? s : 0)
-                .DefaultIfEmpty(0)
-                .Max();
-
-            var queueNumber = $"Q-{maxSeq + 1:D3}";
+            var queueNumber = $"Q-{todayCount + 1:D3}";
 
             var entry = new QueueEntry(
                 tenantContext.TenantId,

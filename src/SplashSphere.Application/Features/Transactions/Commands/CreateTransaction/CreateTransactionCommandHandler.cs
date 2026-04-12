@@ -425,7 +425,8 @@ public sealed class CreateTransactionCommandHandler(
         // This supports both payment scenarios:
         //   • Pay later (Scenario 1): stays InProgress until AddPayment auto-completes it.
         //   • Pay now   (Scenario 2): AddPayment receives InProgress, auto-completes immediately.
-        transaction.Status = TransactionStatus.InProgress;
+        var isMerchandiseOnly = request.Services.Count == 0 && request.Packages.Count == 0;
+        transaction.Status = isMerchandiseOnly ? TransactionStatus.Pending : TransactionStatus.InProgress;
 
         context.Transactions.Add(transaction);
 
@@ -451,41 +452,43 @@ public sealed class CreateTransactionCommandHandler(
         }
         else
         {
-            // Walk-in workflow: auto-create a queue entry so the vehicle appears
-            // in the InService column on the queue board.
-            var walkInNumbers = await context.QueueEntries
-                .Where(q => q.BranchId == request.BranchId && q.QueueDate == manilaDate)
-                .Select(q => q.QueueNumber)
-                .ToListAsync(cancellationToken);
+            var hasServices = request.Services.Count > 0 || request.Packages.Count > 0;
 
-            var walkInMaxSeq = walkInNumbers
-                .Select(n => n.StartsWith("Q-") && int.TryParse(n[2..], out var s) ? s : 0)
-                .DefaultIfEmpty(0)
-                .Max();
+            if (hasServices)
+            {
+                // Walk-in workflow: auto-create a queue entry so the vehicle appears
+                // in the InService column on the queue board.
+                var walkInCount = await context.QueueEntries
+                    .CountAsync(q => q.BranchId == request.BranchId && q.QueueDate == manilaDate, cancellationToken);
 
-            var walkInEntry = new QueueEntry(
-                tenantContext.TenantId,
-                request.BranchId,
-                $"Q-{walkInMaxSeq + 1:D3}",
-                manilaDate,
-                car.PlateNumber,
-                customerId: request.CustomerId,
-                carId: car.Id);
+                var walkInEntry = new QueueEntry(
+                    tenantContext.TenantId,
+                    request.BranchId,
+                    $"Q-{walkInCount + 1:D3}",
+                    manilaDate,
+                    car.PlateNumber,
+                    customerId: request.CustomerId,
+                    carId: car.Id);
 
-            walkInEntry.Status        = QueueStatus.InService;
-            walkInEntry.TransactionId = transaction.Id;
-            walkInEntry.StartedAt     = now;
+                walkInEntry.Status        = QueueStatus.InService;
+                walkInEntry.TransactionId = transaction.Id;
+                walkInEntry.StartedAt     = now;
 
-            context.QueueEntries.Add(walkInEntry);
-            linkedQueueEntryId = walkInEntry.Id;
+                context.QueueEntries.Add(walkInEntry);
+                linkedQueueEntryId = walkInEntry.Id;
 
-            eventPublisher.Enqueue(new QueueEntryInServiceEvent(
-                walkInEntry.Id,
-                walkInEntry.TenantId,
-                walkInEntry.BranchId,
-                walkInEntry.QueueNumber,
-                walkInEntry.PlateNumber,
-                now));
+                eventPublisher.Enqueue(new QueueEntryInServiceEvent(
+                    walkInEntry.Id,
+                    walkInEntry.TenantId,
+                    walkInEntry.BranchId,
+                    walkInEntry.QueueNumber,
+                    walkInEntry.PlateNumber,
+                    now));
+            }
+            else
+            {
+                linkedQueueEntryId = null;
+            }
         }
 
         // Publish event — SignalR hub, dashboard metrics, queue board will handle it
