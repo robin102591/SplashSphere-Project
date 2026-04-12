@@ -39,8 +39,8 @@ public sealed class QueueEntryNoShowNotificationHandler(
                 EstimatedWaitMinutes: null),
                 cancellationToken);
 
-        // Build + send public display snapshot without blocking the response pipeline
-        _ = BuildAndSendDisplaySnapshotAsync(e.BranchId);
+        // Build + send public display snapshot
+        await BuildAndSendDisplaySnapshotAsync(e.BranchId);
 
         // Persist notification for no-show events.
         await notificationService.CreateAsync(

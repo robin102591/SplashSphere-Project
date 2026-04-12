@@ -39,8 +39,8 @@ public sealed class QueueEntryInServiceNotificationHandler(
                 EstimatedWaitMinutes: null),
                 cancellationToken);
 
-        // Build + send public display snapshot without blocking the response pipeline
-        _ = BuildAndSendDisplaySnapshotAsync(e.BranchId);
+        // Build + send public display snapshot
+        await BuildAndSendDisplaySnapshotAsync(e.BranchId);
     }
 
     private async Task BuildAndSendDisplaySnapshotAsync(string branchId)

@@ -93,7 +93,7 @@ public sealed class TransactionStatusChangedNotificationHandler(
                             EstimatedWaitMinutes: null),
                             cancellationToken);
 
-                    _ = BuildAndSendDisplaySnapshotAsync(e.BranchId);
+                    await BuildAndSendDisplaySnapshotAsync(e.BranchId);
                 }
             }
         }
