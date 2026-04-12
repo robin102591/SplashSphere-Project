@@ -23,16 +23,18 @@ public sealed class LowStockAlertNotificationHandler(
     {
         var e = notification.Event;
 
-        // Persist notification for low-stock item.
-        await notificationService.CreateAsync(
-            e.TenantId,
-            NotificationType.LowStockAlert,
-            NotificationCategory.Inventory,
-            "Low Stock Alert",
-            $"{e.MerchandiseName} ({e.Sku}) is low — {e.CurrentStock} remaining (threshold: {e.LowStockThreshold}).",
-            e.MerchandiseId,
-            "Merchandise",
-            cancellationToken);
+        // Persist notification for low-stock item via unified pipeline (may trigger SMS for critical).
+        await notificationService.SendAsync(new SendNotificationRequest
+        {
+            TenantId = e.TenantId,
+            Type = e.CurrentStock == 0 ? NotificationType.OutOfStock : NotificationType.LowStockAlert,
+            Title = e.CurrentStock == 0 ? "Out of Stock" : "Low Stock Alert",
+            Message = $"{e.MerchandiseName} ({e.Sku}) — {e.CurrentStock} remaining (threshold: {e.LowStockThreshold}).",
+            ReferenceId = e.MerchandiseId,
+            ReferenceType = "Merchandise",
+            ActionUrl = "/dashboard/merchandise",
+            ActionLabel = "View Inventory",
+        }, cancellationToken);
 
         // Broadcast real-time alert to admin dashboard.
         await hub.Clients

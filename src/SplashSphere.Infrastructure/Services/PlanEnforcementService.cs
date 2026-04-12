@@ -158,6 +158,26 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
                 : "");
     }
 
+    public async Task<bool> HasSmsQuotaAsync(string tenantId, CancellationToken ct)
+    {
+        var remaining = await GetSmsBudgetRemainingAsync(tenantId, ct);
+        return remaining > 0;
+    }
+
+    public async Task IncrementSmsUsageAsync(string tenantId, CancellationToken ct)
+    {
+        var sub = await db.TenantSubscriptions
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.TenantId == tenantId, ct);
+
+        if (sub is not null)
+        {
+            sub.SmsUsedThisMonth++;
+            // Evict cache so next check sees updated count
+            EvictCache(tenantId);
+        }
+    }
+
     /// <summary>Evict cached subscription for a tenant (call after plan change).</summary>
     public void EvictCache(string tenantId) => Cache.TryRemove(tenantId, out _);
 }

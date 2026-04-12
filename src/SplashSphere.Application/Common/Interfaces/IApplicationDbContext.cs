@@ -92,6 +92,7 @@ public interface IApplicationDbContext
 
     // ── Notifications ───────────────────────────────────────────────────────
     DbSet<Notification> Notifications { get; }
+    DbSet<NotificationPreference> NotificationPreferences { get; }
 
     // ── Government contribution brackets ──────────────────────────────────
     DbSet<GovernmentContributionBracket> GovernmentContributionBrackets { get; }

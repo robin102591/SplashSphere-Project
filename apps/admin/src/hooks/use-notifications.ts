@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PagedResult, NotificationDto, UnreadCountDto } from '@splashsphere/types'
+import type { PagedResult, NotificationDto, UnreadCountDto, NotificationPreferenceDto, UpdateNotificationPreferencesRequest } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 
 export const notificationKeys = {
@@ -10,6 +10,7 @@ export const notificationKeys = {
   list: (params: { page?: number; unreadOnly?: boolean }) =>
     ['notifications', 'list', params] as const,
   unreadCount: ['notifications', 'unread-count'] as const,
+  preferences: ['notifications', 'preferences'] as const,
 }
 
 export function useNotifications(params: { page?: number; pageSize?: number; unreadOnly?: boolean } = {}) {
@@ -75,6 +76,38 @@ export function useMarkAllRead() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+  })
+}
+
+// ── Preferences ─────────────────────────────────────────────────────────────
+
+export function useNotificationPreferences() {
+  const { getToken } = useAuth()
+
+  return useQuery({
+    queryKey: notificationKeys.preferences,
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<NotificationPreferenceDto[]>(
+        '/notifications/preferences',
+        token ?? undefined,
+      )
+    },
+  })
+}
+
+export function useUpdateNotificationPreferences() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: UpdateNotificationPreferencesRequest) => {
+      const token = await getToken()
+      return apiClient.put<void>('/notifications/preferences', data, token ?? undefined)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: notificationKeys.preferences })
     },
   })
 }

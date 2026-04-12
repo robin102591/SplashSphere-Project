@@ -16,6 +16,12 @@ public interface IPlanEnforcementService
     /// <summary>Get remaining SMS budget for the current month.</summary>
     Task<int> GetSmsBudgetRemainingAsync(string tenantId, CancellationToken ct);
 
+    /// <summary>Check if the tenant has remaining SMS quota this month.</summary>
+    Task<bool> HasSmsQuotaAsync(string tenantId, CancellationToken ct);
+
+    /// <summary>Increment the SMS usage counter for the tenant.</summary>
+    Task IncrementSmsUsageAsync(string tenantId, CancellationToken ct);
+
     /// <summary>Evict cached subscription for a tenant (call after plan change).</summary>
     void EvictCache(string tenantId);
 }

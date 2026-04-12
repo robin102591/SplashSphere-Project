@@ -93,7 +93,8 @@
     "myAgreement": "Aking Kasunduan",
     "myRoyalties": "Aking Mga Royalty",
     "benchmarks": "Mga Benchmark",
-    "importData": "Mag-import ng Data"
+    "importData": "Mag-import ng Data",
+    "notificationPreferences": "Mga Kagustuhan sa Abiso"
   },
   "status": {
     "pending": "Naghihintay",

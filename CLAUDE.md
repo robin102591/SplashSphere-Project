@@ -124,6 +124,39 @@ SplashSphere/
 - Pipeline behaviors: validation, logging, tenant resolution, unit of work.
 - TenantId and UserId come from TenantContext (resolved from JWT), never from command parameters.
 
+#### ICommand / IQuery Type Rules
+
+The project uses custom wrapper interfaces that **auto-wrap** the return type in `Result<T>`. Never double-wrap.
+
+```
+ICommand                      → IRequest<Result>            — use for commands with no return value
+ICommand<T>                   → IRequest<Result<T>>         — use for commands returning a value (T = the inner value, NOT Result)
+IQuery<T>                     → IRequest<T>                 — use for queries (T is typically a DTO or PagedResult<DTO>)
+```
+
+**Common mistake — NEVER do this:**
+```csharp
+// ❌ WRONG — produces IRequest<Result<Result>>, handler won't resolve
+public record MyCommand() : ICommand<Result>;
+
+// ✅ CORRECT — produces IRequest<Result>
+public record MyCommand() : ICommand;
+```
+```csharp
+// ❌ WRONG — produces IRequest<Result<Result<MyDto>>>
+public record MyCommand() : ICommand<Result<MyDto>>;
+
+// ✅ CORRECT — produces IRequest<Result<MyDto>>
+public record MyCommand() : ICommand<MyDto>;
+```
+
+**Handler must match the expanded type:**
+| Command declares | Handler implements |
+|---|---|
+| `: ICommand` | `IRequestHandler<MyCommand, Result>` |
+| `: ICommand<MyDto>` | `IRequestHandler<MyCommand, Result<MyDto>>` |
+| `: IQuery<MyDto>` | `IRequestHandler<MyQuery, MyDto>` |
+
 ### Multi-Tenancy Strategy
 
 - **Discriminator column** (`tenantId`) on all tenant-scoped entities.
@@ -494,10 +527,12 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/notifications?page=1&pageSize=20&unreadOnly=false` | Paginated notification list |
+| `GET` | `/notifications?page=1&pageSize=20&unreadOnly=false&category=1` | Paginated notification list (optional category filter) |
 | `GET` | `/notifications/unread-count` | Unread notification count (for badge) |
 | `PATCH` | `/notifications/{id}/read` | Mark one notification as read |
 | `POST` | `/notifications/mark-all-read` | Mark all notifications as read |
+| `GET` | `/notifications/preferences` | Get user notification channel preferences |
+| `PUT` | `/notifications/preferences` | Update user notification channel preferences |
 
 ### Merchandise (additions)
 
@@ -661,6 +696,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
 | `/franchise/accept` | **Public** — franchise invitation acceptance (token validation + onboarding form) |
 | `/dashboard/settings/import` | Data Import Wizard — 4-step CSV/Excel import (upload, column mapping, validation, execute) |
+| `/dashboard/settings/notifications` | Notification Preferences — per-type SMS/email channel toggles with mandatory indicators |
 
 ### POS App
 

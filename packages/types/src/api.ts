@@ -164,10 +164,13 @@ export interface NotificationReceivedPayload {
   id: string;
   type: number;
   category: number;
+  severity: number;
   title: string;
   message: string;
   referenceId: string | null;
   referenceType: string | null;
+  actionUrl: string | null;
+  actionLabel: string | null;
   createdAt: string;
 }
 

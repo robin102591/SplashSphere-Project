@@ -1,5 +1,25 @@
 ## Changelog
 
+## [Unified Notification System] — 2026-04-12
+### Added
+- **Domain**: Expanded `NotificationType` enum (25 types across 7 categories), added `NotificationSeverity` enum, `NotificationCategory` (7 categories)
+- **Domain**: `NotificationPreference` entity — per-user, per-type channel preferences (SMS/email opt-in)
+- **Domain**: Expanded `Notification` entity with severity, recipient targeting (userId/phone/email), action URLs, delivery tracking (InAppDelivered, SmsDelivered, EmailDelivered, SmsSkipped, EmailSkipped), metadata
+- **Application**: `NotificationTypeConfig` static registry — per-type routing rules (channels, mandatory flags, severity, customer-facing SMS)
+- **Application**: `SendNotificationRequest` record + updated `INotificationService` with unified `SendAsync()` method
+- **Application**: `GetNotificationPreferences` query + `UpdateNotificationPreferences` command (CQRS)
+- **Infrastructure**: Rewrote `NotificationService` with multi-channel routing: in-app (SignalR always), SMS (severity/preference/quota check via Semaphore), email (mandatory/preference check via Resend)
+- **Infrastructure**: SMS quota enforcement via `IPlanEnforcementService.HasSmsQuotaAsync()` + `IncrementSmsUsageAsync()`
+- **Infrastructure**: Updated event handlers (ShiftFlagged, LowStockAlert) to use `SendAsync` with action URLs; out-of-stock now uses separate `OutOfStock` type triggering mandatory SMS
+- **API**: `GET/PUT /notifications/preferences` endpoints, category filter on `GET /notifications`
+- **Frontend**: Toast notifications on SignalR events with severity-based styling (info=5s, warning=10s, critical=sticky) and action button
+- **Frontend**: Notification dropdown updated with severity indicators (colored dots) and new category icons (Billing, Customer, Platform)
+- **Frontend**: `/dashboard/settings/notifications` preferences page — toggle matrix per notification type with mandatory lock indicators
+- **Frontend**: "Notifications" button on Settings page header
+- **EF Core**: `NotificationPreferenceConfiguration` with unique index on (TenantId, UserId, NotificationType)
+- **Types**: Updated `NotificationDto` and `NotificationReceivedPayload` with severity, actionUrl, actionLabel fields; added `NotificationPreferenceDto`, `UpdateNotificationPreferencesRequest`
+- i18n: Added `notificationPreferences` key in English and Filipino
+
 ## [Data Migration Tool] — 2026-04-10
 ### Added
 - **Backend**: `IDataMigrationService` interface + `DataMigrationService` implementation (CsvHelper + ClosedXML)

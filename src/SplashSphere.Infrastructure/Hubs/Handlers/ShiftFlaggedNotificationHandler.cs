@@ -21,14 +21,16 @@ public sealed class ShiftFlaggedNotificationHandler(
     {
         var e = notification.Event;
 
-        await notificationService.CreateAsync(
-            e.TenantId,
-            NotificationType.ShiftFlagged,
-            NotificationCategory.Finance,
-            "Shift Flagged",
-            $"Shift flagged for investigation — variance ₱{e.Variance:N2}. Notes: {e.Notes}",
-            e.ShiftId,
-            "Shift",
-            cancellationToken);
+        await notificationService.SendAsync(new SendNotificationRequest
+        {
+            TenantId = e.TenantId,
+            Type = NotificationType.ShiftFlagged,
+            Title = "Shift Flagged",
+            Message = $"Shift flagged for investigation — variance ₱{e.Variance:N2}. Notes: {e.Notes}",
+            ReferenceId = e.ShiftId,
+            ReferenceType = "Shift",
+            ActionUrl = $"/dashboard/shifts/{e.ShiftId}",
+            ActionLabel = "Review Shift",
+        }, cancellationToken);
     }
 }

@@ -93,7 +93,8 @@
     "myAgreement": "My Agreement",
     "myRoyalties": "My Royalties",
     "benchmarks": "Benchmarks",
-    "importData": "Import Data"
+    "importData": "Import Data",
+    "notificationPreferences": "Notification Preferences"
   },
   "status": {
     "pending": "Pending",

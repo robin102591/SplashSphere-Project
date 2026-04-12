@@ -3,7 +3,8 @@
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, Check, CheckCheck, Receipt, AlertTriangle, Package, Users } from 'lucide-react'
+import { Bell, Check, CheckCheck, Receipt, AlertTriangle, Package, Users, CreditCard, Megaphone } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -14,16 +15,27 @@ import {
   notificationKeys,
 } from '@/hooks/use-notifications'
 import { useSignalREvent } from '@/lib/signalr-context'
-import type { NotificationDto } from '@splashsphere/types'
+import type { NotificationDto, NotificationReceivedPayload } from '@splashsphere/types'
 
 const categoryIcons: Record<number, typeof Bell> = {
   1: Receipt,        // Operations
   2: Package,        // Inventory
   3: AlertTriangle,  // Finance
   4: Users,          // Queue
+  5: CreditCard,     // Billing
+  6: Users,          // Customer
+  7: Megaphone,      // Platform
+}
+
+// Severity: 0=Info, 1=Warning, 2=Critical
+const SEVERITY_COLORS: Record<number, string> = {
+  0: 'bg-blue-500',
+  1: 'bg-amber-500',
+  2: 'bg-red-500',
 }
 
 function getRoute(n: NotificationDto): string | null {
+  if (n.actionUrl) return n.actionUrl
   if (!n.referenceId || !n.referenceType) return null
   switch (n.referenceType) {
     case 'Transaction': return `/dashboard/transactions/${n.referenceId}`
@@ -33,6 +45,21 @@ function getRoute(n: NotificationDto): string | null {
     case 'PayrollPeriod':  return `/dashboard/payroll/${n.referenceId}`
     default:               return null
   }
+}
+
+function showNotificationToast(payload: NotificationReceivedPayload, router: ReturnType<typeof useRouter>) {
+  const severity = payload.severity ?? 0
+  const duration = severity === 2 ? Infinity : severity === 1 ? 10000 : 5000
+
+  const toastFn = severity === 2 ? toast.error : severity === 1 ? toast.warning : toast.info
+
+  toastFn(payload.title, {
+    description: payload.message,
+    duration,
+    action: payload.actionUrl
+      ? { label: payload.actionLabel ?? 'View', onClick: () => router.push(payload.actionUrl!) }
+      : undefined,
+  })
 }
 
 function timeAgo(iso: string): string {
@@ -57,9 +84,10 @@ export function NotificationDropdown() {
   const count = unread?.count ?? 0
   const items = notifications?.items ?? []
 
-  // Listen for real-time new notifications
-  useSignalREvent('NotificationReceived', () => {
+  // Listen for real-time new notifications — invalidate queries and show toast
+  useSignalREvent('NotificationReceived', (payload: NotificationReceivedPayload) => {
     qc.invalidateQueries({ queryKey: notificationKeys.all })
+    showNotificationToast(payload, router)
   })
 
   const handleClick = useCallback(
@@ -119,8 +147,11 @@ export function NotificationDropdown() {
                     !n.isRead ? 'bg-accent/20' : ''
                   }`}
                 >
-                  <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                  <div className="relative mt-0.5 rounded-md bg-muted p-1.5">
                     <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {(n.severity ?? 0) > 0 && (
+                      <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ${SEVERITY_COLORS[n.severity ?? 0]}`} />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

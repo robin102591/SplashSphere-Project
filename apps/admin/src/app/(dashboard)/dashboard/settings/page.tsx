@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload } from 'lucide-react'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell } from 'lucide-react'
 import Link from 'next/link'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -950,11 +950,18 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
         </div>
-        <Link href="/dashboard/settings/import">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Import Data
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard/settings/notifications">
+            <Button variant="outline">
+              <Bell className="mr-2 h-4 w-4" /> Notifications
+            </Button>
+          </Link>
+          <Link href="/dashboard/settings/import">
+            <Button variant="outline">
+              <Upload className="mr-2 h-4 w-4" /> Import Data
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs defaultValue="vehicle-types">

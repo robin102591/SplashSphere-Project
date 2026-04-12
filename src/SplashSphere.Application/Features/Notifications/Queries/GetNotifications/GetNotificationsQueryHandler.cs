@@ -17,6 +17,9 @@ public sealed class GetNotificationsQueryHandler(IApplicationDbContext db)
         if (request.UnreadOnly)
             query = query.Where(n => !n.IsRead);
 
+        if (request.Category.HasValue)
+            query = query.Where(n => n.Category == request.Category.Value);
+
         var total = await query.CountAsync(cancellationToken);
 
         var items = await query
@@ -27,10 +30,13 @@ public sealed class GetNotificationsQueryHandler(IApplicationDbContext db)
                 n.Id,
                 (int)n.Type,
                 (int)n.Category,
+                (int)n.Severity,
                 n.Title,
                 n.Message,
                 n.ReferenceId,
                 n.ReferenceType,
+                n.ActionUrl,
+                n.ActionLabel,
                 n.IsRead,
                 n.CreatedAt))
             .ToListAsync(cancellationToken);

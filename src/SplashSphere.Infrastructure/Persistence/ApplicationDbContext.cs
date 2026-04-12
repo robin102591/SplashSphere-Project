@@ -80,6 +80,7 @@ public sealed class ApplicationDbContext(
 
     // ── Notifications ───────────────────────────────────────────────────────
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
     // ── Government contribution brackets ──────────────────────────────────
     public DbSet<GovernmentContributionBracket> GovernmentContributionBrackets => Set<GovernmentContributionBracket>();
@@ -246,6 +247,9 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<Notification>()
             .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<NotificationPreference>()
+            .HasQueryFilter(np => np.TenantId == tenantContext.TenantId);
 
         modelBuilder.Entity<AuditLog>()
             .HasQueryFilter(a => a.TenantId == tenantContext.TenantId);

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
@@ -44,7 +45,50 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.ReferenceType)
             .HasMaxLength(50);
 
+        builder.Property(n => n.Severity)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasDefaultValue(NotificationSeverity.Info);
+
+        builder.Property(n => n.RecipientUserId)
+            .HasMaxLength(128);
+
+        builder.Property(n => n.RecipientPhone)
+            .HasMaxLength(20);
+
+        builder.Property(n => n.RecipientEmail)
+            .HasMaxLength(255);
+
+        builder.Property(n => n.ActionUrl)
+            .HasMaxLength(500);
+
+        builder.Property(n => n.ActionLabel)
+            .HasMaxLength(200);
+
+        builder.Property(n => n.Metadata)
+            .HasMaxLength(4000);
+
         builder.Property(n => n.IsRead)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.InAppDelivered)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.SmsDelivered)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.EmailDelivered)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.SmsSkipped)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.EmailSkipped)
             .IsRequired()
             .HasDefaultValue(false);
 
@@ -65,5 +109,8 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         // Paginated list ordered by newest first
         builder.HasIndex(n => new { n.TenantId, n.CreatedAt })
             .IsDescending(false, true);
+
+        // User-targeted notification queries
+        builder.HasIndex(n => new { n.TenantId, n.RecipientUserId });
     }
 }

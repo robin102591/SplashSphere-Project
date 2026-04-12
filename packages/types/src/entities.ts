@@ -1147,16 +1147,35 @@ export interface NotificationDto {
   id: string;
   type: number;
   category: number;
+  severity: number;
   title: string;
   message: string;
   referenceId: string | null;
   referenceType: string | null;
+  actionUrl: string | null;
+  actionLabel: string | null;
   isRead: boolean;
   createdAt: string;
 }
 
 export interface UnreadCountDto {
   count: number;
+}
+
+export interface NotificationPreferenceDto {
+  notificationType: number;
+  typeName: string;
+  category: number;
+  smsAvailable: boolean;
+  smsMandatory: boolean;
+  emailAvailable: boolean;
+  emailMandatory: boolean;
+  smsEnabled: boolean;
+  emailEnabled: boolean;
+}
+
+export interface UpdateNotificationPreferencesRequest {
+  preferences: { notificationType: number; smsEnabled: boolean; emailEnabled: boolean }[];
 }
 
 export interface LowStockItem {

@@ -1,8 +1,11 @@
 using MediatR;
 using SplashSphere.API.Extensions;
+using SplashSphere.Application.Features.Notifications;
 using SplashSphere.Application.Features.Notifications.Commands.MarkAllNotificationsRead;
 using SplashSphere.Application.Features.Notifications.Commands.MarkNotificationRead;
+using SplashSphere.Application.Features.Notifications.Commands.UpdateNotificationPreferences;
 using SplashSphere.Application.Features.Notifications.Queries.GetNotifications;
+using SplashSphere.Application.Features.Notifications.Queries.GetNotificationPreferences;
 using SplashSphere.Application.Features.Notifications.Queries.GetUnreadCount;
 
 namespace SplashSphere.API.Endpoints;
@@ -16,10 +19,12 @@ public static class NotificationEndpoints
             .WithTags("Notifications")
             .RequireAuthorization();
 
-        group.MapGet("/",             GetNotifications)    .WithName("GetNotifications");
-        group.MapGet("/unread-count", GetUnreadCount)      .WithName("GetUnreadCount");
-        group.MapPatch("/{id}/read",  MarkNotificationRead).WithName("MarkNotificationRead");
-        group.MapPost("/mark-all-read", MarkAllRead)       .WithName("MarkAllNotificationsRead");
+        group.MapGet("/",                GetNotifications)      .WithName("GetNotifications");
+        group.MapGet("/unread-count",    GetUnreadCount)        .WithName("GetUnreadCount");
+        group.MapPatch("/{id}/read",     MarkNotificationRead)  .WithName("MarkNotificationRead");
+        group.MapPost("/mark-all-read",  MarkAllRead)           .WithName("MarkAllNotificationsRead");
+        group.MapGet("/preferences",     GetPreferences)        .WithName("GetNotificationPreferences");
+        group.MapPut("/preferences",     UpdatePreferences)     .WithName("UpdateNotificationPreferences");
 
         return app;
     }
@@ -49,6 +54,21 @@ public static class NotificationEndpoints
         CancellationToken ct)
     {
         var result = await sender.Send(new MarkAllNotificationsReadCommand(), ct);
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    private static async Task<IResult> GetPreferences(
+        ISender sender,
+        CancellationToken ct) =>
+        TypedResults.Ok(await sender.Send(new GetNotificationPreferencesQuery(), ct));
+
+    private static async Task<IResult> UpdatePreferences(
+        UpdateNotificationPreferencesRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdateNotificationPreferencesCommand(request.Preferences), ct);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 }

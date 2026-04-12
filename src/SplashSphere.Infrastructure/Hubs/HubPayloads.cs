@@ -78,10 +78,13 @@ public sealed record NotificationReceivedPayload(
     string Id,
     int Type,
     int Category,
+    int Severity,
     string Title,
     string Message,
     string? ReferenceId,
     string? ReferenceType,
+    string? ActionUrl,
+    string? ActionLabel,
     DateTime CreatedAt);
 
 /// <summary>
