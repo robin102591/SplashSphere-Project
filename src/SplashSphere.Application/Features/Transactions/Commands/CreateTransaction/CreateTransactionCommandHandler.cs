@@ -193,45 +193,56 @@ public sealed class CreateTransactionCommandHandler(
         var manilaDate = DateOnly.FromDateTime(manilaNow);
         var manilaTime = TimeOnly.FromDateTime(manilaNow);
 
-        // Load service pricing matrix rows for this vehicle type + size
-        var servicePricingRows = await context.ServicePricings
-            .AsNoTracking()
-            .Where(sp => serviceIds.Contains(sp.ServiceId)
-                      && sp.VehicleTypeId == vehicleTypeId
-                      && sp.SizeId == sizeId)
-            .ToListAsync(cancellationToken);
+        // Load service pricing + commission matrix rows (skip DB round-trip when empty)
+        Dictionary<string, ServicePricing> servicePricingMap = [];
+        Dictionary<string, ServiceCommission> serviceCommissionMap = [];
 
-        var servicePricingMap = servicePricingRows.ToDictionary(sp => sp.ServiceId);
+        if (serviceIds.Count > 0)
+        {
+            var servicePricingRows = await context.ServicePricings
+                .AsNoTracking()
+                .Where(sp => serviceIds.Contains(sp.ServiceId)
+                          && sp.VehicleTypeId == vehicleTypeId
+                          && sp.SizeId == sizeId)
+                .ToListAsync(cancellationToken);
 
-        // Load service commission matrix rows for this vehicle type + size
-        var serviceCommissionRows = await context.ServiceCommissions
-            .AsNoTracking()
-            .Where(sc => serviceIds.Contains(sc.ServiceId)
-                      && sc.VehicleTypeId == vehicleTypeId
-                      && sc.SizeId == sizeId)
-            .ToListAsync(cancellationToken);
+            servicePricingMap = servicePricingRows.ToDictionary(sp => sp.ServiceId);
 
-        var serviceCommissionMap = serviceCommissionRows.ToDictionary(sc => sc.ServiceId);
+            var serviceCommissionRows = await context.ServiceCommissions
+                .AsNoTracking()
+                .Where(sc => serviceIds.Contains(sc.ServiceId)
+                          && sc.VehicleTypeId == vehicleTypeId
+                          && sc.SizeId == sizeId)
+                .ToListAsync(cancellationToken);
+
+            serviceCommissionMap = serviceCommissionRows.ToDictionary(sc => sc.ServiceId);
+        }
 
         // ── Step 4: Package pricing + commission ──────────────────────────────
 
-        var packagePricingRows = await context.PackagePricings
-            .AsNoTracking()
-            .Where(pp => packageIds.Contains(pp.PackageId)
-                      && pp.VehicleTypeId == vehicleTypeId
-                      && pp.SizeId == sizeId)
-            .ToListAsync(cancellationToken);
+        Dictionary<string, PackagePricing> packagePricingMap = [];
+        Dictionary<string, PackageCommission> packageCommissionMap = [];
 
-        var packagePricingMap = packagePricingRows.ToDictionary(pp => pp.PackageId);
+        if (packageIds.Count > 0)
+        {
+            var packagePricingRows = await context.PackagePricings
+                .AsNoTracking()
+                .Where(pp => packageIds.Contains(pp.PackageId)
+                          && pp.VehicleTypeId == vehicleTypeId
+                          && pp.SizeId == sizeId)
+                .ToListAsync(cancellationToken);
 
-        var packageCommissionRows = await context.PackageCommissions
-            .AsNoTracking()
-            .Where(pc => packageIds.Contains(pc.PackageId)
-                      && pc.VehicleTypeId == vehicleTypeId
-                      && pc.SizeId == sizeId)
-            .ToListAsync(cancellationToken);
+            packagePricingMap = packagePricingRows.ToDictionary(pp => pp.PackageId);
 
-        var packageCommissionMap = packageCommissionRows.ToDictionary(pc => pc.PackageId);
+            var packageCommissionRows = await context.PackageCommissions
+                .AsNoTracking()
+                .Where(pc => packageIds.Contains(pc.PackageId)
+                          && pc.VehicleTypeId == vehicleTypeId
+                          && pc.SizeId == sizeId)
+                .ToListAsync(cancellationToken);
+
+            packageCommissionMap = packageCommissionRows.ToDictionary(pc => pc.PackageId);
+        }
 
         // Load active pricing modifiers for this branch (branch-specific OR tenant-wide)
         var activeModifiers = await context.PricingModifiers
