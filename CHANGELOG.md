@@ -1,5 +1,21 @@
 ## Changelog
 
+## [Data Migration Tool] — 2026-04-10
+### Added
+- **Backend**: `IDataMigrationService` interface + `DataMigrationService` implementation (CsvHelper + ClosedXML)
+  - CSV/Excel file parsing with automatic column detection via fuzzy alias matching
+  - Per-type validation: Customers (name, PH phone, email uniqueness), Vehicles (PH plate format, fuzzy make/model matching), Employees (type, daily rate), Services (name, category, base price)
+  - Transactional bulk import with auto-correction (phone normalization, plate formatting)
+  - CSV template generation with example rows per import type
+- **Backend**: Import API endpoints under `/api/v1/import` — `GET /templates/{type}`, `POST /detect`, `POST /validate`, `POST /execute`
+- **Frontend**: Import wizard page at `/dashboard/settings/import` with 4-step flow: Upload → Column Mapping → Validation → Import Summary
+- **Frontend**: `use-import.ts` hooks — `useDownloadTemplate`, `useDetectColumns`, `useValidateImport`, `useExecuteImport`
+- **Frontend**: "Import Data" button on Settings page linking to import wizard
+- **API client**: `apiClient.upload()` method for multipart FormData uploads
+- **NuGet**: Added CsvHelper 33.x, ClosedXML 0.105.x
+- **Types**: `ImportType` enum (Customers, Vehicles, Employees, Services), `ImportValidationResult`, `ImportResult`, `ColumnMapping` records
+- i18n: Added `importData` key in English and Filipino
+
 ## [Onboarding Franchise Support] — 2026-04-08
 ### Added
 - Backend: `CreateOnboardingCommand` now accepts `BusinessType` parameter (0=Independent, 1=CorporateChain, 2=Franchisor) with default 0 for backward compatibility

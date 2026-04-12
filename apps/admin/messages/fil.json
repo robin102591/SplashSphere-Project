@@ -92,7 +92,8 @@
     "myFranchise": "Aking Franchise",
     "myAgreement": "Aking Kasunduan",
     "myRoyalties": "Aking Mga Royalty",
-    "benchmarks": "Mga Benchmark"
+    "benchmarks": "Mga Benchmark",
+    "importData": "Mag-import ng Data"
   },
   "status": {
     "pending": "Naghihintay",

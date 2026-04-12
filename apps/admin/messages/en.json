@@ -92,7 +92,8 @@
     "myFranchise": "My Franchise",
     "myAgreement": "My Agreement",
     "myRoyalties": "My Royalties",
-    "benchmarks": "Benchmarks"
+    "benchmarks": "Benchmarks",
+    "importData": "Import Data"
   },
   "status": {
     "pending": "Pending",

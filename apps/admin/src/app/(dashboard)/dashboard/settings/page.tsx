@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload } from 'lucide-react'
+import Link from 'next/link'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -944,9 +945,16 @@ function AccountTab() {
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
+        </div>
+        <Link href="/dashboard/settings/import">
+          <Button variant="outline">
+            <Upload className="mr-2 h-4 w-4" /> Import Data
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="vehicle-types">

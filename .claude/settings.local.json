@@ -147,7 +147,12 @@
       "Bash(cmd.exe /c \"pnpm --filter admin exec tsc --noEmit\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('franchise',{}\\), indent=2\\)\\)\")",
       "Bash(./node_modules/.bin/tsc --noEmit)",
-      "Bash(npx shadcn@latest:*)"
+      "Bash(npx shadcn@latest:*)",
+      "Bash(/c/Users/rnobl/AppData/Local/pnpm/pnpm.cmd --filter admin exec tsc --noEmit)",
+      "Bash(where.exe npm:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(npx --yes tsc --noEmit)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

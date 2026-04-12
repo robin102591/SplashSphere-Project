@@ -2,16 +2,17 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 
 async function apiFetch<T>(
   path: string,
-  options: RequestInit & { token?: string } = {}
+  options: RequestInit & { token?: string; skipContentType?: boolean } = {}
 ): Promise<T> {
-  const { token, ...init } = options
+  const { token, skipContentType, ...init } = options
+  const headers: Record<string, string> = {
+    ...(skipContentType ? {} : { 'Content-Type': 'application/json' }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(init.headers as Record<string, string>),
+  }
   const res = await fetch(`${API_BASE}/api/v1${path}`, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
+    headers,
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ title: res.statusText, status: res.status }))
@@ -30,4 +31,6 @@ export const apiClient = {
   patch: <T>(path: string, body: unknown, token?: string) =>
     apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body), token }),
   delete: <T>(path: string, token?: string) => apiFetch<T>(path, { method: 'DELETE', token }),
+  upload: <T>(path: string, formData: FormData, token?: string) =>
+    apiFetch<T>(path, { method: 'POST', body: formData, token, skipContentType: true }),
 }

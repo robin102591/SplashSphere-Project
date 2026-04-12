@@ -59,6 +59,9 @@ public static class DependencyInjection
         // ── Plan enforcement ────────────────────────────────────────────────
         services.AddScoped<IPlanEnforcementService, PlanEnforcementService>();
 
+        // ── Data migration (CSV/Excel import) ──────────────────────────────
+        services.AddScoped<IDataMigrationService, DataMigrationService>();
+
         // ── Payment gateway ──────────────────────────────────────────────────
         // Uses PayMongo when secret key is configured, otherwise falls back to mock.
         if (!string.IsNullOrEmpty(configuration["PayMongo:SecretKey"]))

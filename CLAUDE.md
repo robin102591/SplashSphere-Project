@@ -599,6 +599,15 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/franchise/invitations/{token}/validate` | **Public** — validate invitation token |
 | `POST` | `/franchise/invitations/{token}/accept` | Accept invitation and create franchisee |
 
+### Data Import
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/import/templates/{type}` | Download CSV template for import type (Customers/Vehicles/Employees/Services) |
+| `POST` | `/import/detect` | Upload file + detect columns, return preview rows (multipart) |
+| `POST` | `/import/validate` | Validate file with column mappings (multipart) |
+| `POST` | `/import/execute` | Execute import after validation (multipart, transactional) |
+
 ### Dashboard & Reports — Summary, revenue, commissions, service popularity
 
 ### Analytics
@@ -651,6 +660,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/dashboard/franchise/my-royalties` | Franchisee: paginated royalty statements |
 | `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
 | `/franchise/accept` | **Public** — franchise invitation acceptance (token validation + onboarding form) |
+| `/dashboard/settings/import` | Data Import Wizard — 4-step CSV/Excel import (upload, column mapping, validation, execute) |
 
 ### POS App
 
@@ -800,4 +810,7 @@ This system complements CLAUDE.md (which remains the authoritative project spec)
    the Frontend Page Inventory section.
 4. **Business Rules:** When implementing new business logic, add
    the rule to the Key Business Rules section.
+5. **Commit Message:** At the end of every session with code changes,
+   suggest a commit message summarizing all work done. Use a summary
+   first line, then bullet points for each change in imperative mood.
 
