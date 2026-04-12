@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.Domain.Calculations;
 using SplashSphere.Domain.Entities;
 using SplashSphere.Domain.Enums;
 using SplashSphere.SharedKernel.Results;
@@ -97,11 +98,11 @@ public sealed class CloseShiftCommandHandler(
             .Where(m => m.Type == CashMovementType.CashOut)
             .Sum(m => m.Amount);
 
-        shift.ExpectedCashInDrawer =
-            shift.OpeningCashFund +
-            shift.TotalCashPayments +
-            shift.TotalCashIn -
-            shift.TotalCashOut;
+        shift.ExpectedCashInDrawer = ShiftVarianceCalculator.CalculateExpectedCash(
+            shift.OpeningCashFund,
+            shift.TotalCashPayments,
+            shift.TotalCashIn,
+            shift.TotalCashOut);
 
         // ── Step 4: Denomination count ───────────────────────────────────────────
         foreach (var entry in request.Denominations.Where(d => d.Count > 0))
@@ -116,7 +117,7 @@ public sealed class CloseShiftCommandHandler(
         shift.ActualCashInDrawer = request.Denominations
             .Sum(d => d.DenominationValue * d.Count);
 
-        shift.Variance = shift.ActualCashInDrawer - shift.ExpectedCashInDrawer;
+        shift.Variance = ShiftVarianceCalculator.CalculateVariance(shift.ActualCashInDrawer, shift.ExpectedCashInDrawer);
 
         // ── Step 5: Auto-review based on tenant thresholds ──────────────────────
         var settings = await db.ShiftSettings

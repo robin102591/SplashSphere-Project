@@ -135,3 +135,7 @@ app.MapFranchiseEndpoints();
 app.MapImportEndpoints();
 
 app.Run();
+
+// Required for WebApplicationFactory<Program> in integration tests.
+// Top-level statements generate an implicit Program class — this makes it accessible.
+public partial class Program;

@@ -1,5 +1,33 @@
 ## Changelog
 
+## [Testing Infrastructure] — 2026-04-12
+### Added — Domain Calculator Extraction
+- **Domain**: `CommissionCalculator` — extracted pure calculation logic from `CreateTransactionCommandHandler`: `CalculateTotal` (Percentage/FixedAmount/Hybrid), `SplitAmongEmployees`, `CalculatePackageCommission`
+- **Domain**: `ShiftVarianceCalculator` — extracted from `CloseShiftCommandHandler`: `CalculateExpectedCash`, `CalculateActualCash`, `CalculateVariance`
+- **Domain**: `PayrollCalculator` — `CalculateBaseSalary`, `CalculateNetPay`, `CalculateCashAdvanceDeduction`, `CalculateTipShare`
+- Updated `CreateTransactionCommandHandler` and `CloseShiftCommandHandler` to delegate to domain calculators
+
+### Added — Backend Test Projects (xUnit)
+- **`tests/SplashSphere.Domain.Tests/`** — 90 unit tests covering commission calculation, shift variance, payroll, transaction totals, PayrollEntry entity
+- **`tests/SplashSphere.Application.Tests/`** — project scaffolding with NSubstitute for handler-level tests
+- **`tests/SplashSphere.API.Tests/`** — integration test infrastructure with Testcontainers PostgreSQL
+  - `TestWebApplicationFactory` — replaces DB with Testcontainers, swaps auth, removes Hangfire
+  - `TestAuthHandler` — per-request tenant/user injection via headers
+  - `TestDataBuilder` — seeds 2 isolated tenants (SparkleWash Starter + AquaShine Growth)
+  - `IntegrationTestCollection` — shared fixture for container reuse
+  - `TenantIsolationTests` — 5 tests verifying cross-tenant data isolation
+  - `PlanEnforcementTests` — 10 tests verifying Starter plan blocked from Growth/Enterprise features
+
+### Added — Frontend Testing (Vitest + Testing Library)
+- `vitest.config.ts` and `vitest.setup.ts` configured in `apps/admin/`
+- `format.test.ts` — 10 tests for `formatPeso` and `formatPesoCompact` utilities
+- `money-display.test.tsx` — 5 tests for `MoneyDisplay` component rendering
+- All 15 frontend tests passing
+
+### Packages
+- **NuGet**: xUnit, FluentAssertions 8.x, NSubstitute 5.x, Bogus, Testcontainers.PostgreSql 4.x, Microsoft.AspNetCore.Mvc.Testing 9.x
+- **npm**: Vitest 4.x, @testing-library/react 16.x
+
 ## [Unified Notification System] — 2026-04-12
 ### Added
 - **Domain**: Expanded `NotificationType` enum (25 types across 7 categories), added `NotificationSeverity` enum, `NotificationCategory` (7 categories)

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.Domain.Calculations;
 using SplashSphere.Domain.Entities;
 using SplashSphere.Domain.Enums;
 using SplashSphere.Domain.Events;
@@ -318,7 +319,7 @@ public sealed class CreateTransactionCommandHandler(
                 serviceCommissionMap);
 
             var commissionPerEmployee = svcRequest.EmployeeIds.Count > 0
-                ? Math.Round(totalCommission / svcRequest.EmployeeIds.Count, 2, MidpointRounding.AwayFromZero)
+                ? CommissionCalculator.SplitAmongEmployees(totalCommission, svcRequest.EmployeeIds.Count)
                 : 0m;
 
             var txService = new TransactionService(
@@ -361,11 +362,11 @@ public sealed class CreateTransactionCommandHandler(
 
             // Commission: always percentage
             var pkgTotalCommission = packageCommissionMap.TryGetValue(pkgRequest.PackageId, out var pkgCommRow)
-                ? Math.Round(finalPackagePrice * pkgCommRow.PercentageRate / 100, 2, MidpointRounding.AwayFromZero)
+                ? CommissionCalculator.CalculatePackageCommission(finalPackagePrice, pkgCommRow.PercentageRate)
                 : 0m;
 
             var commissionPerEmployee = pkgRequest.EmployeeIds.Count > 0
-                ? Math.Round(pkgTotalCommission / pkgRequest.EmployeeIds.Count, 2, MidpointRounding.AwayFromZero)
+                ? CommissionCalculator.SplitAmongEmployees(pkgTotalCommission, pkgRequest.EmployeeIds.Count)
                 : 0m;
 
             var txPackage = new TransactionPackage(
@@ -573,9 +574,9 @@ public sealed class CreateTransactionCommandHandler(
     }
 
     /// <summary>
-    /// Calculates the total commission for a service line item using the
-    /// Percentage / FixedAmount / Hybrid formula.
+    /// Calculates the total commission for a service line item.
     /// Returns ₱0 when no commission matrix row exists for the combination.
+    /// Delegates to <see cref="CommissionCalculator"/> for the actual formula.
     /// </summary>
     private static decimal CalculateServiceCommission(
         decimal price,
@@ -585,20 +586,10 @@ public sealed class CreateTransactionCommandHandler(
         if (!commissionMap.TryGetValue(serviceId, out var commission))
             return 0m;
 
-        return commission.Type switch
-        {
-            CommissionType.Percentage =>
-                Math.Round(price * commission.PercentageRate!.Value / 100, 2, MidpointRounding.AwayFromZero),
-
-            CommissionType.FixedAmount =>
-                commission.FixedAmount!.Value,
-
-            CommissionType.Hybrid =>
-                Math.Round(
-                    commission.FixedAmount!.Value + (price * commission.PercentageRate!.Value / 100),
-                    2, MidpointRounding.AwayFromZero),
-
-            _ => 0m,
-        };
+        return CommissionCalculator.CalculateTotal(
+            price,
+            commission.Type,
+            commission.PercentageRate,
+            commission.FixedAmount);
     }
 }
