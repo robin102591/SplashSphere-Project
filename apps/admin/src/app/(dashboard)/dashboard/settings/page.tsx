@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -29,6 +30,7 @@ import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
 import { AdjustmentType } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -803,6 +805,140 @@ function PayrollTemplatesTab() {
   )
 }
 
+// ── Account tab — Set / Change password for POS login ────────────────────────
+
+function AccountTab() {
+  const { user } = useUser()
+  const hasPassword = user?.passwordEnabled ?? false
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNew, setShowNew] = useState(false)
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const onSubmit = useCallback(async () => {
+    setError(null)
+    setSuccess(false)
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+    if (!user) return
+
+    setIsPending(true)
+    try {
+      if (hasPassword) {
+        await user.updatePassword({ currentPassword, newPassword })
+      } else {
+        await user.updatePassword({ newPassword })
+      }
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setSuccess(true)
+      toast.success(hasPassword ? 'Password updated' : 'Password set — you can now log into POS')
+    } catch (err: unknown) {
+      const clerkErr = err as { errors?: { longMessage?: string; message?: string }[] }
+      setError(clerkErr.errors?.[0]?.longMessage ?? clerkErr.errors?.[0]?.message ?? 'Failed to set password')
+    } finally {
+      setIsPending(false)
+    }
+  }, [user, hasPassword, currentPassword, newPassword, confirmPassword])
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5" />
+            {hasPassword ? 'Change Password' : 'Set Password'}
+          </CardTitle>
+          <CardDescription>
+            {hasPassword
+              ? 'Update your password. This password is used for email/password sign-in and POS login.'
+              : 'You signed up with a social account. Set a password so you can also log into the POS terminal with email and password.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-md space-y-4">
+            {hasPassword && (
+              <div className="space-y-1">
+                <Label htmlFor="currentPassword">Current password</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrent ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                  >
+                    {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="space-y-1">
+              <Label htmlFor="newPassword">New password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNew ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowNew(!showNew)}
+                >
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword">Confirm new password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            {success && (
+              <p className="text-sm text-green-600 flex items-center gap-1">
+                <Check className="h-4 w-4" />
+                {hasPassword ? 'Password updated successfully' : 'Password set — you can now log into POS with email and password'}
+              </p>
+            )}
+            <Button onClick={onSubmit} disabled={isPending || !newPassword || !confirmPassword}>
+              {isPending ? 'Saving…' : hasPassword ? 'Update password' : 'Set password'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -821,6 +957,7 @@ export default function SettingsPage() {
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
           <TabsTrigger value="payroll">Payroll</TabsTrigger>
+          <TabsTrigger value="account">Account</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vehicle-types" className="mt-6"><VehicleTypesTab /></TabsContent>
@@ -833,6 +970,7 @@ export default function SettingsPage() {
           <div className="my-6 border-t" />
           <PayrollTemplatesTab />
         </TabsContent>
+        <TabsContent value="account" className="mt-6"><AccountTab /></TabsContent>
       </Tabs>
     </div>
   )
