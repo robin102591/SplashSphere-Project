@@ -308,8 +308,10 @@ export default function QueuePage() {
 
   // Real-time queue updates via shared SignalR context
   useSignalREvent<QueueUpdatedPayload>('QueueUpdated', () => {
-    void queryClient.invalidateQueries({ queryKey: ['queue'] })
-    void queryClient.invalidateQueries({ queryKey: ['queue-stats'] })
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['queue'] }),
+      queryClient.invalidateQueries({ queryKey: ['queue-stats'] }),
+    ])
   })
 
   // ── Actions ─────────────────────────────────────────────────────────────────
