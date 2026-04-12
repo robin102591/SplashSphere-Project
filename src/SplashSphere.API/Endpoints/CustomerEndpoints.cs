@@ -17,11 +17,11 @@ public static class CustomerEndpoints
             .WithTags("Customers")
             .RequireAuthorization();
 
-        group.MapGet("/",              GetCustomers)         .WithName("GetCustomers");
-        group.MapGet("/{id}",          GetCustomerById)      .WithName("GetCustomerById");
-        group.MapPost("/",             CreateCustomer)       .WithName("CreateCustomer");
-        group.MapPut("/{id}",          UpdateCustomer)       .WithName("UpdateCustomer");
-        group.MapPatch("/{id}/status", ToggleCustomerStatus) .WithName("ToggleCustomerStatus");
+        group.MapGet("/",              GetCustomers)         .WithName("GetCustomers").WithSummary("List customers");
+        group.MapGet("/{id}",          GetCustomerById)      .WithName("GetCustomerById").WithSummary("Get customer with vehicles and history");
+        group.MapPost("/",             CreateCustomer)       .WithName("CreateCustomer").WithSummary("Create customer");
+        group.MapPut("/{id}",          UpdateCustomer)       .WithName("UpdateCustomer").WithSummary("Update customer");
+        group.MapPatch("/{id}/status", ToggleCustomerStatus) .WithName("ToggleCustomerStatus").WithSummary("Toggle customer active status");
 
         return app;
     }

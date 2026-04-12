@@ -32,27 +32,27 @@ public static class LoyaltyEndpoints
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.CustomerLoyalty));
 
         // ── Settings & config ───────────────────────────────────────────────
-        group.MapGet("/settings", GetSettings);
-        group.MapPut("/settings", UpsertSettings);
-        group.MapPut("/tiers", UpsertTiers);
+        group.MapGet("/settings", GetSettings).WithSummary("Get loyalty program settings and tier configurations");
+        group.MapPut("/settings", UpsertSettings).WithSummary("Upsert loyalty program settings");
+        group.MapPut("/tiers", UpsertTiers).WithSummary("Upsert loyalty tier configurations");
 
         // ── Rewards catalogue ───────────────────────────────────────────────
-        group.MapGet("/rewards", GetRewards);
-        group.MapPost("/rewards", CreateReward);
-        group.MapPut("/rewards/{id}", UpdateReward);
-        group.MapPatch("/rewards/{id}/status", ToggleRewardStatus);
+        group.MapGet("/rewards", GetRewards).WithSummary("List loyalty rewards");
+        group.MapPost("/rewards", CreateReward).WithSummary("Create a loyalty reward");
+        group.MapPut("/rewards/{id}", UpdateReward).WithSummary("Update a loyalty reward");
+        group.MapPatch("/rewards/{id}/status", ToggleRewardStatus).WithSummary("Toggle reward active or inactive");
 
         // ── Dashboard ───────────────────────────────────────────────────────
-        group.MapGet("/dashboard", GetDashboard);
+        group.MapGet("/dashboard", GetDashboard).WithSummary("Get loyalty dashboard with members, points, and tier stats");
 
         // ── Members ─────────────────────────────────────────────────────────
-        group.MapPost("/members", Enroll);
-        group.MapGet("/members/by-customer/{customerId}", GetByCustomer);
-        group.MapGet("/members/by-card/{cardNumber}", GetByCardNumber);
-        group.MapGet("/members/{membershipCardId}/points", GetPointHistory);
-        group.MapPost("/members/{membershipCardId}/redeem", Redeem);
-        group.MapPost("/members/{membershipCardId}/adjust", Adjust);
-        group.MapGet("/members/by-customer/{customerId}/summary", GetSummary);
+        group.MapPost("/members", Enroll).WithSummary("Enroll a customer in the loyalty program");
+        group.MapGet("/members/by-customer/{customerId}", GetByCustomer).WithSummary("Get membership card by customer ID");
+        group.MapGet("/members/by-card/{cardNumber}", GetByCardNumber).WithSummary("Get membership card by card number");
+        group.MapGet("/members/{membershipCardId}/points", GetPointHistory).WithSummary("Get point history for a membership card");
+        group.MapPost("/members/{membershipCardId}/redeem", Redeem).WithSummary("Redeem points for a reward");
+        group.MapPost("/members/{membershipCardId}/adjust", Adjust).WithSummary("Manually adjust points on a membership card");
+        group.MapGet("/members/by-customer/{customerId}/summary", GetSummary).WithSummary("Get lightweight loyalty summary for POS");
 
         return app;
     }

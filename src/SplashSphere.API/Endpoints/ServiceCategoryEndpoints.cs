@@ -17,11 +17,11 @@ public static class ServiceCategoryEndpoints
             .WithTags("ServiceCategories")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetServiceCategories)  .WithName("GetServiceCategories");
-        group.MapGet("/{id}", GetServiceCategoryById) .WithName("GetServiceCategoryById");
-        group.MapPost("/",    CreateServiceCategory)  .WithName("CreateServiceCategory");
-        group.MapPut("/{id}", UpdateServiceCategory)  .WithName("UpdateServiceCategory");
-        group.MapPatch("/{id}/status", ToggleServiceCategoryStatus).WithName("ToggleServiceCategoryStatus");
+        group.MapGet("/",     GetServiceCategories)  .WithName("GetServiceCategories").WithSummary("List service categories");
+        group.MapGet("/{id}", GetServiceCategoryById) .WithName("GetServiceCategoryById").WithSummary("Get service category by ID");
+        group.MapPost("/",    CreateServiceCategory)  .WithName("CreateServiceCategory").WithSummary("Create service category");
+        group.MapPut("/{id}", UpdateServiceCategory)  .WithName("UpdateServiceCategory").WithSummary("Update service category");
+        group.MapPatch("/{id}/status", ToggleServiceCategoryStatus).WithName("ToggleServiceCategoryStatus").WithSummary("Toggle service category active status");
 
         return app;
     }

@@ -11,7 +11,7 @@ public static class AuditLogEndpoints
             .RequireAuthorization()
             .WithTags("AuditLogs");
 
-        group.MapGet("/", GetAuditLogs).WithName("GetAuditLogs");
+        group.MapGet("/", GetAuditLogs).WithName("GetAuditLogs").WithSummary("List audit logs");
 
         return app;
     }

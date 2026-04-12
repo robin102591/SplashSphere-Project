@@ -25,6 +25,7 @@ public static class QueueEndpoints
         app.MapGet("/api/v1/queue/display", GetQueueDisplay)
             .WithTags("Queue")
             .WithName("GetQueueDisplay")
+            .WithSummary("Get public queue display data")
             .AllowAnonymous();
 
         // ── All other queue endpoints — require auth ───────────────────────────
@@ -34,16 +35,16 @@ public static class QueueEndpoints
             .RequireAuthorization()
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.QueueManagement));
 
-        group.MapGet("/",              GetQueue)       .WithName("GetQueue");
-        group.MapGet("/next",          GetNextInQueue) .WithName("GetNextInQueue");
-        group.MapGet("/stats",         GetQueueStats)  .WithName("GetQueueStats");
-        group.MapGet("/{id}",          GetQueueEntry)  .WithName("GetQueueEntry");
-        group.MapPost("/",             AddToQueue)     .WithName("AddToQueue");
-        group.MapPatch("/{id}/call",   CallNext)       .WithName("CallNextInQueue");
-        group.MapPatch("/{id}/start",  StartService)   .WithName("StartQueueService");
-        group.MapPatch("/{id}/cancel", Cancel)         .WithName("CancelQueueEntry");
-        group.MapPatch("/{id}/no-show",MarkNoShow)     .WithName("MarkNoShow");
-        group.MapPatch("/{id}/requeue",Requeue)        .WithName("RequeueEntry");
+        group.MapGet("/",              GetQueue)       .WithName("GetQueue").WithSummary("Get current queue");
+        group.MapGet("/next",          GetNextInQueue) .WithName("GetNextInQueue").WithSummary("Get next entry to call");
+        group.MapGet("/stats",         GetQueueStats)  .WithName("GetQueueStats").WithSummary("Get queue statistics");
+        group.MapGet("/{id}",          GetQueueEntry)  .WithName("GetQueueEntry").WithSummary("Get queue entry");
+        group.MapPost("/",             AddToQueue)     .WithName("AddToQueue").WithSummary("Add vehicle to queue");
+        group.MapPatch("/{id}/call",   CallNext)       .WithName("CallNextInQueue").WithSummary("Call next customer");
+        group.MapPatch("/{id}/start",  StartService)   .WithName("StartQueueService").WithSummary("Start service from queue");
+        group.MapPatch("/{id}/cancel", Cancel)         .WithName("CancelQueueEntry").WithSummary("Cancel queue entry");
+        group.MapPatch("/{id}/no-show",MarkNoShow)     .WithName("MarkNoShow").WithSummary("Mark as no-show");
+        group.MapPatch("/{id}/requeue",Requeue)        .WithName("RequeueEntry").WithSummary("Requeue no-show entry");
 
         return app;
     }

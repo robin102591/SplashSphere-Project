@@ -17,11 +17,11 @@ public static class VehicleTypeEndpoints
             .WithTags("VehicleTypes")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetVehicleTypes)  .WithName("GetVehicleTypes");
-        group.MapGet("/{id}", GetVehicleTypeById).WithName("GetVehicleTypeById");
-        group.MapPost("/",    CreateVehicleType) .WithName("CreateVehicleType");
-        group.MapPut("/{id}", UpdateVehicleType) .WithName("UpdateVehicleType");
-        group.MapPatch("/{id}/status", ToggleVehicleTypeStatus).WithName("ToggleVehicleTypeStatus");
+        group.MapGet("/",     GetVehicleTypes)  .WithName("GetVehicleTypes").WithSummary("List vehicle types");
+        group.MapGet("/{id}", GetVehicleTypeById).WithName("GetVehicleTypeById").WithSummary("Get vehicle type by ID");
+        group.MapPost("/",    CreateVehicleType) .WithName("CreateVehicleType").WithSummary("Create vehicle type");
+        group.MapPut("/{id}", UpdateVehicleType) .WithName("UpdateVehicleType").WithSummary("Update vehicle type");
+        group.MapPatch("/{id}/status", ToggleVehicleTypeStatus).WithName("ToggleVehicleTypeStatus").WithSummary("Toggle vehicle type active status");
 
         return app;
     }

@@ -18,11 +18,11 @@ public static class BranchEndpoints
             .WithTags("Branches")
             .RequireAuthorization();
 
-        group.MapGet("/",      GetBranches)   .WithName("GetBranches");
-        group.MapGet("/{id}",  GetBranchById) .WithName("GetBranchById");
-        group.MapPost("/",     CreateBranch)  .WithName("CreateBranch");
-        group.MapPut("/{id}",  UpdateBranch)  .WithName("UpdateBranch");
-        group.MapPatch("/{id}/status", ToggleBranchStatus).WithName("ToggleBranchStatus");
+        group.MapGet("/",      GetBranches)   .WithName("GetBranches").WithSummary("List branches");
+        group.MapGet("/{id}",  GetBranchById) .WithName("GetBranchById").WithSummary("Get branch by ID");
+        group.MapPost("/",     CreateBranch)  .WithName("CreateBranch").WithSummary("Create branch");
+        group.MapPut("/{id}",  UpdateBranch)  .WithName("UpdateBranch").WithSummary("Update branch");
+        group.MapPatch("/{id}/status", ToggleBranchStatus).WithName("ToggleBranchStatus").WithSummary("Toggle branch active status");
 
         return app;
     }

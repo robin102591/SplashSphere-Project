@@ -14,8 +14,8 @@ public static class AttendanceEndpoints
             .WithTags("Attendance")
             .RequireAuthorization();
 
-        group.MapGet("/report", GetReport).WithName("GetAttendanceReport");
-        group.MapGet("/export/csv", ExportCsv).WithName("ExportAttendanceCsv");
+        group.MapGet("/report", GetReport).WithName("GetAttendanceReport").WithSummary("Get attendance report");
+        group.MapGet("/export/csv", ExportCsv).WithName("ExportAttendanceCsv").WithSummary("Export attendance as CSV");
 
         return app;
     }

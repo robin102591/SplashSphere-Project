@@ -17,11 +17,11 @@ public static class SizeEndpoints
             .WithTags("Sizes")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetSizes)  .WithName("GetSizes");
-        group.MapGet("/{id}", GetSizeById).WithName("GetSizeById");
-        group.MapPost("/",    CreateSize) .WithName("CreateSize");
-        group.MapPut("/{id}", UpdateSize) .WithName("UpdateSize");
-        group.MapPatch("/{id}/status", ToggleSizeStatus).WithName("ToggleSizeStatus");
+        group.MapGet("/",     GetSizes)  .WithName("GetSizes").WithSummary("List vehicle sizes");
+        group.MapGet("/{id}", GetSizeById).WithName("GetSizeById").WithSummary("Get vehicle size by ID");
+        group.MapPost("/",    CreateSize) .WithName("CreateSize").WithSummary("Create size");
+        group.MapPut("/{id}", UpdateSize) .WithName("UpdateSize").WithSummary("Update size");
+        group.MapPatch("/{id}/status", ToggleSizeStatus).WithName("ToggleSizeStatus").WithSummary("Toggle size active status");
 
         return app;
     }

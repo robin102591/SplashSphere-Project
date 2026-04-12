@@ -17,11 +17,11 @@ public static class MerchandiseCategoryEndpoints
             .WithTags("MerchandiseCategories")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetMerchandiseCategories)  .WithName("GetMerchandiseCategories");
-        group.MapGet("/{id}", GetMerchandiseCategoryById) .WithName("GetMerchandiseCategoryById");
-        group.MapPost("/",    CreateMerchandiseCategory)  .WithName("CreateMerchandiseCategory");
-        group.MapPut("/{id}", UpdateMerchandiseCategory)  .WithName("UpdateMerchandiseCategory");
-        group.MapPatch("/{id}/status", ToggleMerchandiseCategoryStatus).WithName("ToggleMerchandiseCategoryStatus");
+        group.MapGet("/",     GetMerchandiseCategories)  .WithName("GetMerchandiseCategories").WithSummary("List merchandise categories");
+        group.MapGet("/{id}", GetMerchandiseCategoryById) .WithName("GetMerchandiseCategoryById").WithSummary("Get merchandise category by ID");
+        group.MapPost("/",    CreateMerchandiseCategory)  .WithName("CreateMerchandiseCategory").WithSummary("Create merchandise category");
+        group.MapPut("/{id}", UpdateMerchandiseCategory)  .WithName("UpdateMerchandiseCategory").WithSummary("Update merchandise category");
+        group.MapPatch("/{id}/status", ToggleMerchandiseCategoryStatus).WithName("ToggleMerchandiseCategoryStatus").WithSummary("Toggle merchandise category active status");
 
         return app;
     }

@@ -19,13 +19,13 @@ public static class PackageEndpoints
             .WithTags("Packages")
             .RequireAuthorization();
 
-        group.MapGet("/",                  GetPackages)         .WithName("GetPackages");
-        group.MapGet("/{id}",              GetPackageById)      .WithName("GetPackageById");
-        group.MapPost("/",                 CreatePackage)       .WithName("CreatePackage");
-        group.MapPut("/{id}",              UpdatePackage)       .WithName("UpdatePackage");
-        group.MapPatch("/{id}/status",     TogglePackageStatus) .WithName("TogglePackageStatus");
-        group.MapPut("/{id}/pricing",      UpsertPricing)       .WithName("UpsertPackagePricing");
-        group.MapPut("/{id}/commissions",  UpsertCommissions)   .WithName("UpsertPackageCommissions");
+        group.MapGet("/",                  GetPackages)         .WithName("GetPackages").WithSummary("List packages");
+        group.MapGet("/{id}",              GetPackageById)      .WithName("GetPackageById").WithSummary("Get package by ID");
+        group.MapPost("/",                 CreatePackage)       .WithName("CreatePackage").WithSummary("Create package");
+        group.MapPut("/{id}",              UpdatePackage)       .WithName("UpdatePackage").WithSummary("Update package");
+        group.MapPatch("/{id}/status",     TogglePackageStatus) .WithName("TogglePackageStatus").WithSummary("Toggle package status");
+        group.MapPut("/{id}/pricing",      UpsertPricing)       .WithName("UpsertPackagePricing").WithSummary("Upsert package pricing matrix");
+        group.MapPut("/{id}/commissions",  UpsertCommissions)   .WithName("UpsertPackageCommissions").WithSummary("Upsert package commission matrix").WithDescription("Package commissions are always percentage-based.");
 
         return app;
     }

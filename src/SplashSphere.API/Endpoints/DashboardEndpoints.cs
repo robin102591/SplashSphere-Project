@@ -15,7 +15,7 @@ public static class DashboardEndpoints
 
         // GET /api/v1/dashboard/summary?branchId=
         // branchId is optional; omitting it returns tenant-wide KPIs + branch breakdowns.
-        group.MapGet("/summary", GetSummary).WithName("GetDashboardSummary");
+        group.MapGet("/summary", GetSummary).WithName("GetDashboardSummary").WithSummary("Get dashboard KPIs, revenue, and branch breakdowns");
 
         return app;
     }

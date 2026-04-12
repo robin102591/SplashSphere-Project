@@ -39,51 +39,53 @@ public static class FranchiseEndpoints
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.FranchiseManagement));
 
         // ── Franchisor: Settings ─────────────────────────────────────────────────
-        group.MapGet("/settings",  GetSettings)    .WithName("GetFranchiseSettings");
-        group.MapPut("/settings",  UpdateSettings)  .WithName("UpdateFranchiseSettings");
+        group.MapGet("/settings",  GetSettings)    .WithName("GetFranchiseSettings").WithSummary("Get franchise network settings");
+        group.MapPut("/settings",  UpdateSettings)  .WithName("UpdateFranchiseSettings").WithSummary("Update franchise network settings");
 
         // ── Franchisor: Franchisees ──────────────────────────────────────────────
-        group.MapGet("/franchisees",             GetFranchisees)      .WithName("GetFranchisees");
-        group.MapGet("/franchisees/{id}",        GetFranchiseeDetail) .WithName("GetFranchiseeDetail");
-        group.MapPost("/franchisees/{id}/suspend",     SuspendFranchisee)   .WithName("SuspendFranchisee");
-        group.MapPost("/franchisees/{id}/reactivate",  ReactivateFranchisee).WithName("ReactivateFranchisee");
-        group.MapPost("/franchisees/{id}/push-templates", PushTemplates)     .WithName("PushServiceTemplates");
+        group.MapGet("/franchisees",             GetFranchisees)      .WithName("GetFranchisees").WithSummary("List all franchisees");
+        group.MapGet("/franchisees/{id}",        GetFranchiseeDetail) .WithName("GetFranchiseeDetail").WithSummary("Get franchisee detail with agreement and royalties");
+        group.MapPost("/franchisees/{id}/suspend",     SuspendFranchisee)   .WithName("SuspendFranchisee").WithSummary("Suspend a franchisee");
+        group.MapPost("/franchisees/{id}/reactivate",  ReactivateFranchisee).WithName("ReactivateFranchisee").WithSummary("Reactivate a suspended franchisee");
+        group.MapPost("/franchisees/{id}/push-templates", PushTemplates)     .WithName("PushServiceTemplates").WithSummary("Push service templates to a franchisee");
 
         // ── Franchisor: Agreements ───────────────────────────────────────────────
-        group.MapPost("/agreements", CreateAgreement).WithName("CreateFranchiseAgreement");
+        group.MapPost("/agreements", CreateAgreement).WithName("CreateFranchiseAgreement").WithSummary("Create a franchise agreement");
 
         // ── Franchisor: Royalties ────────────────────────────────────────────────
-        group.MapGet("/royalties",              GetRoyalties)      .WithName("GetRoyaltyPeriods");
-        group.MapPost("/royalties/calculate",   CalculateRoyalties).WithName("CalculateRoyalties");
-        group.MapPatch("/royalties/{id}/paid",  MarkPaid)          .WithName("MarkRoyaltyPaid");
+        group.MapGet("/royalties",              GetRoyalties)      .WithName("GetRoyaltyPeriods").WithSummary("List royalty periods");
+        group.MapPost("/royalties/calculate",   CalculateRoyalties).WithName("CalculateRoyalties").WithSummary("Calculate royalties for a period");
+        group.MapPatch("/royalties/{id}/paid",  MarkPaid)          .WithName("MarkRoyaltyPaid").WithSummary("Mark a royalty period as paid");
 
         // ── Franchisor: Network ──────────────────────────────────────────────────
-        group.MapGet("/network-summary", GetNetworkSummary).WithName("GetNetworkSummary");
-        group.MapGet("/compliance",      GetCompliance)    .WithName("GetComplianceReport");
+        group.MapGet("/network-summary", GetNetworkSummary).WithName("GetNetworkSummary").WithSummary("Get franchise network KPI summary");
+        group.MapGet("/compliance",      GetCompliance)    .WithName("GetComplianceReport").WithSummary("Get compliance report per franchisee");
 
         // ── Franchisor: Service Templates ────────────────────────────────────────
-        group.MapGet("/templates",       GetTemplates)     .WithName("GetServiceTemplates");
-        group.MapPost("/templates",      CreateTemplate)   .WithName("CreateServiceTemplate");
-        group.MapPut("/templates/{id}",  UpdateTemplate)   .WithName("UpdateServiceTemplate");
+        group.MapGet("/templates",       GetTemplates)     .WithName("GetServiceTemplates").WithSummary("List service templates");
+        group.MapPost("/templates",      CreateTemplate)   .WithName("CreateServiceTemplate").WithSummary("Create a service template");
+        group.MapPut("/templates/{id}",  UpdateTemplate)   .WithName("UpdateServiceTemplate").WithSummary("Update a service template");
 
         // ── Franchisor: Invitations ──────────────────────────────────────────────
-        group.MapPost("/invite", InviteFranchisee).WithName("InviteFranchisee");
+        group.MapPost("/invite", InviteFranchisee).WithName("InviteFranchisee").WithSummary("Send a franchise invitation");
 
         // ── Franchisee: My data ──────────────────────────────────────────────────
-        group.MapGet("/my-agreement", GetMyAgreement).WithName("GetMyAgreement");
-        group.MapGet("/my-royalties", GetMyRoyalties).WithName("GetMyRoyalties");
-        group.MapGet("/benchmarks",   GetBenchmarks) .WithName("GetBenchmarks");
+        group.MapGet("/my-agreement", GetMyAgreement).WithName("GetMyAgreement").WithSummary("Get my franchise agreement");
+        group.MapGet("/my-royalties", GetMyRoyalties).WithName("GetMyRoyalties").WithSummary("Get my royalty statements");
+        group.MapGet("/benchmarks",   GetBenchmarks) .WithName("GetBenchmarks").WithSummary("Get performance benchmarks vs network");
 
         // ── Invitations (mixed auth) ─────────────────────────────────────────────
         // Validate is public (no auth), Accept requires auth.
         app.MapGet("/api/v1/franchise/invitations/{token}/validate", ValidateInvitation)
             .WithTags("Franchise")
-            .WithName("ValidateInvitation");
+            .WithName("ValidateInvitation")
+            .WithSummary("Validate a franchise invitation token");
 
         app.MapPost("/api/v1/franchise/invitations/{token}/accept", AcceptInvitation)
             .WithTags("Franchise")
             .RequireAuthorization()
-            .WithName("AcceptInvitation");
+            .WithName("AcceptInvitation")
+            .WithSummary("Accept a franchise invitation and create franchisee");
 
         return app;
     }

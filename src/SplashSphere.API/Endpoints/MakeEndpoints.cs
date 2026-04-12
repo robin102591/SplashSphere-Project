@@ -17,11 +17,11 @@ public static class MakeEndpoints
             .WithTags("Makes")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetMakes)  .WithName("GetMakes");
-        group.MapGet("/{id}", GetMakeById).WithName("GetMakeById");
-        group.MapPost("/",    CreateMake) .WithName("CreateMake");
-        group.MapPut("/{id}", UpdateMake) .WithName("UpdateMake");
-        group.MapPatch("/{id}/status", ToggleMakeStatus).WithName("ToggleMakeStatus");
+        group.MapGet("/",     GetMakes)  .WithName("GetMakes").WithSummary("List vehicle makes");
+        group.MapGet("/{id}", GetMakeById).WithName("GetMakeById").WithSummary("Get vehicle make by ID");
+        group.MapPost("/",    CreateMake) .WithName("CreateMake").WithSummary("Create make");
+        group.MapPut("/{id}", UpdateMake) .WithName("UpdateMake").WithSummary("Update make");
+        group.MapPatch("/{id}/status", ToggleMakeStatus).WithName("ToggleMakeStatus").WithSummary("Toggle make active status");
 
         return app;
     }

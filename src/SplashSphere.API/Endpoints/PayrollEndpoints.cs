@@ -33,31 +33,31 @@ public static class PayrollEndpoints
             .WithTags("Payroll");
 
         // ── Periods ───────────────────────────────────────────────────────────
-        group.MapGet("/periods",                          GetPayrollPeriods);
-        group.MapPost("/periods",                         CreatePayrollPeriod);
-        group.MapGet("/periods/{id}",                     GetPayrollPeriodById);
-        group.MapPost("/periods/{id}/close",              ClosePayrollPeriod);
-        group.MapPost("/periods/{id}/process",            ProcessPayrollPeriod);
-        group.MapPost("/periods/{id}/release",            ReleasePayrollPeriod);
-        group.MapGet("/periods/{id}/export/csv",          ExportPayrollCsv);
+        group.MapGet("/periods",                          GetPayrollPeriods).WithSummary("List payroll periods");
+        group.MapPost("/periods",                         CreatePayrollPeriod).WithSummary("Create payroll period");
+        group.MapGet("/periods/{id}",                     GetPayrollPeriodById).WithSummary("Get period with entries");
+        group.MapPost("/periods/{id}/close",              ClosePayrollPeriod).WithSummary("Close payroll period");
+        group.MapPost("/periods/{id}/process",            ProcessPayrollPeriod).WithSummary("Process payroll period");
+        group.MapPost("/periods/{id}/release",            ReleasePayrollPeriod).WithSummary("Release payroll");
+        group.MapGet("/periods/{id}/export/csv",          ExportPayrollCsv).WithSummary("Export period as CSV");
 
         // ── Entries ───────────────────────────────────────────────────────────
-        group.MapPatch("/entries/{id}",                   UpdatePayrollEntry);
-        group.MapPost("/entries/bulk-adjust",              BulkApplyAdjustment);
-        group.MapGet("/entries/{id}/detail",               GetPayrollEntryDetail);
-        group.MapGet("/entries/{id}/payslip",              GetPayslip);
-        group.MapGet("/entries/{id}/payslip/pdf",          ExportPayslipPdf);
+        group.MapPatch("/entries/{id}",                   UpdatePayrollEntry).WithSummary("Update payroll entry");
+        group.MapPost("/entries/bulk-adjust",              BulkApplyAdjustment).WithSummary("Bulk adjust entries");
+        group.MapGet("/entries/{id}/detail",               GetPayrollEntryDetail).WithSummary("Get entry detail with breakdown");
+        group.MapGet("/entries/{id}/payslip",              GetPayslip).WithSummary("Get payslip data");
+        group.MapGet("/entries/{id}/payslip/pdf",          ExportPayslipPdf).WithSummary("Download payslip PDF");
 
         // ── Entry adjustments ───────────────────────────────────────────────
-        group.MapPost("/entries/{id}/adjustments",         AddPayrollAdjustment);
-        group.MapPut("/adjustments/{adjustmentId}",        UpdatePayrollAdjustment);
-        group.MapDelete("/adjustments/{adjustmentId}",     DeletePayrollAdjustment);
+        group.MapPost("/entries/{id}/adjustments",         AddPayrollAdjustment).WithSummary("Add adjustment to entry");
+        group.MapPut("/adjustments/{adjustmentId}",        UpdatePayrollAdjustment).WithSummary("Update adjustment");
+        group.MapDelete("/adjustments/{adjustmentId}",     DeletePayrollAdjustment).WithSummary("Delete adjustment");
 
         // ── Adjustment templates ────────────────────────────────────────────
-        group.MapGet("/templates",                        GetPayrollTemplates);
-        group.MapPost("/templates",                       CreatePayrollTemplate);
-        group.MapPut("/templates/{id}",                   UpdatePayrollTemplate);
-        group.MapDelete("/templates/{id}",                DeletePayrollTemplate);
+        group.MapGet("/templates",                        GetPayrollTemplates).WithSummary("List adjustment templates");
+        group.MapPost("/templates",                       CreatePayrollTemplate).WithSummary("Create adjustment template");
+        group.MapPut("/templates/{id}",                   UpdatePayrollTemplate).WithSummary("Update adjustment template");
+        group.MapDelete("/templates/{id}",                DeletePayrollTemplate).WithSummary("Delete adjustment template");
 
         return app;
     }

@@ -1,6 +1,8 @@
+using System.Reflection;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using SplashSphere.API.Endpoints;
@@ -32,8 +34,49 @@ if (!builder.Environment.IsDevelopment())
         .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });
 }
 
-// ── OpenAPI ───────────────────────────────────────────────────────────────────
+// ── OpenAPI + Swagger ────────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SplashSphere API",
+        Version = "v1",
+        Description = "Multi-tenant car wash management platform API for the Philippine market.",
+        Contact = new OpenApiContact
+        {
+            Name = "LezanobTech",
+            Email = "dev@splashsphere.ph"
+        }
+    });
+
+    // JWT Bearer authentication
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Clerk JWT token. Format: Bearer {token}",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML documentation comments
+    var xmlPath = Path.Combine(AppContext.BaseDirectory,
+        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+    if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
+});
 
 // ── ProblemDetails + exception handling ──────────────────────────────────────
 builder.Services.AddProblemDetails();
@@ -57,11 +100,17 @@ builder.Services.AddAuthorization();
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// ── Dev-only: OpenAPI, Scalar, migrations, seed ───────────────────────────────
+// ── Dev-only: OpenAPI, Scalar, Swagger UI, migrations, seed ──────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SplashSphere API v1");
+        c.RoutePrefix = "docs";
+    });
 
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

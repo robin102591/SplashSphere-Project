@@ -14,8 +14,8 @@ public static class PayrollSettingsEndpoints
             .RequireAuthorization()
             .WithTags("Settings");
 
-        group.MapGet("/payroll-config", GetPayrollSettings);
-        group.MapPut("/payroll-config", UpdatePayrollSettings);
+        group.MapGet("/payroll-config", GetPayrollSettings).WithSummary("Get payroll settings");
+        group.MapPut("/payroll-config", UpdatePayrollSettings).WithSummary("Update payroll settings");
 
         return app;
     }

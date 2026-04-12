@@ -19,12 +19,12 @@ public static class NotificationEndpoints
             .WithTags("Notifications")
             .RequireAuthorization();
 
-        group.MapGet("/",                GetNotifications)      .WithName("GetNotifications");
-        group.MapGet("/unread-count",    GetUnreadCount)        .WithName("GetUnreadCount");
-        group.MapPatch("/{id}/read",     MarkNotificationRead)  .WithName("MarkNotificationRead");
-        group.MapPost("/mark-all-read",  MarkAllRead)           .WithName("MarkAllNotificationsRead");
-        group.MapGet("/preferences",     GetPreferences)        .WithName("GetNotificationPreferences");
-        group.MapPut("/preferences",     UpdatePreferences)     .WithName("UpdateNotificationPreferences");
+        group.MapGet("/",                GetNotifications)      .WithName("GetNotifications").WithSummary("List notifications");
+        group.MapGet("/unread-count",    GetUnreadCount)        .WithName("GetUnreadCount").WithSummary("Get unread notification count");
+        group.MapPatch("/{id}/read",     MarkNotificationRead)  .WithName("MarkNotificationRead").WithSummary("Mark notification as read");
+        group.MapPost("/mark-all-read",  MarkAllRead)           .WithName("MarkAllNotificationsRead").WithSummary("Mark all notifications as read");
+        group.MapGet("/preferences",     GetPreferences)        .WithName("GetNotificationPreferences").WithSummary("Get notification preferences");
+        group.MapPut("/preferences",     UpdatePreferences)     .WithName("UpdateNotificationPreferences").WithSummary("Update notification preferences");
 
         return app;
     }

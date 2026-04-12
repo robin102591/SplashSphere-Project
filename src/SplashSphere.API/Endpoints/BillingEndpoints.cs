@@ -21,18 +21,19 @@ public static class BillingEndpoints
             .RequireAuthorization()
             .WithTags("Billing");
 
-        group.MapGet("/plan", GetCurrentPlan);
-        group.MapPost("/checkout", CreateCheckout);
-        group.MapPost("/change-plan", ChangePlan);
-        group.MapPost("/cancel", CancelSubscription);
-        group.MapGet("/history", GetBillingHistory);
-        group.MapGet("/invoices/{id}/pdf", ExportInvoicePdf);
-        group.MapPost("/invoices/{id}/pay", PayInvoice);
+        group.MapGet("/plan", GetCurrentPlan).WithSummary("Get current plan and usage");
+        group.MapPost("/checkout", CreateCheckout).WithSummary("Create checkout session for plan upgrade");
+        group.MapPost("/change-plan", ChangePlan).WithSummary("Change subscription plan");
+        group.MapPost("/cancel", CancelSubscription).WithSummary("Cancel subscription");
+        group.MapGet("/history", GetBillingHistory).WithSummary("Get billing and payment history");
+        group.MapGet("/invoices/{id}/pdf", ExportInvoicePdf).WithSummary("Download invoice as PDF");
+        group.MapPost("/invoices/{id}/pay", PayInvoice).WithSummary("Pay a pending invoice");
 
         // ── Payment webhook — NO auth (called by PayMongo) ───────────────────
         app.MapPost("/api/v1/webhooks/payment", ProcessPaymentWebhook)
             .WithTags("Webhooks")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .WithSummary("Process payment gateway webhook");
 
         return app;
     }

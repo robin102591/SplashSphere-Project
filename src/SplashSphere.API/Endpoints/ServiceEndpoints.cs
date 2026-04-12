@@ -19,13 +19,13 @@ public static class ServiceEndpoints
             .WithTags("Services")
             .RequireAuthorization();
 
-        group.MapGet("/",                      GetServices)         .WithName("GetServices");
-        group.MapGet("/{id}",                  GetServiceById)      .WithName("GetServiceById");
-        group.MapPost("/",                     CreateService)       .WithName("CreateService");
-        group.MapPut("/{id}",                  UpdateService)       .WithName("UpdateService");
-        group.MapPatch("/{id}/status",         ToggleServiceStatus) .WithName("ToggleServiceStatus");
-        group.MapPut("/{id}/pricing",          UpsertPricing)       .WithName("UpsertServicePricing");
-        group.MapPut("/{id}/commissions",      UpsertCommissions)   .WithName("UpsertServiceCommissions");
+        group.MapGet("/",                      GetServices)         .WithName("GetServices").WithSummary("List services");
+        group.MapGet("/{id}",                  GetServiceById)      .WithName("GetServiceById").WithSummary("Get service with pricing and commission matrices");
+        group.MapPost("/",                     CreateService)       .WithName("CreateService").WithSummary("Create service");
+        group.MapPut("/{id}",                  UpdateService)       .WithName("UpdateService").WithSummary("Update service");
+        group.MapPatch("/{id}/status",         ToggleServiceStatus) .WithName("ToggleServiceStatus").WithSummary("Toggle service active status");
+        group.MapPut("/{id}/pricing",          UpsertPricing)       .WithName("UpsertServicePricing").WithSummary("Upsert pricing matrix");
+        group.MapPut("/{id}/commissions",      UpsertCommissions)   .WithName("UpsertServiceCommissions").WithSummary("Upsert commission matrix");
 
         return app;
     }

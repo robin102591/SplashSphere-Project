@@ -25,20 +25,20 @@ public static class TransactionEndpoints
             .WithTags("Transactions");
 
         // ── Commands ──────────────────────────────────────────────────────────
-        group.MapPost("/",                           CreateTransaction);
-        group.MapPatch("/{id}/status",               UpdateTransactionStatus);
-        group.MapPatch("/{id}/items",                UpdateTransactionItems);
-        group.MapPatch("/{id}/discount-tip",         UpdateDiscountTip);
-        group.MapPost("/{id}/payments",              AddPayment);
-        group.MapPost("/{id}/refund",                RefundTransaction);
+        group.MapPost("/",                           CreateTransaction).WithSummary("Create transaction");
+        group.MapPatch("/{id}/status",               UpdateTransactionStatus).WithSummary("Update transaction status");
+        group.MapPatch("/{id}/items",                UpdateTransactionItems).WithSummary("Update transaction line items");
+        group.MapPatch("/{id}/discount-tip",         UpdateDiscountTip).WithSummary("Update discount and tip");
+        group.MapPost("/{id}/payments",              AddPayment).WithSummary("Add payment to transaction");
+        group.MapPost("/{id}/refund",                RefundTransaction).WithSummary("Refund transaction");
 
         // ── Queries ───────────────────────────────────────────────────────────
         // daily-summary must come BEFORE /{id} to avoid route ambiguity
-        group.MapGet("/daily-summary",               GetDailySummary);
-        group.MapGet("/",                            GetTransactions);
-        group.MapGet("/{id}",                        GetTransactionById);
-        group.MapGet("/{id}/receipt",                GetReceipt);
-        group.MapGet("/{id}/receipt/pdf",            ExportReceiptPdf);
+        group.MapGet("/daily-summary",               GetDailySummary).WithSummary("Get daily summary");
+        group.MapGet("/",                            GetTransactions).WithSummary("List transactions");
+        group.MapGet("/{id}",                        GetTransactionById).WithSummary("Get transaction by ID");
+        group.MapGet("/{id}/receipt",                GetReceipt).WithSummary("Get receipt data");
+        group.MapGet("/{id}/receipt/pdf",            ExportReceiptPdf).WithSummary("Download receipt PDF");
 
         return app;
     }

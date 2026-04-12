@@ -1,5 +1,13 @@
 ## Changelog
 
+## [API Documentation] — 2026-04-12
+### Added — Swagger / OpenAPI Documentation
+- **Swashbuckle.AspNetCore 7.x** installed with JWT Bearer auth definition for try-it-out
+- Swagger UI accessible at `/docs` in development (alongside existing Scalar UI)
+- XML documentation comments enabled via `<GenerateDocumentationFile>` in API csproj
+- `.WithSummary()` metadata added to **all 35 endpoint files** (~170+ endpoints)
+- Endpoints organized by tag groups: Auth, Branches, Services, Transactions, Queue, Payroll, Shifts, etc.
+
 ## [Testing Infrastructure] — 2026-04-12
 ### Added — Domain Calculator Extraction
 - **Domain**: `CommissionCalculator` — extracted pure calculation logic from `CreateTransactionCommandHandler`: `CalculateTotal` (Percentage/FixedAmount/Hybrid), `SplitAmongEmployees`, `CalculatePackageCommission`

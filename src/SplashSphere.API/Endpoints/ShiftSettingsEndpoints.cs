@@ -14,8 +14,8 @@ public static class ShiftSettingsEndpoints
             .RequireAuthorization()
             .WithTags("Settings");
 
-        group.MapGet("/shift-config", GetShiftSettings);
-        group.MapPut("/shift-config", UpdateShiftSettings);
+        group.MapGet("/shift-config", GetShiftSettings).WithSummary("Get shift settings");
+        group.MapPut("/shift-config", UpdateShiftSettings).WithSummary("Update shift settings");
 
         return app;
     }

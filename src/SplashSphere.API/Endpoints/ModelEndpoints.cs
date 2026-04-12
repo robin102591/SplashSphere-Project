@@ -17,11 +17,11 @@ public static class ModelEndpoints
             .WithTags("Models")
             .RequireAuthorization();
 
-        group.MapGet("/",     GetModels)  .WithName("GetModels");
-        group.MapGet("/{id}", GetModelById).WithName("GetModelById");
-        group.MapPost("/",    CreateModel) .WithName("CreateModel");
-        group.MapPut("/{id}", UpdateModel) .WithName("UpdateModel");
-        group.MapPatch("/{id}/status", ToggleModelStatus).WithName("ToggleModelStatus");
+        group.MapGet("/",     GetModels)  .WithName("GetModels").WithSummary("List vehicle models").WithDescription("Filter by makeId query parameter to list models for a specific make.");
+        group.MapGet("/{id}", GetModelById).WithName("GetModelById").WithSummary("Get vehicle model by ID");
+        group.MapPost("/",    CreateModel) .WithName("CreateModel").WithSummary("Create model");
+        group.MapPut("/{id}", UpdateModel) .WithName("UpdateModel").WithSummary("Update model");
+        group.MapPatch("/{id}/status", ToggleModelStatus).WithName("ToggleModelStatus").WithSummary("Toggle model active status");
 
         return app;
     }

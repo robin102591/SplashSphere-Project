@@ -18,12 +18,12 @@ public static class CarEndpoints
             .RequireAuthorization();
 
         // Fast POS plate lookup — must be registered BEFORE "/{id}" to avoid route ambiguity.
-        group.MapGet("/lookup/{plateNumber}", LookupByPlate) .WithName("LookupCarByPlate");
+        group.MapGet("/lookup/{plateNumber}", LookupByPlate) .WithName("LookupCarByPlate").WithSummary("Lookup vehicle by plate number").WithDescription("POS fast path. Returns 200 with null body when plate is not found.");
 
-        group.MapGet("/",       GetCars)      .WithName("GetCars");
-        group.MapGet("/{id}",   GetCarById)   .WithName("GetCarById");
-        group.MapPost("/",      CreateCar)    .WithName("CreateCar");
-        group.MapPut("/{id}",   UpdateCar)    .WithName("UpdateCar");
+        group.MapGet("/",       GetCars)      .WithName("GetCars").WithSummary("List vehicles");
+        group.MapGet("/{id}",   GetCarById)   .WithName("GetCarById").WithSummary("Get vehicle by ID");
+        group.MapPost("/",      CreateCar)    .WithName("CreateCar").WithSummary("Create vehicle");
+        group.MapPut("/{id}",   UpdateCar)    .WithName("UpdateCar").WithSummary("Update vehicle");
 
         return app;
     }

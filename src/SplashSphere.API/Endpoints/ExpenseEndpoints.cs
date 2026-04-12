@@ -24,10 +24,10 @@ public static class ExpenseEndpoints
             .WithTags("Expenses")
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ExpenseTracking));
 
-        group.MapPost("/", RecordExpense);
-        group.MapGet("/", GetExpenses);
-        group.MapPut("/{id}", UpdateExpense);
-        group.MapDelete("/{id}", DeleteExpense);
+        group.MapPost("/", RecordExpense).WithSummary("Record an expense");
+        group.MapGet("/", GetExpenses).WithSummary("List expenses");
+        group.MapPut("/{id}", UpdateExpense).WithSummary("Update an expense");
+        group.MapDelete("/{id}", DeleteExpense).WithSummary("Delete an expense");
 
         // Categories
         var catGroup = app.MapGroup("/api/v1/expense-categories")
@@ -35,14 +35,15 @@ public static class ExpenseEndpoints
             .WithTags("Expenses")
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ExpenseTracking));
 
-        catGroup.MapGet("/", GetCategories);
-        catGroup.MapPost("/", CreateCategory);
+        catGroup.MapGet("/", GetCategories).WithSummary("List expense categories");
+        catGroup.MapPost("/", CreateCategory).WithSummary("Create an expense category");
 
         // P&L Report
         app.MapGet("/api/v1/reports/profit-loss", GetProfitLossReport)
             .RequireAuthorization()
             .WithTags("Reports")
-            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ProfitLossReports));
+            .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ProfitLossReports))
+            .WithSummary("Get profit and loss report");
 
         return app;
     }

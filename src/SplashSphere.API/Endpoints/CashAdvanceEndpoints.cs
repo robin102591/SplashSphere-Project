@@ -23,12 +23,12 @@ public static class CashAdvanceEndpoints
             .WithTags("CashAdvances")
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.CashAdvanceTracking));
 
-        group.MapGet("/",             GetCashAdvances);
-        group.MapGet("/{id}",         GetCashAdvanceById);
-        group.MapPost("/",            CreateCashAdvance);
-        group.MapPatch("/{id}/approve",  ApproveCashAdvance);
-        group.MapPatch("/{id}/disburse", DisburseCashAdvance);
-        group.MapPatch("/{id}/cancel",   CancelCashAdvance);
+        group.MapGet("/",             GetCashAdvances).WithSummary("List cash advances");
+        group.MapGet("/{id}",         GetCashAdvanceById).WithSummary("Get cash advance by ID");
+        group.MapPost("/",            CreateCashAdvance).WithSummary("Create cash advance");
+        group.MapPatch("/{id}/approve",  ApproveCashAdvance).WithSummary("Approve cash advance");
+        group.MapPatch("/{id}/disburse", DisburseCashAdvance).WithSummary("Disburse cash advance");
+        group.MapPatch("/{id}/cancel",   CancelCashAdvance).WithSummary("Cancel cash advance");
 
         return app;
     }

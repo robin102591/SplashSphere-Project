@@ -28,19 +28,19 @@ public static class ShiftEndpoints
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.ShiftManagement));
 
         // Commands
-        group.MapPost("/open",               OpenShift);
-        group.MapPost("/{id}/cash-movement", RecordCashMovement);
-        group.MapPost("/{id}/close",         CloseShift);
-        group.MapPatch("/{id}/review",       ReviewShift);
-        group.MapPatch("/{id}/reopen",       ReopenShift);
-        group.MapPatch("/{id}/void",         VoidShift);
+        group.MapPost("/open",               OpenShift).WithSummary("Open cashier shift");
+        group.MapPost("/{id}/cash-movement", RecordCashMovement).WithSummary("Record cash movement");
+        group.MapPost("/{id}/close",         CloseShift).WithSummary("Close shift with denomination count");
+        group.MapPatch("/{id}/review",       ReviewShift).WithSummary("Review shift");
+        group.MapPatch("/{id}/reopen",       ReopenShift).WithSummary("Reopen closed shift");
+        group.MapPatch("/{id}/void",         VoidShift).WithSummary("Void empty shift");
 
         // Queries
-        group.MapGet("/current",             GetCurrentShift);
-        group.MapGet("/",                    GetShifts);
-        group.MapGet("/{id}",                GetShiftById);
-        group.MapGet("/{id}/report",         GetShiftReport);
-        group.MapGet("/variance-report",     GetVarianceReport);
+        group.MapGet("/current",             GetCurrentShift).WithSummary("Get current open shift");
+        group.MapGet("/",                    GetShifts).WithSummary("List shifts");
+        group.MapGet("/{id}",                GetShiftById).WithSummary("Get shift detail");
+        group.MapGet("/{id}/report",         GetShiftReport).WithSummary("Get end-of-day report");
+        group.MapGet("/variance-report",     GetVarianceReport).WithSummary("Get variance report");
 
         return app;
     }

@@ -25,18 +25,18 @@ public static class EmployeeEndpoints
             .WithTags("Employees")
             .RequireAuthorization();
 
-        group.MapGet("/",                              GetEmployees)          .WithName("GetEmployees");
-        group.MapGet("/{id}",                          GetEmployeeById)       .WithName("GetEmployeeById");
-        group.MapPost("/",                             CreateEmployee)        .WithName("CreateEmployee");
-        group.MapPut("/{id}",                          UpdateEmployee)        .WithName("UpdateEmployee");
-        group.MapPatch("/{id}/status",                 ToggleEmployeeStatus)  .WithName("ToggleEmployeeStatus");
-        group.MapPost("/{id}/invite",                  InviteEmployee)        .WithName("InviteEmployee");
-        group.MapPost("/{id}/clock-in",                ClockIn)               .WithName("ClockIn");
-        group.MapPost("/{id}/clock-out",               ClockOut)              .WithName("ClockOut");
-        group.MapGet("/{id}/commissions",              GetCommissions)        .WithName("GetEmployeeCommissions");
-        group.MapGet("/{id}/cash-advances",            GetCashAdvances)       .WithName("GetEmployeeCashAdvances");
-        group.MapGet("/{id}/payroll-history",           GetPayrollHistory)     .WithName("GetEmployeePayrollHistory");
-        group.MapGet("/attendance",                    GetAttendance)         .WithName("GetAttendance");
+        group.MapGet("/",                              GetEmployees)          .WithName("GetEmployees").WithSummary("List employees");
+        group.MapGet("/{id}",                          GetEmployeeById)       .WithName("GetEmployeeById").WithSummary("Get employee by ID");
+        group.MapPost("/",                             CreateEmployee)        .WithName("CreateEmployee").WithSummary("Create employee");
+        group.MapPut("/{id}",                          UpdateEmployee)        .WithName("UpdateEmployee").WithSummary("Update employee");
+        group.MapPatch("/{id}/status",                 ToggleEmployeeStatus)  .WithName("ToggleEmployeeStatus").WithSummary("Toggle employee active status");
+        group.MapPost("/{id}/invite",                  InviteEmployee)        .WithName("InviteEmployee").WithSummary("Send Clerk org invitation to employee");
+        group.MapPost("/{id}/clock-in",                ClockIn)               .WithName("ClockIn").WithSummary("Clock in employee attendance");
+        group.MapPost("/{id}/clock-out",               ClockOut)              .WithName("ClockOut").WithSummary("Clock out employee attendance");
+        group.MapGet("/{id}/commissions",              GetCommissions)        .WithName("GetEmployeeCommissions").WithSummary("Get employee commission history");
+        group.MapGet("/{id}/cash-advances",            GetCashAdvances)       .WithName("GetEmployeeCashAdvances").WithSummary("Get employee cash advances");
+        group.MapGet("/{id}/payroll-history",           GetPayrollHistory)     .WithName("GetEmployeePayrollHistory").WithSummary("Get employee payroll history");
+        group.MapGet("/attendance",                    GetAttendance)         .WithName("GetAttendance").WithSummary("List attendance records");
 
         return app;
     }

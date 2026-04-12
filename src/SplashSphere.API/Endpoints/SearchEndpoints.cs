@@ -12,7 +12,7 @@ public static class SearchEndpoints
             .WithTags("Search")
             .RequireAuthorization();
 
-        group.MapGet("/", GlobalSearch).WithName("GlobalSearch");
+        group.MapGet("/", GlobalSearch).WithName("GlobalSearch").WithSummary("Global search across customers, employees, transactions, vehicles, services, and merchandise");
 
         return app;
     }

@@ -19,13 +19,13 @@ public static class MerchandiseEndpoints
             .WithTags("Merchandise")
             .RequireAuthorization();
 
-        group.MapGet("/",                      GetMerchandise)         .WithName("GetMerchandise");
-        group.MapGet("/{id}",                  GetMerchandiseById)     .WithName("GetMerchandiseById");
-        group.MapPost("/",                     CreateMerchandise)      .WithName("CreateMerchandise");
-        group.MapPut("/{id}",                  UpdateMerchandise)      .WithName("UpdateMerchandise");
-        group.MapPatch("/{id}/status",         ToggleMerchandiseStatus).WithName("ToggleMerchandiseStatus");
-        group.MapPost("/{id}/stock-adjustment",AdjustStock)            .WithName("AdjustStock");
-        group.MapGet("/low-stock",             GetLowStock)            .WithName("GetLowStockMerchandise");
+        group.MapGet("/",                      GetMerchandise)         .WithName("GetMerchandise").WithSummary("List merchandise");
+        group.MapGet("/{id}",                  GetMerchandiseById)     .WithName("GetMerchandiseById").WithSummary("Get merchandise by ID");
+        group.MapPost("/",                     CreateMerchandise)      .WithName("CreateMerchandise").WithSummary("Create merchandise");
+        group.MapPut("/{id}",                  UpdateMerchandise)      .WithName("UpdateMerchandise").WithSummary("Update merchandise");
+        group.MapPatch("/{id}/status",         ToggleMerchandiseStatus).WithName("ToggleMerchandiseStatus").WithSummary("Toggle merchandise active status");
+        group.MapPost("/{id}/stock-adjustment",AdjustStock)            .WithName("AdjustStock").WithSummary("Adjust stock quantity").WithDescription("Positive values add stock, negative values remove stock.");
+        group.MapGet("/low-stock",             GetLowStock)            .WithName("GetLowStockMerchandise").WithSummary("List low-stock items");
 
         return app;
     }

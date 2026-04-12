@@ -23,12 +23,12 @@ public static class PricingModifierEndpoints
             .RequireAuthorization()
             .WithMetadata(new RequiresFeatureAttribute(FeatureKeys.PricingModifiers));
 
-        group.MapGet("/",          GetAll)         .WithName("GetPricingModifiers");
-        group.MapGet("/{id}",      GetById)        .WithName("GetPricingModifierById");
-        group.MapPost("/",         Create)         .WithName("CreatePricingModifier");
-        group.MapPut("/{id}",      Update)         .WithName("UpdatePricingModifier");
-        group.MapDelete("/{id}",   Delete)         .WithName("DeletePricingModifier");
-        group.MapPatch("/{id}/toggle", Toggle)     .WithName("TogglePricingModifierStatus");
+        group.MapGet("/",          GetAll)         .WithName("GetPricingModifiers").WithSummary("List pricing modifiers");
+        group.MapGet("/{id}",      GetById)        .WithName("GetPricingModifierById").WithSummary("Get modifier by ID");
+        group.MapPost("/",         Create)         .WithName("CreatePricingModifier").WithSummary("Create pricing modifier");
+        group.MapPut("/{id}",      Update)         .WithName("UpdatePricingModifier").WithSummary("Update pricing modifier");
+        group.MapDelete("/{id}",   Delete)         .WithName("DeletePricingModifier").WithSummary("Delete pricing modifier");
+        group.MapPatch("/{id}/toggle", Toggle)     .WithName("TogglePricingModifierStatus").WithSummary("Toggle modifier status");
 
         return app;
     }

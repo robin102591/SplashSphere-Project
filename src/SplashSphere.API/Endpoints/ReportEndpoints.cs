@@ -21,19 +21,19 @@ public static class ReportEndpoints
             .WithTags("Reports")
             .RequireAuthorization();
 
-        group.MapGet("/revenue", GetRevenue).WithName("GetRevenueReport");
-        group.MapGet("/commissions", GetCommissions).WithName("GetCommissionsReport");
-        group.MapGet("/service-popularity", GetServicePopularity).WithName("GetServicePopularityReport");
+        group.MapGet("/revenue", GetRevenue).WithName("GetRevenueReport").WithSummary("Get revenue report by date range and branch");
+        group.MapGet("/commissions", GetCommissions).WithName("GetCommissionsReport").WithSummary("Get commissions report by date range, branch, and employee");
+        group.MapGet("/service-popularity", GetServicePopularity).WithName("GetServicePopularityReport").WithSummary("Get service popularity rankings by date range");
 
         // Analytics
-        group.MapGet("/customer-analytics", GetCustomerAnalytics).WithName("GetCustomerAnalytics");
-        group.MapGet("/peak-hours", GetPeakHours).WithName("GetPeakHours");
-        group.MapGet("/employee-performance", GetEmployeePerformance).WithName("GetEmployeePerformance");
+        group.MapGet("/customer-analytics", GetCustomerAnalytics).WithName("GetCustomerAnalytics").WithSummary("Get customer analytics including retention and visit frequency");
+        group.MapGet("/peak-hours", GetPeakHours).WithName("GetPeakHours").WithSummary("Get peak hours heatmap data by day-of-week and hour");
+        group.MapGet("/employee-performance", GetEmployeePerformance).WithName("GetEmployeePerformance").WithSummary("Get employee performance rankings and metrics");
 
         // CSV exports
-        group.MapGet("/revenue/export/csv", ExportRevenueCsv).WithName("ExportRevenueCsv");
-        group.MapGet("/commissions/export/csv", ExportCommissionsCsv).WithName("ExportCommissionsCsv");
-        group.MapGet("/service-popularity/export/csv", ExportServicePopularityCsv).WithName("ExportServicePopularityCsv");
+        group.MapGet("/revenue/export/csv", ExportRevenueCsv).WithName("ExportRevenueCsv").WithSummary("Export revenue report as CSV");
+        group.MapGet("/commissions/export/csv", ExportCommissionsCsv).WithName("ExportCommissionsCsv").WithSummary("Export commissions report as CSV");
+        group.MapGet("/service-popularity/export/csv", ExportServicePopularityCsv).WithName("ExportServicePopularityCsv").WithSummary("Export service popularity report as CSV");
 
         return app;
     }
