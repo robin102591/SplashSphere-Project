@@ -71,8 +71,37 @@ public sealed class GetProfitLossReportQueryHandler(IApplicationDbContext db)
         if (!string.IsNullOrWhiteSpace(request.BranchId))
             cogsQuery = cogsQuery.Where(tm => tm.Transaction.BranchId == request.BranchId);
 
-        var cogs = await cogsQuery
+        var merchandiseCogs = await cogsQuery
             .SumAsync(tm => (decimal?)(tm.Quantity * tm.Merchandise.CostPrice!.Value) ?? 0, cancellationToken);
+
+        // ── COGS from stock movements (supply usage + merchandise sales) ────
+        var smSaleQuery = db.StockMovements
+            .AsNoTracking()
+            .Where(sm => sm.Type == MovementType.SaleOut
+                         && sm.TotalCost.HasValue
+                         && sm.MovementDate >= fromUtc
+                         && sm.MovementDate < toUtc);
+
+        if (!string.IsNullOrWhiteSpace(request.BranchId))
+            smSaleQuery = smSaleQuery.Where(sm => sm.BranchId == request.BranchId);
+
+        var saleCogs = await smSaleQuery
+            .SumAsync(sm => (decimal?)sm.TotalCost!.Value ?? 0, cancellationToken);
+
+        var smUsageQuery = db.StockMovements
+            .AsNoTracking()
+            .Where(sm => sm.Type == MovementType.UsageOut
+                         && sm.TotalCost.HasValue
+                         && sm.MovementDate >= fromUtc
+                         && sm.MovementDate < toUtc);
+
+        if (!string.IsNullOrWhiteSpace(request.BranchId))
+            smUsageQuery = smUsageQuery.Where(sm => sm.BranchId == request.BranchId);
+
+        var supplyCogs = await smUsageQuery
+            .SumAsync(sm => (decimal?)sm.TotalCost!.Value ?? 0, cancellationToken);
+
+        var cogs = merchandiseCogs + saleCogs + supplyCogs;
 
         // ── Build daily breakdown ───────────────────────────────────────────
         var allDates = new HashSet<DateOnly>();

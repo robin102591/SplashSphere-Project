@@ -17,7 +17,13 @@ public static class FeatureKeys
     public const string EmployeeManagement = "employee_management";
     public const string MerchandiseManagement = "merchandise_management";
 
+    public const string SupplyTracking = "supply_tracking";
+
     // ── Growth (Growth + Enterprise) ─────────────────────────────────────────
+    public const string PurchaseOrders = "purchase_orders";
+    public const string EquipmentManagement = "equipment_management";
+    public const string SupplyUsageAutoDeduction = "supply_usage_auto_deduction";
+    public const string CostPerWashReports = "cost_per_wash_reports";
     public const string QueueManagement = "queue_management";
     public const string CustomerLoyalty = "customer_loyalty";
     public const string CashAdvanceTracking = "cash_advance_tracking";

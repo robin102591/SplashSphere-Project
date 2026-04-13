@@ -64,6 +64,14 @@ description: Current frontend page inventory — updated by agents after each ta
 | /dashboard/franchise/templates | Service templates CRUD + push-to-franchisees |
 | /dashboard/franchise/compliance | Compliance report — color-coded matrix per franchisee |
 | /dashboard/franchise/settings | Franchise settings form — royalties, standards, branding |
+| /dashboard/supplies | Supply list with category/branch/stock filters, quick actions |
+| /dashboard/supplies/[id] | Supply detail: stock gauge, movements timeline, usage/restock dialogs |
+| /dashboard/equipment | Equipment list with status badges and maintenance indicators |
+| /dashboard/equipment/[id] | Equipment detail with maintenance log timeline |
+| /dashboard/purchase-orders | PO list with status lifecycle badges |
+| /dashboard/purchase-orders/new | Create PO form with line items |
+| /dashboard/purchase-orders/[id] | PO detail with receive items workflow |
+| /dashboard/suppliers | Supplier CRUD list |
 
 ## POS App
 | Route | Page |

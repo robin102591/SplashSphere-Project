@@ -252,3 +252,39 @@ export enum RoyaltyStatus {
   Paid     = 2,
   Overdue  = 3,
 }
+
+// ── Inventory ────────────────────────────────────────────────────────────────
+
+export enum MovementType {
+  PurchaseIn    = 1,
+  UsageOut      = 2,
+  SaleOut       = 3,
+  AdjustmentIn  = 4,
+  AdjustmentOut = 5,
+  TransferIn    = 6,
+  TransferOut   = 7,
+  ReturnIn      = 8,
+  WasteOut      = 9,
+}
+
+export enum PurchaseOrderStatus {
+  Draft              = 0,
+  Sent               = 1,
+  PartiallyReceived  = 2,
+  Received           = 3,
+  Cancelled          = 4,
+}
+
+export enum EquipmentStatus {
+  Operational      = 0,
+  NeedsMaintenance = 1,
+  UnderRepair      = 2,
+  Retired          = 3,
+}
+
+export enum MaintenanceType {
+  Preventive      = 0,
+  Corrective      = 1,
+  Inspection      = 2,
+  PartReplacement = 3,
+}

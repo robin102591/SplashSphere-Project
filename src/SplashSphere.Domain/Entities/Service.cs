@@ -46,4 +46,5 @@ public sealed class Service : IAuditableEntity
     public ICollection<ServiceCommission> Commissions { get; set; } = [];
     public ICollection<PackageService> PackageServices { get; set; } = [];
     public ICollection<TransactionService> TransactionServices { get; set; } = [];
+    public ICollection<ServiceSupplyUsage> SupplyUsages { get; set; } = [];
 }

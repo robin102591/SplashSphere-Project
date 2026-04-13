@@ -44,11 +44,18 @@ public static class RecurringJobSetup
 
         // ── Inventory ─────────────────────────────────────────────────────────
 
-        // Daily 08:00 PHT — publish LowStockAlertEvent for items at or below threshold.
+        // Every 6 hours — scan merchandise and supply items for low stock alerts.
         manager.AddOrUpdate<InventoryJobService>(
             recurringJobId: "inventory-low-stock-check",
             methodCall: job => job.CheckLowStockAlertsAsync(CancellationToken.None),
-            cronExpression: Cron.Daily(hour: 8),
+            cronExpression: "0 */6 * * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // Daily midnight UTC (8 AM PHT) — flag overdue equipment as NeedsMaintenance.
+        manager.AddOrUpdate<InventoryJobService>(
+            recurringJobId: "inventory-equipment-maintenance",
+            methodCall: job => job.CheckEquipmentMaintenanceAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 0),
             options: new RecurringJobOptions { TimeZone = Manila });
 
         // ── Transactions ──────────────────────────────────────────────────────

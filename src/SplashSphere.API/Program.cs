@@ -182,6 +182,12 @@ app.MapAuditLogEndpoints();
 app.MapLoyaltyEndpoints();
 app.MapFranchiseEndpoints();
 app.MapImportEndpoints();
+app.MapSupplyEndpoints();
+app.MapStockMovementEndpoints();
+app.MapServiceUsageEndpoints();
+app.MapPurchaseOrderEndpoints();
+app.MapSupplierEndpoints();
+app.MapEquipmentEndpoints();
 
 app.Run();
 

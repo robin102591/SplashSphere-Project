@@ -15,12 +15,16 @@ import type {
   CashMovementType,
   CommissionType,
   EmployeeType,
+  EquipmentStatus,
   ExpenseFrequency,
   LoyaltyTier,
+  MaintenanceType,
   ModifierType,
+  MovementType,
   PaymentMethod,
   PayrollStatus,
   PointTransactionType,
+  PurchaseOrderStatus,
   QueuePriority,
   QueueStatus,
   ReceiptLineType,
@@ -977,6 +981,12 @@ export const FeatureKeys = {
   ApiAccess: 'api_access',
   CustomIntegrations: 'custom_integrations',
   FranchiseManagement: 'franchise_management',
+  // Inventory (Growth+)
+  SupplyTracking: 'supply_tracking',
+  PurchaseOrders: 'purchase_orders',
+  EquipmentManagement: 'equipment_management',
+  SupplyUsageAutoDeduction: 'supply_usage_auto_deduction',
+  CostPerWashReports: 'cost_per_wash_reports',
 } as const;
 
 // ── Attendance Reports ────────────────────────────────────────────────────────
@@ -1529,4 +1539,198 @@ export interface InvitationDetailsDto {
   franchiseCode: string | null;
   territoryName: string | null;
   expiresAt: string;
+}
+
+// ── Inventory ────────────────────────────────────────────────────────────────
+
+export interface SupplyCategoryDto {
+  id: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
+
+export interface SupplyItemDto {
+  id: string;
+  branchId: string;
+  branchName: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  name: string;
+  description: string | null;
+  unit: string;
+  currentStock: number;
+  reorderLevel: number | null;
+  averageUnitCost: number;
+  isActive: boolean;
+  isLowStock: boolean;
+  createdAt: string;
+}
+
+export interface SupplyItemDetailDto extends SupplyItemDto {
+  recentMovements: readonly StockMovementDto[];
+}
+
+export interface StockMovementDto {
+  id: string;
+  branchName: string;
+  itemName: string;
+  type: string;
+  quantity: number;
+  unitCost: number | null;
+  totalCost: number | null;
+  reference: string | null;
+  notes: string | null;
+  performedBy: string | null;
+  movementDate: string;
+}
+
+export interface ServiceSupplyUsageDto {
+  supplyItemId: string;
+  supplyItemName: string;
+  unit: string;
+  sizeUsages: readonly SizeUsageDto[];
+}
+
+export interface SizeUsageDto {
+  sizeId: string | null;
+  sizeName: string | null;
+  quantityPerUse: number;
+}
+
+export interface ServiceCostBreakdownDto {
+  serviceName: string;
+  basePrice: number;
+  sizeCosts: readonly SizeCostDto[];
+}
+
+export interface SizeCostDto {
+  sizeId: string;
+  sizeName: string;
+  servicePrice: number;
+  supplyCost: number;
+  estimatedCommission: number;
+  grossMargin: number;
+  marginPercent: number;
+  supplyCostLines: readonly SupplyCostLineDto[];
+}
+
+export interface SupplyCostLineDto {
+  supplyName: string;
+  unit: string;
+  quantityPerUse: number;
+  unitCost: number;
+  lineCost: number;
+}
+
+export interface SupplierDto {
+  id: string;
+  name: string;
+  contactPerson: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  isActive: boolean;
+}
+
+export interface PurchaseOrderDto {
+  id: string;
+  poNumber: string;
+  supplierName: string;
+  branchName: string;
+  status: string;
+  totalAmount: number;
+  orderDate: string | null;
+  expectedDeliveryDate: string | null;
+  createdAt: string;
+}
+
+export interface PurchaseOrderDetailDto extends PurchaseOrderDto {
+  supplierId: string;
+  branchId: string;
+  notes: string | null;
+  lines: readonly PurchaseOrderLineDto[];
+}
+
+export interface PurchaseOrderLineDto {
+  id: string;
+  itemName: string;
+  supplyItemId: string | null;
+  merchandiseId: string | null;
+  quantity: number;
+  receivedQuantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface EquipmentDto {
+  id: string;
+  branchName: string;
+  name: string;
+  brand: string | null;
+  model: string | null;
+  serialNumber: string | null;
+  status: string;
+  location: string | null;
+  isActive: boolean;
+  lastMaintenanceDate: string | null;
+  nextMaintenanceDue: string | null;
+  createdAt: string;
+}
+
+export interface EquipmentDetailDto extends EquipmentDto {
+  branchId: string;
+  purchaseDate: string | null;
+  purchaseCost: number | null;
+  warrantyExpiry: string | null;
+  notes: string | null;
+  maintenanceLogs: readonly MaintenanceLogDto[];
+}
+
+export interface MaintenanceLogDto {
+  id: string;
+  type: string;
+  description: string;
+  cost: number | null;
+  performedBy: string | null;
+  performedDate: string;
+  nextDueDate: string | null;
+  nextDueHours: number | null;
+  notes: string | null;
+}
+
+export interface InventorySummaryDto {
+  totalSupplyItems: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  totalStockValue: number;
+  lowStockItems: readonly LowStockItemInventoryDto[];
+}
+
+export interface LowStockItemInventoryDto {
+  id: string;
+  name: string;
+  unit: string;
+  branchName: string;
+  currentStock: number;
+  reorderLevel: number | null;
+  averageUnitCost: number;
+}
+
+export interface EquipmentMaintenanceReportDto {
+  totalEquipment: number;
+  needsMaintenanceCount: number;
+  underRepairCount: number;
+  totalMaintenanceCostThisMonth: number;
+  upcomingMaintenance: readonly MaintenanceDueItemDto[];
+  overdueMaintenance: readonly MaintenanceDueItemDto[];
+}
+
+export interface MaintenanceDueItemDto {
+  equipmentId: string;
+  equipmentName: string;
+  branchName: string;
+  lastMaintenanceDescription: string | null;
+  nextDueDate: string | null;
+  daysUntilDue: number;
 }

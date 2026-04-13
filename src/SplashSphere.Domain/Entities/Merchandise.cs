@@ -92,4 +92,5 @@ public sealed class Merchandise : IAuditableEntity
     public Tenant Tenant { get; set; } = null!;
     public MerchandiseCategory? Category { get; set; }
     public ICollection<TransactionMerchandise> TransactionMerchandise { get; set; } = [];
+    public ICollection<StockMovement> StockMovements { get; set; } = [];
 }

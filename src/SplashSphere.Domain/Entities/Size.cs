@@ -28,4 +28,5 @@ public sealed class Size : IAuditableEntity
     // ── Navigations ──────────────────────────────────────────────────────────
 
     public Tenant Tenant { get; set; } = null!;
+    public ICollection<ServiceSupplyUsage> ServiceSupplyUsages { get; set; } = [];
 }

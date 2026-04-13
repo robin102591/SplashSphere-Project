@@ -653,6 +653,74 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/reports/peak-hours` | Peak hours heatmap (7×24 grid, transaction count + revenue per slot) |
 | `GET` | `/reports/employee-performance` | Employee performance rankings (revenue, services, commissions, attendance) |
 
+### Supplies
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/supplies` | List supply items (filter by category, branch, stock status) |
+| `POST` | `/supplies` | Create supply item |
+| `GET` | `/supplies/{id}` | Supply item detail with movement history |
+| `PUT` | `/supplies/{id}` | Update supply item |
+| `DELETE` | `/supplies/{id}` | Soft delete supply item |
+| `GET` | `/supplies/categories` | List supply categories |
+| `POST` | `/supplies/categories` | Create supply category |
+
+### Stock Movements
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/stock-movements` | Record a stock movement |
+| `GET` | `/stock-movements` | List movements (filter by item, type, branch, date) |
+| `POST` | `/stock-movements/bulk-usage` | Record daily usage for multiple supplies |
+
+### Service Supply Usage
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/services/{id}/supply-usage` | Get supply usage matrix for a service |
+| `PUT` | `/services/{id}/supply-usage` | Set/update supply usage matrix |
+| `GET` | `/services/{id}/cost-breakdown` | Cost-per-wash breakdown by vehicle size |
+
+### Purchase Orders
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/purchase-orders` | List purchase orders (filter by status, supplier, branch) |
+| `POST` | `/purchase-orders` | Create purchase order |
+| `GET` | `/purchase-orders/{id}` | PO detail with lines |
+| `PUT` | `/purchase-orders/{id}` | Update PO (Draft only) |
+| `PATCH` | `/purchase-orders/{id}/send` | Mark PO as Sent |
+| `POST` | `/purchase-orders/{id}/receive` | Receive items (partial or full) |
+| `PATCH` | `/purchase-orders/{id}/cancel` | Cancel PO |
+
+### Suppliers
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/suppliers` | List suppliers |
+| `POST` | `/suppliers` | Create supplier |
+| `PUT` | `/suppliers/{id}` | Update supplier |
+
+### Equipment
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/equipment` | List equipment (filter by branch, status) |
+| `POST` | `/equipment` | Register equipment |
+| `GET` | `/equipment/{id}` | Equipment detail with maintenance history |
+| `PUT` | `/equipment/{id}` | Update equipment |
+| `POST` | `/equipment/{id}/maintenance` | Log maintenance activity |
+| `PATCH` | `/equipment/{id}/status` | Update equipment status |
+
+### Inventory Reports
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/reports/inventory-summary` | Stock levels, value, low stock alerts |
+| `GET` | `/reports/supply-usage` | Supply consumption over time |
+| `GET` | `/reports/equipment-maintenance` | Upcoming and overdue maintenance |
+| `GET` | `/reports/purchase-history` | Spending by supplier, category, period |
+
 ---
 
 ## Frontend Page Inventory
@@ -697,6 +765,14 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `/franchise/accept` | **Public** — franchise invitation acceptance (token validation + onboarding form) |
 | `/dashboard/settings/import` | Data Import Wizard — 4-step CSV/Excel import (upload, column mapping, validation, execute) |
 | `/dashboard/settings/notifications` | Notification Preferences — per-type SMS/email channel toggles with mandatory indicators |
+| `/dashboard/supplies` | Supply list with category/branch/stock filters, quick actions |
+| `/dashboard/supplies/[id]` | Supply detail: stock gauge, movements timeline, usage/restock dialogs |
+| `/dashboard/equipment` | Equipment list with status badges and maintenance indicators |
+| `/dashboard/equipment/[id]` | Equipment detail with maintenance log timeline |
+| `/dashboard/purchase-orders` | PO list with status lifecycle badges |
+| `/dashboard/purchase-orders/new` | Create PO form with line items |
+| `/dashboard/purchase-orders/[id]` | PO detail with receive items workflow |
+| `/dashboard/suppliers` | Supplier CRUD list |
 
 ### POS App
 
@@ -735,11 +811,12 @@ When `queueEntryId` is present: pre-fill vehicle/customer from queue entry, pre-
 | Job | Schedule | Description |
 |---|---|---|
 | `RunDailyPayrollJob` | Daily 00:05 PHT | Per-tenant: auto-close expired periods + create new periods based on tenant's CutOffStartDay |
-| `CheckLowStockAlerts` | Daily 08:00 PHT | Scan low inventory |
+| `CheckLowStockAlerts` | Every 6 hours | Check supplies and merchandise for low stock |
 | `CleanupStaleTransactions` | Hourly | Cancel PENDING transactions older than 4h |
 | `GenerateRecurringExpenses` | Daily 00:30 PHT | Auto-generate expense records for recurring expenses (Daily/Weekly/Monthly) |
 | `CalculateMonthlyRoyaltiesJob` | Monthly 1st 02:00 PHT | Per-franchise-network: sum franchisee revenue, calculate royalty/marketing/tech fees |
 | `SendRoyaltyRemindersJob` | Monthly 5th 09:00 PHT | Mark unpaid royalties as overdue |
+| `CheckEquipmentMaintenance` | Daily 08:00 PHT | Set overdue equipment to NeedsMaintenance status |
 
 **Queue No-Show Timer:** Fire-and-forget, triggered when customer is CALLED. `BackgroundJob.Schedule` 5-minute delay. Only marks NO_SHOW if status still CALLED.
 
@@ -774,6 +851,10 @@ Events: `TransactionUpdated`, `DashboardMetricsUpdated`, `AttendanceUpdated`, `Q
 17. **Loyalty Points**: Points are whole integers. Earned via `floor(FinalAmount / CurrencyUnitAmount) * PointsPerCurrencyUnit * tierMultiplier`. Auto-awarded on transaction completion via `TransactionCompletedLoyaltyHandler`. MembershipCard is separate from Customer (requires feature gate). Tier progression is one-directional (upgrades only). Auto-enrollment when `AutoEnroll` is enabled.
 18. **Loyalty Feature Gate**: All loyalty endpoints require `FeatureKeys.CustomerLoyalty` (Growth + Enterprise + Trial plans). The `RequiresFeatureAttribute` middleware enforces this.
 19. **Franchise Feature Gate**: All franchise endpoints (except public invitation validate/accept) require `FeatureKeys.FranchiseManagement` (Enterprise plan only). Franchisees pay their own independent subscriptions — each franchisee tenant has its own `TenantSubscription` starting with a 14-day Trial, then upgrades to any plan independently.
+20. **Stock Movement Audit Trail**: Every stock quantity change creates a `StockMovement` record. `CurrentStock` is always derivable from the sum of movements. Negative stock is allowed but triggers warnings.
+21. **Supply Usage Auto-Deduction**: On transaction completion, if `ServiceSupplyUsage` records exist, supplies are auto-deducted based on vehicle size. Falls back to default (null SizeId) entries. Optional per-service — unconfigured services skip deduction.
+22. **Purchase Order Lifecycle**: Draft → Sent → PartiallyReceived/Received. Only Draft POs can be edited. Receiving creates PurchaseIn movements and updates stock + weighted average unit cost.
+23. **Equipment Maintenance Scheduling**: Equipment status cycles: Operational → NeedsMaintenance → UnderRepair → Operational. Daily Hangfire job flags overdue equipment. Logging maintenance resets status to Operational.
 
 ---
 

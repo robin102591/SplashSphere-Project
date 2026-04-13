@@ -738,6 +738,85 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("Employees", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Equipment", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("PurchaseCost")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<DateTime?>("PurchaseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("WarrantyExpiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "BranchId", "Status");
+
+                    b.ToTable("Equipment", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Expense", b =>
                 {
                     b.Property<string>("Id")
@@ -1363,6 +1442,64 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("LoyaltyTierConfigs", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.MaintenanceLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<decimal?>("Cost")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("EquipmentId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("NextDueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("NextDueHours")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PerformedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("PerformedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("EquipmentId", "NextDueDate");
+
+                    b.ToTable("MaintenanceLogs", (string)null);
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Make", b =>
@@ -2542,6 +2679,133 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("PricingModifiers", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTime?>("ExpectedDeliveryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("OrderDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PoNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SupplierId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "PoNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("PurchaseOrders", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PurchaseOrderLine", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("MerchandiseId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("PurchaseOrderId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<decimal>("ReceivedQuantity")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("SupplyItemId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MerchandiseId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.HasIndex("SupplyItemId");
+
+                    b.ToTable("PurchaseOrderLines", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.QueueEntry", b =>
                 {
                     b.Property<string>("Id")
@@ -3047,6 +3311,54 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("ServicePricing", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ServiceSupplyUsage", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("QuantityPerUse")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("ServiceId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("SizeId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("SupplyItemId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SizeId");
+
+                    b.HasIndex("SupplyItemId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ServiceId", "SupplyItemId", "SizeId")
+                        .IsUnique();
+
+                    b.ToTable("ServiceSupplyUsages", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.ShiftDenomination", b =>
                 {
                     b.Property<string>("Id")
@@ -3224,6 +3536,257 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Sizes", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.StockMovement", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("MerchandiseId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("MovementDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PerformedByUserId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SupplyItemId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<decimal?>("TotalCost")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("MerchandiseId");
+
+                    b.HasIndex("SupplyItemId");
+
+                    b.HasIndex("TenantId", "BranchId", "Type");
+
+                    b.HasIndex("TenantId", "MerchandiseId", "MovementDate");
+
+                    b.HasIndex("TenantId", "SupplyItemId", "MovementDate");
+
+                    b.ToTable("StockMovements", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Supplier", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Suppliers", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyCategory", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("SupplyCategories", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyItem", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<decimal>("AverageUnitCost")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("CategoryId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<decimal>("CurrentStock")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<decimal?>("ReorderLevel")
+                        .HasPrecision(14, 4)
+                        .HasColumnType("numeric(14,4)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "BranchId");
+
+                    b.ToTable("SupplyItems", (string)null);
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Tenant", b =>
@@ -4033,6 +4596,25 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Equipment", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany("Equipment")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("Equipment")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Expense", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
@@ -4176,6 +4758,17 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Settings");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.MaintenanceLog", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Equipment", "Equipment")
+                        .WithMany("MaintenanceLogs")
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipment");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Make", b =>
@@ -4513,6 +5106,58 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Supplier", "Supplier")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Supplier");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PurchaseOrderLine", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Merchandise", "Merchandise")
+                        .WithMany()
+                        .HasForeignKey("MerchandiseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SplashSphere.Domain.Entities.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Lines")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.SupplyItem", "SupplyItem")
+                        .WithMany()
+                        .HasForeignKey("SupplyItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Merchandise");
+
+                    b.Navigation("PurchaseOrder");
+
+                    b.Navigation("SupplyItem");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.QueueEntry", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
@@ -4694,6 +5339,32 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("VehicleType");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ServiceSupplyUsage", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Service", "Service")
+                        .WithMany("SupplyUsages")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Size", "Size")
+                        .WithMany("ServiceSupplyUsages")
+                        .HasForeignKey("SizeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SplashSphere.Domain.Entities.SupplyItem", "SupplyItem")
+                        .WithMany("ServiceUsages")
+                        .HasForeignKey("SupplyItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Size");
+
+                    b.Navigation("SupplyItem");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.ShiftDenomination", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.CashierShift", "CashierShift")
@@ -4734,6 +5405,87 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.StockMovement", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Merchandise", "Merchandise")
+                        .WithMany("StockMovements")
+                        .HasForeignKey("MerchandiseId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SplashSphere.Domain.Entities.SupplyItem", "SupplyItem")
+                        .WithMany("StockMovements")
+                        .HasForeignKey("SupplyItemId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Merchandise");
+
+                    b.Navigation("SupplyItem");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Supplier", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("Suppliers")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyCategory", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("SupplyCategories")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyItem", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany("SupplyItems")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.SupplyCategory", "Category")
+                        .WithMany("Items")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("SupplyItems")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Category");
 
                     b.Navigation("Tenant");
                 });
@@ -4934,7 +5686,11 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("CashierShifts");
 
+                    b.Navigation("Equipment");
+
                     b.Navigation("QueueEntries");
+
+                    b.Navigation("SupplyItems");
 
                     b.Navigation("Transactions");
                 });
@@ -4981,6 +5737,11 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("TransactionSummaries");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Equipment", b =>
+                {
+                    b.Navigation("MaintenanceLogs");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.ExpenseCategory", b =>
                 {
                     b.Navigation("Expenses");
@@ -5008,6 +5769,8 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Merchandise", b =>
                 {
+                    b.Navigation("StockMovements");
+
                     b.Navigation("TransactionMerchandise");
                 });
 
@@ -5031,6 +5794,11 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Entries");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Commissions");
@@ -5038,6 +5806,8 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("PackageServices");
 
                     b.Navigation("Pricing");
+
+                    b.Navigation("SupplyUsages");
 
                     b.Navigation("TransactionServices");
                 });
@@ -5058,17 +5828,43 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("TransactionPackages");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Size", b =>
+                {
+                    b.Navigation("ServiceSupplyUsages");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Supplier", b =>
+                {
+                    b.Navigation("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyCategory", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.SupplyItem", b =>
+                {
+                    b.Navigation("ServiceUsages");
+
+                    b.Navigation("StockMovements");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Branches");
 
                     b.Navigation("ChildTenants");
 
+                    b.Navigation("Equipment");
+
                     b.Navigation("FranchiseSettings");
 
                     b.Navigation("Makes");
 
                     b.Navigation("MerchandiseCategories");
+
+                    b.Navigation("PurchaseOrders");
 
                     b.Navigation("QueueEntries");
 
@@ -5077,6 +5873,12 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Sizes");
 
                     b.Navigation("Subscription");
+
+                    b.Navigation("Suppliers");
+
+                    b.Navigation("SupplyCategories");
+
+                    b.Navigation("SupplyItems");
 
                     b.Navigation("Users");
 

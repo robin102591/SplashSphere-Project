@@ -154,6 +154,10 @@ Standard CRUD.
 | GET | /reports/revenue/export/csv | Export revenue report as CSV |
 | GET | /reports/commissions/export/csv | Export commissions report as CSV |
 | GET | /reports/service-popularity/export/csv | Export service popularity report as CSV |
+| GET | /reports/inventory-summary | Inventory stock summary with low stock alerts (gated: supply_tracking) |
+| GET | /reports/supply-usage | Supply usage trend over time (gated: cost_per_wash_reports) |
+| GET | /reports/equipment-maintenance | Equipment maintenance status report (gated: equipment_management) |
+| GET | /reports/purchase-history | Purchase spending by supplier and category (gated: purchase_orders) |
 
 ## Dashboard & Reports
 Summary, revenue, commissions, service popularity.
@@ -193,3 +197,56 @@ Summary, revenue, commissions, service popularity.
 | Method | Route | Description |
 |---|---|---|
 | GET | /audit-logs | Paginated audit log list |
+
+## Inventory / Supplies (Gated: supply_tracking)
+| Method | Route | Description |
+|---|---|---|
+| GET | /supplies | List supply items (filter by category, branch, stock status) |
+| POST | /supplies | Create a new supply item |
+| GET | /supplies/{id} | Get supply item detail with recent movements |
+| PUT | /supplies/{id} | Update a supply item |
+| DELETE | /supplies/{id} | Soft-delete a supply item |
+| GET | /supplies/categories | List supply categories |
+| POST | /supplies/categories | Create a supply category |
+
+## Stock Movements (Gated: supply_tracking)
+| Method | Route | Description |
+|---|---|---|
+| POST | /stock-movements | Record a stock movement for a supply item |
+| GET | /stock-movements | List stock movements (filter by item, type, branch, dates) |
+| POST | /stock-movements/bulk-usage | Record bulk usage deductions for multiple supply items |
+
+## Service Supply Usage (Gated: supply_usage_auto_deduction / cost_per_wash_reports)
+| Method | Route | Description |
+|---|---|---|
+| GET | /services/{id}/supply-usage | Get supply usage configuration for a service |
+| PUT | /services/{id}/supply-usage | Update supply usage configuration for a service |
+| GET | /services/{id}/cost-breakdown | Get cost breakdown per size for a service |
+
+## Suppliers (Gated: purchase_orders)
+| Method | Route | Description |
+|---|---|---|
+| GET | /suppliers | List all suppliers |
+| POST | /suppliers | Create a supplier |
+| PUT | /suppliers/{id} | Update a supplier |
+
+## Purchase Orders (Gated: purchase_orders)
+| Method | Route | Description |
+|---|---|---|
+| GET | /purchase-orders | List purchase orders (filter by supplier, branch, status) |
+| POST | /purchase-orders | Create a purchase order |
+| GET | /purchase-orders/{id} | Get purchase order details |
+| PUT | /purchase-orders/{id} | Update a draft purchase order |
+| PATCH | /purchase-orders/{id}/send | Send a purchase order to supplier |
+| POST | /purchase-orders/{id}/receive | Receive goods against a purchase order |
+| PATCH | /purchase-orders/{id}/cancel | Cancel a purchase order |
+
+## Equipment (Gated: equipment_management)
+| Method | Route | Description |
+|---|---|---|
+| GET | /equipment | List equipment (filter by branch, status) |
+| POST | /equipment | Register new equipment |
+| GET | /equipment/{id} | Get equipment details |
+| PUT | /equipment/{id} | Update equipment |
+| POST | /equipment/{id}/maintenance | Log a maintenance activity |
+| PATCH | /equipment/{id}/status | Update equipment status |

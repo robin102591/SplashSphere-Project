@@ -56,4 +56,11 @@ public sealed class Tenant : IAuditableEntity
     public Tenant? ParentTenant { get; set; }
     public ICollection<Tenant> ChildTenants { get; set; } = [];
     public FranchiseSettings? FranchiseSettings { get; set; }
+
+    // ── Inventory navigations ────────────────────────────────────────────────
+    public ICollection<SupplyCategory> SupplyCategories { get; set; } = [];
+    public ICollection<SupplyItem> SupplyItems { get; set; } = [];
+    public ICollection<Supplier> Suppliers { get; set; } = [];
+    public ICollection<Equipment> Equipment { get; set; } = [];
+    public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = [];
 }

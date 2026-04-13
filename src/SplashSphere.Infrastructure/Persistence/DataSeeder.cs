@@ -176,6 +176,10 @@ public static class DataSeeder
         // Batch 7 — loyalty program
         SeedLoyaltyProgram(ctx);
         await ctx.SaveChangesAsync();
+
+        // Batch 8 — supply categories
+        SeedSupplyCategories(ctx);
+        await ctx.SaveChangesAsync();
     }
 
     // ── Master data ───────────────────────────────────────────────────────────
@@ -857,5 +861,18 @@ public static class DataSeeder
         {
             ExpiresAt = DateTime.UtcNow.AddMonths(12),
         });
+    }
+
+    // ── Supply categories ─────────────────────────────────────────────────────
+
+    private static void SeedSupplyCategories(ApplicationDbContext ctx)
+    {
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Cleaning Chemicals", "Car wash soaps, detergents, and degreasers") { Id = "supcat-cleaning" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Wax & Polish", "Spray wax, polish compounds, and sealants") { Id = "supcat-wax" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Tire & Trim Products", "Tire black, trim restorers, and protectants") { Id = "supcat-tire" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Towels & Cloths", "Microfiber towels, chamois, and drying cloths") { Id = "supcat-towels" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Brushes & Tools", "Wash mitts, brushes, and applicator pads") { Id = "supcat-brushes" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Water & Utilities", "Water consumption and utility tracking") { Id = "supcat-water" });
+        ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Packaging & Miscellaneous", "Paper towels, plastic wraps, and misc supplies") { Id = "supcat-misc" });
     }
 }

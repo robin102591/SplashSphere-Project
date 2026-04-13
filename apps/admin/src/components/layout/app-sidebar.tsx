@@ -51,6 +51,10 @@ import {
   Settings2,
   BarChart2,
   Network,
+  Boxes,
+  Hammer,
+  ClipboardList,
+  Truck,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useHasFeature, usePlan } from '@/hooks/use-plan'
@@ -80,6 +84,15 @@ const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[]; f
       { labelKey: 'packages', href: '/dashboard/packages', icon: Package },
       { labelKey: 'merchandise', href: '/dashboard/merchandise', icon: ShoppingBag },
       { labelKey: 'pricingRules', href: '/dashboard/pricing-modifiers', icon: Percent, feature: FeatureKeys.PricingModifiers },
+    ],
+  },
+  {
+    labelKey: 'inventory',
+    items: [
+      { labelKey: 'supplies', href: '/dashboard/supplies', icon: Boxes, feature: FeatureKeys.SupplyTracking },
+      { labelKey: 'equipment', href: '/dashboard/equipment', icon: Hammer, feature: FeatureKeys.EquipmentManagement },
+      { labelKey: 'purchaseOrders', href: '/dashboard/purchase-orders', icon: ClipboardList, feature: FeatureKeys.PurchaseOrders },
+      { labelKey: 'suppliers', href: '/dashboard/suppliers', icon: Truck, feature: FeatureKeys.PurchaseOrders },
     ],
   },
   {

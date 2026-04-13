@@ -1,5 +1,30 @@
 ## Changelog
 
+## [Inventory Module] — 2026-04-12
+
+### Added
+- **Domain entities**: SupplyCategory, SupplyItem, StockMovement, Supplier, PurchaseOrder, PurchaseOrderLine, Equipment, MaintenanceLog, ServiceSupplyUsage
+- **Enums**: MovementType (9 values), PurchaseOrderStatus, EquipmentStatus, MaintenanceType
+- **Feature keys**: supply_tracking (Starter), purchase_orders, equipment_management, supply_usage_auto_deduction, cost_per_wash_reports (Growth+)
+- **Supply CRUD**: Create, update, soft-delete supply items with branch-scoped stock tracking
+- **Stock movements**: Record individual movements (usage, purchase, adjustment, waste, transfer) and bulk daily usage
+- **Service supply usage matrix**: Configure per-service supply consumption by vehicle size for auto-deduction
+- **Cost-per-wash analysis**: Calculate supply costs, commissions, and margins per service per vehicle size
+- **Purchase orders**: Full PO lifecycle (Draft → Sent → PartiallyReceived → Received → Cancelled) with auto-stock-in on receive
+- **Supplier management**: CRUD for vendor/supplier records linked to POs
+- **Equipment registry**: Track car wash equipment (pressure washers, vacuums) with brand, model, serial, warranty, location
+- **Maintenance logging**: Record preventive/corrective maintenance with next-due scheduling
+- **Inventory reports**: Inventory summary, supply usage trends, equipment maintenance status, purchase history by supplier/category
+- **P&L integration**: COGS now includes StockMovement SaleOut and UsageOut costs
+- **Hangfire jobs**: Low stock alerts (every 6 hours), equipment maintenance check (daily 8 AM PHT)
+- **29 new API endpoints** across supplies, stock movements, POs, suppliers, equipment, service usage, reports
+- **Admin pages**: Supplies list + detail, Equipment list + detail, Purchase Orders list + create + detail, Suppliers CRUD
+- **Sidebar**: Inventory nav group (Supplies, Equipment, Purchase Orders, Suppliers)
+- **TypeScript types**: 18 new DTO interfaces, 4 enums, 31 React hooks
+- **i18n**: English + Filipino translations for inventory navigation
+- **Seed data**: 7 default supply categories
+- **EF migration**: AddInventoryModule (9 new tables with indexes)
+
 ## [API Documentation] — 2026-04-12
 ### Added — Swagger / OpenAPI Documentation
 - **Swashbuckle.AspNetCore 7.x** installed with JWT Bearer auth definition for try-it-out

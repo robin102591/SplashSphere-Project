@@ -116,6 +116,17 @@ public interface IApplicationDbContext
     DbSet<MembershipCard> MembershipCards { get; }
     DbSet<PointTransaction> PointTransactions { get; }
 
+    // ── Inventory ────────────────────────────────────────────────────────────
+    DbSet<SupplyCategory> SupplyCategories { get; }
+    DbSet<SupplyItem> SupplyItems { get; }
+    DbSet<StockMovement> StockMovements { get; }
+    DbSet<Supplier> Suppliers { get; }
+    DbSet<PurchaseOrder> PurchaseOrders { get; }
+    DbSet<PurchaseOrderLine> PurchaseOrderLines { get; }
+    DbSet<Equipment> Equipment { get; }
+    DbSet<MaintenanceLog> MaintenanceLogs { get; }
+    DbSet<ServiceSupplyUsage> ServiceSupplyUsages { get; }
+
     // ── Franchise ────────────────────────────────────────────────────────────
     DbSet<FranchiseSettings> FranchiseSettings { get; }
     DbSet<FranchiseAgreement> FranchiseAgreements { get; }

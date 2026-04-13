@@ -104,6 +104,17 @@ public sealed class ApplicationDbContext(
     public DbSet<MembershipCard> MembershipCards => Set<MembershipCard>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
+    // ── Inventory ────────────────────────────────────────────────────────────
+    public DbSet<SupplyCategory> SupplyCategories => Set<SupplyCategory>();
+    public DbSet<SupplyItem> SupplyItems => Set<SupplyItem>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+    public DbSet<Equipment> Equipment => Set<Equipment>();
+    public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
+    public DbSet<ServiceSupplyUsage> ServiceSupplyUsages => Set<ServiceSupplyUsage>();
+
     // ── Franchise ────────────────────────────────────────────────────────────
     public DbSet<FranchiseSettings> FranchiseSettings => Set<FranchiseSettings>();
     public DbSet<FranchiseAgreement> FranchiseAgreements => Set<FranchiseAgreement>();
@@ -274,6 +285,28 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<PointTransaction>()
             .HasQueryFilter(p => p.TenantId == tenantContext.TenantId);
+
+        // ── Inventory ────────────────────────────────────────────────────────
+        modelBuilder.Entity<SupplyCategory>()
+            .HasQueryFilter(sc => sc.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<SupplyItem>()
+            .HasQueryFilter(si => si.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<StockMovement>()
+            .HasQueryFilter(sm => sm.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Supplier>()
+            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<PurchaseOrder>()
+            .HasQueryFilter(po => po.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Equipment>()
+            .HasQueryFilter(eq => eq.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<ServiceSupplyUsage>()
+            .HasQueryFilter(ssu => ssu.TenantId == tenantContext.TenantId);
 
         // ── Franchise (tenant-scoped only) ───────────────────────────────────
         // NOTE: FranchiseAgreement, RoyaltyPeriod, and FranchiseInvitation are

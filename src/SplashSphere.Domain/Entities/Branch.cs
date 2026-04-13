@@ -45,4 +45,6 @@ public sealed class Branch : IAuditableEntity
     public ICollection<Transaction> Transactions { get; set; } = [];
     public ICollection<QueueEntry> QueueEntries { get; set; } = [];
     public ICollection<CashierShift> CashierShifts { get; set; } = [];
+    public ICollection<SupplyItem> SupplyItems { get; set; } = [];
+    public ICollection<Equipment> Equipment { get; set; } = [];
 }

@@ -12,7 +12,8 @@ public static class PlanCatalog
     [
         FeatureKeys.Pos, FeatureKeys.CommissionTracking, FeatureKeys.WeeklyPayroll,
         FeatureKeys.BasicReports, FeatureKeys.CustomerManagement, FeatureKeys.VehicleManagement,
-        FeatureKeys.EmployeeManagement, FeatureKeys.MerchandiseManagement
+        FeatureKeys.EmployeeManagement, FeatureKeys.MerchandiseManagement,
+        FeatureKeys.SupplyTracking
     ];
 
     private static readonly HashSet<string> GrowthFeatures =
@@ -20,7 +21,9 @@ public static class PlanCatalog
         ..CoreFeatures,
         FeatureKeys.QueueManagement, FeatureKeys.CustomerLoyalty, FeatureKeys.CashAdvanceTracking,
         FeatureKeys.ExpenseTracking, FeatureKeys.ShiftManagement, FeatureKeys.ProfitLossReports,
-        FeatureKeys.SmsNotifications, FeatureKeys.PricingModifiers
+        FeatureKeys.SmsNotifications, FeatureKeys.PricingModifiers,
+        FeatureKeys.PurchaseOrders, FeatureKeys.EquipmentManagement,
+        FeatureKeys.SupplyUsageAutoDeduction, FeatureKeys.CostPerWashReports
     ];
 
     private static readonly HashSet<string> EnterpriseFeatures =
