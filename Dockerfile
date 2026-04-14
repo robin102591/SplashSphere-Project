@@ -8,6 +8,7 @@ WORKDIR /src
 COPY src/SplashSphere.Domain/SplashSphere.Domain.csproj Domain/
 COPY src/SplashSphere.Application/SplashSphere.Application.csproj Application/
 COPY src/SplashSphere.Infrastructure/SplashSphere.Infrastructure.csproj Infrastructure/
+COPY src/SplashSphere.SharedKernel/SplashSphere.SharedKernel.csproj SharedKernel/
 COPY src/SplashSphere.API/SplashSphere.API.csproj API/
 
 # Restore dependencies (cached unless .csproj changes)
