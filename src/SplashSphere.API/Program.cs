@@ -32,7 +32,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── Dev-only: override auth with pass-through handler ─────────────────────────
 // Auto-authenticates every request as the seed tenant so no Clerk token is needed.
-if (!builder.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddAuthentication(DevAuthHandler.SchemeName)
         .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });
@@ -107,11 +107,7 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection")!,
         name: "postgresql",
-        tags: ["db", "ready"])
-    .AddRedis(
-        builder.Configuration["Redis:ConnectionString"]!,
-        name: "redis",
-        tags: ["cache", "ready"]);
+        tags: ["db", "ready"]);
 
 builder.Services.AddAuthorization();
 
@@ -121,18 +117,19 @@ var app = builder.Build();
 // Health check endpoint (Railway uses this)
 app.MapHealthChecks("/health");
 
-// ── Dev-only: OpenAPI, Scalar, Swagger UI, migrations, seed ──────────────────
+// ── OpenAPI, Scalar, Swagger UI ──────────────────────────────────────────────
+app.MapOpenApi();
+app.MapScalarApiReference();
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SplashSphere API v1");
+    c.RoutePrefix = "docs";
+});
+
+// ── Dev-only: auto-migrate + seed ────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SplashSphere API v1");
-        c.RoutePrefix = "docs";
-    });
-
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
