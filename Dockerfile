@@ -5,18 +5,18 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /src
 
 # Copy project files first (for layer caching)
-COPY src/SplashSphere.Domain/SplashSphere.Domain.csproj Domain/
-COPY src/SplashSphere.Application/SplashSphere.Application.csproj Application/
-COPY src/SplashSphere.Infrastructure/SplashSphere.Infrastructure.csproj Infrastructure/
-COPY src/SplashSphere.SharedKernel/SplashSphere.SharedKernel.csproj SharedKernel/
-COPY src/SplashSphere.API/SplashSphere.API.csproj API/
+COPY src/SplashSphere.SharedKernel/SplashSphere.SharedKernel.csproj SplashSphere.SharedKernel/
+COPY src/SplashSphere.Domain/SplashSphere.Domain.csproj SplashSphere.Domain/
+COPY src/SplashSphere.Application/SplashSphere.Application.csproj SplashSphere.Application/
+COPY src/SplashSphere.Infrastructure/SplashSphere.Infrastructure.csproj SplashSphere.Infrastructure/
+COPY src/SplashSphere.API/SplashSphere.API.csproj SplashSphere.API/
 
 # Restore dependencies (cached unless .csproj changes)
-RUN dotnet restore API/SplashSphere.API.csproj
+RUN dotnet restore SplashSphere.API/SplashSphere.API.csproj
 
 # Copy everything and build
 COPY src/ .
-WORKDIR /src/API
+WORKDIR /src/SplashSphere.API
 RUN dotnet publish -c Release -o /app --no-restore
 
 # ============================================
