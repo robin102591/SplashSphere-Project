@@ -26,7 +26,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
 WORKDIR /app
 
 # Install ICU for globalization (needed for Philippine peso formatting)
-RUN apk add --no-cache icu-libs
+RUN apk add --no-cache icu-libs tzdata
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # Copy published output
