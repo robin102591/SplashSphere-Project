@@ -152,7 +152,15 @@
       "Bash(where.exe npm:*)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(npx --yes tsc --noEmit)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(mkdir -p tests)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet test:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

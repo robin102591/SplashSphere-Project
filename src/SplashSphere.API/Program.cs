@@ -16,6 +16,10 @@ using SplashSphere.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Railway injects PORT — Kestrel must listen on it
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // ── Serilog ───────────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
@@ -85,20 +89,37 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("SplashSphere", policy =>
     {
-        policy.WithOrigins(
-                builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [])
+        var origins = builder.Configuration
+            .GetSection("CORS:AllowedOrigins")
+            .Get<string[]>() ?? [];
+
+        policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials();  // Required for SignalR
     });
 });
+
+// In Program.cs — register health checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name: "postgresql",
+        tags: ["db", "ready"])
+    .AddRedis(
+        builder.Configuration["Redis:ConnectionString"]!,
+        name: "redis",
+        tags: ["cache", "ready"]);
 
 builder.Services.AddAuthorization();
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// Health check endpoint (Railway uses this)
+app.MapHealthChecks("/health");
 
 // ── Dev-only: OpenAPI, Scalar, Swagger UI, migrations, seed ──────────────────
 if (app.Environment.IsDevelopment())
@@ -121,7 +142,7 @@ if (app.Environment.IsDevelopment())
 // ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
-app.UseCors();
+app.UseCors("SplashSphere");
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 app.UseAuthentication();

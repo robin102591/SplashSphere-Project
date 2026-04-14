@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.next/
+**/dist/
+.git/
+.github/
+apps/
+packages/
+saas-admin/
+tests/
+*.md
+docker-compose*.yml
+.env*
