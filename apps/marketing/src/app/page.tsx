@@ -23,6 +23,7 @@ import {
   Shield,
   CreditCard,
   ChevronDown,
+  Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -307,7 +308,7 @@ const features = [
       'Track soap, wax, and microfiber stock with auto-deduction per service and vehicle size. Draft purchase orders, receive stock, and update weighted-average cost automatically.',
   },
   {
-    icon: Settings,
+    icon: Wrench,
     title: 'Equipment & Maintenance',
     description:
       'Register pressure washers, vacuums, and blowers. Log maintenance, get overdue alerts, and track equipment status from Operational to Under Repair.',
