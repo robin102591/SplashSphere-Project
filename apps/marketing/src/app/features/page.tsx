@@ -9,6 +9,10 @@ import {
   Heart,
   CheckCircle,
   ArrowRight,
+  Package,
+  Wrench,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -51,9 +55,10 @@ const categories: FeatureCategory[] = [
     features: [
       'Dynamic pricing matrix (vehicle type x size)',
       'Service packages with bundle discounts',
-      'Multiple payment methods (Cash, GCash, Card)',
-      'Split payment support',
-      'Transaction receipt (printable)',
+      'Multiple payment methods — cash, card, bank transfer, and manual e-wallet (GCash / Maya) tagging with reference number',
+      'Split payment support across multiple methods',
+      'Transaction receipt (80mm thermal printable / PDF)',
+      'Auto-lock POS with 4–6 digit PIN unlock',
       'Daily transaction summary',
     ],
     imagePlaceholder: 'POS Transaction Screen',
@@ -110,11 +115,72 @@ const categories: FeatureCategory[] = [
     features: [
       'Customer database with vehicle registry',
       'Plate number quick lookup',
-      'Loyalty points & tier membership (Bronze to Platinum)',
-      'Service history per customer/vehicle',
+      'Loyalty points auto-awarded on transaction completion',
+      'Tier membership (Bronze → Silver → Gold → Platinum) with per-tier multipliers',
+      'Membership cards with optional auto-enrollment',
+      'Service history per customer / vehicle',
       'SMS notifications',
     ],
     imagePlaceholder: 'Customer Profile',
+  },
+  {
+    icon: Package,
+    title: 'Supplies & Inventory',
+    description:
+      'Track every bottle of shampoo, wax, and microfiber cloth. Auto-deduct supplies when transactions complete, monitor stock movements, and reorder through purchase orders with weighted-average costing.',
+    features: [
+      'Supply catalog with categories and suppliers',
+      'Per-service supply usage by vehicle size (auto-deduct on completion)',
+      'Full stock movement audit trail',
+      'Purchase orders: Draft → Sent → Received lifecycle',
+      'Weighted-average unit cost updated on receiving',
+      'Low-stock warnings and negative-stock alerts',
+      'Merchandise inventory (retail add-ons) with low-stock alerts',
+    ],
+    imagePlaceholder: 'Supplies & Purchase Orders',
+  },
+  {
+    icon: Wrench,
+    title: 'Equipment Maintenance',
+    description:
+      'Never lose a bay to a surprise breakdown. Register your pressure washers, vacuums, and blowers, schedule maintenance, and get flagged when service is overdue.',
+    features: [
+      'Equipment register per branch',
+      'Status lifecycle: Operational → Needs Maintenance → Under Repair',
+      'Maintenance log history',
+      'Daily overdue-maintenance flagging (automatic)',
+      'Last-serviced and next-due tracking',
+    ],
+    imagePlaceholder: 'Equipment Register & Maintenance Log',
+  },
+  {
+    icon: Building2,
+    title: 'Franchise Management',
+    description:
+      'Built for multi-franchise operators. Onboard franchisees with invitation links, push service templates, track royalties, and let each franchisee run their own independent subscription.',
+    features: [
+      'Franchisee onboarding via invitation link',
+      'Service templates pushed from franchisor to franchisees',
+      'Royalty period tracking and reporting',
+      'Each franchisee tenant pays an independent subscription',
+      'Enterprise plan feature',
+    ],
+    imagePlaceholder: 'Franchise Dashboard',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Security & Access',
+    description:
+      'Keep your terminals safe on a busy floor. PIN-protected POS lock screen, BCrypt-hashed credentials, and full audit logging across every sensitive action.',
+    features: [
+      'POS auto-lock after configurable inactivity',
+      'Manual lock button for quick hand-off',
+      '4–6 digit PIN unlock with attempt throttling',
+      'Admin-only PIN provisioning (BCrypt-hashed)',
+      'Tenant-isolated data with per-branch access control',
+      'Audit log of sensitive actions',
+    ],
+    imagePlaceholder: 'POS Lock Screen',
   },
 ]
 

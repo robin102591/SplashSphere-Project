@@ -52,10 +52,13 @@ const plans = [
       'Up to 15 employees',
       'Everything in Starter',
       'Queue management',
-      'Customer loyalty',
+      'Customer loyalty & membership tiers',
+      'Supplies inventory & purchase orders',
+      'Equipment maintenance tracking',
       'Cash advance tracking',
       'Expense tracking',
       'Cash reconciliation / shift reports',
+      'POS lock screen & PIN unlock',
       'P&L Reports',
       'SMS notifications (50/mo)',
       'Priority support',
@@ -71,6 +74,7 @@ const plans = [
       'Unlimited branches',
       'Unlimited employees',
       'Everything in Growth',
+      'Franchise management (invitations, royalties, templates)',
       'API access',
       'Custom integrations',
       'Dedicated support',
@@ -98,11 +102,15 @@ const comparisonRows: ComparisonRow[] = [
   { feature: 'Weekly Payroll', starter: true, growth: true, enterprise: true },
   { feature: 'Basic Reports', starter: true, growth: true, enterprise: true },
   { feature: 'Queue Management', starter: false, growth: true, enterprise: true },
-  { feature: 'Customer Loyalty', starter: false, growth: true, enterprise: true },
+  { feature: 'Customer Loyalty & Tiers', starter: false, growth: true, enterprise: true },
+  { feature: 'Supplies & Purchase Orders', starter: false, growth: true, enterprise: true },
+  { feature: 'Equipment Maintenance', starter: false, growth: true, enterprise: true },
+  { feature: 'POS Lock Screen & PIN', starter: true, growth: true, enterprise: true },
   { feature: 'Cash Advance Tracking', starter: false, growth: true, enterprise: true },
   { feature: 'Expense Tracking', starter: false, growth: true, enterprise: true },
   { feature: 'Shift / Cash Reconciliation', starter: false, growth: true, enterprise: true },
   { feature: 'P&L Reports', starter: false, growth: true, enterprise: true },
+  { feature: 'Franchise Management', starter: false, growth: false, enterprise: true },
   { feature: 'SMS Notifications', starter: false, growth: '50/mo', enterprise: '200/mo' },
   { feature: 'API Access', starter: false, growth: false, enterprise: true },
   { feature: 'Custom Integrations', starter: false, growth: false, enterprise: true },
@@ -123,9 +131,9 @@ const faqItems = [
       'No. Setup is completely free and takes about 15 minutes. Our onboarding wizard guides you through everything.',
   },
   {
-    question: 'What payment methods do you accept?',
+    question: 'What payment methods do you accept for my subscription?',
     answer:
-      'We accept GCash, credit/debit cards, and bank transfers through our secure payment partner.',
+      'SplashSphere subscriptions are billed via credit/debit card and bank transfer. Inside your POS, your cashiers can record cash, card, bank transfer, and manually tagged e-wallet (GCash / Maya) payments from customers — each e-wallet entry captures a reference number for easy reconciliation at shift close.',
   },
   {
     question: 'Do you charge per transaction?',
@@ -395,7 +403,7 @@ function FaqSection() {
 const ctaBadges = [
   { icon: Shield, label: '14-day free trial' },
   { icon: CreditCard, label: 'No credit card required' },
-  { icon: Smartphone, label: 'GCash ready' },
+  { icon: Smartphone, label: 'Multi-payment tracking' },
 ]
 
 function BottomCtaSection() {
