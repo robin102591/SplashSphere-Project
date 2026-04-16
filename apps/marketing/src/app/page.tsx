@@ -150,7 +150,7 @@ function HeroSection() {
               <ArrowRight className="h-4 w-4" />
             </a>
             <a
-              href="#demo"
+              href="/contact"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10"
             >
               Book a Demo
@@ -822,7 +822,7 @@ function FinalCtaSection() {
             <ArrowRight className="h-4 w-4" />
           </a>
           <a
-            href="#demo"
+            href="/contact"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-8 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
           >
             Book a Demo
