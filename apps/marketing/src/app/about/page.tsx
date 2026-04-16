@@ -47,7 +47,7 @@ const values = [
     icon: MapPin,
     title: 'Built for the Philippines',
     description:
-      'Peso currency, GCash payments, Filipino names, weekly payroll cycles \u2014 everything designed for how car washes actually run here.',
+      'Peso currency, multi-payment tracking (cash, card, e-wallet with reference numbers), Filipino names, weekly payroll cycles \u2014 everything designed for how car washes actually run here.',
   },
   {
     icon: Zap,
@@ -146,9 +146,9 @@ export default function AboutPage() {
             disputes were a weekly headache. Owners had no visibility into which
             branches were profitable and which were bleeding money. We set out to
             build affordable, locally-relevant software that speaks the language
-            of Philippine car wash operations &mdash; from GCash payments and
-            weekly payroll cut-offs to commission splitting and vehicle queue
-            management. SplashSphere is the result of that mission.
+            of Philippine car wash operations &mdash; from multi-payment
+            tracking and weekly payroll cut-offs to commission splitting and
+            vehicle queue management. SplashSphere is the result of that mission.
           </motion.p>
         </motion.div>
       </Section>

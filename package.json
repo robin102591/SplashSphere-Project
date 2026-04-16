@@ -1,0 +1,13 @@
+{
+  "name": "splashsphere",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev:admin": "pnpm --filter @splashsphere/admin dev",
+    "dev:pos": "pnpm --filter @splashsphere/pos dev",
+    "dev:marketing": "pnpm --filter @splashsphere/marketing dev",
+    "build:admin": "pnpm --filter @splashsphere/admin build",
+    "build:pos": "pnpm --filter @splashsphere/pos build",
+    "build:marketing": "pnpm --filter @splashsphere/marketing build"
+  }
+}

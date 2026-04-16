@@ -23,6 +23,7 @@ import {
   Shield,
   CreditCard,
   ChevronDown,
+  Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -99,7 +100,7 @@ function SectionHeader({
    ═══════════════════════════════════════════════════════════════════════ */
 
 const trustBadges = [
-  { icon: Smartphone, label: 'GCash Ready' },
+  { icon: Smartphone, label: 'Multi-Payment Tracking' },
   { icon: Building2, label: 'Multi-Branch' },
   { icon: CalendarCheck, label: 'Weekly Payroll' },
   { icon: Activity, label: 'Real-Time Dashboard' },
@@ -149,7 +150,7 @@ function HeroSection() {
               <ArrowRight className="h-4 w-4" />
             </a>
             <a
-              href="#demo"
+              href="/contact"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10"
             >
               Book a Demo
@@ -299,6 +300,30 @@ const features = [
     title: 'Receipt & Invoicing',
     description:
       'Thermal-printer-ready receipts in 80mm format. PDF downloads, auto-print on transaction complete, and customer SMS option.',
+  },
+  {
+    icon: ClipboardList,
+    title: 'Supplies & Purchase Orders',
+    description:
+      'Track soap, wax, and microfiber stock with auto-deduction per service and vehicle size. Draft purchase orders, receive stock, and update weighted-average cost automatically.',
+  },
+  {
+    icon: Wrench,
+    title: 'Equipment & Maintenance',
+    description:
+      'Register pressure washers, vacuums, and blowers. Log maintenance, get overdue alerts, and track equipment status from Operational to Under Repair.',
+  },
+  {
+    icon: Building2,
+    title: 'Franchise Management',
+    description:
+      'For Enterprise operators — onboard franchisees with invitations, royalty tracking, and per-franchisee subscription billing. Each franchisee runs independently.',
+  },
+  {
+    icon: Shield,
+    title: 'POS Lock & PIN',
+    description:
+      'Auto-lock the POS after inactivity. Cashiers unlock with a 4–6 digit PIN, and admin-only PIN provisioning keeps your terminal secure on a shared floor.',
   },
 ]
 
@@ -570,9 +595,9 @@ const faqItems = [
       'No. All plans include unlimited transactions. We believe in simple, predictable pricing.',
   },
   {
-    question: 'What payment methods do you accept?',
+    question: 'What payment methods do you accept for my subscription?',
     answer:
-      'We accept GCash, Maya, credit/debit cards, and bank transfers through our secure payment partner.',
+      'We accept credit/debit cards and bank transfers for SplashSphere subscription billing. Inside your POS, you can record cash, card, e-wallet (GCash/Maya), and bank transfer payments from your customers — e-wallet payments are logged manually with a reference number for easy end-of-shift reconciliation.',
   },
   {
     question: 'Can I use SplashSphere on a tablet?',
@@ -756,7 +781,7 @@ const ctaBadges = [
   { icon: Shield, label: '14-day free trial' },
   { icon: CreditCard, label: 'No credit card required' },
   { icon: CheckCircle, label: 'Cancel anytime' },
-  { icon: Smartphone, label: 'GCash ready' },
+  { icon: Smartphone, label: 'Multi-payment tracking' },
 ]
 
 function FinalCtaSection() {
@@ -797,7 +822,7 @@ function FinalCtaSection() {
             <ArrowRight className="h-4 w-4" />
           </a>
           <a
-            href="#demo"
+            href="/contact"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-8 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
           >
             Book a Demo

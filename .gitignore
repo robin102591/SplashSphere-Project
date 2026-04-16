@@ -23,6 +23,9 @@ node_modules/
 dist/
 out/
 .pnpm-store/
+# Prevent stale npm/yarn lockfiles in workspace apps (pnpm-lock.yaml is the source of truth)
+apps/*/package-lock.json
+apps/*/yarn.lock
 
 # PWA — generated service worker
 public/sw.js

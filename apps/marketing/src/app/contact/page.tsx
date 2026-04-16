@@ -162,6 +162,7 @@ function SuccessView() {
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -180,9 +181,24 @@ export default function ContactPage() {
     },
   })
 
-  const onSubmit = (data: ContactFormData) => {
-    console.log('Contact form submitted:', data)
-    setSubmitted(true)
+  const onSubmit = async (data: ContactFormData) => {
+    setSubmitError(null)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        throw new Error(body?.error ?? 'Something went wrong')
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : 'Failed to send. Please try again.',
+      )
+    }
   }
 
   const inputClassName =
@@ -366,6 +382,13 @@ export default function ContactPage() {
                         {...register('message')}
                       />
                     </InputField>
+
+                    {/* Error message */}
+                    {submitError && (
+                      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                        {submitError}
+                      </p>
+                    )}
 
                     {/* Submit */}
                     <button
