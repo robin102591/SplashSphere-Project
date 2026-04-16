@@ -92,7 +92,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("SplashSphere", policy =>
     {
         var origins = builder.Configuration
-            .GetSection("CORS:AllowedOrigins")
+            .GetSection("AllowedOrigins")
             .Get<string[]>() ?? [];
 
         policy.WithOrigins(origins)
