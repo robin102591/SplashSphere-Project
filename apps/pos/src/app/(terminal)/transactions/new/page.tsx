@@ -426,6 +426,8 @@ function NewTransactionContent() {
   /** Reset store and strip query params (queueEntryId, editId) so the page is fully clean. */
   const resetPage = () => {
     store.reset()
+    setLookupPlate('')
+    setCarNotFound(false)
     if (queueEntryId || editId) {
       router.replace('/transactions/new')
     }
