@@ -4,68 +4,71 @@ using SplashSphere.Domain.Entities;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
-public sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
+public sealed class ConnectUserTenantLinkConfiguration : IEntityTypeConfiguration<ConnectUserTenantLink>
 {
-    public void Configure(EntityTypeBuilder<Branch> builder)
+    public void Configure(EntityTypeBuilder<ConnectUserTenantLink> builder)
     {
-        builder.ToTable("Branches");
+        builder.ToTable("ConnectUserTenantLinks");
 
         // ── Primary key ───────────────────────────────────────────────────────
-        builder.HasKey(b => b.Id);
-        builder.Property(b => b.Id)
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Id)
             .IsRequired()
             .HasMaxLength(36)
             .HasDefaultValueSql("gen_random_uuid()::text");
 
         // ── Scalar properties ─────────────────────────────────────────────────
-        builder.Property(b => b.TenantId)
+        builder.Property(l => l.ConnectUserId)
+            .IsRequired()
+            .HasMaxLength(36);
+
+        builder.Property(l => l.TenantId)
             .IsRequired()
             .HasMaxLength(256);
 
-        builder.Property(b => b.Name)
+        builder.Property(l => l.CustomerId)
             .IsRequired()
-            .HasMaxLength(256);
+            .HasMaxLength(36);
 
-        builder.Property(b => b.Code)
-            .IsRequired()
-            .HasMaxLength(20);
-
-        builder.Property(b => b.Address)
-            .IsRequired()
-            .HasMaxLength(512);
-
-        builder.Property(b => b.ContactNumber)
-            .IsRequired()
-            .HasMaxLength(50);
-
-        builder.Property(b => b.IsActive)
+        builder.Property(l => l.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
 
-        // ── Geolocation (optional — filled in by admin for Connect auto-nearest) ──
-        builder.Property(b => b.Latitude)
-            .HasColumnType("decimal(9,6)");
-
-        builder.Property(b => b.Longitude)
-            .HasColumnType("decimal(9,6)");
+        builder.Property(l => l.LinkedAt)
+            .IsRequired();
 
         // ── Audit timestamps ──────────────────────────────────────────────────
-        builder.Property(b => b.CreatedAt)
+        builder.Property(l => l.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");
 
-        builder.Property(b => b.UpdatedAt)
+        builder.Property(l => l.UpdatedAt)
             .IsRequired();
 
         // ── Relationships ─────────────────────────────────────────────────────
-        builder.HasOne(b => b.Tenant)
-            .WithMany(t => t.Branches)
-            .HasForeignKey(b => b.TenantId)
+        builder.HasOne(l => l.ConnectUser)
+            .WithMany(u => u.TenantLinks)
+            .HasForeignKey(l => l.ConnectUserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(l => l.Tenant)
+            .WithMany()
+            .HasForeignKey(l => l.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Restrict: deleting a tenant Customer row should require explicitly unlinking first
+        builder.HasOne(l => l.Customer)
+            .WithMany()
+            .HasForeignKey(l => l.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // ── Indexes ───────────────────────────────────────────────────────────
-        // Branch codes are unique per tenant (e.g. two tenants can both have "MKT")
-        builder.HasIndex(b => new { b.Code, b.TenantId }).IsUnique();
-        builder.HasIndex(b => b.TenantId);
+        // One link per (user, tenant) — a customer cannot be linked twice to the same tenant
+        builder.HasIndex(l => new { l.ConnectUserId, l.TenantId })
+            .IsUnique()
+            .HasDatabaseName("UX_ConnectUserTenantLink_User_Tenant");
+
+        builder.HasIndex(l => l.TenantId);
+        builder.HasIndex(l => l.CustomerId);
     }
 }

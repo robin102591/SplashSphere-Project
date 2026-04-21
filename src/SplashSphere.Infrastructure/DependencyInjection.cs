@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Interfaces;
 using SplashSphere.Infrastructure.Auth;
+using SplashSphere.Infrastructure.Auth.Connect;
 using SplashSphere.Infrastructure.Authentication;
 using SplashSphere.Infrastructure.Persistence;
 using SplashSphere.Infrastructure.Persistence.Interceptors;
@@ -48,7 +49,11 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 
         // ── Clerk JWT authentication ──────────────────────────────────────────
-        services.AddClerkJwtAuthentication(configuration);
+        // Default Bearer scheme = Clerk (admin/POS). ConnectJwt is registered
+        // as a second scheme for the Customer Connect app — see ConnectJwtSetup.
+        services
+            .AddClerkJwtAuthentication(configuration)
+            .AddConnectJwtAuthentication(configuration);
 
         // ── Clerk backend API (organization management) ───────────────────────
         services.AddScoped<IClerkOrganizationService, ClerkOrganizationService>();
@@ -97,6 +102,15 @@ public static class DependencyInjection
         {
             services.AddScoped<ISmsService, ExternalServices.MockSmsService>();
         }
+
+        // ── Connect (customer app) OTP ──────────────────────────────────────
+        // Distributed cache — in-memory for dev, swap to AddStackExchangeRedisCache in prod.
+        services.AddDistributedMemoryCache();
+        services.AddScoped<IOtpSender, OtpSender>();
+        services.AddScoped<IOtpStore, DistributedCacheOtpStore>();
+
+        // ── Connect (customer app) JWT ──────────────────────────────────────
+        services.AddScoped<IConnectTokenService, ConnectTokenService>();
 
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();

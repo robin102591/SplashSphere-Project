@@ -1,5 +1,21 @@
 ## Changelog
 
+## [Customer Connect — Phase 22.1 Foundations] — 2026-04-21
+
+### Added
+- **Domain entities (global)**: `ConnectUser`, `ConnectVehicle`, `ConnectRefreshToken`, `GlobalMake`, `GlobalModel` — not tenant-scoped, phone is the cross-tenant identity.
+- **Domain entities (tenant-scoped)**: `ConnectUserTenantLink`, `BookingSetting`, `Booking`, `BookingService`, `Referral`.
+- **Enums**: `BookingStatus` (Confirmed / Arrived / InService / Completed / Cancelled / NoShow), `ReferralStatus` (Pending / Completed / Expired). `QueuePriority` renumbered: `Vip` 3 → 4 and new `Booked = 3` inserted between Express and Vip.
+- **Branch geolocation**: `Latitude` / `Longitude` (decimal(9,6), nullable) for auto-nearest-branch matching.
+- **Feature keys**: `online_booking`, `connect_directory_listing`, `referral_program` (all Growth+ tier).
+- **OTP infrastructure**: `IOtpSender` / `IOtpStore` application interfaces; `OtpSender` (wraps existing `ISmsService`, supports dev-mode fixed code) and `DistributedCacheOtpStore` (uses `IDistributedCache` — in-memory for dev, swap to Redis in prod). Enforces 60-second cooldown and 5 / day cap per phone. Platform absorbs OTP SMS cost (does NOT decrement tenant quota).
+- **Connect JWT service**: `IConnectTokenService` with HS256 signing, separate issuer/audience (`splashsphere.connect`), 30-min access tokens, 30-day refresh tokens. Refresh tokens are SHA-256 hashed and rotate on every use. New auth scheme `ConnectJwt` registered alongside default Clerk Bearer scheme.
+- **EF configurations**: 10 new `IEntityTypeConfiguration` implementations with unique indexes (`UX_ConnectUser_Phone`, `UX_ConnectUserTenantLink_User_Tenant`, `UX_ConnectVehicle_User_Plate`, `UX_GlobalMake_Name`, `UX_GlobalModel_Make_Name`, `UX_BookingSetting_Tenant_Branch`, `UX_Referral_Tenant_Code`, `UX_ConnectRefreshToken_TokenHash`) and a `IX_Booking_Status_SlotStart` for the Hangfire no-show job.
+- **Seed data**: Global vehicle catalogue — 15 Philippine makes with common models (Toyota, Mitsubishi, Honda, Ford, Suzuki, Nissan, Hyundai, Kia, Isuzu, Chevrolet, Mazda, MG, Geely, Chery, Subaru), seeded idempotently and outside the tenant idempotency guard.
+- **EF migration**: `AddCustomerConnect` (10 new tables + `Branches.Latitude`/`Longitude`, with a `migrationBuilder.Sql` data update promoting existing `QueueEntries.Priority = 3` rows to `4`).
+- **Config surface**: `Jwt:Connect:SigningKey` / `Issuer` / `Audience` / `AccessTokenMinutes` / `RefreshTokenDays` and `Otp:FixedCode` / `CodeLength` / `TtlMinutes` added to `.env.example`.
+- **Business rules 24–27** documented in `CLAUDE.md` (Connect identity, Connect auth, queue priority with bookings, booking price semantics).
+
 ## [Inventory Module] — 2026-04-12
 
 ### Added

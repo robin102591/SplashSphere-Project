@@ -133,4 +133,16 @@ public interface IApplicationDbContext
     DbSet<RoyaltyPeriod> RoyaltyPeriods { get; }
     DbSet<FranchiseServiceTemplate> FranchiseServiceTemplates { get; }
     DbSet<FranchiseInvitation> FranchiseInvitations { get; }
+
+    // ── Connect (customer-facing) ────────────────────────────────────────────
+    DbSet<ConnectUser> ConnectUsers { get; }
+    DbSet<ConnectUserTenantLink> ConnectUserTenantLinks { get; }
+    DbSet<ConnectVehicle> ConnectVehicles { get; }
+    DbSet<ConnectRefreshToken> ConnectRefreshTokens { get; }
+    DbSet<GlobalMake> GlobalMakes { get; }
+    DbSet<GlobalModel> GlobalModels { get; }
+    DbSet<BookingSetting> BookingSettings { get; }
+    DbSet<Booking> Bookings { get; }
+    DbSet<BookingService> BookingServices { get; }
+    DbSet<Referral> Referrals { get; }
 }

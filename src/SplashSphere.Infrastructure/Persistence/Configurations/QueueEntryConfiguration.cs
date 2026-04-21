@@ -57,7 +57,7 @@ public sealed class QueueEntryConfiguration : IEntityTypeConfiguration<QueueEntr
             .IsRequired()
             .HasConversion<int>();
 
-        // Stored as int — Regular=1, Express=2, Vip=3 (encodes sort order)
+        // Stored as int — Regular=1, Express=2, Booked=3, Vip=4 (encodes sort order)
         builder.Property(qe => qe.Priority)
             .IsRequired()
             .HasConversion<int>();

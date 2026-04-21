@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,11 +17,11 @@ namespace SplashSphere.Infrastructure.Authentication;
 /// </summary>
 public static class ClerkJwtSetup
 {
-    public static IServiceCollection AddClerkJwtAuthentication(
+    public static AuthenticationBuilder AddClerkJwtAuthentication(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services
+        return services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -64,7 +65,5 @@ public static class ClerkJwtSetup
                     },
                 };
             });
-
-        return services;
     }
 }

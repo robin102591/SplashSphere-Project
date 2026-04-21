@@ -36,6 +36,18 @@ public sealed class Branch : IAuditableEntity
     public string ContactNumber { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Branch latitude for Connect app auto-nearest-branch resolution.
+    /// Nullable — admins fill this in post-creation. WGS84 decimal degrees.
+    /// </summary>
+    public decimal? Latitude { get; set; }
+
+    /// <summary>
+    /// Branch longitude for Connect app auto-nearest-branch resolution.
+    /// Nullable — admins fill this in post-creation. WGS84 decimal degrees.
+    /// </summary>
+    public decimal? Longitude { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

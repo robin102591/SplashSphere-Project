@@ -122,6 +122,18 @@ public sealed class ApplicationDbContext(
     public DbSet<FranchiseServiceTemplate> FranchiseServiceTemplates => Set<FranchiseServiceTemplate>();
     public DbSet<FranchiseInvitation> FranchiseInvitations => Set<FranchiseInvitation>();
 
+    // ── Connect (customer-facing) ────────────────────────────────────────────
+    public DbSet<ConnectUser> ConnectUsers => Set<ConnectUser>();
+    public DbSet<ConnectUserTenantLink> ConnectUserTenantLinks => Set<ConnectUserTenantLink>();
+    public DbSet<ConnectVehicle> ConnectVehicles => Set<ConnectVehicle>();
+    public DbSet<ConnectRefreshToken> ConnectRefreshTokens => Set<ConnectRefreshToken>();
+    public DbSet<GlobalMake> GlobalMakes => Set<GlobalMake>();
+    public DbSet<GlobalModel> GlobalModels => Set<GlobalModel>();
+    public DbSet<BookingSetting> BookingSettings => Set<BookingSetting>();
+    public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<BookingService> BookingServices => Set<BookingService>();
+    public DbSet<Referral> Referrals => Set<Referral>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -316,6 +328,24 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<FranchiseServiceTemplate>()
             .HasQueryFilter(fst => fst.FranchisorTenantId == tenantContext.TenantId);
+
+        // ── Connect (customer-facing) ────────────────────────────────────────
+        // NOTE: ConnectUser, ConnectVehicle, ConnectRefreshToken, GlobalMake, and
+        // GlobalModel are intentionally NOT filtered — they are global (not tenant-scoped).
+        modelBuilder.Entity<ConnectUserTenantLink>()
+            .HasQueryFilter(l => l.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<BookingSetting>()
+            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Booking>()
+            .HasQueryFilter(b => b.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<BookingService>()
+            .HasQueryFilter(bs => bs.TenantId == tenantContext.TenantId);
+
+        modelBuilder.Entity<Referral>()
+            .HasQueryFilter(r => r.TenantId == tenantContext.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

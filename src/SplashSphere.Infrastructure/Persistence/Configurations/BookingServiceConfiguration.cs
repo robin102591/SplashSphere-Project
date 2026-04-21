@@ -4,68 +4,58 @@ using SplashSphere.Domain.Entities;
 
 namespace SplashSphere.Infrastructure.Persistence.Configurations;
 
-public sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
+public sealed class BookingServiceConfiguration : IEntityTypeConfiguration<BookingService>
 {
-    public void Configure(EntityTypeBuilder<Branch> builder)
+    public void Configure(EntityTypeBuilder<BookingService> builder)
     {
-        builder.ToTable("Branches");
+        builder.ToTable("BookingServices");
 
         // ── Primary key ───────────────────────────────────────────────────────
-        builder.HasKey(b => b.Id);
-        builder.Property(b => b.Id)
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id)
             .IsRequired()
             .HasMaxLength(36)
             .HasDefaultValueSql("gen_random_uuid()::text");
 
         // ── Scalar properties ─────────────────────────────────────────────────
-        builder.Property(b => b.TenantId)
+        builder.Property(s => s.TenantId)
             .IsRequired()
             .HasMaxLength(256);
 
-        builder.Property(b => b.Name)
+        builder.Property(s => s.BookingId)
             .IsRequired()
-            .HasMaxLength(256);
+            .HasMaxLength(36);
 
-        builder.Property(b => b.Code)
+        builder.Property(s => s.ServiceId)
             .IsRequired()
-            .HasMaxLength(20);
+            .HasMaxLength(36);
 
-        builder.Property(b => b.Address)
-            .IsRequired()
-            .HasMaxLength(512);
+        builder.Property(s => s.Price)
+            .HasColumnType("decimal(10,2)");
 
-        builder.Property(b => b.ContactNumber)
-            .IsRequired()
-            .HasMaxLength(50);
+        builder.Property(s => s.PriceMin)
+            .HasColumnType("decimal(10,2)");
 
-        builder.Property(b => b.IsActive)
-            .IsRequired()
-            .HasDefaultValue(true);
-
-        // ── Geolocation (optional — filled in by admin for Connect auto-nearest) ──
-        builder.Property(b => b.Latitude)
-            .HasColumnType("decimal(9,6)");
-
-        builder.Property(b => b.Longitude)
-            .HasColumnType("decimal(9,6)");
+        builder.Property(s => s.PriceMax)
+            .HasColumnType("decimal(10,2)");
 
         // ── Audit timestamps ──────────────────────────────────────────────────
-        builder.Property(b => b.CreatedAt)
+        builder.Property(s => s.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("now()");
 
-        builder.Property(b => b.UpdatedAt)
+        builder.Property(s => s.UpdatedAt)
             .IsRequired();
 
         // ── Relationships ─────────────────────────────────────────────────────
-        builder.HasOne(b => b.Tenant)
-            .WithMany(t => t.Branches)
-            .HasForeignKey(b => b.TenantId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // Booking is configured from BookingConfiguration.HasMany(Services).WithOne(Booking)
+
+        builder.HasOne(s => s.Service)
+            .WithMany()
+            .HasForeignKey(s => s.ServiceId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ── Indexes ───────────────────────────────────────────────────────────
-        // Branch codes are unique per tenant (e.g. two tenants can both have "MKT")
-        builder.HasIndex(b => new { b.Code, b.TenantId }).IsUnique();
-        builder.HasIndex(b => b.TenantId);
+        builder.HasIndex(s => s.BookingId);
     }
 }
