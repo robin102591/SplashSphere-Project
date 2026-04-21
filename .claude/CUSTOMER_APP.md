@@ -73,6 +73,23 @@ public sealed class ConnectUserTenantLink
     public bool IsActive { get; set; } = true;
     public DateTime LinkedAt { get; set; }
 }
+
+// Customer's vehicle — lightweight, NO vehicle type or size.
+// Type/size is assigned by the car wash cashier on first visit (stored in tenant's Car entity).
+public sealed class ConnectVehicle
+{
+    public string Id { get; set; } = string.Empty;
+    public string ConnectUserId { get; set; } = string.Empty;
+    public string MakeId { get; set; } = string.Empty;        // Toyota, Honda, etc.
+    public string ModelId { get; set; } = string.Empty;        // Vios, City, etc.
+    public string PlateNumber { get; set; } = string.Empty;    // PH format: ABC-1234
+    public string? Color { get; set; }
+    public int? Year { get; set; }
+    // NO VehicleTypeId — assigned by cashier on arrival
+    // NO SizeId — assigned by cashier on arrival
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
 ```
 
 ---
@@ -92,12 +109,12 @@ public sealed class ConnectUserTenantLink
 │                                                        │
 │  ── My Vehicles ────────────────────────── [+ Add] ── │
 │                                                        │
-│  🚗 Toyota Vios 2020                                  │
-│     ABC-1234 • Sedan • Medium • White                 │
+│  🚗 Toyota Vios 2020 • White                          │
+│     ABC-1234                                           │
 │     Last wash: Mar 22, 2026 at AquaShine              │
 │                                                        │
-│  🚙 Mitsubishi Xpander 2023                           │
-│     DEF-5678 • SUV • Large • Black                    │
+│  🚙 Mitsubishi Xpander 2023 • Black                   │
+│     DEF-5678                                           │
 │     Last wash: Mar 15, 2026 at SpeedyWash             │
 │                                                        │
 └────────────────────────────────────────────────────────┘
@@ -105,13 +122,19 @@ public sealed class ConnectUserTenantLink
 
 **Add Vehicle flow:**
 1. Enter plate number (PH format validation)
-2. Select make → model (searchable dropdown, pre-populated from tenant's make/model list)
-3. Select vehicle type (Sedan, SUV, Van, etc.)
-4. Size auto-suggested based on vehicle type + model, editable
-5. Optional: color, year
-6. Vehicle saved to `ConnectVehicle` (global) and synced to the tenant's `Car` entity when booking
+2. Select make → model (searchable dropdown, pre-populated from global make/model list)
+3. Optional: color, year
+4. Vehicle saved to `ConnectVehicle` (global)
+5. **No vehicle type or size selection** — the customer does NOT classify their vehicle. This prevents gaming (e.g., Fortuner owner selecting "Sedan/Small" to get cheaper prices). Vehicle type and size are assigned by the cashier/attendant when the car physically arrives at the car wash.
 
-**Vehicle sync:** When a customer books at a specific car wash, the app checks if that vehicle exists in the tenant's `Car` table. If not, it creates it automatically from the `ConnectVehicle` data. If it exists (matched by plate number), it links to the existing record.
+**Vehicle sync:** When a customer books at a specific car wash, the API checks if that tenant already has a `Car` record matching the plate number:
+- **Car exists in tenant (return visit):** Link to existing record. Vehicle type/size already assigned → exact pricing shown.
+- **Car doesn't exist (first visit):** No `Car` record created yet. Vehicle type/size unknown → price ranges shown. The `Car` entity (with type/size) is created by the cashier when the customer arrives and the vehicle is assessed.
+
+**Why the cashier assigns type/size, not the customer:**
+- Prevents pricing fraud (customers selecting smaller classification for cheaper services)
+- Matches real-world operations (attendants look at the car and decide classification)
+- After first visit, all future bookings at that car wash show exact prices automatically
 
 ### 2. Find & Join a Car Wash
 
@@ -155,10 +178,13 @@ The core feature. A customer books a time slot, which automatically creates a qu
 │                                                        │
 │  Select Vehicle                                        │
 │  ┌─────────────────────────────────────────────────┐  │
-│  │ 🚗 Toyota Vios (ABC-1234) • Sedan/Medium        │  │
-│  │ 🚙 Mitsubishi Xpander (DEF-5678) • SUV/Large    │  │
+│  │ 🚗 Toyota Vios 2020 (ABC-1234) • White          │  │
+│  │     ✅ Classified: Sedan/Medium                  │  │
+│  │ 🚙 Mitsubishi Xpander 2023 (DEF-5678) • Black   │  │
+│  │     ⏳ Not yet classified at this car wash       │  │
 │  └─────────────────────────────────────────────────┘  │
 │                                                        │
+│  ── If vehicle IS classified (return visit): ──       │
 │  Select Services                                       │
 │  ┌─────────────────────────────────────────────────┐  │
 │  │ ✓ Basic Wash .......................... ₱200     │  │
@@ -166,7 +192,17 @@ The core feature. A customer books a time slot, which automatically creates a qu
 │  │ ○ Wax & Polish ....................... ₱450     │  │
 │  │ ○ Interior Vacuum .................... ₱150     │  │
 │  └─────────────────────────────────────────────────┘  │
-│  Prices shown for Sedan/Medium                         │
+│  Prices for Sedan/Medium ✓                            │
+│                                                        │
+│  ── If vehicle NOT classified (first visit): ──       │
+│  Select Services                                       │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ ✓ Basic Wash .................. ₱180 – ₱350     │  │
+│  │ ✓ Tire & Rim Shine ........... ₱100 – ₱180     │  │
+│  │ ○ Wax & Polish ............... ₱350 – ₱600     │  │
+│  │ ○ Interior Vacuum ............ ₱120 – ₱250     │  │
+│  └─────────────────────────────────────────────────┘  │
+│  ⚠️ Final price confirmed at vehicle assessment       │
 │                                                        │
 │  Select Date & Time                                    │
 │  ┌─────────────────────────────────────────────────┐  │
@@ -181,12 +217,19 @@ The core feature. A customer books a time slot, which automatically creates a qu
 │  [10:00]   [10:30]   [11:00]   [11:30]                │
 │  [1:00 PM] [1:30 PM] [2:00 PM] [2:30 PM]             │
 │                                                        │
-│  ── Summary ──────────────────────────────────────    │
+│  ── Summary (classified vehicle) ────────────────    │
 │  Toyota Vios • Basic Wash + Tire Shine                │
 │  Saturday, Mar 5 at 9:00 AM                           │
 │  Estimated duration: 40 min                           │
 │  Total: ₱320                                          │
 │  Points earned: 32 pts                                │
+│                                                        │
+│  ── Summary (unclassified vehicle) ──────────────    │
+│  Mitsubishi Xpander • Basic Wash + Tire Shine         │
+│  Saturday, Mar 5 at 9:00 AM                           │
+│  Estimated duration: 40 min                           │
+│  Estimated Total: ₱280 – ₱530                        │
+│  *Final price confirmed when vehicle is assessed      │
 │                                                        │
 │              [Book Appointment]                        │
 └────────────────────────────────────────────────────────┘
@@ -227,14 +270,18 @@ public sealed class Booking
     public string BranchId { get; set; } = string.Empty;
     public string CustomerId { get; set; } = string.Empty;
     public string ConnectUserId { get; set; } = string.Empty;
-    public string CarId { get; set; } = string.Empty;
+    public string ConnectVehicleId { get; set; } = string.Empty;  // Always set (customer's vehicle)
+    public string? CarId { get; set; }                            // Set only if tenant has classified this vehicle
     public DateTime SlotStart { get; set; }
     public DateTime SlotEnd { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Confirmed;
-    public decimal EstimatedTotal { get; set; }
+    public bool IsVehicleClassified { get; set; }                 // true = exact prices, false = estimated
+    public decimal EstimatedTotal { get; set; }                   // Exact if classified, midpoint estimate if not
+    public decimal? EstimatedTotalMin { get; set; }               // Only set if not classified (price range low)
+    public decimal? EstimatedTotalMax { get; set; }               // Only set if not classified (price range high)
     public int EstimatedDurationMinutes { get; set; }
-    public string? QueueEntryId { get; set; }              // Created when customer arrives or at slot time
-    public string? TransactionId { get; set; }             // Created when service starts
+    public string? QueueEntryId { get; set; }                     // Created when customer arrives or at slot time
+    public string? TransactionId { get; set; }                    // Created when service starts
     public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -247,7 +294,9 @@ public sealed class BookingService
     public string Id { get; set; } = string.Empty;
     public string BookingId { get; set; } = string.Empty;
     public string ServiceId { get; set; } = string.Empty;
-    public decimal Price { get; set; }                     // Captured at booking time
+    public decimal? Price { get; set; }                           // Exact price (if vehicle classified)
+    public decimal? PriceMin { get; set; }                        // Range low (if not classified)
+    public decimal? PriceMax { get; set; }                        // Range high (if not classified)
 }
 
 public enum BookingStatus
@@ -498,14 +547,14 @@ Separate route prefix: `/api/v1/connect/` — different auth from the admin/POS 
 | `POST` | `/connect/auth/verify-otp` | Verify OTP → return session token |
 | `POST` | `/connect/auth/refresh` | Refresh session token |
 
-### Profile
+### Profile & Vehicles
 | Method | Route | Description |
 |---|---|---|
 | `GET` | `/connect/profile` | Get current user profile |
 | `PUT` | `/connect/profile` | Update name, email, avatar |
-| `GET` | `/connect/vehicles` | List user's vehicles |
-| `POST` | `/connect/vehicles` | Add a vehicle |
-| `PUT` | `/connect/vehicles/{id}` | Update vehicle |
+| `GET` | `/connect/vehicles` | List user's vehicles (make, model, plate, color, year — no type/size) |
+| `POST` | `/connect/vehicles` | Add a vehicle (make, model, plate, color, year only) |
+| `PUT` | `/connect/vehicles/{id}` | Update vehicle details |
 | `DELETE` | `/connect/vehicles/{id}` | Remove vehicle |
 
 ### Car Wash Discovery
@@ -515,6 +564,13 @@ Separate route prefix: `/api/v1/connect/` — different auth from the admin/POS 
 | `GET` | `/connect/carwashes/{tenantId}` | Car wash detail (services, hours, location) |
 | `POST` | `/connect/carwashes/{tenantId}/join` | Join/link to a car wash |
 | `GET` | `/connect/my-carwashes` | List user's linked car washes |
+
+### Services & Pricing
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes/{tenantId}/services?vehicleId={id}` | List services with pricing — returns exact prices if vehicle is classified at this tenant, or price ranges (min/max across all vehicle types/sizes) if not yet classified |
+
+Note: The `vehicleId` is the `ConnectVehicle.Id`. The API checks if a matching `Car` record exists in the tenant (matched by plate number). If yes → looks up `ServicePricing` for that vehicle's type/size → returns exact prices. If no → queries all `ServicePricing` rows for the service → returns min/max range.
 
 ### Booking
 | Method | Route | Description |
@@ -656,8 +712,13 @@ Infrastructure:
 CQRS features for Connect:
 
 Auth: SendOtpCommand, VerifyOtpCommand, RefreshTokenCommand
-Profile: UpdateProfileCommand, CRUD for ConnectVehicle
+Profile: UpdateProfileCommand, CRUD for ConnectVehicle (make, model, plate, color, year — NO type/size)
 Discovery: SearchCarWashesQuery, GetCarWashDetailQuery, JoinCarWashCommand
+Services: GetServicesWithPricingQuery — takes tenantId + connectVehicleId:
+  - Looks up plate number in tenant's Car table
+  - If Car exists (return visit): return exact prices from ServicePricing for that type/size
+  - If Car doesn't exist (first visit): return price ranges (min/max across all type/size combos)
+  - Response includes priceMode: "exact" | "estimate" and vehicleClassification: {...} | null
 Booking: GetAvailableSlotsQuery, CreateBookingCommand, CancelBookingCommand,
          MarkArrivedCommand
 Loyalty: GetMembershipQuery, GetRewardsQuery, RedeemRewardCommand,
@@ -668,12 +729,19 @@ History: GetServiceHistoryQuery
 
 Booking → Queue integration:
 - CreateBookingCommand validates slot availability, creates Booking record
+  - Sets IsVehicleClassified based on whether tenant Car exists
+  - Stores exact Price or PriceMin/PriceMax on BookingService
 - Hangfire job CreateQueueFromBookings: creates QueueEntry 15 min before slot
   with priority = BOOKED
 - MarkArrivedCommand updates both Booking and QueueEntry status
 - When POS creates Transaction from queue entry, link back to Booking
 
-Vehicle sync: when booking at a tenant, auto-create/link Car entity
+Vehicle flow:
+- Customer registers ConnectVehicle with make/model/plate (NO type/size)
+- On first visit: cashier sees vehicle info, assigns VehicleType + Size in POS
+  → creates Car entity in tenant's database with the classification
+- On return visits: Car already exists → exact pricing shown in Connect app
+- ConnectVehicle is NEVER synced to Car automatically — Car is only created by the cashier
 
 API routes under /api/v1/connect/ with OTP auth middleware
 ```
@@ -686,10 +754,14 @@ Create the customer app: apps/customer/ (Next.js 16 in the monorepo)
 Pages:
 - / — Home: "My Car Washes" list with loyalty summary per tenant
 - /auth — Phone OTP sign-in
-- /profile — Profile + vehicle management
+- /profile — Profile + vehicle management (add vehicle: make, model, plate, color, year ONLY — no type/size)
 - /discover — Search/browse car washes, join
 - /carwash/[tenantId] — Car wash detail (services, hours, reviews)
 - /carwash/[tenantId]/book — Booking wizard (vehicle → services → date/slot → confirm)
+  Vehicle selection: show classification status per vehicle ("Classified: Sedan/Medium" or "Not yet classified")
+  Services: if vehicle classified → show exact prices. If not → show price ranges (₱180 – ₱350)
+  with note: "Final price confirmed when your vehicle is assessed"
+  Booking summary: exact total OR estimated range
 - /carwash/[tenantId]/membership — Loyalty tier, points, rewards, referrals
 - /bookings — My upcoming + past bookings
 - /bookings/[id] — Booking detail with live queue status
@@ -715,7 +787,14 @@ Admin:
 POS:
 - Queue board: show 📅 badge on booked customers, display scheduled time
 - "Check In" button for when booked customer arrives
+- Vehicle classification flow (first-visit customers):
+  When a booked customer arrives and their vehicle has NOT been classified at this tenant,
+  the cashier sees: "Toyota Vios 2020 • ABC-1234 • White — Assign vehicle type and size"
+  Cashier selects VehicleType + Size → creates the tenant's Car record → prices lock in
+  → all future Connect app bookings show exact prices automatically
 - Auto-fill transaction from booking data (vehicle, services, customer)
+- If vehicle was unclassified: recalculate actual prices using the now-assigned type/size
+  Show cashier: "Estimated: ₱280-₱530 → Actual: ₱320" for confirmation
 - Mark no-show button (after grace period)
 
 Hangfire jobs:
@@ -753,9 +832,11 @@ Notifications: booking.confirmed, booking.reminder, booking.no_show,
 
 4. **Booking creates queue entry automatically.** The cashier doesn't need to manually add booked customers to the queue. A Hangfire job creates the `QueueEntry` 15 minutes before the slot with `BOOKED` priority, which sits between VIP and NORMAL.
 
-5. **Prices captured at booking time.** If the tenant changes pricing after the customer books, the booked price is honored. The `BookingService.Price` field stores the quoted price.
+5. **Prices captured at booking time.** If the tenant changes pricing after the customer books, the booked price is honored. For classified vehicles, `BookingService.Price` stores the exact quoted price. For unclassified vehicles (first visit), `BookingService.PriceMin` and `PriceMax` store the range — actual price is determined when the cashier classifies the vehicle at arrival.
 
 6. **Loyalty and referrals are per-tenant.** Maria's Gold status at AquaShine doesn't transfer to SpeedyWash. Each car wash has its own loyalty program. This matches real-world expectations and lets each tenant customize their tiers.
+
+7. **Vehicle type/size assigned by cashier, not customer.** Customers register vehicles with make, model, plate, color, and year only. The car wash cashier assigns vehicle type (Sedan/SUV/Van) and size (Small/Medium/Large/XL) when the car physically arrives. This prevents pricing fraud (customers selecting smaller classification for cheaper services) and matches real-world operations where attendants assess vehicles visually. After the first visit, all future bookings at that car wash show exact pricing automatically.
 
 7. **Growth+ plan feature.** Online booking and the Connect app listing are upgrade incentives for Starter tenants. "Want customers to book online? Upgrade to Growth."
 

@@ -371,6 +371,8 @@ function NewTransactionContent() {
   const searchParams = useSearchParams()
   const queueEntryId = searchParams.get('queueEntryId')
   const editId = searchParams.get('editId')          // edit mode — tx already exists
+  const prefillCarId = searchParams.get('carId')     // pre-fill from customer lookup
+  const prefillPlate = searchParams.get('plate')     // pre-fill from customer lookup (no carId)
   const { branchId: contextBranchId } = useBranch()
   const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
   const shiftOpen = isShiftOpen(currentShift)
@@ -423,12 +425,12 @@ function NewTransactionContent() {
   const servicesInitDone = useRef(false)
   const editInitDone = useRef(false)
 
-  /** Reset store and strip query params (queueEntryId, editId) so the page is fully clean. */
+  /** Reset store and strip query params (queueEntryId, editId, carId, plate) so the page is fully clean. */
   const resetPage = () => {
     store.reset()
     setLookupPlate('')
     setCarNotFound(false)
-    if (queueEntryId || editId) {
+    if (queueEntryId || editId || prefillCarId || prefillPlate) {
       router.replace('/transactions/new')
     }
   }
@@ -469,6 +471,47 @@ function NewTransactionContent() {
     enabled: !!queueEntry?.plateNumber,
     retry: false, // 404 = car doesn't exist yet, no need to retry
   })
+
+  // ── Prefill car from ?carId= (e.g. from customer lookup, direct flow) ─────
+  const { data: prefillCar } = useQuery({
+    queryKey: ['car-for-tx-prefill', prefillCarId],
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<Car>(`/cars/${prefillCarId}`, token ?? undefined)
+    },
+    enabled: !!prefillCarId && !queueEntryId && !editId,
+    retry: false,
+  })
+
+  const prefillInitDone = useRef(false)
+  useEffect(() => {
+    if (prefillInitDone.current) return
+    if (queueEntryId || editId) return
+    // Plate-only prefill (no carId): trigger plate lookup on mount.
+    if (!prefillCarId && prefillPlate) {
+      prefillInitDone.current = true
+      const plate = prefillPlate.trim().toUpperCase()
+      setLookupPlate(plate)
+      void handlePlateLookup(plate)
+      return
+    }
+    // CarId prefill: wait for car fetch, then populate vehicle in store.
+    if (prefillCarId && prefillCar) {
+      prefillInitDone.current = true
+      setLookupPlate(prefillCar.plateNumber)
+      useTransactionStore.getState().setVehicle({
+        plateNumber: prefillCar.plateNumber,
+        carId: prefillCar.id,
+        customerId: prefillCar.customerId,
+        vehicleTypeId: prefillCar.vehicleTypeId,
+        sizeId: prefillCar.sizeId,
+        vehicleTypeName: prefillCar.vehicleTypeName,
+        sizeName: prefillCar.sizeName,
+      })
+      setCarNotFound(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillCar, prefillCarId, prefillPlate, queueEntryId, editId])
 
   // ── Edit mode: load existing transaction ──────────────────────────────────
 
@@ -756,8 +799,9 @@ function NewTransactionContent() {
 
   // ── Plate lookup (direct flow) ─────────────────────────────────────────────
 
-  const handlePlateLookup = async () => {
-    const plate = lookupPlate.trim().toUpperCase()
+  const handlePlateLookup = async (plateOverride?: string) => {
+    const raw = plateOverride ?? lookupPlate
+    const plate = raw.trim().toUpperCase()
     if (!plate) return
     setIsLookingUp(true)
     setCarNotFound(false)
