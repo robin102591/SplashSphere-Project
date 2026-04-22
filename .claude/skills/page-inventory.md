@@ -72,14 +72,16 @@ description: Current frontend page inventory — updated by agents after each ta
 | /dashboard/purchase-orders/new | Create PO form with line items |
 | /dashboard/purchase-orders/[id] | PO detail with receive items workflow |
 | /dashboard/suppliers | Supplier CRUD list |
+| /dashboard/bookings | Bookings list + week calendar view (gated on online_booking) — branch/status/date filters, detail dialog |
+| /dashboard/settings/booking | Per-branch online-booking configuration (gated on online_booking) — hours, slot interval, lead time, availability toggles |
 
 ## POS App
 | Route | Page |
 |---|---|
 | / | POS Home — quick actions |
-| /queue | Queue Board — Kanban (WAITING / CALLED / IN_SERVICE) |
+| /queue | Queue Board — Kanban (WAITING / CALLED / IN_SERVICE). Booking entries show calendar badge + slot time, Confirmed bookings get a Check-In button, and Start Service on a booking with an unclassified vehicle opens a classification modal. |
 | /queue/add | Add to Queue — plate lookup, priority, preferred services |
-| /transactions/new | New Transaction (supports direct OR from-queue via ?queueEntryId) |
+| /transactions/new | New Transaction (supports direct OR from-queue via ?queueEntryId). When the queue entry has a bookingId, the page fetches booking detail, shows a "From booking" banner, and pre-fills services with the booking's locked prices. |
 | /transactions/[id] | Transaction detail + receipt |
 | /history | Today's transactions |
 | /customers/lookup | Plate/customer search |

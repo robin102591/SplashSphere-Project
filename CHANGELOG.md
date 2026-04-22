@@ -1,5 +1,45 @@
 ## Changelog
 
+## [Customer Connect — Phase 22.4 Admin + POS Integration] — 2026-04-22
+
+Closes Phase 22 with the tenant-facing side of bookings + referrals — admin booking management, POS check-in / classification / auto-fill, referral-reward payout on first completed transaction, and the Hangfire reminders/expiry cycle.
+
+### Added
+- **Backend — Booking Settings**: `Features/BookingSettings/` with `BookingSettingDtos`, `GetBookingSettingQuery`, `UpsertBookingSettingCommand` — per-branch settings (open/close times, slot interval, max-per-slot, advance days, lead time, grace minutes, feature toggles). Tenant defaults surface when no branch-specific row exists.
+- **Backend — Booking Admin**: `Features/BookingAdmin/` with `BookingAdminDtos`, `GetBookingsQuery` (date-range + branch + status filters), `GetBookingDetailAdminQuery` (customer, vehicle, services, queue entry, transaction links).
+- **Backend — Booking commands**: `CheckInBookingCommand` (Confirmed → Arrived, allocates a queue entry when missing), `ClassifyBookingVehicleCommand` (sets VehicleType + Size, locks exact `BookingService.Price` from the pricing matrix).
+- **Backend — Referral events + handlers**: `ReferralEvents.cs` (5 domain events: `BookingConfirmed`, `BookingNoShow`, `BookingReminderSent`, `BookingArrived`, `ReferralCompleted`). New SignalR handlers: `TransactionCompletedReferralHandler` (first-wash reward payout), `BookingConfirmedNotificationHandler`, `BookingNoShowNotificationHandler`, `BookingReminderSentNotificationHandler`, `ReferralCompletedNotificationHandler`, `QueuePositionChangedBroadcaster`.
+- **Backend — Hangfire**: `ReferralJobService` with referral-expiry sweep (daily 01:00 PHT). Added hourly booking-reminder job to `RecurringJobSetup` (enqueues SMS/in-app reminders and emits `BookingReminderSent`).
+- **Backend — Handler wiring**: `CreateTransactionCommandHandler` now auto-populates services from `BookingService` rows for booking-linked queue entries, overrides line prices with `BookingService.Price`, and sets `Booking.TransactionId` + `Booking.Status = InService` on creation. `StartQueueServiceCommandHandler` added a classification guard: `Booked` entries with `IsVehicleClassified = false` are rejected until classified.
+- **Backend — Queue enrichment**: `GetQueue`, `GetQueueEntry`, and `GetNextInQueue` DTOs + query handlers now LEFT JOIN `Bookings` on `QueueEntryId` and expose `BookingId`, `BookingSlotStart`, `IsVehicleClassified`, `BookingStatus` so the POS can render booking context without a second roundtrip.
+
+### Endpoints (6 new, all behind `online_booking` feature gate)
+- `GET  /api/v1/booking-settings?branchId={id}` — read per-branch booking settings
+- `PUT  /api/v1/booking-settings?branchId={id}` — upsert per-branch booking settings
+- `GET  /api/v1/bookings?fromDate=&toDate=&branchId=&status=` — admin bookings list
+- `GET  /api/v1/bookings/{id}` — admin booking detail
+- `PATCH /api/v1/bookings/{id}/check-in` — cashier check-in (Confirmed → Arrived + queue allocation)
+- `POST /api/v1/bookings/{id}/classify-vehicle` — lock vehicle classification + exact prices
+
+### POS (`apps/pos/`)
+- `src/app/(terminal)/queue/page.tsx` — booking badges (📅 + slot time in Manila TZ), **Check In** button on Confirmed bookings, classification modal on Start Service when the vehicle is unclassified.
+- `src/app/(terminal)/transactions/new/page.tsx` — reads linked booking detail, shows "From booking" banner, pre-fills service lines with booking-locked prices.
+- `QueuePriority` enum promoted: `Vip = 4`, `Booked = 3`; `BookingStatus` enum added in `packages/types`.
+
+### Admin (`apps/admin/`)
+- `src/app/(dashboard)/dashboard/settings/booking/page.tsx` — per-branch booking configuration form (hours, slot interval, max-per-slot, advance days, lead time, grace, feature toggles).
+- `src/app/(dashboard)/dashboard/bookings/page.tsx` — bookings page with List + Calendar view toggle (`?view=` URL sync), branch/status/date-range filters, booking detail dialog.
+- `src/hooks/use-bookings.ts` — TanStack Query hooks for admin booking endpoints.
+- Sidebar: new **Bookings** entry (gated on `online_booking`). Settings landing: new **Booking** quick-action button.
+- i18n: `settings.booking.*`, `bookings.admin.*`, and `nav.bookings` keys in `messages/en.json` + `messages/fil.json`.
+
+### Migrations
+- `20260422122242_AddReferralRewardSettings` — adds `ReferrerRewardPoints` (default 100) and `ReferredRewardPoints` (default 50) to `LoyaltyProgramSettings`.
+- `20260422122319_AddBookingReminderSentAt` — adds `ReminderSentAt` to `Bookings` for reminder idempotency.
+
+### Business rules
+- Rule **28** (Booking-to-Transaction Handoff) and rule **29** (Referral Reward Payout) added to `CLAUDE.md`.
+
 ## [Customer Connect — Phase 22.2 Application + API] — 2026-04-22
 
 ### Added

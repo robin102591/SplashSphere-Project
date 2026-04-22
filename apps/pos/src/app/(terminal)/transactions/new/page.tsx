@@ -9,13 +9,14 @@ import {
   ArrowLeft, Search, RefreshCw, X, Plus, Minus,
   Banknote, Smartphone, CreditCard, Building2, CheckCircle2,
   ChevronDown, ChevronUp, AlertCircle, Layers, BadgeCheck,
+  CalendarClock,
 } from 'lucide-react'
 
 import { PaymentMethod, TransactionStatus, EmployeeType } from '@splashsphere/types'
 import type {
   Car, QueueEntry, ServiceSummary, PackageSummary, Merchandise,
   Employee, VehicleType, Size, PackageDetail, ServiceDetail, TransactionSummary,
-  ApiError,
+  ApiError, BookingAdminDetailDto,
 } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
 
@@ -459,6 +460,21 @@ function NewTransactionContent() {
     enabled: !!queueEntryId,
   })
 
+  // ── Booking detail (when queue entry is tied to a booking) ────────────────
+  const bookingId = queueEntry?.bookingId ?? null
+  const { data: bookingDetail } = useQuery({
+    queryKey: ['booking-detail-tx', bookingId],
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<BookingAdminDetailDto>(
+        `/bookings/${encodeURIComponent(bookingId!)}`,
+        token ?? undefined,
+      )
+    },
+    enabled: !!bookingId,
+    staleTime: 30_000,
+  })
+
   const { data: queueCar, isPending: isQueueCarPending } = useQuery({
     queryKey: ['car-for-tx-queue', queueEntry?.plateNumber],
     queryFn: async () => {
@@ -701,9 +717,11 @@ function NewTransactionContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageDetailQueries, vehicleTypeId, sizeId])
 
-  // Sync cart service prices from catalog detail cache when vehicle type/size changes
+  // Sync cart service prices from catalog detail cache when vehicle type/size changes.
+  // Skip for booking-sourced carts so we don't clobber the booking's locked prices.
   useEffect(() => {
     if (!vehicleTypeId || !sizeId) return
+    if (bookingDetail) return
     const storeServices = useTransactionStore.getState().services
     storeServices.forEach((svcItem) => {
       const idx = allServices.findIndex((s) => s.id === svcItem.serviceId)
@@ -718,7 +736,7 @@ function NewTransactionContent() {
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicleTypeId, sizeId, serviceDetailQueries])
+  }, [vehicleTypeId, sizeId, serviceDetailQueries, bookingDetail])
 
   // Sync cart package prices from catalog detail cache when vehicle type/size changes
   useEffect(() => {
@@ -780,9 +798,36 @@ function NewTransactionContent() {
 
   useEffect(() => {
     if (!queueEntry || !allServices.length || servicesInitDone.current) return
+    // If the queue entry is tied to a booking, wait for the booking detail before
+    // pre-filling so that we can lock in the booking's exact prices.
+    if (queueEntry.bookingId && !bookingDetail) return
     servicesInitDone.current = true
-    const ids = parseServiceIds(queueEntry.preferredServices)
+
     const { addService } = useTransactionStore.getState()
+
+    // ── Booking-driven pre-fill: use locked booking prices (when available). ──
+    if (bookingDetail && bookingDetail.services.length > 0) {
+      bookingDetail.services.forEach((bs) => {
+        const svc = allServices.find((s) => s.id === bs.serviceId)
+        if (!svc) return
+        // Prefer exact locked price; fall back to midpoint of range, then basePrice.
+        const lockedPrice = bs.price
+          ?? (bs.priceMin != null && bs.priceMax != null
+                ? (bs.priceMin + bs.priceMax) / 2
+                : svc.basePrice)
+        addService({
+          serviceId: svc.id,
+          serviceName: svc.name,
+          categoryName: svc.categoryName,
+          basePrice: svc.basePrice,
+          unitPrice: lockedPrice,
+        })
+      })
+      return
+    }
+
+    // ── Walk-in / queue-only pre-fill: use preferredServices at basePrice. ──
+    const ids = parseServiceIds(queueEntry.preferredServices)
     ids.forEach((sid) => {
       const svc = allServices.find((s) => s.id === sid)
       if (svc) {
@@ -795,7 +840,7 @@ function NewTransactionContent() {
         })
       }
     })
-  }, [queueEntry, allServices])
+  }, [queueEntry, allServices, bookingDetail])
 
   // ── Plate lookup (direct flow) ─────────────────────────────────────────────
 
@@ -1125,6 +1170,23 @@ function NewTransactionContent() {
             </p>
           </div>
         </div>
+
+        {/* Booking banner — present only when this transaction originated from a booking */}
+        {bookingDetail && (
+          <div className="mx-4 mt-3 flex items-start gap-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 px-3 py-2 shrink-0">
+            <CalendarClock className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0 text-xs text-indigo-200/90 space-y-0.5">
+              <p>
+                <span className="font-semibold text-indigo-300">From booking</span>
+                {' — '}
+                <span>Slot: {new Intl.DateTimeFormat('en-PH', {
+                  hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila',
+                }).format(new Date(bookingDetail.slotStartUtc))}</span>
+              </p>
+              <p className="text-indigo-200/70">Services auto-filled from the booking.</p>
+            </div>
+          </div>
+        )}
 
         {/* Vehicle bar */}
         <div className="px-4 py-3 border-b border-gray-800 shrink-0 space-y-2">

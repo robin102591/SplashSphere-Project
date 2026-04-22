@@ -22,6 +22,10 @@ public sealed class SearchCarWashesQueryHandler(
         var userId = connectUser.IsAuthenticated ? connectUser.ConnectUserId : null;
 
         // Cross-tenant read — Connect customers have no tenant scope.
+        // Public directory rule (22.4-D): a branch only appears if its BookingSetting
+        // row exists AND ShowInPublicDirectory == true. Tenants with NO settings
+        // rows for any branch are invisible here (they haven't opted in). Joined
+        // customers can still reach GetCarWashDetailQuery directly via saved link.
         var query =
             from branch in db.Branches.IgnoreQueryFilters()
             join tenant in db.Tenants.IgnoreQueryFilters()

@@ -37,4 +37,15 @@ public enum NotificationType
 
     // Platform
     PlatformAnnouncement = 50,
+
+    // Bookings (Customer Connect — admin/POS visibility)
+    BookingConfirmed     = 60,
+    BookingNoShow        = 61,
+    BookingReminderSent  = 62,
+
+    // Queue (Customer Connect — position changes)
+    QueuePositionChanged = 70,
+
+    // Referrals (Customer Connect)
+    ReferralCompleted    = 80,
 }

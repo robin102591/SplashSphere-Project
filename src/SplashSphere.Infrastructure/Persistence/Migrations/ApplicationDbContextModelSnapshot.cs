@@ -263,6 +263,9 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasMaxLength(36)
                         .HasColumnType("character varying(36)");
 
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("SlotEnd")
                         .HasColumnType("timestamp with time zone");
 
@@ -1825,6 +1828,12 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("PointsPerCurrencyUnit")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("ReferredRewardPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReferrerRewardPoints")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
                         .IsRequired()

@@ -334,6 +334,26 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/reports/equipment-maintenance` | Upcoming and overdue maintenance |
 | `GET` | `/reports/purchase-history` | Spending by supplier, category, period |
 
+## Booking Settings
+
+Per-branch online-booking configuration. Feature-gated behind `online_booking`.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/booking-settings?branchId={id}` | Get booking settings for a branch (falls back to tenant defaults) |
+| `PUT` | `/booking-settings?branchId={id}` | Upsert booking settings (hours, slot interval, capacity, lead/grace, toggles) |
+
+## Bookings (Admin / POS)
+
+Tenant-scoped booking management — consumed by the admin dashboard and the POS for cashier check-in + classification. Feature-gated behind `online_booking`.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/bookings?fromDate=&toDate=&branchId=&status=` | List bookings in a date window |
+| `GET` | `/bookings/{id}` | Booking detail with customer, vehicle, services, queue/transaction links |
+| `PATCH` | `/bookings/{id}/check-in` | Cashier check-in: flip Confirmed → Arrived and allocate a queue entry when missing |
+| `POST` | `/bookings/{id}/classify-vehicle` | Classify vehicle (VehicleType + Size) and lock exact service prices |
+
 ---
 
 # Customer Connect

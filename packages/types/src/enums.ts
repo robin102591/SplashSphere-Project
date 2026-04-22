@@ -27,13 +27,34 @@ export enum QueueStatus {
 
 /**
  * Priority level assigned at queue check-in.
- * Ordering: Vip (3) > Express (2) > Regular (1).
+ * Ordering: Vip (4) > Booked (3) > Express (2) > Regular (1).
  * Within the same tier, entries are served FIFO by createdAt.
  */
 export enum QueuePriority {
   Regular = 1,
   Express = 2,
-  Vip     = 3,
+  /** Customer pre-booked via the Connect app. Auto-assigned by the pre-slot Hangfire job. */
+  Booked  = 3,
+  Vip     = 4,
+}
+
+// ── Booking ───────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle state of an online booking created via the Customer Connect app.
+ *
+ * Transitions:
+ *   Confirmed → Arrived → InService → Completed
+ *   Confirmed → Cancelled (customer/tenant)
+ *   Confirmed → NoShow (grace period elapsed)
+ */
+export enum BookingStatus {
+  Confirmed = 1,
+  Arrived   = 2,
+  InService = 3,
+  Completed = 4,
+  Cancelled = 5,
+  NoShow    = 6,
 }
 
 // ── Transaction ───────────────────────────────────────────────────────────────

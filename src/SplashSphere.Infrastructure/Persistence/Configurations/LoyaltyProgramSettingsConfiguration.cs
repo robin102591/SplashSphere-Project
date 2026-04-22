@@ -19,6 +19,8 @@ public sealed class LoyaltyProgramSettingsConfiguration : IEntityTypeConfigurati
         builder.Property(s => s.CurrencyUnitAmount).IsRequired().HasPrecision(10, 2);
         builder.Property(s => s.IsActive).IsRequired().HasDefaultValue(true);
         builder.Property(s => s.AutoEnroll).IsRequired().HasDefaultValue(true);
+        builder.Property(s => s.ReferrerRewardPoints);
+        builder.Property(s => s.ReferredRewardPoints);
         builder.Property(s => s.CreatedAt).IsRequired().HasDefaultValueSql("now()");
         builder.Property(s => s.UpdatedAt).IsRequired();
 

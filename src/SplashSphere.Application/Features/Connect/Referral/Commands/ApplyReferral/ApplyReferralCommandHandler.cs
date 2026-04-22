@@ -13,6 +13,11 @@ public sealed class ApplyReferralCommandHandler(
     IPlanEnforcementService planService)
     : IRequestHandler<ApplyReferralCommand, Result<ApplyReferralResultDto>>
 {
+    // Platform defaults used when a tenant has no LoyaltyProgramSettings row
+    // or left the referral reward fields null.
+    private const int DefaultReferrerReward = 100;
+    private const int DefaultReferredReward = 50;
+
     public async Task<Result<ApplyReferralResultDto>> Handle(
         ApplyReferralCommand request,
         CancellationToken cancellationToken)
@@ -75,6 +80,18 @@ public sealed class ApplyReferralCommandHandler(
         if (alreadyReferred)
             return Result.Failure<ApplyReferralResultDto>(
                 Error.Conflict("You have already been referred at this car wash."));
+
+        // Re-sync reward amounts from current tenant settings so the payout on
+        // first-wash completion reflects the latest admin configuration.
+        var rewardRow = await db.LoyaltyProgramSettings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(s => s.TenantId == request.TenantId)
+            .Select(s => new { s.ReferrerRewardPoints, s.ReferredRewardPoints })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        referral.ReferrerPointsEarned = rewardRow?.ReferrerRewardPoints ?? DefaultReferrerReward;
+        referral.ReferredPointsEarned = rewardRow?.ReferredRewardPoints ?? DefaultReferredReward;
 
         referral.ReferredCustomerId = customerId;
 

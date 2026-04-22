@@ -32,6 +32,18 @@ public sealed class LoyaltyProgramSettings : IAuditableEntity
     /// <summary>Whether to auto-enroll customers when they first complete a transaction.</summary>
     public bool AutoEnroll { get; set; } = true;
 
+    /// <summary>
+    /// Points awarded to the referrer when a referred customer completes their first wash.
+    /// Nullable so existing rows pre-22.4 fall back to the hardcoded default (100).
+    /// </summary>
+    public int? ReferrerRewardPoints { get; set; }
+
+    /// <summary>
+    /// Points awarded to the referred customer on their first wash.
+    /// Nullable so existing rows pre-22.4 fall back to the hardcoded default (50).
+    /// </summary>
+    public int? ReferredRewardPoints { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

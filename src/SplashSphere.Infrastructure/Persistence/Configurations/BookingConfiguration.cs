@@ -80,6 +80,8 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.CancellationReason)
             .HasMaxLength(500);
 
+        builder.Property(b => b.ReminderSentAt);
+
         // ── Audit timestamps ──────────────────────────────────────────────────
         builder.Property(b => b.CreatedAt)
             .IsRequired()

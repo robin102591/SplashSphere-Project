@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Application.Features.Connect.Booking;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Events;
 using SplashSphere.SharedKernel.Results;
 using DomainBookingService = SplashSphere.Domain.Entities.BookingService;
 
@@ -10,7 +11,8 @@ namespace SplashSphere.Application.Features.Connect.Booking.Commands.CreateBooki
 
 public sealed class CreateBookingCommandHandler(
     IApplicationDbContext db,
-    IConnectUserContext connectUser)
+    IConnectUserContext connectUser,
+    IEventPublisher eventPublisher)
     : IRequestHandler<CreateBookingCommand, Result<BookingDetailDto>>
 {
     private static readonly TimeZoneInfo Manila =
@@ -236,6 +238,18 @@ public sealed class CreateBookingCommandHandler(
         }
 
         db.Bookings.Add(booking);
+
+        // Emit a BookingConfirmedEvent after the UoW flush so downstream
+        // notification handlers see the persisted booking.
+        eventPublisher.Enqueue(new BookingConfirmedEvent(
+            BookingId: booking.Id,
+            TenantId: booking.TenantId,
+            BranchId: booking.BranchId,
+            CustomerId: booking.CustomerId,
+            PlateNumber: vehicle.PlateNumber,
+            SlotStartUtc: booking.SlotStart,
+            SlotEndUtc: booking.SlotEnd,
+            VehicleLabel: null));
 
         // UoWBehavior saves.
         return Result.Success(new BookingDetailDto(

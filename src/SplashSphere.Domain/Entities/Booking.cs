@@ -94,6 +94,12 @@ public sealed class Booking : IAuditableEntity
 
     public string? CancellationReason { get; set; }
 
+    /// <summary>
+    /// Set by the hourly reminder job when the 2-hour pre-slot SMS is dispatched.
+    /// Guards against duplicate sends across job runs.
+    /// </summary>
+    public DateTime? ReminderSentAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

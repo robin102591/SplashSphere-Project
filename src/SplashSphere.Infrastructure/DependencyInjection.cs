@@ -125,6 +125,7 @@ public static class DependencyInjection
         services.AddTransient<ExpenseJobService>();
         services.AddTransient<FranchiseJobService>();
         services.AddTransient<BookingJobService>();
+        services.AddTransient<ReferralJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────────
         services.AddHangfire(config => config

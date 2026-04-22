@@ -53,6 +53,17 @@ public sealed class GetReferralCodeQueryHandler(
             return Result.Failure<ConnectReferralCodeDto>(
                 Error.Forbidden("Join this car wash before sharing a referral code."));
 
+        // ── Resolve tenant-configured reward amounts (fallback to defaults) ─
+        var rewardRow = await db.LoyaltyProgramSettings
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(s => s.TenantId == request.TenantId)
+            .Select(s => new { s.ReferrerRewardPoints, s.ReferredRewardPoints })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var referrerReward = rewardRow?.ReferrerRewardPoints ?? DefaultReferrerReward;
+        var referredReward = rewardRow?.ReferredRewardPoints ?? DefaultReferredReward;
+
         // ── Existing code? ───────────────────────────────────────────────────
         var existing = await db.Referrals
             .IgnoreQueryFilters()
@@ -72,8 +83,8 @@ public sealed class GetReferralCodeQueryHandler(
                 tenantId: request.TenantId,
                 referrerCustomerId: linkRow.CustomerId,
                 referralCode: code,
-                referrerPointsReward: DefaultReferrerReward,
-                referredPointsReward: DefaultReferredReward);
+                referrerPointsReward: referrerReward,
+                referredPointsReward: referredReward);
 
             db.Referrals.Add(existing);
         }

@@ -50,6 +50,8 @@
 | `/dashboard/purchase-orders/new` | Create PO form with line items |
 | `/dashboard/purchase-orders/[id]` | PO detail with receive items workflow |
 | `/dashboard/suppliers` | Supplier CRUD list |
+| `/dashboard/bookings` | Bookings -- list + week calendar view with branch/status/date filters + detail dialog (gated on `online_booking`) |
+| `/dashboard/settings/booking` | Per-branch online-booking configuration -- hours, slot interval, lead time, availability toggles (gated on `online_booking`) |
 
 ## POS App
 
@@ -83,3 +85,9 @@
 ### New Transaction Screen -- supports `?queueEntryId=xxx` query param
 
 When `queueEntryId` is present: pre-fill vehicle/customer from queue entry, pre-select preferred services, on submit also link the queue entry.
+
+### Booking-aware POS behavior
+
+- **Queue Board (`/queue`)**: queue entries linked to a booking display a 📅 badge with the slot time (Manila TZ). `Confirmed` bookings show a **Check In** action that flips Confirmed → Arrived and ensures a queue entry exists.
+- **Start Service**: when a `Booked` queue entry has an unclassified vehicle (`IsVehicleClassified = false`), a classification modal is required before service can start — cashier picks VehicleType + Size, which locks exact service prices on the linked booking.
+- **New Transaction (`/transactions/new`)**: when navigated from a booked queue entry, a "From booking" banner is shown and the service list is auto-populated from `BookingService` rows with prices pre-locked; cashier still adjusts quantities and adds ad-hoc items as needed.

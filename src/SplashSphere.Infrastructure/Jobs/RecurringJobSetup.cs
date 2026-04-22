@@ -94,6 +94,24 @@ public static class RecurringJobSetup
             cronExpression: "*/5 * * * *",
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // Every hour — fire 2-hour pre-slot reminder SMS to customers with
+        // Confirmed bookings. Counts against tenant SMS monthly quota.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-reminder",
+            methodCall: job => job.SendBookingReminderAsync(CancellationToken.None),
+            cronExpression: Cron.Hourly(),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // ── Referrals ────────────────────────────────────────────────────────
+
+        // Daily 01:00 PHT — expire Pending referral codes older than 90 days
+        // that were never redeemed (no ReferredCustomerId).
+        manager.AddOrUpdate<ReferralJobService>(
+            recurringJobId: "referral-expiry",
+            methodCall: job => job.ExpireReferralsAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 1),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         // ── Billing ──────────────────────────────────────────────────────────
 
         // Daily 9 AM PHT — remind tenants with trials expiring in 1-3 days.

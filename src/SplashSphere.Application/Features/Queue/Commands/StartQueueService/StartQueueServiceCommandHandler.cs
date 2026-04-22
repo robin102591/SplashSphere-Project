@@ -32,10 +32,26 @@ public sealed class StartQueueServiceCommandHandler(
         if (!transactionExists)
             return Result.Failure(Error.NotFound("Transaction", request.TransactionId));
 
+        // If this queue entry came from an online booking, enforce the
+        // classification guard and mirror the transition onto the booking.
+        var linkedBooking = await context.Bookings
+            .FirstOrDefaultAsync(b => b.QueueEntryId == entry.Id, cancellationToken);
+
+        if (linkedBooking is not null && !linkedBooking.IsVehicleClassified)
+            return Result.Failure(Error.Validation(
+                "BOOKING_VEHICLE_NOT_CLASSIFIED",
+                "Classify the vehicle before starting service."));
+
         var now = DateTime.UtcNow;
         entry.Status        = QueueStatus.InService;
         entry.TransactionId = request.TransactionId;
         entry.StartedAt     = now;
+
+        if (linkedBooking is not null)
+        {
+            linkedBooking.TransactionId = request.TransactionId;
+            linkedBooking.Status        = BookingStatus.InService;
+        }
 
         eventPublisher.Enqueue(new QueueEntryInServiceEvent(
             entry.Id,

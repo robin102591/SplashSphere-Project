@@ -217,6 +217,199 @@ public sealed class BookingJobService(
             created, skipped);
     }
 
+    /// <summary>
+    /// Hourly sweep — find Confirmed bookings whose <see cref="Booking.SlotStart"/>
+    /// is ~2 hours away (window: 1h55m – 2h05m) and that haven't had a reminder
+    /// dispatched yet. Send an SMS to the customer's phone and stamp
+    /// <see cref="Booking.ReminderSentAt"/> so subsequent runs skip the row.
+    /// <para>
+    /// Unlike OTP SMS (platform-absorbed), reminder SMS counts against the
+    /// tenant's monthly quota via the usual <c>SmsNotifications</c> feature gate.
+    /// </para>
+    /// </summary>
+    [AutomaticRetry(Attempts = 3)]
+    [DisableConcurrentExecution(timeoutInSeconds: 60)]
+    public async Task SendBookingReminderAsync(CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var windowStart = now.AddMinutes(115);
+        var windowEnd   = now.AddMinutes(125);
+
+        logger.LogDebug(
+            "BookingJob: Scanning for bookings needing reminders between {Start:u} and {End:u}.",
+            windowStart, windowEnd);
+
+        // ── Cross-tenant scan ────────────────────────────────────────────────
+        List<(string BookingId, string TenantId, string BranchId, string? CustomerPhone,
+              string CustomerFirstName, string PlateNumber, DateTime SlotStart,
+              string BranchName, string CustomerId)> candidates;
+
+        using (var scanScope = scopeFactory.CreateScope())
+        {
+            var db = scanScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+            candidates = await (
+                from b in db.Bookings.IgnoreQueryFilters()
+                join cust in db.Customers.IgnoreQueryFilters() on b.CustomerId equals cust.Id
+                join br in db.Branches.IgnoreQueryFilters() on b.BranchId equals br.Id
+                join v in db.ConnectVehicles.IgnoreQueryFilters() on b.ConnectVehicleId equals v.Id
+                where b.Status == BookingStatus.Confirmed
+                   && b.ReminderSentAt == null
+                   && b.SlotStart >= windowStart
+                   && b.SlotStart <= windowEnd
+                select new
+                {
+                    BookingId = b.Id,
+                    b.TenantId,
+                    b.BranchId,
+                    CustomerPhone = cust.ContactNumber,
+                    CustomerFirstName = cust.FirstName,
+                    PlateNumber = v.PlateNumber,
+                    b.SlotStart,
+                    BranchName = br.Name,
+                    b.CustomerId,
+                })
+                .AsNoTracking()
+                .ToListAsync(ct)
+                .ContinueWith(t => t.Result
+                    .Select(x => (x.BookingId, x.TenantId, x.BranchId,
+                                  (string?)x.CustomerPhone,
+                                  x.CustomerFirstName, x.PlateNumber, x.SlotStart,
+                                  x.BranchName, x.CustomerId))
+                    .ToList(), ct);
+        }
+
+        if (candidates.Count == 0)
+        {
+            logger.LogDebug("BookingJob: No bookings need a reminder right now.");
+            return;
+        }
+
+        logger.LogInformation(
+            "BookingJob: Reminder sweep — {Count} candidate booking(s).", candidates.Count);
+
+        var sent = 0;
+        var skipped = 0;
+
+        foreach (var c in candidates)
+        {
+            using var tenantScope = scopeFactory.CreateScope();
+
+            var tenantCtx = tenantScope.ServiceProvider.GetRequiredService<TenantContext>();
+            tenantCtx.TenantId = c.TenantId;
+
+            var db = tenantScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+            var planService = tenantScope.ServiceProvider
+                .GetRequiredService<SplashSphere.Application.Common.Interfaces.IPlanEnforcementService>();
+            var smsService = tenantScope.ServiceProvider
+                .GetRequiredService<SplashSphere.Application.Common.Interfaces.ISmsService>();
+            var eventPublisher = tenantScope.ServiceProvider.GetRequiredService<IEventPublisher>();
+
+            try
+            {
+                // Feature + budget gate.
+                if (!await planService.HasFeatureAsync(
+                    c.TenantId, SplashSphere.Domain.Subscription.FeatureKeys.SmsNotifications, ct))
+                {
+                    // No SMS feature — still stamp the row so we don't re-consider.
+                    await StampReminderAsync(db, c.BookingId, ct);
+                    skipped++;
+                    continue;
+                }
+
+                var budget = await planService.GetSmsBudgetRemainingAsync(c.TenantId, ct);
+                if (budget <= 0)
+                {
+                    logger.LogDebug(
+                        "BookingJob: SMS budget exhausted for tenant {TenantId}; skipping reminder.",
+                        c.TenantId);
+                    skipped++;
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(c.CustomerPhone))
+                {
+                    // No number to reach — mark so we don't keep trying.
+                    await StampReminderAsync(db, c.BookingId, ct);
+                    skipped++;
+                    continue;
+                }
+
+                var slotManilaTime = (c.SlotStart + ManilaOffset).ToString("h:mm tt");
+                var body = $"Hi {c.CustomerFirstName}! Reminder: your booking at {c.BranchName} " +
+                           $"is at {slotManilaTime} today. Plate {c.PlateNumber}. " +
+                           "See you soon — SplashSphere.";
+
+                var dispatched = await smsService.SendAsync(
+                    new SplashSphere.Application.Common.Interfaces.SmsMessage(
+                        c.CustomerPhone!, body), ct);
+
+                // Stamp regardless to avoid duplicate sends across transient errors.
+                var booking = await db.Bookings
+                    .FirstOrDefaultAsync(b => b.Id == c.BookingId, ct);
+
+                if (booking is null)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                booking.ReminderSentAt = DateTime.UtcNow;
+
+                if (dispatched)
+                {
+                    // Decrement tenant SMS usage counter.
+                    var sub = await db.TenantSubscriptions
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(s => s.TenantId == c.TenantId, ct);
+
+                    if (sub is not null)
+                    {
+                        sub.SmsUsedThisMonth++;
+                        planService.EvictCache(c.TenantId);
+                    }
+                }
+
+                await db.SaveChangesAsync(ct);
+
+                if (dispatched)
+                {
+                    eventPublisher.Enqueue(new BookingReminderSentEvent(
+                        c.BookingId, c.TenantId, c.BranchId,
+                        c.CustomerId, c.PlateNumber, c.SlotStart));
+
+                    await eventPublisher.FlushAsync(ct);
+                    sent++;
+                }
+                else
+                {
+                    skipped++;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "BookingJob: Exception sending reminder for booking {BookingId}.", c.BookingId);
+            }
+        }
+
+        logger.LogInformation(
+            "BookingJob: Reminder sweep complete. Sent={Sent}, Skipped={Skipped}.",
+            sent, skipped);
+    }
+
+    private static async Task StampReminderAsync(
+        IApplicationDbContext db, string bookingId, CancellationToken ct)
+    {
+        var booking = await db.Bookings
+            .FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+
+        if (booking is null) return;
+
+        booking.ReminderSentAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+    }
+
     [AutomaticRetry(Attempts = 3)]
     [DisableConcurrentExecution(timeoutInSeconds: 60)]
     public async Task MarkBookingNoShowsAsync(CancellationToken ct = default)
@@ -277,6 +470,7 @@ public sealed class BookingJobService(
             tenantCtx.TenantId = o.TenantId;
 
             var db = tenantScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+            var eventPublisher = tenantScope.ServiceProvider.GetRequiredService<IEventPublisher>();
 
             try
             {
@@ -292,7 +486,26 @@ public sealed class BookingJobService(
                 }
 
                 booking.Status = BookingStatus.NoShow;
+
+                // Resolve plate for the event payload.
+                var plate = await db.ConnectVehicles
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .Where(v => v.Id == booking.ConnectVehicleId)
+                    .Select(v => v.PlateNumber)
+                    .FirstOrDefaultAsync(ct) ?? string.Empty;
+
                 await db.SaveChangesAsync(ct);
+
+                eventPublisher.Enqueue(new BookingNoShowEvent(
+                    booking.Id,
+                    booking.TenantId,
+                    booking.BranchId,
+                    booking.CustomerId,
+                    plate,
+                    booking.SlotStart));
+
+                await eventPublisher.FlushAsync(ct);
 
                 marked++;
                 logger.LogInformation(

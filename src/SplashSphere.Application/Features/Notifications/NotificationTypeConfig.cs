@@ -214,6 +214,37 @@ public static class NotificationTypeConfig
             DefaultSeverity = NotificationSeverity.Info,
             EmailAvailable = true,
         },
+
+        // -- Bookings (Customer Connect) --------------------------------------
+        [NotificationType.BookingConfirmed] = new()
+        {
+            Category = NotificationCategory.Operations,
+            DefaultSeverity = NotificationSeverity.Info,
+        },
+        [NotificationType.BookingNoShow] = new()
+        {
+            Category = NotificationCategory.Operations,
+            DefaultSeverity = NotificationSeverity.Warning,
+        },
+        [NotificationType.BookingReminderSent] = new()
+        {
+            Category = NotificationCategory.Operations,
+            DefaultSeverity = NotificationSeverity.Info,
+        },
+
+        // -- Queue position changes (Customer-facing, poll-friendly) ----------
+        [NotificationType.QueuePositionChanged] = new()
+        {
+            Category = NotificationCategory.Queue,
+            DefaultSeverity = NotificationSeverity.Info,
+        },
+
+        // -- Referrals --------------------------------------------------------
+        [NotificationType.ReferralCompleted] = new()
+        {
+            Category = NotificationCategory.Customer,
+            DefaultSeverity = NotificationSeverity.Info,
+        },
     };
 
     /// <summary>Get the channel config for a notification type.</summary>

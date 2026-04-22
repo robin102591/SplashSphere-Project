@@ -11,6 +11,7 @@
 
 import type {
   AdjustmentType,
+  BookingStatus,
   CashAdvanceStatus,
   CashMovementType,
   CommissionType,
@@ -376,6 +377,13 @@ export interface QueueEntry {
   cancelledAt: string | null;
   noShowAt: string | null;
   createdAt: string;
+  // ── Booking context (null when queue entry is a walk-in) ─────────────────
+  bookingId: string | null;
+  /** ISO-8601 UTC slot start time. Display in Asia/Manila. */
+  bookingSlotStart: string | null;
+  /** True once the cashier has locked the vehicle type + size for this booking's first visit. */
+  isVehicleClassified: boolean | null;
+  bookingStatus: BookingStatus | null;
 }
 
 /** Slimmed-down projection for the public wall-display. Plate is masked. */
@@ -987,6 +995,8 @@ export const FeatureKeys = {
   EquipmentManagement: 'equipment_management',
   SupplyUsageAutoDeduction: 'supply_usage_auto_deduction',
   CostPerWashReports: 'cost_per_wash_reports',
+  // Customer Connect / Online Booking (Growth+)
+  OnlineBooking: 'online_booking',
 } as const;
 
 // ── Attendance Reports ────────────────────────────────────────────────────────
@@ -1733,4 +1743,106 @@ export interface MaintenanceDueItemDto {
   lastMaintenanceDescription: string | null;
   nextDueDate: string | null;
   daysUntilDue: number;
+}
+
+// ── Bookings ─────────────────────────────────────────────────────────────────
+
+/** A single service line on a booking, admin view. */
+export interface BookingAdminServiceDto {
+  serviceId: string;
+  name: string;
+  /** Exact price once the booking's vehicle has been classified, else null. */
+  price: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+}
+
+/** Full detail for a single booking — POS uses this to auto-fill transactions. */
+export interface BookingAdminDetailDto {
+  id: string;
+  branchId: string;
+  branchName: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string | null;
+  vehicleId: string;
+  plateNumber: string;
+  makeName: string | null;
+  modelName: string | null;
+  /** ISO-8601 UTC. Display in Asia/Manila. */
+  slotStartUtc: string;
+  slotEndUtc: string;
+  estimatedDurationMinutes: number;
+  /** Stringified BookingStatus (e.g., "Confirmed", "Arrived"). */
+  status: string;
+  isVehicleClassified: boolean;
+  estimatedTotal: number;
+  estimatedTotalMin: number | null;
+  estimatedTotalMax: number | null;
+  cancellationReason: string | null;
+  queueEntryId: string | null;
+  transactionId: string | null;
+  createdAtUtc: string;
+  services: readonly BookingAdminServiceDto[];
+}
+
+/** Result returned by POST /bookings/{id}/classify-vehicle. */
+export interface BookingClassificationResultDto {
+  bookingId: string;
+  carId: string;
+  total: number;
+  services: readonly {
+    serviceId: string;
+    serviceName: string;
+    price: number;
+  }[];
+}
+
+/** Result returned by PATCH /bookings/{id}/check-in. */
+export interface BookingCheckInDto {
+  bookingId: string;
+  queueEntryId: string | null;
+  queueNumber: string | null;
+  /** Enum value (number) matching BookingStatus. */
+  status: BookingStatus;
+}
+
+/** Summary row used by the admin bookings list. */
+export interface BookingListItemDto {
+  id: string;
+  branchId: string;
+  branchName: string;
+  customerId: string;
+  customerName: string;
+  vehicleId: string;
+  plateNumber: string;
+  /** Comma-joined service names. */
+  serviceSummary: string;
+  /** ISO-8601 UTC slot start — display in Asia/Manila. */
+  slotStartUtc: string;
+  slotEndUtc: string;
+  /** Stringified BookingStatus (e.g., "Confirmed", "Arrived"). */
+  status: string;
+  isVehicleClassified: boolean;
+  estimatedTotal: number;
+  estimatedTotalMin: number | null;
+  estimatedTotalMax: number | null;
+  queueEntryId: string | null;
+  transactionId: string | null;
+}
+
+/** Per-branch online-booking configuration. */
+export interface BookingSettingDto {
+  branchId: string;
+  /** "HH:mm" (TimeOnly on the wire). */
+  openTime: string;
+  /** "HH:mm" (TimeOnly on the wire). */
+  closeTime: string;
+  slotIntervalMinutes: number;
+  maxBookingsPerSlot: number;
+  advanceBookingDays: number;
+  minLeadTimeMinutes: number;
+  noShowGraceMinutes: number;
+  isBookingEnabled: boolean;
+  showInPublicDirectory: boolean;
 }

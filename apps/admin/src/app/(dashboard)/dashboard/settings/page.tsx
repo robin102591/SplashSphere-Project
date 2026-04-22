@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell } from 'lucide-react'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell, CalendarCheck } from 'lucide-react'
 import Link from 'next/link'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useHasFeature } from '@/hooks/use-plan'
 import { useVehicleTypes, useCreateVehicleType, useUpdateVehicleType, useToggleVehicleType } from '@/hooks/use-vehicle-types'
 import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/use-sizes'
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
@@ -29,7 +30,7 @@ import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
-import { AdjustmentType } from '@splashsphere/types'
+import { AdjustmentType, FeatureKeys } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
@@ -943,6 +944,7 @@ function AccountTab() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const hasOnlineBooking = useHasFeature(FeatureKeys.OnlineBooking)
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -951,6 +953,13 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
         </div>
         <div className="flex gap-2">
+          {hasOnlineBooking && (
+            <Link href="/dashboard/settings/booking">
+              <Button variant="outline">
+                <CalendarCheck className="mr-2 h-4 w-4" /> Booking
+              </Button>
+            </Link>
+          )}
           <Link href="/dashboard/settings/notifications">
             <Button variant="outline">
               <Bell className="mr-2 h-4 w-4" /> Notifications
