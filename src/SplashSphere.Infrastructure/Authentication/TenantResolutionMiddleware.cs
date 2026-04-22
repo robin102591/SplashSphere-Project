@@ -26,6 +26,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         "/api/v1/auth/me",
         "/api/v1/onboarding",      // POST /api/v1/onboarding
         "/api/v1/onboarding/",     // GET  /api/v1/onboarding/status (prefix)
+        "/api/v1/connect/",        // Customer Connect app — uses ConnectJwt, not Clerk
         "/webhooks/",
         // Dev / infra paths that must not be blocked:
         "/openapi",

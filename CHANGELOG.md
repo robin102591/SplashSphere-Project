@@ -1,5 +1,21 @@
 ## Changelog
 
+## [Customer Connect — Phase 22.2 Application + API] — 2026-04-22
+
+### Added
+- **Connect auth CQRS**: `SendOtpCommand`, `VerifyOtpCommand`, `RefreshTokenCommand`, `SignOutCommand` — wraps `IOtpSender`/`IOtpStore`/`IConnectTokenService`. `VerifyOtp` upserts a `ConnectUser` (keyed on phone) and stores a SHA-256-hashed refresh token; refresh rotates on every use and revokes the prior token.
+- **`IConnectUserContext`**: scoped service populated from the `ConnectJwt` handler — exposes `ConnectUserId`, `Phone`, `IsAuthenticated` for handlers. `MapConnectGroup` extension wires endpoint groups to the `ConnectJwt` scheme.
+- **Profile + vehicles**: `GetMyProfileQuery`, `UpdateProfileCommand`, `AddVehicleCommand`, `UpdateVehicleCommand`, `RemoveVehicleCommand`. Plate uniqueness enforced per user (`UX_ConnectVehicle_User_Plate`); make/model must belong to a single global chain.
+- **Discovery + join**: `SearchCarWashesQuery` (text + optional lat/lng ranking via Haversine-style distance), `GetCarWashDetailQuery`, `JoinCarWashCommand` (creates a Customer row in the tenant + links via `ConnectUserTenantLink`), `GetMyCarWashesQuery`.
+- **Catalogue**: `GetGlobalMakesQuery`, `GetGlobalModelsQuery` — global, active-only, alphabetical.
+- **Services with pricing**: `GetServicesWithPricingQuery(tenantId, vehicleId)` — returns exact prices when the caller's vehicle is already classified at the tenant (matched by plate against `Cars.PlateNumber`), otherwise a `{ priceMin, priceMax }` range derived from the `ServicePricing` matrix for the selected vehicle type.
+- **Booking CQRS**: `GetAvailableSlotsQuery`, `CreateBookingCommand`, `GetMyBookingsQuery`, `GetBookingDetailQuery`, `CancelBookingCommand`, `MarkArrivedCommand`. Slot generation honours `BookingSetting` (lead/trail buffer, slot-interval minutes, per-slot capacity). Cancel is idempotent-safe; arrive performs early enqueue as `QueuePriority.Booked`.
+- **Hangfire Booking jobs** (every 5 min, Manila tz): `booking-create-queue` scans confirmed bookings ≤15 minutes out across tenants and enqueues them as `Booked` priority with retry-on-23505 unique-collision handling, linking `Booking.QueueEntryId` and publishing `QueueEntryCreatedEvent`; `booking-noshow-sweep` flips still-Confirmed bookings past `SlotEnd + GraceMinutes` (from `BookingSetting`) to `NoShow`.
+- **Loyalty (Connect)**: `GetMyLoyaltyQuery`, `GetRewardsQuery` (with `IsAffordable` flag), `RedeemRewardCommand` (deducts `PointsBalance`, increments `LifetimePointsRedeemed`, emits `PointTransaction(Redeemed)` + `PointsRedeemedEvent`), `GetPointsHistoryQuery`. All gated through `IPlanEnforcementService.HasFeatureAsync(FeatureKeys.CustomerLoyalty)` — degraded DTO when off-plan instead of a 4xx.
+- **Referral CQRS**: `GetReferralCodeQuery` (declared as `ICommand<T>` so `UnitOfWorkBehavior` commits the lazy issuance) generates `{PREFIX}-{XXXX}` codes using ambiguity-free alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`; 10 retry attempts then 8-char random fallback. `GetMyReferralsQuery` lists completed referrals. `ApplyReferralCommand` validates code, blocks self-referral and duplicate claims, stores `ReferredCustomerId`. Rewards are deferred to first-wash completion (Phase 22.4).
+- **Live queue + history**: `GetActiveQueuePositionQuery` — cross-tenant lookup of most recent `Waiting|Called|InService` entry, priority-aware `AheadCount`. `GetServiceHistoryQuery` — cross-tenant completed-transaction list with per-tx service names, default take=50, max=200.
+- **API endpoints** (31 routes across 10 endpoint classes): `ConnectAuthEndpoints`, `ConnectProfileEndpoints`, `ConnectCatalogueEndpoints`, `ConnectDiscoveryEndpoints`, `ConnectServicesEndpoints`, `ConnectBookingEndpoints`, `ConnectLoyaltyEndpoints`, `ConnectReferralEndpoints`, `ConnectQueueEndpoints`, `ConnectHistoryEndpoints`. All wired in `Program.cs` and documented in `docs/API_ENDPOINTS.md` under a new "Customer Connect" section.
+
 ## [Customer Connect — Phase 22.1 Foundations] — 2026-04-21
 
 ### Added

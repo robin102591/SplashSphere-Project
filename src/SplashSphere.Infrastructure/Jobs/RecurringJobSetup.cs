@@ -76,6 +76,24 @@ public static class RecurringJobSetup
             cronExpression: "*/5 * * * *",
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // ── Booking (Customer Connect) ───────────────────────────────────────
+
+        // Every 5 minutes — auto-enqueue Confirmed/Arrived bookings whose slot
+        // starts within the next 15 minutes and have no queue entry yet.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-create-queue",
+            methodCall: job => job.CreateQueueFromBookingsAsync(CancellationToken.None),
+            cronExpression: "*/5 * * * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // Every 5 minutes — flip still-Confirmed bookings to NoShow once the
+        // slot's end + per-branch grace window has elapsed.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-noshow-sweep",
+            methodCall: job => job.MarkBookingNoShowsAsync(CancellationToken.None),
+            cronExpression: "*/5 * * * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         // ── Billing ──────────────────────────────────────────────────────────
 
         // Daily 9 AM PHT — remind tenants with trials expiring in 1-3 days.

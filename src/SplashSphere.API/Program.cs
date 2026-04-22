@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using SplashSphere.API.Endpoints;
+using SplashSphere.API.Endpoints.Connect;
 using SplashSphere.API.Infrastructure;
 using SplashSphere.Application;
 using SplashSphere.Infrastructure;
@@ -206,6 +207,18 @@ app.MapServiceUsageEndpoints();
 app.MapPurchaseOrderEndpoints();
 app.MapSupplierEndpoints();
 app.MapEquipmentEndpoints();
+
+// ── Customer Connect ──────────────────────────────────────────────────────────
+app.MapConnectAuthEndpoints();
+app.MapConnectProfileEndpoints();
+app.MapConnectCatalogueEndpoints();
+app.MapConnectDiscoveryEndpoints();
+app.MapConnectServicesEndpoints();
+app.MapConnectBookingEndpoints();
+app.MapConnectLoyaltyEndpoints();
+app.MapConnectReferralEndpoints();
+app.MapConnectQueueEndpoints();
+app.MapConnectHistoryEndpoints();
 
 app.Run();
 

@@ -112,6 +112,10 @@ public static class DependencyInjection
         // ── Connect (customer app) JWT ──────────────────────────────────────
         services.AddScoped<IConnectTokenService, ConnectTokenService>();
 
+        // ── Connect per-request identity ────────────────────────────────────
+        services.AddHttpContextAccessor();
+        services.AddScoped<IConnectUserContext, ConnectUserContext>();
+
         // ── Background job services ───────────────────────────────────────────
         services.AddTransient<PayrollJobService>();
         services.AddTransient<InventoryJobService>();
@@ -120,6 +124,7 @@ public static class DependencyInjection
         services.AddTransient<BillingJobService>();
         services.AddTransient<ExpenseJobService>();
         services.AddTransient<FranchiseJobService>();
+        services.AddTransient<BookingJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────────
         services.AddHangfire(config => config
