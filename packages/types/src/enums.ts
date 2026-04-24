@@ -234,6 +234,13 @@ export enum RewardType {
   DiscountPercent = 3,
 }
 
+/** Lifecycle state of a referral — mirrors C# `SplashSphere.Domain.Enums.ReferralStatus`. */
+export enum ReferralStatus {
+  Pending   = 1,
+  Completed = 2,
+  Expired   = 3,
+}
+
 // ── Franchise ───────────────────────────────────────────────────────────────
 
 /** Classification of a tenant within the platform. */

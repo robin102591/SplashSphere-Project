@@ -92,3 +92,15 @@ description: Current frontend page inventory — updated by agents after each ta
 | /shift/cash-movement | Cash Movement Form — Cash In / Cash Out |
 | /shift/close | Close Shift — 3-step wizard |
 | /shift/report | Shift Report — printable EOD report |
+
+## Customer Connect App (apps/customer/)
+
+| Route | Purpose |
+|---|---|
+| / | Home — greeting, quick actions (Book / My bookings), "My car washes" list fetched from `GET /my-carwashes` |
+| /discover | Nearby branches (placeholder) |
+| /history | Cross-tenant service history — completed transactions grouped by Manila-time month, newest first, with points-earned badge and plate number |
+| /profile | Profile detail (edit name/email), vehicles CRUD (add/edit/remove with global Make/Model picker), language toggle (en/fil), sign-out |
+| /bookings | My Bookings list — Upcoming/Past tabs (URL `?tab=`), status badges, plate + est. total / range. Upcoming asc, Past desc |
+| /bookings/[id] | Booking detail — header card with status + slot + short code, services table with per-line price or range, vehicle card, live queue panel (polls `/queue/active` every 10s, pauses when tab hidden), cancel action (Confirmed/Arrived + future slot) |
+| /auth | Phone OTP sign-in flow |

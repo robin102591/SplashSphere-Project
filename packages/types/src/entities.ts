@@ -29,6 +29,7 @@ import type {
   QueuePriority,
   QueueStatus,
   ReceiptLineType,
+  ReferralStatus,
   ReviewStatus,
   RewardType,
   ShiftStatus,
@@ -1845,4 +1846,544 @@ export interface BookingSettingDto {
   noShowGraceMinutes: number;
   isBookingEnabled: boolean;
   showInPublicDirectory: boolean;
+}
+
+// ── Customer Connect auth ─────────────────────────────────────────────────────
+
+/**
+ * Response payload from `POST /api/v1/connect/auth/otp/send`.
+ * TTL is the server-side countdown until the code expires (seconds).
+ */
+export interface SendOtpResponse {
+  ttlSeconds: number;
+}
+
+/**
+ * Public profile for the signed-in Connect user.
+ * Mirrors the C# `ConnectUserDto` record returned by the verify endpoint.
+ */
+export interface ConnectUserDto {
+  id: string;
+  phone: string;
+  name: string;
+  email: string | null;
+  avatarUrl: string | null;
+  /** True on the first successful verification for a phone number. */
+  isNew: boolean;
+}
+
+/**
+ * Response payload from `POST /api/v1/connect/auth/otp/verify`.
+ * Access token lives ~30 minutes, refresh token ~30 days (and rotates on use).
+ */
+export interface VerifyOtpResponse {
+  accessToken: string;
+  /** ISO-8601 UTC instant. */
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  /** ISO-8601 UTC instant. */
+  refreshTokenExpiresAt: string;
+  user: ConnectUserDto;
+}
+
+/**
+ * Response payload from `POST /api/v1/connect/auth/refresh`.
+ * Shape mirrors verify but without the user block — the stored user is still valid.
+ */
+export interface RefreshTokenResponse {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+}
+
+/**
+ * One row in the Connect customer's cross-tenant service history — a
+ * completed transaction at any car wash branch they've joined. Mirrors
+ * the C# `ConnectServiceHistoryItemDto` record. Returned by
+ * `GET /api/v1/connect/history` (flat array, newest first, no pagination).
+ */
+export interface ConnectHistoryItemDto {
+  transactionId: string;
+  transactionNumber: string;
+  tenantId: string;
+  tenantName: string;
+  branchId: string;
+  branchName: string;
+  plateNumber: string;
+  /** Decimal PHP amount from the server (already a number via System.Text.Json). */
+  finalAmount: number;
+  pointsEarned: number;
+  /** ISO-8601 UTC instant. Convert to Asia/Manila for display. */
+  completedAt: string;
+  serviceNames: string[];
+}
+
+// ── Customer Connect profile ──────────────────────────────────────────────────
+
+/**
+ * Vehicle registered on a Connect user's global profile.
+ *
+ * Deliberately lacks type/size — those get assigned per-tenant by cashiers on
+ * the customer's first physical visit to each car wash. Mirrors the C#
+ * `ConnectVehicleDto` record.
+ */
+export interface ConnectVehicleDto {
+  id: string;
+  makeId: string;
+  makeName: string;
+  modelId: string;
+  modelName: string;
+  plateNumber: string;
+  color: string | null;
+  year: number | null;
+}
+
+/**
+ * Full profile for the signed-in Connect user, returned by
+ * `GET /api/v1/connect/profile`. Includes the user's vehicle list inline.
+ */
+export interface ConnectProfileDto {
+  id: string;
+  phone: string;
+  name: string;
+  email: string | null;
+  avatarUrl: string | null;
+  /** ISO-8601 UTC instant. */
+  createdAt: string;
+  vehicles: readonly ConnectVehicleDto[];
+}
+
+/** Request body for `PATCH /api/v1/connect/profile`. */
+export interface UpdateConnectProfileRequest {
+  name: string;
+  email: string | null;
+  avatarUrl: string | null;
+}
+
+/** Request body for `POST`/`PATCH /api/v1/connect/profile/vehicles[/{id}]`. */
+export interface ConnectVehicleUpsertRequest {
+  makeId: string;
+  modelId: string;
+  plateNumber: string;
+  color: string | null;
+  year: number | null;
+}
+
+/**
+ * A tenant the authenticated Connect user has joined. Returned by
+ * `GET /api/v1/connect/my-carwashes`. Loyalty tier/points are not included
+ * here — fetch `/carwashes/{tenantId}/loyalty` separately for that data.
+ */
+export interface ConnectTenantSummaryDto {
+  tenantId: string;
+  tenantName: string;
+  address: string;
+  /** ISO-8601 UTC instant. */
+  linkedAt: string;
+}
+
+// ── Customer Connect vehicle catalogue ────────────────────────────────────────
+
+/** Global vehicle make for the Connect app's vehicle picker. */
+export interface GlobalMakeDto {
+  id: string;
+  name: string;
+  displayOrder: number;
+}
+
+/** Global vehicle model, scoped to a make. */
+export interface GlobalModelDto {
+  id: string;
+  makeId: string;
+  name: string;
+  displayOrder: number;
+}
+
+// ── Customer Connect discovery ────────────────────────────────────────────────
+
+/**
+ * One row in the public car-wash directory returned by
+ * `GET /api/v1/connect/carwashes`. NOTE: the endpoint emits one row per
+ * *branch*, so tenants with multiple public branches appear multiple times —
+ * the UI groups by `tenantId` for the tenant-level card.
+ *
+ * Mirrors the C# `CarWashListItemDto` record.
+ */
+export interface ConnectDiscoveryResultDto {
+  tenantId: string;
+  tenantName: string;
+  branchId: string;
+  branchName: string;
+  address: string;
+  contactNumber: string;
+  /** Branch latitude in WGS84. `null` when the branch has no geolocation set. */
+  latitude: number | null;
+  /** Branch longitude in WGS84. `null` when the branch has no geolocation set. */
+  longitude: number | null;
+  /** Straight-line km from the caller's coords when supplied; otherwise `null`. */
+  distanceKm: number | null;
+  /** Local Manila `HH:mm`, or `null` when booking is disabled for the branch. */
+  openTime: string | null;
+  /** Local Manila `HH:mm`, or `null` when booking is disabled for the branch. */
+  closeTime: string | null;
+  isBookingEnabled: boolean;
+  isJoined: boolean;
+}
+
+// ── Customer Connect car-wash detail ──────────────────────────────────────────
+
+/** A publicly listed branch on a tenant's detail page. */
+export interface ConnectBranchSummaryDto {
+  id: string;
+  name: string;
+  address: string;
+  contactNumber: string;
+  latitude: number | null;
+  longitude: number | null;
+  /** Local Manila `HH:mm`, or `null` when booking is disabled. */
+  openTime: string | null;
+  /** Local Manila `HH:mm`, or `null` when booking is disabled. */
+  closeTime: string | null;
+  isBookingEnabled: boolean;
+}
+
+/**
+ * A service offered by a tenant, as shown on the detail page (pre-vehicle
+ * selection). Only the base price is returned here — per-vehicle pricing
+ * ranges come from `GET /carwashes/{tenantId}/services?vehicleId=...`.
+ *
+ * Mirrors the C# `CarWashServiceDto` record.
+ */
+export interface ConnectServiceSummaryDto {
+  id: string;
+  name: string;
+  description: string | null;
+  basePrice: number;
+}
+
+/**
+ * Full detail for a single car wash tenant returned by
+ * `GET /api/v1/connect/carwashes/{tenantId}`.
+ *
+ * Mirrors the C# `CarWashDetailDto` record.
+ */
+export interface ConnectCarwashDetailDto {
+  tenantId: string;
+  tenantName: string;
+  email: string;
+  contactNumber: string;
+  address: string;
+  isJoined: boolean;
+  branches: readonly ConnectBranchSummaryDto[];
+  services: readonly ConnectServiceSummaryDto[];
+}
+
+// ── Customer Connect bookings ────────────────────────────────────────────────
+
+/**
+ * A single service line on a Connect booking. When `price` is set the
+ * booking's vehicle was already classified; otherwise the
+ * `priceMin`/`priceMax` range is shown. Mirrors C# `BookingServiceDto`.
+ */
+export interface ConnectBookingServiceDto {
+  serviceId: string;
+  name: string;
+  price: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+}
+
+/**
+ * Row returned by `GET /api/v1/connect/bookings` — summary fields for
+ * the customer's "My Bookings" list. Mirrors C# `BookingListItemDto`
+ * (the Connect variant; the admin DTO has a different shape).
+ *
+ * `status` is the stringified `BookingStatus` (e.g., "Confirmed",
+ * "Arrived", "InService", "Completed", "Cancelled", "NoShow").
+ */
+export interface ConnectBookingListItemDto {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  branchId: string;
+  branchName: string;
+  /** ISO-8601 UTC. Display in Asia/Manila. */
+  slotStartUtc: string;
+  slotEndUtc: string;
+  status: string;
+  isVehicleClassified: boolean;
+  estimatedTotal: number;
+  estimatedTotalMin: number | null;
+  estimatedTotalMax: number | null;
+  vehicleId: string;
+  plateNumber: string;
+}
+
+/**
+ * Full detail for a single Connect booking. Returned by
+ * `GET /api/v1/connect/bookings/{id}`. Mirrors C# `BookingDetailDto`.
+ */
+export interface ConnectBookingDetailDto {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  branchId: string;
+  branchName: string;
+  /** ISO-8601 UTC. Display in Asia/Manila. */
+  slotStartUtc: string;
+  slotEndUtc: string;
+  /** Stringified BookingStatus. */
+  status: string;
+  isVehicleClassified: boolean;
+  estimatedTotal: number;
+  estimatedTotalMin: number | null;
+  estimatedTotalMax: number | null;
+  estimatedDurationMinutes: number;
+  vehicleId: string;
+  plateNumber: string;
+  queueEntryId: string | null;
+  queueNumber: string | null;
+  /** Stringified QueueStatus when an entry exists, else null. */
+  queueStatus: string | null;
+  transactionId: string | null;
+  services: readonly ConnectBookingServiceDto[];
+}
+
+/**
+ * The caller's currently active queue entry across every tenant, or
+ * `null` if none. Returned by `GET /api/v1/connect/queue/active`.
+ *
+ * `status` and `priority` arrive as numeric enum values (matches the
+ * backend which does NOT register `JsonStringEnumConverter`). Compare
+ * against `QueueStatus`/`QueuePriority` from `./enums`.
+ */
+export interface ConnectActiveQueueDto {
+  queueEntryId: string;
+  tenantId: string;
+  tenantName: string;
+  branchId: string;
+  branchName: string;
+  queueNumber: string;
+  status: QueueStatus;
+  priority: QueuePriority;
+  /** Number of entries ahead of this one; null while not Waiting/Called. */
+  aheadCount: number | null;
+  estimatedWaitMinutes: number | null;
+  /** ISO-8601 UTC when the entry was called. */
+  calledAt: string | null;
+  /** ISO-8601 UTC when service started. */
+  startedAt: string | null;
+  bookingId: string | null;
+}
+
+// ── Customer Connect booking wizard ──────────────────────────────────────────
+
+/**
+ * One tenant service with pricing resolved for the caller's selected vehicle.
+ *
+ * `priceMode` is the server's decision about how to present the price:
+ *  - `"exact"` — the vehicle is classified at this tenant, so only `price`
+ *    is populated.
+ *  - `"estimate"` — the vehicle is unclassified; `priceMin`/`priceMax`
+ *    span the ServicePricing matrix (with the base price as a fallback)
+ *    and `price` is null.
+ *
+ * Mirrors C# `ConnectServicePriceDto`.
+ */
+export interface ConnectServicePriceDto {
+  serviceId: string;
+  name: string;
+  description: string | null;
+  /** `"exact"` or `"estimate"`. */
+  priceMode: string;
+  price: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+}
+
+/**
+ * Response wrapper for
+ * `GET /api/v1/connect/carwashes/{tenantId}/services?vehicleId={id}`.
+ * Mirrors C# `ConnectServicesWithPricingDto`.
+ */
+export interface ConnectServicesWithPricingDto {
+  tenantId: string;
+  vehicleId: string;
+  /** `"exact"` when the caller's vehicle is already classified, else `"estimate"`. */
+  priceMode: string;
+  services: readonly ConnectServicePriceDto[];
+}
+
+/**
+ * One available booking slot on a branch+date, returned by
+ * `GET /api/v1/connect/carwashes/{tenantId}/slots?branchId={id}&date=YYYY-MM-DD`.
+ *
+ * The backend already filters out slots with zero remaining capacity and
+ * those that violate `minLeadTimeMinutes`, so the client can render every
+ * returned slot as tappable. Mirrors C# `BookingSlotDto`.
+ */
+export interface ConnectBookingSlotDto {
+  /** ISO-8601 UTC instant — pass straight back on `POST /bookings`. */
+  slotStartUtc: string;
+  slotEndUtc: string;
+  /** Manila-local `HH:mm`, ready to render. */
+  localTime: string;
+  remainingCapacity: number;
+}
+
+/** Alias — the customer app uses the plural; admin uses a different shape. */
+export type ConnectAvailabilityDto = ConnectBookingSlotDto;
+
+/**
+ * Request body for `POST /api/v1/connect/bookings`. Sends the slot back as
+ * an ISO-8601 UTC instant — the server validates it against the branch's
+ * `BookingSetting` and rejects with 400/409 on mismatch.
+ *
+ * `notes` is accepted by the UI but not yet persisted by the current
+ * `CreateBookingCommand` — the field is kept so the shape matches once the
+ * backend starts storing it.
+ */
+export interface CreateBookingRequest {
+  tenantId: string;
+  branchId: string;
+  vehicleId: string;
+  /** ISO-8601 UTC instant. */
+  slotStartUtc: string;
+  serviceIds: string[];
+  notes?: string;
+}
+
+/**
+ * Response payload from `POST /api/v1/connect/bookings`. The backend
+ * returns the full booking detail on create so the confirmation redirect
+ * can warm the detail cache immediately. Alias of
+ * `ConnectBookingDetailDto` — kept as a separate name so call sites read
+ * semantically.
+ */
+export type ConnectBookingCreatedDto = ConnectBookingDetailDto;
+
+// ── Customer Connect loyalty / membership ────────────────────────────────────
+
+/**
+ * Customer-facing loyalty card summary for a single tenant. Returned by
+ * `GET /api/v1/connect/carwashes/{tenantId}/loyalty`.
+ *
+ * `isEnrolled` is `false` when the tenant doesn't offer loyalty (not on
+ * their plan) or the customer has not yet earned a card — all numeric
+ * fields are then zero and `pointsToNextTier`/`nextTierName` are null.
+ *
+ * Mirrors the C# `ConnectMembershipDto` record.
+ */
+export interface ConnectLoyaltyCardDto {
+  isEnrolled: boolean;
+  membershipCardId: string | null;
+  cardNumber: string | null;
+  currentTier: LoyaltyTier;
+  tierName: string;
+  pointsBalance: number;
+  lifetimePointsEarned: number;
+  lifetimePointsRedeemed: number;
+  /** Points required to reach the next tier, or `null` at the top tier. */
+  pointsToNextTier: number | null;
+  nextTierName: string | null;
+  tierMultiplier: number;
+}
+
+/**
+ * A loyalty reward a customer may redeem at a tenant. Returned in bulk by
+ * `GET /api/v1/connect/carwashes/{tenantId}/rewards`. `isAffordable`
+ * reflects the caller's current points balance at this tenant — falsy
+ * cards should be rendered disabled with a "need X more points" hint.
+ *
+ * Mirrors the C# `ConnectRewardDto` record.
+ */
+export interface ConnectRewardDto {
+  id: string;
+  name: string;
+  description: string | null;
+  rewardType: RewardType;
+  pointsCost: number;
+  serviceId: string | null;
+  serviceName: string | null;
+  packageId: string | null;
+  packageName: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  isAffordable: boolean;
+}
+
+/**
+ * Payload returned by `POST /api/v1/connect/carwashes/{tenantId}/rewards/redeem`.
+ * The customer presents `pointTransactionId` (or a QR derived from it) at
+ * the POS to claim the reward.
+ *
+ * Mirrors the C# `ConnectRedemptionResultDto` record.
+ */
+export interface RedeemRewardResponseDto {
+  pointTransactionId: string;
+  rewardId: string;
+  rewardName: string;
+  pointsDeducted: number;
+  newBalance: number;
+}
+
+/**
+ * A single row in the Connect "Points history" feed. Negative `points`
+ * indicate a redemption or expiry; positive values indicate points earned.
+ *
+ * Mirrors the C# `ConnectPointTransactionDto` record.
+ */
+export interface ConnectPointTransactionDto {
+  id: string;
+  type: PointTransactionType;
+  points: number;
+  balanceAfter: number;
+  description: string;
+  rewardName: string | null;
+  /** ISO-8601 UTC. */
+  createdAt: string;
+}
+
+// ── Customer Connect referrals ───────────────────────────────────────────────
+
+/**
+ * The caller's referral code at a tenant plus aggregate share stats.
+ * Returned by `GET /api/v1/connect/carwashes/{tenantId}/referral-code` —
+ * the handler lazily issues a code on first read so a joined customer
+ * always has something to share.
+ *
+ * Mirrors the C# `ConnectReferralCodeDto` record.
+ */
+export interface ConnectReferralCodeDto {
+  code: string;
+  /** Points the referrer earns when a referral completes. */
+  referrerPointsReward: number;
+  /** Points the new customer earns on their first wash. */
+  referredPointsReward: number;
+  totalReferrals: number;
+  completedReferrals: number;
+  pendingReferrals: number;
+  /** Lifetime points this customer has earned from completed referrals. */
+  pointsEarned: number;
+}
+
+/**
+ * A single row on the "My referrals" list at a tenant. Only referrals
+ * where someone actually used the code are returned — pending-but-unused
+ * codes are the caller's own code, not referrals.
+ *
+ * Mirrors the C# `ConnectReferralListItemDto` record.
+ */
+export interface ConnectReferralHistoryItemDto {
+  id: string;
+  /** Full name of the referred customer, or `null` if no longer resolvable. */
+  referredName: string | null;
+  status: ReferralStatus;
+  /** Points the referrer earned once the referral completed. */
+  referrerPointsEarned: number;
+  /** ISO-8601 UTC when the referral was completed, or `null` if still pending. */
+  completedAt: string | null;
+  /** ISO-8601 UTC. */
+  createdAt: string;
 }

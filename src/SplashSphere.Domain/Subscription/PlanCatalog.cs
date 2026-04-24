@@ -23,7 +23,8 @@ public static class PlanCatalog
         FeatureKeys.ExpenseTracking, FeatureKeys.ShiftManagement, FeatureKeys.ProfitLossReports,
         FeatureKeys.SmsNotifications, FeatureKeys.PricingModifiers,
         FeatureKeys.PurchaseOrders, FeatureKeys.EquipmentManagement,
-        FeatureKeys.SupplyUsageAutoDeduction, FeatureKeys.CostPerWashReports
+        FeatureKeys.SupplyUsageAutoDeduction, FeatureKeys.CostPerWashReports,
+        FeatureKeys.OnlineBooking, FeatureKeys.ConnectDirectoryListing, FeatureKeys.ReferralProgram
     ];
 
     private static readonly HashSet<string> EnterpriseFeatures =

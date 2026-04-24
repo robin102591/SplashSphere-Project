@@ -1,5 +1,65 @@
 ## Changelog
 
+## [Customer Connect — Phase 22.3 Customer-Facing App] — 2026-04-22
+
+Ships the end-customer Next.js 16 PWA (`apps/customer/`, port 3002) that consumes the existing `/api/v1/connect/*` API surface. Mobile-first bottom-tab shell, phone-OTP auth via the `ConnectJwt` scheme (no Clerk on this app), discovery + booking + loyalty + referrals + cross-tenant history — all backed by React Query and client-side token management. No new backend endpoints this phase; frontend only.
+
+### 22.3-A — Scaffold
+- New `apps/customer/` workspace: `package.json`, `next.config.ts`, `tsconfig.json` (+ `tsconfig.sw.json` for Serwist), `postcss.config.mjs`, `eslint.config.mjs`, Tailwind v4 baseline matching shadcn.
+- Bottom-tab shell (`src/app/(tabs)/layout.tsx`) with 4 tabs: Home, Book (→ Discover), History, Profile.
+- `next-intl` i18n with cookie-based locale (en/fil), no URL prefix; messages under `apps/customer/messages/{en,fil}.json`.
+- Serwist PWA manifest + service worker (`public/manifest.json`, `src/app/sw.ts`, `/offline` fallback).
+- Mobile-first layout; **no Clerk**, **no SignalR** — polling-only for live data.
+- Root `package.json` gained `dev:customer` + `build:customer` scripts.
+
+### 22.3-B — Phone OTP auth + ConnectJwt
+- `/auth` two-step flow (phone → 6-digit code) consuming `/connect/auth/otp/send`, `/otp/verify`, `/refresh`, `/sign-out`.
+- Tokens stored in `localStorage` under `splashsphere.connect.*`, read via `useSyncExternalStore` for SSR safety (`src/lib/auth/token-store.ts`).
+- `apiClient` (`src/lib/api-client.ts`) auto-attaches bearer and auto-refreshes on 401 with **module-level refresh-lock coalescing** — one `/auth/refresh` in flight at a time.
+- `<AuthProvider>` + `useConnectAuth()` hook (`src/lib/auth/auth-context.tsx`).
+- `<AuthGuard>` client component wraps `(tabs)/*`, `carwash/*`, and `bookings/*` layouts.
+- `NEXT_PUBLIC_DEV_OTP_CODE` convenience for dev prefill.
+
+### 22.3-C — Home + Profile + Vehicles
+- `/` (Home): greeting, "My Car Washes" cards from `GET /my-carwashes`, quick actions.
+- `/profile`: profile edit, vehicles list + add/edit/delete, language toggle (en/fil), sign out.
+- Hooks: `use-profile`, `use-catalogue` (global makes/models).
+
+### 22.3-D — Discover + Carwash detail
+- `/discover`: debounced search, geolocation-aware, tenant results from `GET /carwashes`.
+- `/carwash/[tenantId]`: branches, services, Join CTA (`POST /carwashes/{tenantId}/join`), Book / View-rewards CTAs.
+- Route layout `carwash/[tenantId]/layout.tsx` with its own `AuthGuard` + back-button AppBar.
+- New shared `src/components/layout/app-bar.tsx`.
+
+### 22.3-E — Booking wizard
+- `/carwash/[tenantId]/book` — 4-step wizard (Vehicle → Services → Branch/Date/Time → Confirm).
+- Availability from `GET /carwashes/{tenantId}/slots` (server-enforced lead time + capacity).
+- Classified vehicle → exact prices; unclassified → price ranges with a "final price confirmed on first visit" banner.
+- `POST /bookings` → redirect to `/bookings/[id]`.
+- `useBookingWizard` reducer with cascading invalidation (vehicle change clears services + slot; branch/date change clears slot).
+
+### 22.3-F — Bookings list + live queue detail
+- `/bookings` — Upcoming / Past tabs (URL param).
+- `/bookings/[id]` — detail + **live queue panel polling `GET /queue/active` every 10s**, paused on tab hidden (`visibilitychange` + `refetchIntervalInBackground: false`).
+- Cancel action via `PATCH /bookings/{id}/cancel` with confirmation dialog.
+- Elapsed-time ticker for `InService` bookings.
+
+### 22.3-G — Membership + referrals
+- `/carwash/[tenantId]/membership` — tier/points header, rewards list with redemption, recent points history, referral code (copy + Web Share API with clipboard fallback).
+- Endpoints consumed: `/carwashes/{tenantId}/loyalty`, `/rewards`, `/rewards/redeem`, `/referral-code`, `/referrals`, `/points-history`.
+
+### 22.3-H — History
+- `/history` — cross-tenant service history grouped by month (Manila TZ, sticky month headers).
+- Flat list (not paginated) from `GET /history?take=N` with the 200 server cap.
+
+### Shared packages + i18n
+- `packages/types/src/entities.ts` — appended ~15 Connect DTOs consumed by hooks.
+- `packages/types/src/enums.ts` — added `ReferralStatus` enum.
+- `apps/customer/messages/{en,fil}.json` — new namespaces: `auth`, `common`, `nav`, `home`, `profile`, `discover`, `carwash`, `bookings`, `booking`, `membership`, `referral`, `history`.
+
+### Business rules
+- Rule **30** (Connect App Token Handling) added to `CLAUDE.md`.
+
 ## [Customer Connect — Phase 22.4 Admin + POS Integration] — 2026-04-22
 
 Closes Phase 22 with the tenant-facing side of bookings + referrals — admin booking management, POS check-in / classification / auto-fill, referral-reward payout on first completed transaction, and the Hangfire reminders/expiry cycle.

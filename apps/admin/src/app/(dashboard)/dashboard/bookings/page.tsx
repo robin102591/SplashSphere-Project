@@ -1,9 +1,17 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { CalendarCheck, CalendarDays, LayoutGrid, List as ListIcon, Lock } from 'lucide-react'
+import {
+  CalendarCheck,
+  CalendarDays,
+  ExternalLink,
+  LayoutGrid,
+  List as ListIcon,
+  Lock,
+} from 'lucide-react'
 
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -111,6 +119,15 @@ function BookingDetailDialog({
         <DialogHeader>
           <DialogTitle>{t('detailTitle')}</DialogTitle>
           <DialogDescription>{t('detailDescription')}</DialogDescription>
+          {id && (
+            <Link
+              href={`/dashboard/bookings/${id}`}
+              onClick={() => onOpenChange(false)}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline pt-1 w-fit"
+            >
+              {t('openFullPage')} <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
         </DialogHeader>
 
         {isLoading || !booking ? (

@@ -45,6 +45,11 @@ public static class ConnectJwtSetup
                     ? null
                     : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
                 NameClaimType = "sub",
+                // Stamp the identity's AuthenticationType with our scheme name so
+                // ConnectUserContext.IsAuthenticated can distinguish Connect-issued
+                // tickets from Clerk tickets. Without this the default is
+                // "AuthenticationTypes.Federation" and the check fails.
+                AuthenticationType = SchemeName,
             };
         });
     }

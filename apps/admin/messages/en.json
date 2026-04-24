@@ -347,6 +347,13 @@
       "estimatedTotal": "Estimated total",
       "cancellationReason": "Cancellation reason",
       "viewTransaction": "View transaction",
+      "viewQueue": "View queue entry",
+      "openFullPage": "Open full page",
+      "backToList": "Back to bookings",
+      "duration": "Duration",
+      "durationMinutes": "{minutes} min",
+      "notFoundTitle": "Booking not found",
+      "notFoundDescription": "The booking you're looking for doesn't exist or you don't have access.",
       "upsellTitle": "Online Booking is not in your current plan",
       "upsellMessage": "Upgrade to Growth or Enterprise to accept customer bookings through the Customer Connect app."
     }

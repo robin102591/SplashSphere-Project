@@ -347,6 +347,13 @@
       "estimatedTotal": "Tantyang kabuuan",
       "cancellationReason": "Dahilan ng cancellation",
       "viewTransaction": "Tingnan ang transaksyon",
+      "viewQueue": "Tingnan ang queue entry",
+      "openFullPage": "Buksan nang buo",
+      "backToList": "Bumalik sa mga booking",
+      "duration": "Tagal",
+      "durationMinutes": "{minutes} min",
+      "notFoundTitle": "Hindi natagpuan ang booking",
+      "notFoundDescription": "Hindi umiiral ang booking na hinahanap o wala kang access dito.",
       "upsellTitle": "Hindi kasama ang Online Booking sa inyong plano",
       "upsellMessage": "Mag-upgrade sa Growth o Enterprise para tumanggap ng bookings mula sa Customer Connect app."
     }
