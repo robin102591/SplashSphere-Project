@@ -1,5 +1,20 @@
 ## Changelog
 
+## [Customer Connect — Discover map view] — 2026-04-24
+
+Delivery-app style map view added to the Customer Connect Discover tab. Users can toggle between the existing list view and a full-screen Mapbox GL map with a Grab/FoodPanda-like bottom card carousel. No backend changes — reuses the `latitude`/`longitude`/`distanceKm` already returned by `GET /api/v1/connect/carwashes`.
+
+- New components under `apps/customer/src/components/discover/`:
+  - `view-toggle.tsx` — segmented List ↔ Map control.
+  - `discover-map-view.tsx` — `react-map-gl` v7 + `mapbox-gl` v3 map with animated SVG pins, `GeolocateControl`, fit-bounds on load, `easeTo` on selection. Bi-directionally synced with the carousel.
+  - `map-card-carousel.tsx` — horizontal snap-scrolling carousel; `IntersectionObserver` detects the centered card with a programmatic-scroll guard to avoid feedback loops with marker taps.
+  - `group-by-tenant.ts` — extracted shared helper (previously inline in the Discover page).
+- `apps/customer/src/app/(tabs)/discover/page.tsx`: lazy-loads `DiscoverMapView` via `next/dynamic({ ssr: false })`; shows a "N branches without map location" chip in map view for branches missing coords.
+- `apps/customer/src/app/globals.css`: imports `mapbox-gl/dist/mapbox-gl.css`; adds `.scrollbar-none` utility for the carousel.
+- `apps/customer/.env.example`: adds `NEXT_PUBLIC_MAPBOX_TOKEN=`. When unset, the Map toggle is hidden and the list view behaves as before — no runtime regression.
+- `apps/customer/messages/{en,fil}.json`: new `discover.viewList`, `viewMap`, `mapUnavailable`, `noMapLocation`, `mapEmpty`.
+- `apps/customer/package.json`: adds `mapbox-gl@^3`, `react-map-gl@^7`.
+
 ## [Customer Connect — Phase 22.3 Customer-Facing App] — 2026-04-22
 
 Ships the end-customer Next.js 16 PWA (`apps/customer/`, port 3002) that consumes the existing `/api/v1/connect/*` API surface. Mobile-first bottom-tab shell, phone-OTP auth via the `ConnectJwt` scheme (no Clerk on this app), discovery + booking + loyalty + referrals + cross-tenant history — all backed by React Query and client-side token management. No new backend endpoints this phase; frontend only.

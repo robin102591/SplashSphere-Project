@@ -138,7 +138,12 @@
     "distanceKm": "{km} km away",
     "branchesMore": "+{count} more {count, plural, one {branch} other {branches}}",
     "locatingHint": "Using your location to sort by distance",
-    "locationDenied": "Location turned off — showing results alphabetically"
+    "locationDenied": "Location turned off — showing results alphabetically",
+    "viewList": "List",
+    "viewMap": "Map",
+    "mapUnavailable": "Map view is not configured.",
+    "noMapLocation": "{count, plural, one {# branch} other {# branches}} without map location",
+    "mapEmpty": "No car washes to show on the map."
   },
   "carwash": {
     "backLabel": "Back",

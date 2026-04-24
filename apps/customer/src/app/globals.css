@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
 
 :root {
   /* SplashSphere brand palette (shared with admin) */
@@ -72,4 +73,13 @@ body {
 
 .safe-area-mb {
   margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide the horizontal scrollbar on the Discover map carousel. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

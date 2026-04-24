@@ -138,7 +138,12 @@
     "distanceKm": "{km} km ang layo",
     "branchesMore": "+{count} pang {count, plural, one {branch} other {mga branch}}",
     "locatingHint": "Ginagamit ang iyong lokasyon para sa ranking ayon sa layo",
-    "locationDenied": "Naka-off ang location — alphabetical ang pagkakaayos"
+    "locationDenied": "Naka-off ang location — alphabetical ang pagkakaayos",
+    "viewList": "Listahan",
+    "viewMap": "Mapa",
+    "mapUnavailable": "Hindi pa naka-set up ang mapa.",
+    "noMapLocation": "{count, plural, one {# branch} other {# na branch}} na walang lokasyon sa mapa",
+    "mapEmpty": "Walang car wash na maipapakita sa mapa."
   },
   "carwash": {
     "backLabel": "Bumalik",

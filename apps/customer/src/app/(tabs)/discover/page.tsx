@@ -1,16 +1,40 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { MapPin, Search, X } from 'lucide-react'
-import type { ConnectDiscoveryResultDto } from '@splashsphere/types'
 import {
   useDiscoverySearch,
   type DiscoverySearchCoords,
 } from '@/hooks/use-discovery'
 import { CarwashResultCard } from '@/components/discover/carwash-result-card'
+import { ViewToggle, type DiscoverView } from '@/components/discover/view-toggle'
+import {
+  groupByTenant,
+  type TenantGroup,
+} from '@/components/discover/group-by-tenant'
+
+/**
+ * The Mapbox view pulls in ~220KB of JS and touches `window`, so it's
+ * lazy-loaded only when the user actually switches to Map mode. SSR is
+ * disabled because `mapbox-gl` calls `window` at module scope.
+ */
+const DiscoverMapView = dynamic(
+  () =>
+    import('@/components/discover/discover-map-view').then(
+      (m) => m.DiscoverMapView,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[calc(100svh-180px)] min-h-[480px] animate-pulse rounded-2xl border border-border bg-muted" />
+    ),
+  },
+)
 
 const DEBOUNCE_MS = 300
+const MAPBOX_TOKEN_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
 
 /**
  * Explicit tri-state for the browser geolocation flow:
@@ -28,36 +52,15 @@ type GeoState =
   | { kind: 'unsupported' }
 
 /**
- * Collapse the branch-level rows returned by the API into one card per
- * tenant. The first row for a tenant wins (the server already sorted by
- * distance when coords were supplied), and we count the remaining branches
- * for the "+N more" label.
- */
-interface TenantGroup {
-  primary: ConnectDiscoveryResultDto
-  extraBranchCount: number
-}
-
-function groupByTenant(
-  rows: readonly ConnectDiscoveryResultDto[],
-): TenantGroup[] {
-  const byTenant = new Map<string, TenantGroup>()
-  for (const row of rows) {
-    const existing = byTenant.get(row.tenantId)
-    if (existing) {
-      existing.extraBranchCount += 1
-    } else {
-      byTenant.set(row.tenantId, { primary: row, extraBranchCount: 0 })
-    }
-  }
-  return Array.from(byTenant.values())
-}
-
-/**
  * Discover screen — the car-wash directory. Sticky search bar at the top,
  * grouped-by-tenant results below. Debounces the query 300ms before hitting
  * the server and optimistically reuses the previous page of results while
  * typing (see `placeholderData` in `useDiscoverySearch`).
+ *
+ * Supports two view modes:
+ *   - `list` (default): vertical stack of result cards.
+ *   - `map`:  full-screen Mapbox map with a bottom card carousel. Hidden
+ *     entirely when `NEXT_PUBLIC_MAPBOX_TOKEN` is unset.
  */
 export default function DiscoverPage() {
   const t = useTranslations('discover')
@@ -68,6 +71,8 @@ export default function DiscoverPage() {
   // "recommended" list appears instantly.
   const [input, setInput] = useState('')
   const [debounced, setDebounced] = useState('')
+
+  const [view, setView] = useState<DiscoverView>('list')
 
   // Geolocation is fired once on mount by a small "bridge" effect that only
   // *subscribes* to the browser API — it does not call setState in its body.
@@ -103,25 +108,31 @@ export default function DiscoverPage() {
       () => setGeo({ kind: 'denied' }),
       { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 8000 },
     )
-    // getCurrentPosition cannot be cancelled; the component will either see
-    // the success/error callback or unmount first (and then our setGeo is a
-    // no-op because React silently drops updates on unmounted components in
-    // strict mode — acceptable for this fire-and-forget flow).
   }, [geo.kind])
 
   const coords = geo.kind === 'granted' ? geo.coords : null
   const search = useDiscoverySearch(debounced, coords)
-  const groups = useMemo(
+  const groups = useMemo<TenantGroup[]>(
     () => (search.data ? groupByTenant(search.data) : []),
     [search.data],
+  )
+
+  const noCoordsCount = useMemo(
+    () =>
+      groups.reduce(
+        (n, g) =>
+          g.primary.latitude === null || g.primary.longitude === null
+            ? n + 1
+            : n,
+        0,
+      ),
+    [groups],
   )
 
   const clearInput = () => setInput('')
 
   return (
     <section className="space-y-4">
-      {/* Header — sticks below the device top inset. The tab shell already
-          accounts for header height in its top padding. */}
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
@@ -155,21 +166,28 @@ export default function DiscoverPage() {
           )}
         </label>
 
-        {geo.kind === 'granted' && (
-          <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="h-3 w-3" aria-hidden />
-            {t('locatingHint')}
-          </p>
-        )}
-        {geo.kind === 'denied' && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            {t('locationDenied')}
-          </p>
-        )}
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {geo.kind === 'granted' && (
+              <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <MapPin className="h-3 w-3" aria-hidden />
+                {t('locatingHint')}
+              </p>
+            )}
+            {geo.kind === 'denied' && (
+              <p className="text-[11px] text-muted-foreground">
+                {t('locationDenied')}
+              </p>
+            )}
+          </div>
+          {MAPBOX_TOKEN_CONFIGURED && (
+            <ViewToggle value={view} onChange={setView} />
+          )}
+        </div>
       </div>
 
       {/* Results */}
-      {search.isPending && <ResultsSkeleton />}
+      {search.isPending && view === 'list' && <ResultsSkeleton />}
 
       {search.isError && (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center">
@@ -199,7 +217,8 @@ export default function DiscoverPage() {
 
       {search.data &&
         groups.length === 0 &&
-        debounced.trim().length === 0 && (
+        debounced.trim().length === 0 &&
+        view === 'list' && (
           <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
               <Search className="h-6 w-6 text-primary" aria-hidden />
@@ -213,7 +232,7 @@ export default function DiscoverPage() {
           </div>
         )}
 
-      {groups.length > 0 && (
+      {view === 'list' && groups.length > 0 && (
         <ul className="space-y-3">
           {groups.map((g) => (
             <li key={g.primary.tenantId}>
@@ -224,6 +243,18 @@ export default function DiscoverPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {view === 'map' && (
+        <div className="space-y-2">
+          <DiscoverMapView groups={groups} userCoords={coords} />
+          {noCoordsCount > 0 && (
+            <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <MapPin className="h-3 w-3" aria-hidden />
+              {t('noMapLocation', { count: noCoordsCount })}
+            </p>
+          )}
+        </div>
       )}
     </section>
   )
