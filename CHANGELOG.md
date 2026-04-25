@@ -1,5 +1,15 @@
 ## Changelog
 
+## [Admin — Section nav (pilot)] — 2026-04-24
+
+Replaced horizontal in-page tab strips with a vertical secondary nav column on two pages, mirroring the hierarchy already present in the main sidebar. The Settings page in particular benefits — its 7 tabs no longer wrap to two rows on narrow viewports, and the Booking / Notifications / Import Data buttons now have a dedicated home below the nav instead of competing with the page title. Active section lives in the URL (`?section=`) so refreshes and deep links land in the right place.
+
+- New `apps/admin/src/components/ui/section-nav.tsx` — URL-driven vertical list, active-row treatment matching `AppSidebar` (splash-50 fill + 2px splash-500 left bar), optional `actions` slot for secondary links. On `<768px` it collapses to a horizontal scrolling chip strip and the action buttons fall back to the page header.
+- New `apps/admin/src/hooks/use-section-param.ts` — read/write the `?section=` query param via `router.replace` so each section change does not push a history entry.
+- `apps/admin/src/app/(dashboard)/dashboard/branches/[id]/page.tsx`: replaced `Tabs` with `SectionNav` for the Employees + Transactions sections.
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: replaced 7-tab `Tabs` + 3 header buttons with `SectionNav` (7 items + 3 actions). `useHasFeature(FeatureKeys.OnlineBooking)` still gates the Booking action.
+- The other 7 tabbed admin pages (`services/[id]`, `packages/[id]`, `employees/[id]`, `customers/[id]`, `payroll/[id]`, `loyalty`, `reports`) keep their existing `Tabs` until the pilot is validated. The `Tabs` primitive at `apps/admin/src/components/ui/tabs.tsx` stays in place.
+
 ## [Customer Connect — Swap Mapbox for Leaflet/OSM] — 2026-04-25
 
 Replaced Mapbox GL with Leaflet + OpenStreetMap on the Discover map view. Mapbox was free up to 50K loads/month but still required a billing-card-on-file account; Leaflet + OSM tiles need no key and no account at all. Same Grab-style UX, smaller dep footprint, zero ongoing cost.
