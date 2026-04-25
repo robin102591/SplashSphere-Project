@@ -1,5 +1,16 @@
 ## Changelog
 
+## [Admin — Payroll entry sheet: tabs → stacked sections] — 2026-04-25
+
+Replaced the in-sheet `Tabs` (Adjustments / Commissions / Attendance) on the payroll employee detail panel with a stacked-sections layout fronted by a sticky anchor row. The sheet is `sm:max-w-3xl` — too narrow for a side-column SectionNav — but tabs were hiding two reference panels (commissions, attendance) behind a click that users almost never made unless they noticed the count. Stacking surfaces all three at once; the sticky `Adjustments · Commissions (N) · Attendance (N)` row gives the same jump affordance tabs did, without the panel-switch cognitive load.
+
+- `apps/admin/src/app/(dashboard)/dashboard/payroll/[id]/page.tsx` (`EmployeeDetailSheet`):
+  - Removed `Tabs / TabsList / TabsTrigger / TabsContent` imports and wrapper.
+  - Added a sticky anchor nav (`sticky top-0 z-10` inside `SheetContent`'s scroll context, with `backdrop-blur` so summary numbers behind it stay legible).
+  - Each section is now a `<section id="…" scroll-mt-20>` with a small heading; counts moved from the section heading into the anchor row.
+  - `scrollToSection(id)` uses `scrollIntoView({ behavior: 'smooth', block: 'start' })` — works correctly inside the sheet's scroll container.
+- `payroll/[id]` was the only remaining caller of the `Tabs` primitive in the admin app. The primitive itself stays in place (no callers to break) in case future contexts reach for it.
+
 ## [Admin — Section nav rollout] — 2026-04-25
 
 Rolled out the `SectionNav` pattern (piloted on `branches/[id]` + `settings`) to the remaining tabbed admin pages. Same UX everywhere now: vertical secondary nav on `md:` and up, horizontal chip strip on mobile, active section persisted in `?section=`. The `Tabs` primitive stays in place for nested/sheet contexts (the only remaining caller is the `EmployeeDetailSheet` inside `payroll/[id]`, where a side-nav column would not fit a narrow slide-out panel).
