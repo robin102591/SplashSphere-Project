@@ -16,9 +16,9 @@ import {
 } from '@/components/discover/group-by-tenant'
 
 /**
- * The Mapbox view pulls in ~220KB of JS and touches `window`, so it's
- * lazy-loaded only when the user actually switches to Map mode. SSR is
- * disabled because `mapbox-gl` calls `window` at module scope.
+ * The Leaflet view touches `window` at module load (the leaflet bundle
+ * mutates `window.L`), so it's lazy-loaded with SSR disabled. Defer until
+ * the user actually switches to Map mode to keep the initial bundle lean.
  */
 const DiscoverMapView = dynamic(
   () =>
@@ -34,7 +34,6 @@ const DiscoverMapView = dynamic(
 )
 
 const DEBOUNCE_MS = 300
-const MAPBOX_TOKEN_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
 
 /**
  * Explicit tri-state for the browser geolocation flow:
@@ -180,9 +179,7 @@ export default function DiscoverPage() {
               </p>
             )}
           </div>
-          {MAPBOX_TOKEN_CONFIGURED && (
-            <ViewToggle value={view} onChange={setView} />
-          )}
+          <ViewToggle value={view} onChange={setView} />
         </div>
       </div>
 

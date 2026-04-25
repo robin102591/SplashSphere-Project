@@ -196,8 +196,10 @@ public static class DataSeeder
             contactNumber: "+63 917 123 4567",
             address: "Mandaluyong City, Metro Manila, Philippines") { Id = Ten });
 
-        ctx.Add(new Branch(Ten, "Makati Branch", "MKT", "7849 Makati Ave, Makati City", "+63 2 8123 4567") { Id = BrMkt });
-        ctx.Add(new Branch(Ten, "BGC Branch",    "BGC", "26th St, Bonifacio Global City, Taguig", "+63 2 8987 6543") { Id = BrBgc });
+        ctx.Add(new Branch(Ten, "Makati Branch", "MKT", "7849 Makati Ave, Makati City", "+63 2 8123 4567")
+            { Id = BrMkt, Latitude = 14.5547m, Longitude = 121.0244m });
+        ctx.Add(new Branch(Ten, "BGC Branch", "BGC", "26th St, Bonifacio Global City, Taguig", "+63 2 8987 6543")
+            { Id = BrBgc, Latitude = 14.5507m, Longitude = 121.0480m });
 
         // System users (POS cashier logins — one per branch)
         ctx.Add(new User("clerk_mkt_cashier_seed", "cashier-mkt@sparklewash.ph", "Ana",   "Lim")

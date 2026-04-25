@@ -1,5 +1,16 @@
 ## Changelog
 
+## [Customer Connect — Swap Mapbox for Leaflet/OSM] — 2026-04-25
+
+Replaced Mapbox GL with Leaflet + OpenStreetMap on the Discover map view. Mapbox was free up to 50K loads/month but still required a billing-card-on-file account; Leaflet + OSM tiles need no key and no account at all. Same Grab-style UX, smaller dep footprint, zero ongoing cost.
+
+- `apps/customer/package.json`: removed `mapbox-gl` and `react-map-gl`; added `leaflet@^1.9`, `react-leaflet@^5`, `@types/leaflet`.
+- `apps/customer/src/components/discover/discover-map-view.tsx`: rewritten against `react-leaflet`. Custom `L.divIcon` for the brand pin (matches the prior SVG); user-location dot; `MapContainer` + `TileLayer` + `ZoomControl` + `AttributionControl`; `flyTo` on selection; `fitBounds` once on first mount with carousel padding.
+- `apps/customer/src/app/globals.css`: imports `leaflet/dist/leaflet.css` instead of `mapbox-gl/dist/mapbox-gl.css`.
+- `apps/customer/src/app/(tabs)/discover/page.tsx`: dropped the `NEXT_PUBLIC_MAPBOX_TOKEN` gate — the View toggle is always available now since OSM has no key requirement.
+- `apps/customer/.env.example`: replaced `NEXT_PUBLIC_MAPBOX_TOKEN` with optional `NEXT_PUBLIC_MAP_TILE_URL` / `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` overrides for swapping in MapTiler / Stadia in production.
+- `apps/customer/messages/{en,fil}.json`: removed obsolete `mapUnavailable` (the map view is always reachable now).
+
 ## [Customer Connect — Discover map view] — 2026-04-24
 
 Delivery-app style map view added to the Customer Connect Discover tab. Users can toggle between the existing list view and a full-screen Mapbox GL map with a Grab/FoodPanda-like bottom card carousel. No backend changes — reuses the `latitude`/`longitude`/`distanceKm` already returned by `GET /api/v1/connect/carwashes`.

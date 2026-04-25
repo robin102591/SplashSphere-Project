@@ -141,7 +141,6 @@
     "locationDenied": "Naka-off ang location — alphabetical ang pagkakaayos",
     "viewList": "Listahan",
     "viewMap": "Mapa",
-    "mapUnavailable": "Hindi pa naka-set up ang mapa.",
     "noMapLocation": "{count, plural, one {# branch} other {# na branch}} na walang lokasyon sa mapa",
     "mapEmpty": "Walang car wash na maipapakita sa mapa."
   },
