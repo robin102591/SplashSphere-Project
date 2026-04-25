@@ -39,17 +39,25 @@ interface DiscoverMapViewProps {
 }
 
 interface PinGroup extends TenantGroup {
+  /** Mirrored from `primary.latitude` once the null-check has passed. */
   latitude: number
+  /** Mirrored from `primary.longitude` once the null-check has passed. */
   longitude: number
 }
 
 /**
- * Narrow a TenantGroup to one whose primary branch has real coordinates.
- * Branches without coords are hidden from the map entirely (the parent
- * surfaces them as a count chip).
+ * Project a `TenantGroup` to a `PinGroup` if its primary branch has real
+ * coordinates, otherwise drop it. We surface the coordinates at the top
+ * level so the rest of this component can read `g.latitude` / `g.longitude`
+ * without re-checking for null on every access. Branches without coords
+ * are hidden from the map entirely (the parent surfaces them as a count
+ * chip).
  */
-function hasCoords(g: TenantGroup): g is PinGroup {
-  return g.primary.latitude !== null && g.primary.longitude !== null
+function toPinGroup(g: TenantGroup): PinGroup | null {
+  const lat = g.primary.latitude
+  const lng = g.primary.longitude
+  if (lat === null || lng === null) return null
+  return { ...g, latitude: lat, longitude: lng }
 }
 
 /**
@@ -105,7 +113,11 @@ export function DiscoverMapView({ groups, userCoords }: DiscoverMapViewProps) {
   const didFitRef = useRef(false)
 
   const pinGroups = useMemo<PinGroup[]>(
-    () => groups.filter(hasCoords),
+    () =>
+      groups.flatMap((g) => {
+        const pin = toPinGroup(g)
+        return pin ? [pin] : []
+      }),
     [groups],
   )
 
