@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -463,6 +464,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params)
   const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
+  const [section] = useSectionParam('section', 'details')
 
   const { data: customer, isLoading, isError } = useCustomer(id)
   const { mutate: toggleStatus, isPending: isToggling } = useToggleCustomerStatus()
@@ -535,70 +537,65 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <Tabs defaultValue="details">
-        <TabsList variant="line">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="vehicles">
-            Vehicles
-            {customer.cars.length > 0 && (
-              <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
-                {customer.cars.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="loyalty">
-            <Award className="mr-1.5 h-3.5 w-3.5" />
-            Loyalty
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="details"
+          items={[
+            { value: 'details', label: 'Details', icon: FileText },
+            {
+              value: 'vehicles',
+              label: 'Vehicles',
+              icon: Car,
+              badge: customer.cars.length > 0 ? customer.cars.length : undefined,
+            },
+            { value: 'loyalty', label: 'Loyalty', icon: Award },
+          ]}
+        />
 
-        <TabsContent value="details" className="mt-6">
-          <div className="space-y-4 max-w-md">
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-4">
-              {customer.email && (
-                <div className="col-span-2">
-                  <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5" /> Email
-                  </dt>
-                  <dd className="mt-0.5">{customer.email}</dd>
-                </div>
-              )}
-              {customer.contactNumber && (
+        <div className="min-w-0 flex-1">
+          {section === 'details' && (
+            <div className="space-y-4 max-w-md">
+              <dl className="grid grid-cols-2 gap-x-8 gap-y-4">
+                {customer.email && (
+                  <div className="col-span-2">
+                    <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </dt>
+                    <dd className="mt-0.5">{customer.email}</dd>
+                  </div>
+                )}
+                {customer.contactNumber && (
+                  <div>
+                    <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5" /> Contact
+                    </dt>
+                    <dd className="mt-0.5 text-sm">{customer.contactNumber}</dd>
+                  </div>
+                )}
+                {customer.notes && (
+                  <div className="col-span-2">
+                    <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5" /> Notes
+                    </dt>
+                    <dd className="mt-0.5 text-sm">{customer.notes}</dd>
+                  </div>
+                )}
                 <div>
-                  <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5" /> Contact
-                  </dt>
-                  <dd className="mt-0.5 text-sm">{customer.contactNumber}</dd>
+                  <dt className="text-sm text-muted-foreground">Member since</dt>
+                  <dd className="mt-0.5 text-sm">
+                    {new Date(customer.createdAt).toLocaleDateString('en-PH', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                    })}
+                  </dd>
                 </div>
-              )}
-              {customer.notes && (
-                <div className="col-span-2">
-                  <dt className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" /> Notes
-                  </dt>
-                  <dd className="mt-0.5 text-sm">{customer.notes}</dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-sm text-muted-foreground">Member since</dt>
-                <dd className="mt-0.5 text-sm">
-                  {new Date(customer.createdAt).toLocaleDateString('en-PH', {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="vehicles" className="mt-6">
-          <VehiclesTab customer={customer} />
-        </TabsContent>
-
-        <TabsContent value="loyalty" className="mt-6">
-          <LoyaltyTab customerId={customer.id} />
-        </TabsContent>
-      </Tabs>
+              </dl>
+            </div>
+          )}
+          {section === 'vehicles' && <VehiclesTab customer={customer} />}
+          {section === 'loyalty' && <LoyaltyTab customerId={customer.id} />}
+        </div>
+      </div>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
         <SheetContent className="sm:max-w-md overflow-y-auto">

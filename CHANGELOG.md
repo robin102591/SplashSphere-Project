@@ -1,5 +1,17 @@
 ## Changelog
 
+## [Admin — Section nav rollout] — 2026-04-25
+
+Rolled out the `SectionNav` pattern (piloted on `branches/[id]` + `settings`) to the remaining tabbed admin pages. Same UX everywhere now: vertical secondary nav on `md:` and up, horizontal chip strip on mobile, active section persisted in `?section=`. The `Tabs` primitive stays in place for nested/sheet contexts (the only remaining caller is the `EmployeeDetailSheet` inside `payroll/[id]`, where a side-nav column would not fit a narrow slide-out panel).
+
+- `apps/admin/src/app/(dashboard)/dashboard/services/[id]/page.tsx`: Details / Pricing Matrix / Commission Matrix — pricing + commission rows surface as count badges in the nav.
+- `apps/admin/src/app/(dashboard)/dashboard/packages/[id]/page.tsx`: same 3-section layout as services with matching badges.
+- `apps/admin/src/app/(dashboard)/dashboard/employees/[id]/page.tsx`: Details / Commission History / Attendance / Payroll History / Security (5 sections).
+- `apps/admin/src/app/(dashboard)/dashboard/customers/[id]/page.tsx`: Details / Vehicles / Loyalty — Vehicles tab carries a count badge.
+- `apps/admin/src/app/(dashboard)/dashboard/loyalty/page.tsx`: Dashboard / Rewards / Settings.
+- `apps/admin/src/app/(dashboard)/dashboard/reports/page.tsx`: Revenue / Commissions / Service Popularity. Per-section Export-CSV buttons and the Commissions employee filter moved into each conditional block.
+- `payroll/[id]` was deliberately left on `Tabs` — its tabs live inside an `EmployeeDetailSheet` slide-out (`sm:max-w-3xl`), which is too narrow for a side-column nav.
+
 ## [Admin — Section nav (pilot)] — 2026-04-24
 
 Replaced horizontal in-page tab strips with a vertical secondary nav column on two pages, mirroring the hierarchy already present in the main sidebar. The Settings page in particular benefits — its 7 tabs no longer wrap to two rows on narrow viewports, and the Booking / Notifications / Import Data buttons now have a dedicated home below the nav instead of competing with the page title. Active section lives in the URL (`?section=`) so refreshes and deep links land in the right place.

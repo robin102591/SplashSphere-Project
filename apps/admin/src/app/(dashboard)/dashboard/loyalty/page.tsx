@@ -5,7 +5,8 @@ import {
   Award, Gift, Settings as SettingsIcon, Users, TrendingUp, Star,
   Plus, Pencil, Power, PowerOff,
 } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -718,6 +719,8 @@ function DashboardTab() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function LoyaltyPage() {
+  const [section] = useSectionParam('section', 'dashboard')
+
   return (
     <div className="space-y-6">
       <div>
@@ -725,34 +728,23 @@ export default function LoyaltyPage() {
         <p className="text-muted-foreground">Manage your customer loyalty program, rewards, and membership tiers.</p>
       </div>
 
-      <Tabs defaultValue="dashboard">
-        <TabsList>
-          <TabsTrigger value="dashboard">
-            <Award className="mr-2 h-4 w-4" />
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="rewards">
-            <Gift className="mr-2 h-4 w-4" />
-            Rewards
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <SettingsIcon className="mr-2 h-4 w-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="dashboard"
+          items={[
+            { value: 'dashboard', label: 'Dashboard', icon: Award },
+            { value: 'rewards', label: 'Rewards', icon: Gift },
+            { value: 'settings', label: 'Settings', icon: SettingsIcon },
+          ]}
+        />
 
-        <TabsContent value="dashboard" className="mt-6">
-          <DashboardTab />
-        </TabsContent>
-
-        <TabsContent value="rewards" className="mt-6">
-          <RewardsTab />
-        </TabsContent>
-
-        <TabsContent value="settings" className="mt-6">
-          <SettingsTab />
-        </TabsContent>
-      </Tabs>
+        <div className="min-w-0 flex-1">
+          {section === 'dashboard' && <DashboardTab />}
+          {section === 'rewards' && <RewardsTab />}
+          {section === 'settings' && <SettingsTab />}
+        </div>
+      </div>
     </div>
   )
 }
