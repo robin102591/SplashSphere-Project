@@ -1,5 +1,19 @@
 ## Changelog
 
+## [Settings — Receipt Designer (Slice 2 of Company Profile + Receipt Designer)] — 2026-04-27
+
+Tenants can now control what every printed and digital receipt shows from `/dashboard/settings/receipt`. ~30 toggles split across Header / Body / Customer / Footer / Format sections, custom header/footer text, thank-you message, paper width (58mm vs 80mm), and font size. A live thermal-style preview on the right of the form re-renders as toggles change. The `ReceiptPdfDocument` (QuestPDF-based, used by `GET /transactions/{id}/receipt/pdf` and the POS receipt screen) honors every flag — so changes take effect on the next receipt without a cache or restart. Per-branch overrides come in slice 4; logo upload + GCash QR image come in slice 3.
+
+- Domain: new `ReceiptSetting` entity (~30 fields, nullable `BranchId` reserved for slice-4 overrides). New enums `LogoSize`, `LogoPosition`, `ReceiptWidth`, `ReceiptFontSize`. Marked `ITenantScoped` so the auto-filter from the earlier refactor picks it up — verified by the existing `TenantFilterRegistrationTests`.
+- Migration `AddReceiptSettings` creates the table with two unique partial indexes: `(TenantId)` filtered by `BranchId IS NULL` (one tenant default per tenant), `(TenantId, BranchId)` filtered by `BranchId IS NOT NULL` (one override per branch).
+- Onboarding: `CreateOnboardingCommandHandler` now seeds a default `ReceiptSetting` row alongside the tenant — every new tenant has the row from day one. Legacy tenants get the in-memory default until they first hit Save (the upsert handler then creates the persisted row).
+- Application: `GetReceiptSettingQuery`/`UpdateReceiptSettingCommand` (+ validator). The update is an upsert: it creates the row on first save for legacy tenants. Resolution order documented in business rule 31.
+- API: `GET`/`PUT /api/v1/settings/receipt[?branchId=]`. `branchId` is parsed in slice 2 but only the null path is exercised; slice 4 wires the branch UX.
+- Receipt rendering: `ReceiptDto` extended with `Company` (tenant branding) and `Settings` (the toggles), populated by `GetReceiptQueryHandler` from a single `t.Tenant.*` projection. `ReceiptPdfDocument` was rewritten to honor every `Show*` flag, custom header/footer text, paper width (~164pt vs ~226pt), and font size. Toggles for not-yet-wired data (service duration, loyalty info, GCash QR image) are documented no-ops in the renderer — flags stay in the form so they activate when the data lands.
+- Shared types: `ReceiptSettingDto` + `UpdateReceiptSettingPayload` + the four enums added to `@splashsphere/types` (`enums.ts` + `settings.ts`).
+- Admin: new `apps/admin/src/hooks/use-receipt-settings.ts` (`useReceiptSetting` + `useUpdateReceiptSetting`). New page `/dashboard/settings/receipt` — sectioned form (Header / Body / Customer / Footer / Format), live preview that subscribes to the form via `useWatch` so every toggle re-renders the preview, sticky save (only enabled when dirty). Settings index gains "Receipt Designer" as the second nav action.
+- Docs: `API_ENDPOINTS.md`, `PAGE_INVENTORY.md`, two new business rules in `CLAUDE.md` (#31 receipt resolution, #32 PDF toggles).
+
 ## [Settings — Company Profile (Slice 1 of Company Profile + Receipt Designer)] — 2026-04-27
 
 First slice of the Company Profile + Receipt Designer feature. Tenants can now edit their full business identity from `/dashboard/settings/company` — structured address, tax/registration (TIN, DTI/SEC, VAT flag), social URLs (Facebook, Instagram), GCash number, tagline. Logo and GCash QR uploads come in slice 3; the receipt designer that consumes these fields ships in slice 2. Existing readers (Auth/me, Billing PDF, Connect listings, Franchise detail) all continue to read the legacy single-string `Tenant.Address` — the update handler re-derives it from the structured fields on every save, so the two views stay in sync without a backfill migration.

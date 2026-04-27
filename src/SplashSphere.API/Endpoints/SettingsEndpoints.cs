@@ -2,7 +2,10 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Settings.Commands.UpdateCompanyProfile;
+using SplashSphere.Application.Features.Settings.Commands.UpdateReceiptSetting;
 using SplashSphere.Application.Features.Settings.Queries.GetCompanyProfile;
+using SplashSphere.Application.Features.Settings.Queries.GetReceiptSetting;
+using SplashSphere.Domain.Enums;
 
 namespace SplashSphere.API.Endpoints;
 
@@ -28,8 +31,19 @@ public static class SettingsEndpoints
             .WithName("UpdateCompanyProfile")
             .WithSummary("Update the current tenant's company profile");
 
+        // ── Receipt designer ──────────────────────────────────────────────────
+        group.MapGet("/receipt", GetReceiptSetting)
+            .WithName("GetReceiptSetting")
+            .WithSummary("Get receipt-design settings (tenant default; branchId reserved for slice 4)");
+
+        group.MapPut("/receipt", UpdateReceiptSetting)
+            .WithName("UpdateReceiptSetting")
+            .WithSummary("Update receipt-design settings (upserts the tenant default)");
+
         return app;
     }
+
+    // ── Company profile handlers ──────────────────────────────────────────────
 
     private static async Task<IResult> GetCompanyProfile(ISender sender, CancellationToken ct)
     {
@@ -63,6 +77,68 @@ public static class SettingsEndpoints
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
+    // ── Receipt setting handlers ──────────────────────────────────────────────
+
+    private static async Task<IResult> GetReceiptSetting(
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var setting = await sender.Send(new GetReceiptSettingQuery(branchId), ct);
+        return TypedResults.Ok(setting);
+    }
+
+    private static async Task<IResult> UpdateReceiptSetting(
+        [FromBody] UpdateReceiptSettingRequest body,
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateReceiptSettingCommand(
+            branchId,
+            // Header
+            body.ShowLogo,
+            body.LogoSize,
+            body.LogoPosition,
+            body.ShowBusinessName,
+            body.ShowTagline,
+            body.ShowBranchName,
+            body.ShowBranchAddress,
+            body.ShowBranchContact,
+            body.ShowTIN,
+            body.CustomHeaderText,
+            // Body
+            body.ShowServiceDuration,
+            body.ShowEmployeeNames,
+            body.ShowVehicleInfo,
+            body.ShowDiscountBreakdown,
+            body.ShowTaxLine,
+            body.ShowTransactionNumber,
+            body.ShowDateTime,
+            body.ShowCashierName,
+            // Customer
+            body.ShowCustomerName,
+            body.ShowCustomerPhone,
+            body.ShowLoyaltyPointsEarned,
+            body.ShowLoyaltyBalance,
+            body.ShowLoyaltyTier,
+            // Footer
+            body.ThankYouMessage,
+            body.PromoText,
+            body.ShowSocialMedia,
+            body.ShowGCashQr,
+            body.ShowGCashNumber,
+            body.CustomFooterText,
+            // Format
+            body.ReceiptWidth,
+            body.FontSize,
+            body.AutoCutPaper), ct);
+
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    // ── Request bodies ────────────────────────────────────────────────────────
+
     /// <summary>
     /// PUT body for <c>UpdateCompanyProfile</c>. Mirrors
     /// <see cref="UpdateCompanyProfileCommand"/> but lives at the API surface
@@ -85,4 +161,48 @@ public static class SettingsEndpoints
         string? FacebookUrl,
         string? InstagramHandle,
         string? GCashNumber);
+
+    /// <summary>
+    /// PUT body for <c>UpdateReceiptSetting</c>. The branchId comes from the
+    /// query string (so the URL alone identifies which row is being upserted)
+    /// rather than the body.
+    /// </summary>
+    private sealed record UpdateReceiptSettingRequest(
+        // Header
+        bool ShowLogo,
+        LogoSize LogoSize,
+        LogoPosition LogoPosition,
+        bool ShowBusinessName,
+        bool ShowTagline,
+        bool ShowBranchName,
+        bool ShowBranchAddress,
+        bool ShowBranchContact,
+        bool ShowTIN,
+        string? CustomHeaderText,
+        // Body
+        bool ShowServiceDuration,
+        bool ShowEmployeeNames,
+        bool ShowVehicleInfo,
+        bool ShowDiscountBreakdown,
+        bool ShowTaxLine,
+        bool ShowTransactionNumber,
+        bool ShowDateTime,
+        bool ShowCashierName,
+        // Customer
+        bool ShowCustomerName,
+        bool ShowCustomerPhone,
+        bool ShowLoyaltyPointsEarned,
+        bool ShowLoyaltyBalance,
+        bool ShowLoyaltyTier,
+        // Footer
+        string ThankYouMessage,
+        string? PromoText,
+        bool ShowSocialMedia,
+        bool ShowGCashQr,
+        bool ShowGCashNumber,
+        string? CustomFooterText,
+        // Format
+        ReceiptWidth ReceiptWidth,
+        ReceiptFontSize FontSize,
+        bool AutoCutPaper);
 }

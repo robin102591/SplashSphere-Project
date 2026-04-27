@@ -99,6 +99,9 @@ public sealed class ApplicationDbContext(
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<Expense> Expenses => Set<Expense>();
 
+    // ── Receipt settings ────────────────────────────────────────────────────
+    public DbSet<ReceiptSetting> ReceiptSettings => Set<ReceiptSetting>();
+
     // ── Loyalty ───────────────────────────────────────────────────────────
     public DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings => Set<LoyaltyProgramSettings>();
     public DbSet<LoyaltyTierConfig> LoyaltyTierConfigs => Set<LoyaltyTierConfig>();

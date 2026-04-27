@@ -316,3 +316,27 @@ export enum MaintenanceType {
   Inspection      = 2,
   PartReplacement = 3,
 }
+
+// ── Receipt designer ──────────────────────────────────────────────────────────
+
+export enum LogoSize {
+  Small  = 0,
+  Medium = 1,
+  Large  = 2,
+}
+
+export enum LogoPosition {
+  Left   = 0,
+  Center = 1,
+}
+
+export enum ReceiptWidth {
+  Mm58 = 0,
+  Mm80 = 1,
+}
+
+export enum ReceiptFontSize {
+  Small  = 0,
+  Normal = 1,
+  Large  = 2,
+}

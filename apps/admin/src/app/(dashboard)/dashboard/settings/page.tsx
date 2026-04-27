@@ -950,6 +950,7 @@ export default function SettingsPage() {
 
   const actions = [
     { label: 'Company Profile', href: '/dashboard/settings/company', icon: Building2 },
+    { label: 'Receipt Designer', href: '/dashboard/settings/receipt', icon: Receipt },
     ...(hasOnlineBooking
       ? [{ label: 'Booking', href: '/dashboard/settings/booking', icon: CalendarCheck }]
       : []),

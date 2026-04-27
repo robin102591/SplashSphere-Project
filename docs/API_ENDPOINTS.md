@@ -194,6 +194,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/settings/company` | Get the current tenant's company profile (identity, contact, structured address, tax/registration, social, GCash) |
 | `PUT` | `/settings/company` | Update the current tenant's company profile. Server re-derives the legacy single-string `Address` from the structured fields |
+| `GET` | `/settings/receipt[?branchId={id}]` | Get receipt-design settings. Resolution: branch-specific row → tenant default → in-memory default. Slice 2 only exercises the tenant-default path; `branchId` is reserved for slice 4 |
+| `PUT` | `/settings/receipt[?branchId={id}]` | Upsert receipt-design settings. With no `branchId`, upserts the tenant default. Body is the full setting (all toggles, custom text, format) |
 
 ## Expenses
 
