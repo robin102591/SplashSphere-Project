@@ -1,5 +1,15 @@
 ## Changelog
 
+## [Backend — Delete unused repository abstraction] — 2026-04-27
+
+Removed the dormant `IRepository<T>` / `ITenantAwareRepository<T>` / `ITransactionRepository` / `IServicePricingRepository` / `IServiceCommissionRepository` ladder. The codebase already follows the EF Core 9 + CQRS convention of letting handlers query `IApplicationDbContext` directly — only the two `BulkUpsertAsync` calls in the service-pricing and service-commission upsert handlers were going through the repo layer, and that "abstraction" was a 4-line `ExecuteDeleteAsync` + `AddRangeAsync` combo that reads more clearly inline. `ITransactionRepository` and its three methods (`GetWithDetailsAsync`, `GetNextDailySequenceAsync`, `GetByBranchAndDateAsync`) had zero callers anywhere in the application.
+
+- Inlined the bulk-replace logic into `UpsertServicePricingCommandHandler` and `UpsertServiceCommissionCommandHandler` (both retain their explicit DB transactions — the comments explaining why now point to `ExecuteDeleteAsync` directly instead of routing through `BulkUpsertAsync`).
+- Deleted 9 files: `IRepository.cs`, `ITenantAwareRepository.cs`, `ITransactionRepository.cs`, `IServicePricingRepository.cs`, `IServiceCommissionRepository.cs`, `TenantAwareRepository.cs`, `TransactionRepository.cs`, `ServicePricingRepository.cs`, `ServiceCommissionRepository.cs`.
+- Removed three `services.AddScoped<...>` registrations from `Infrastructure/DependencyInjection.cs`. `IUnitOfWork` registration stays — it is genuinely used by the two transactional handlers and by the `UnitOfWorkBehavior` MediatR pipeline.
+- `Domain/Interfaces/` now contains only `IUnitOfWork.cs`. `Infrastructure/Persistence/Repositories/` now contains only `UnitOfWork.cs` — name is mildly misleading but renaming the folder is left as a cosmetic follow-up.
+- Net diff: -334 lines.
+
 ## [API — Centralize ProblemDetails mapping; fix silent 404→400 bug] — 2026-04-27
 
 Endpoints across ten files were checking `result.Error.Code == "NotFound"` to decide whether to return 404, but the canonical code emitted by `Error.NotFound()` is `"NOT_FOUND"`. The check never matched, so genuine not-found failures silently returned **400 Bad Request** instead of **404 Not Found** — across 29 endpoint methods. Refactored the API surface to route every Result-failure through a single `ProblemDetailsMapper`, deleting the broken inline checks and the parallel mapping kept in `GlobalExceptionHandler`. Side benefit: `409 Conflict`, `422 Validation`, `401`, and `403` were also being flattened to 400 by the legacy pattern — those now surface with the right status too.

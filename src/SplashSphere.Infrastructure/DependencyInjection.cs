@@ -34,11 +34,8 @@ public static class DependencyInjection
         });
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        // ── Repositories & Unit of Work ───────────────────────────────────────
+        // ── Unit of Work ──────────────────────────────────────────────────────
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<ITransactionRepository, TransactionRepository>();
-        services.AddScoped<IServicePricingRepository, ServicePricingRepository>();
-        services.AddScoped<IServiceCommissionRepository, ServiceCommissionRepository>();
 
         // ── Domain event publisher & background jobs ──────────────────────────
         services.AddScoped<IEventPublisher, EventPublisher>();
