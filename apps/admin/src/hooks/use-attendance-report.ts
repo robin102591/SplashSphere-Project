@@ -13,8 +13,6 @@ export interface AttendanceReportParams {
   employeeId?: string
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-
 export function useAttendanceReport(params: AttendanceReportParams) {
   const { getToken } = useAuth()
   return useQuery({
@@ -39,20 +37,7 @@ export function useExportAttendanceCsv() {
     if (params.branchId) qs.set('branchId', params.branchId)
     if (params.employeeId) qs.set('employeeId', params.employeeId)
 
-    const res = await fetch(`${API_BASE}/api/v1/attendance/export/csv?${qs}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) throw new Error('Export failed')
-
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `attendance_${params.from.replace(/-/g, '')}_${params.to.replace(/-/g, '')}.csv`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    const filename = `attendance_${params.from.replace(/-/g, '')}_${params.to.replace(/-/g, '')}.csv`
+    await apiClient.download(`/attendance/export/csv?${qs}`, filename, token ?? undefined)
   }, [getToken])
 }

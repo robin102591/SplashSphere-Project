@@ -58,13 +58,15 @@ function fileUrl(path: string): string {
 }
 
 /**
- * Authenticated binary download. Triggers the browser's "save as" flow with
- * the given filename. Throws the ProblemDetails body on non-OK responses, so
- * UI callers can show a toast.
+ * Authenticated binary download. Triggers the browser's "save as" flow.
+ * If the server sends a `Content-Disposition: attachment; filename=...`
+ * header, that takes precedence over the caller's `fallbackFilename`.
+ * Throws the ProblemDetails body on non-OK responses, so UI callers can
+ * show a toast.
  */
 async function download(
   path: string,
-  filename: string,
+  fallbackFilename: string,
   token?: string,
 ): Promise<void> {
   const headers: Record<string, string> = {}
@@ -78,6 +80,12 @@ async function download(
       .catch(() => ({ title: res.statusText, status: res.status }))
     throw err
   }
+
+  // Prefer the server-supplied filename (e.g. "payroll_2026-04-14_2026-04-20.csv")
+  // when the response advertises one.
+  const disposition = res.headers.get('Content-Disposition')
+  const match = disposition?.match(/filename="?([^";\n]+)"?/)
+  const filename = match?.[1] ?? fallbackFilename
 
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)

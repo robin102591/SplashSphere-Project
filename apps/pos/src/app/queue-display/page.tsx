@@ -6,6 +6,7 @@ import { Droplets, Users } from 'lucide-react'
 import { StatusBadge, type ConnectionState } from '@/components/connection-status'
 import type { QueueDisplayUpdatedPayload, QueueDisplayEntry } from '@splashsphere/types'
 import { QueuePriority } from '@splashsphere/types'
+import { apiClient } from '@/lib/api-client'
 import { createHubConnection } from '@/lib/signalr'
 
 // ── Clock ─────────────────────────────────────────────────────────────────────
@@ -125,12 +126,10 @@ function QueueDisplayContent() {
 
     // Initial data fetch (public — no auth)
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-      const res = await fetch(`${apiBase}/api/v1/queue/display?branchId=${encodeURIComponent(branchId)}`)
-      if (res.ok) {
-        const data = (await res.json()) as QueueDisplayUpdatedPayload
-        setDisplayData(data)
-      }
+      const data = await apiClient.get<QueueDisplayUpdatedPayload>(
+        `/queue/display?branchId=${encodeURIComponent(branchId)}`,
+      )
+      setDisplayData(data)
     } catch {
       // ignore — SignalR will deliver first update
     }

@@ -1,7 +1,5 @@
 'use client'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-
 import { use, useState, useCallback } from 'react'
 import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer, Banknote, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -349,16 +347,15 @@ function PayslipDialog({
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={async () => {
                   const token = await getToken()
-                  const res = await fetch(`${API_BASE}/api/v1/payroll/entries/${entryId}/payslip/pdf`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  })
-                  if (!res.ok) return
-                  const blob = await res.blob()
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url; a.download = `payslip_${entryId}.pdf`
-                  document.body.appendChild(a); a.click(); a.remove()
-                  URL.revokeObjectURL(url)
+                  try {
+                    await apiClient.download(
+                      `/payroll/entries/${entryId}/payslip/pdf`,
+                      `payslip_${entryId}.pdf`,
+                      token ?? undefined,
+                    )
+                  } catch {
+                    /* surfaced silently — original behavior */
+                  }
                 }}>
                   <Download className="mr-1.5 h-3.5 w-3.5" /> PDF
                 </Button>
@@ -1000,19 +997,11 @@ export default function PayrollPeriodDetailPage({
     setExporting(true)
     try {
       const token = await getToken()
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-      const res = await fetch(`${apiBase}/api/v1/payroll/periods/${id}/export/csv`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = res.headers.get('content-disposition')?.match(/filename="?(.+?)"?$/)?.[1]
-        ?? `payroll_${id}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+      await apiClient.download(
+        `/payroll/periods/${id}/export/csv`,
+        `payroll_${id}.csv`,
+        token ?? undefined,
+      )
       toast.success('CSV exported')
     } catch {
       toast.error('Failed to export CSV')

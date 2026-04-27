@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Download } from 'lucide-react'
 import { usePlan, useBillingHistory, useCancelSubscription, usePayInvoice } from '@/hooks/use-plan'
+import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 
 export default function BillingPage() {
   const { getToken } = useAuth()
@@ -18,17 +17,16 @@ export default function BillingPage() {
   const { mutate: payInvoice, isPending: paying } = usePayInvoice()
 
   const downloadInvoicePdf = async (billingRecordId: string) => {
-    const token = await getToken()
-    const res = await fetch(`${API_BASE}/api/v1/billing/invoices/${billingRecordId}/pdf`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) { toast.error('Failed to download invoice.'); return }
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = `invoice_${billingRecordId.slice(0, 8)}.pdf`
-    document.body.appendChild(a); a.click(); a.remove()
-    URL.revokeObjectURL(url)
+    try {
+      const token = await getToken()
+      await apiClient.download(
+        `/billing/invoices/${billingRecordId}/pdf`,
+        `invoice_${billingRecordId.slice(0, 8)}.pdf`,
+        token ?? undefined,
+      )
+    } catch {
+      toast.error('Failed to download invoice.')
+    }
   }
 
   const handlePayInvoice = (billingRecordId: string) => {

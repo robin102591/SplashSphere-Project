@@ -17,9 +17,9 @@ import { Button } from '@/components/ui/button'
 import { useRevenueReport, useCommissionsReport, useServicePopularityReport } from '@/hooks/use-reports'
 import { useBranches } from '@/hooks/use-branches'
 import { useEmployees } from '@/hooks/use-employees'
+import { apiClient } from '@/lib/api-client'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
 
@@ -357,19 +357,7 @@ export default function ReportsPage() {
     setExporting(true)
     try {
       const token = await getToken()
-      const res = await fetch(`${API_BASE}/api/v1${path}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fallbackName
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      await apiClient.download(path, fallbackName, token ?? undefined)
     } finally {
       setExporting(false)
     }
