@@ -8,7 +8,7 @@ namespace SplashSphere.Domain.Entities;
 /// Creation is lazy/upsert — defaults applied when the admin first saves.
 /// </para>
 /// </summary>
-public sealed class BookingSetting : IAuditableEntity
+public sealed class BookingSetting : IAuditableEntity, ITenantScoped
 {
     private BookingSetting() { } // EF Core
 

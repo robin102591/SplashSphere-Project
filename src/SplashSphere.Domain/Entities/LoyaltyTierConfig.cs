@@ -7,7 +7,7 @@ namespace SplashSphere.Domain.Entities;
 /// Child of <see cref="LoyaltyProgramSettings"/>. Each tenant can customise tier names,
 /// point thresholds, and earning multipliers.
 /// </summary>
-public sealed class LoyaltyTierConfig : IAuditableEntity
+public sealed class LoyaltyTierConfig : IAuditableEntity, ITenantScoped
 {
     private LoyaltyTierConfig() { } // EF Core
 

@@ -4,7 +4,7 @@ namespace SplashSphere.Domain.Entities;
 /// Per-tenant loyalty program configuration (singleton per tenant, upsert pattern).
 /// Controls how points are earned, whether they expire, and the master on/off switch.
 /// </summary>
-public sealed class LoyaltyProgramSettings : IAuditableEntity
+public sealed class LoyaltyProgramSettings : IAuditableEntity, ITenantScoped
 {
     private LoyaltyProgramSettings() { } // EF Core
 

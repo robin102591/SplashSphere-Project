@@ -16,7 +16,7 @@ namespace SplashSphere.Domain.Entities;
 /// When service starts, the link to <see cref="Transaction"/> is established.
 /// </para>
 /// </summary>
-public sealed class Booking : IAuditableEntity
+public sealed class Booking : IAuditableEntity, ITenantScoped
 {
     private Booking() { } // EF Core
 

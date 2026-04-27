@@ -10,7 +10,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Cascade delete: deleted when parent <see cref="Transaction"/> is deleted.
 /// </summary>
-public sealed class TransactionPackage : IAuditableEntity
+public sealed class TransactionPackage : IAuditableEntity, ITenantScoped
 {
     private TransactionPackage() { } // EF Core
 

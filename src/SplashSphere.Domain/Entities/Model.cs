@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// Used during customer/car registration to classify the vehicle.
 /// Scoped per tenant via the parent <see cref="Make"/>.
 /// </summary>
-public sealed class Model : IAuditableEntity
+public sealed class Model : IAuditableEntity, ITenantScoped
 {
     private Model() { } // EF Core
 

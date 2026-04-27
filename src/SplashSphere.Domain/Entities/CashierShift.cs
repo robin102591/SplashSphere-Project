@@ -22,7 +22,7 @@ namespace SplashSphere.Domain.Entities;
 /// |Variance| ≤ ₱50 → Approved; ≤ ₱200 → Pending; > ₱200 → Flagged.
 /// </para>
 /// </summary>
-public sealed class CashierShift : IAuditableEntity
+public sealed class CashierShift : IAuditableEntity, ITenantScoped
 {
     private CashierShift() { } // EF Core
 

@@ -16,7 +16,7 @@ namespace SplashSphere.Domain.Entities;
 /// Normal customer payments from completed transactions are NOT recorded here —
 /// they are read from the <c>Payment</c> table when the shift is closed.
 /// </summary>
-public sealed class CashMovement : IAuditableEntity
+public sealed class CashMovement : IAuditableEntity, ITenantScoped
 {
     private CashMovement() { } // EF Core
 

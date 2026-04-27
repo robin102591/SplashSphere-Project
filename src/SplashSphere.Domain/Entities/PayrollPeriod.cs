@@ -15,7 +15,7 @@ namespace SplashSphere.Domain.Entities;
 /// </list>
 /// Unique constraint: [TenantId, Year, CutOffWeek] — one period per ISO week per tenant.
 /// </summary>
-public sealed class PayrollPeriod : IAuditableEntity
+public sealed class PayrollPeriod : IAuditableEntity, ITenantScoped
 {
     private PayrollPeriod() { } // EF Core
 

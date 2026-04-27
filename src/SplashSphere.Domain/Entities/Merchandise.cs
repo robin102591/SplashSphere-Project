@@ -12,7 +12,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="StockQuantity"/> would go below zero.
 /// </para>
 /// </summary>
-public sealed class Merchandise : IAuditableEntity
+public sealed class Merchandise : IAuditableEntity, ITenantScoped
 {
     private Merchandise() { } // EF Core
 

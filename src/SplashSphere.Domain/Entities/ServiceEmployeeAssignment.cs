@@ -12,7 +12,7 @@ namespace SplashSphere.Domain.Entities;
 /// assigned once per service line item.
 /// Cascade delete: deleted when parent <see cref="TransactionService"/> is deleted.
 /// </summary>
-public sealed class ServiceEmployeeAssignment : IAuditableEntity
+public sealed class ServiceEmployeeAssignment : IAuditableEntity, ITenantScoped
 {
     private ServiceEmployeeAssignment() { } // EF Core
 

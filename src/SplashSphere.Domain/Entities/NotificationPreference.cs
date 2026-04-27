@@ -1,6 +1,6 @@
 namespace SplashSphere.Domain.Entities;
 
-public sealed class NotificationPreference
+public sealed class NotificationPreference : ITenantScoped
 {
     private NotificationPreference() { } // EF Core
 

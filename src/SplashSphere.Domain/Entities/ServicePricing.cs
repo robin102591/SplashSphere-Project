@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// Unique constraint: (serviceId, vehicleTypeId, sizeId).
 /// Tenant-scoped for global query filter isolation.
 /// </summary>
-public sealed class ServicePricing : IAuditableEntity
+public sealed class ServicePricing : IAuditableEntity, ITenantScoped
 {
     private ServicePricing() { } // EF Core
 

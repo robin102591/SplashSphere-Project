@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="Service"/> items it includes.
 /// Unique constraint: (packageId, serviceId).
 /// </summary>
-public sealed class PackageService : IAuditableEntity
+public sealed class PackageService : IAuditableEntity, ITenantScoped
 {
     private PackageService() { } // EF Core
 

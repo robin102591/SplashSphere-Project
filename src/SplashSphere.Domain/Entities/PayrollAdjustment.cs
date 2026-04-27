@@ -8,7 +8,7 @@ namespace SplashSphere.Domain.Entities;
 /// fields are denormalised totals recalculated from these rows.
 /// </para>
 /// </summary>
-public sealed class PayrollAdjustment : IAuditableEntity
+public sealed class PayrollAdjustment : IAuditableEntity, ITenantScoped
 {
     private PayrollAdjustment() { } // EF Core
 

@@ -27,7 +27,7 @@ namespace SplashSphere.Domain.Entities;
 /// by <see cref="IAuditableEntity.CreatedAt"/> within the same priority tier.
 /// </para>
 /// </summary>
-public sealed class QueueEntry : IAuditableEntity
+public sealed class QueueEntry : IAuditableEntity, ITenantScoped
 {
     private QueueEntry() { } // EF Core
 

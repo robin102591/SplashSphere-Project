@@ -9,7 +9,7 @@ namespace SplashSphere.Domain.Entities;
 /// one active link per tenant.
 /// </para>
 /// </summary>
-public sealed class ConnectUserTenantLink : IAuditableEntity
+public sealed class ConnectUserTenantLink : IAuditableEntity, ITenantScoped
 {
     private ConnectUserTenantLink() { } // EF Core
 

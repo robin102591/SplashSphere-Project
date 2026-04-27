@@ -4,3 +4,4 @@ global using SplashSphere.SharedKernel.Results;
 global using SplashSphere.Domain.Entities;
 global using SplashSphere.Domain.Enums;
 global using SplashSphere.Domain.Events;
+global using SplashSphere.Domain.Interfaces;

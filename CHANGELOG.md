@@ -1,5 +1,16 @@
 ## Changelog
 
+## [Backend — Auto-register tenant query filter via ITenantScoped marker] — 2026-04-27
+
+`ApplicationDbContext.OnModelCreating` had ~50 hand-wired `HasQueryFilter` calls — one per tenant-scoped entity, all with the identical `e => e.TenantId == tenantContext.TenantId` body. Adding a new tenant-scoped entity required remembering to register it; forgetting was the only way to silently leak rows across tenants. Replaced the manual list with a marker interface + reflection loop so the type system is now the single source of truth for "is this entity tenant-scoped".
+
+- New `src/SplashSphere.Domain/Interfaces/ITenantScoped.cs` — empty marker interface with documentation describing the contract (must expose `string TenantId`; non-standard scoping keeps a hand-wired filter).
+- Added `, ITenantScoped` to all 63 entity classes that previously had a hand-wired tenant filter (`Branch`, `Service`, `Transaction`, etc.). The 17 entities that should NOT be tenant-scoped (`Tenant`, `GlobalMake`, `GlobalModel`, `ConnectUser`, `ConnectVehicle`, `ConnectRefreshToken`, `FranchiseAgreement`, `RoyaltyPeriod`, `FranchiseInvitation`, plus support types) deliberately do not implement it.
+- `ApplicationDbContext.OnModelCreating` now loops over `modelBuilder.Model.GetEntityTypes()` and applies a dynamically-built `EF.Property<string>(e, "TenantId") == tenantContext.TenantId` filter to every CLR type that implements `ITenantScoped`. The `tenantContext` reference is captured as a constant and accessed via property expression so EF Core re-evaluates it per request.
+- Two non-standard filters kept hand-wired (with explanatory comments): `Expense` (uses `&& !IsDeleted` for soft-delete) and `FranchiseServiceTemplate` (scopes by `FranchisorTenantId` not `TenantId`).
+- Added `tests/SplashSphere.API.Tests/Persistence/TenantFilterRegistrationTests.cs` — two tests that build the EF model (no DB connection needed, no Docker required) and assert (a) every `ITenantScoped` entity has a query filter registered, (b) the 9 intentionally-global types do NOT. These guard against future regressions where someone adds an entity without the marker, or accidentally tags a global type.
+- Net diff: -90 / +28 lines in `OnModelCreating` (200 → 28 in the filter block); +56 trivial single-line edits across entity files; +63 lines of new test coverage.
+
 ## [Backend — Delete unused repository abstraction] — 2026-04-27
 
 Removed the dormant `IRepository<T>` / `ITenantAwareRepository<T>` / `ITransactionRepository` / `IServicePricingRepository` / `IServiceCommissionRepository` ladder. The codebase already follows the EF Core 9 + CQRS convention of letting handlers query `IApplicationDbContext` directly — only the two `BulkUpsertAsync` calls in the service-pricing and service-commission upsert handlers were going through the repo layer, and that "abstraction" was a 4-line `ExecuteDeleteAsync` + `AddRangeAsync` combo that reads more clearly inline. `ITransactionRepository` and its three methods (`GetWithDetailsAsync`, `GetNextDailySequenceAsync`, `GetByBranchAndDateAsync`) had zero callers anywhere in the application.

@@ -10,7 +10,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Unique constraint: (packageId, vehicleTypeId, sizeId).
 /// </summary>
-public sealed class PackageCommission : IAuditableEntity
+public sealed class PackageCommission : IAuditableEntity, ITenantScoped
 {
     private PackageCommission() { } // EF Core
 

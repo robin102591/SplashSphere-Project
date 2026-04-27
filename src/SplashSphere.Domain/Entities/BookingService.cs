@@ -10,7 +10,7 @@ namespace SplashSphere.Domain.Entities;
 /// Tenant-scoped for isolation + query-filter alignment, even though the row is
 /// owned by the parent Booking.
 /// </summary>
-public sealed class BookingService : IAuditableEntity
+public sealed class BookingService : IAuditableEntity, ITenantScoped
 {
     private BookingService() { } // EF Core
 

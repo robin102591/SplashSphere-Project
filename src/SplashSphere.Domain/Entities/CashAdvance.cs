@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// Active advances are automatically deducted from payroll each period via
 /// <see cref="DeductionPerPeriod"/> until <see cref="RemainingBalance"/> reaches zero.
 /// </summary>
-public sealed class CashAdvance : IAuditableEntity
+public sealed class CashAdvance : IAuditableEntity, ITenantScoped
 {
     private CashAdvance() { } // EF Core
 

@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// (e.g. "Chemicals", "Towels &amp; Cloths", "Wax &amp; Polish").
 /// Scoped per tenant.
 /// </summary>
-public sealed class SupplyCategory : IAuditableEntity
+public sealed class SupplyCategory : IAuditableEntity, ITenantScoped
 {
     private SupplyCategory() { } // EF Core
 

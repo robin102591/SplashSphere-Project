@@ -1,6 +1,6 @@
 namespace SplashSphere.Domain.Entities;
 
-public sealed class ExpenseCategory : IAuditableEntity
+public sealed class ExpenseCategory : IAuditableEntity, ITenantScoped
 {
     private ExpenseCategory() { }
 

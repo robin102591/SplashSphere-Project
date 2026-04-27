@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="Code"/> is the short prefix used in transaction numbers:
 /// <c>{Code}-{YYYYMMDD}-{Sequence}</c>.
 /// </summary>
-public sealed class Branch : IAuditableEntity
+public sealed class Branch : IAuditableEntity, ITenantScoped
 {
     private Branch() { } // EF Core
 

@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// and commission matrix (<see cref="PackageCommission"/>), but package commissions are
 /// always <see cref="CommissionType.Percentage"/> — never fixed or hybrid.
 /// </summary>
-public sealed class ServicePackage : IAuditableEntity
+public sealed class ServicePackage : IAuditableEntity, ITenantScoped
 {
     private ServicePackage() { } // EF Core
 

@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// Linked to <see cref="PurchaseOrder"/>s for procurement tracking.
 /// Scoped per tenant.
 /// </summary>
-public sealed class Supplier : IAuditableEntity
+public sealed class Supplier : IAuditableEntity, ITenantScoped
 {
     private Supplier() { } // EF Core
 

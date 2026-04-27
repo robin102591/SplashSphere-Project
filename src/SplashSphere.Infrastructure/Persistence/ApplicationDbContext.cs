@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Interfaces;
 using SplashSphere.Infrastructure.Auth;
 
 namespace SplashSphere.Infrastructure.Persistence;
@@ -138,215 +140,68 @@ public sealed class ApplicationDbContext(
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-        // ── Global query filters — tenant isolation ────────────────────────────
-        // Every query is automatically scoped to the current tenant.
+        // ── Tenant isolation: auto-register the standard filter ────────────────
+        // Any entity tagged with the ITenantScoped marker interface gets a global
+        // query filter `e => e.TenantId == tenantContext.TenantId` registered
+        // automatically. Adding a new tenant-scoped entity requires only the
+        // marker — there is no separate spot to remember to update here.
         // Use .IgnoreQueryFilters() in handlers that need cross-tenant access
         // (e.g. user lookup in TenantResolutionMiddleware, admin tooling).
 
-        // Tenant itself is never filtered — it IS the root tenant record
-        // User: nullable TenantId (null during onboarding); filter when TenantId is set
-        modelBuilder.Entity<User>()
-            .HasQueryFilter(u => u.TenantId == tenantContext.TenantId);
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(ITenantScoped).IsAssignableFrom(entityType.ClrType))
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .HasQueryFilter(BuildTenantFilter(entityType.ClrType));
+            }
+        }
 
-        modelBuilder.Entity<Branch>()
-            .HasQueryFilter(b => b.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<VehicleType>()
-            .HasQueryFilter(vt => vt.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Size>()
-            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Make>()
-            .HasQueryFilter(m => m.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Model>()
-            .HasQueryFilter(m => m.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServiceCategory>()
-            .HasQueryFilter(sc => sc.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Service>()
-            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServicePricing>()
-            .HasQueryFilter(sp => sp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServiceCommission>()
-            .HasQueryFilter(sc => sc.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServicePackage>()
-            .HasQueryFilter(sp => sp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PackageService>()
-            .HasQueryFilter(ps => ps.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PackagePricing>()
-            .HasQueryFilter(pp => pp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PackageCommission>()
-            .HasQueryFilter(pc => pc.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PricingModifier>()
-            .HasQueryFilter(pm => pm.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<MerchandiseCategory>()
-            .HasQueryFilter(mc => mc.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Merchandise>()
-            .HasQueryFilter(m => m.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Customer>()
-            .HasQueryFilter(c => c.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Car>()
-            .HasQueryFilter(c => c.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Employee>()
-            .HasQueryFilter(e => e.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Attendance>()
-            .HasQueryFilter(a => a.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PayrollPeriod>()
-            .HasQueryFilter(pp => pp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PayrollEntry>()
-            .HasQueryFilter(pe => pe.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Transaction>()
-            .HasQueryFilter(t => t.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<TransactionService>()
-            .HasQueryFilter(ts => ts.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<TransactionPackage>()
-            .HasQueryFilter(tp => tp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<TransactionMerchandise>()
-            .HasQueryFilter(tm => tm.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<TransactionEmployee>()
-            .HasQueryFilter(te => te.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Payment>()
-            .HasQueryFilter(p => p.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServiceEmployeeAssignment>()
-            .HasQueryFilter(sea => sea.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PackageEmployeeAssignment>()
-            .HasQueryFilter(pea => pea.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<QueueEntry>()
-            .HasQueryFilter(qe => qe.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<CashierShift>()
-            .HasQueryFilter(cs => cs.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<CashMovement>()
-            .HasQueryFilter(cm => cm.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ShiftDenomination>()
-            .HasQueryFilter(sd => sd.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ShiftPaymentSummary>()
-            .HasQueryFilter(sp => sp.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ShiftSettings>()
-            .HasQueryFilter(ss => ss.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PayrollAdjustmentTemplate>()
-            .HasQueryFilter(pat => pat.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PayrollAdjustment>()
-            .HasQueryFilter(pa => pa.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PayrollSettings>()
-            .HasQueryFilter(ps => ps.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<CashAdvance>()
-            .HasQueryFilter(ca => ca.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Notification>()
-            .HasQueryFilter(n => n.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<NotificationPreference>()
-            .HasQueryFilter(np => np.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<AuditLog>()
-            .HasQueryFilter(a => a.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ExpenseCategory>()
-            .HasQueryFilter(ec => ec.TenantId == tenantContext.TenantId);
-
+        // ── Non-standard tenant filters (kept hand-wired) ──────────────────────
+        // Expense uses an additional !IsDeleted soft-delete predicate.
         modelBuilder.Entity<Expense>()
             .HasQueryFilter(e => e.TenantId == tenantContext.TenantId && !e.IsDeleted);
 
-        modelBuilder.Entity<LoyaltyProgramSettings>()
-            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<LoyaltyTierConfig>()
-            .HasQueryFilter(t => t.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<LoyaltyReward>()
-            .HasQueryFilter(r => r.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<MembershipCard>()
-            .HasQueryFilter(m => m.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PointTransaction>()
-            .HasQueryFilter(p => p.TenantId == tenantContext.TenantId);
-
-        // ── Inventory ────────────────────────────────────────────────────────
-        modelBuilder.Entity<SupplyCategory>()
-            .HasQueryFilter(sc => sc.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<SupplyItem>()
-            .HasQueryFilter(si => si.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<StockMovement>()
-            .HasQueryFilter(sm => sm.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Supplier>()
-            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<PurchaseOrder>()
-            .HasQueryFilter(po => po.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Equipment>()
-            .HasQueryFilter(eq => eq.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<ServiceSupplyUsage>()
-            .HasQueryFilter(ssu => ssu.TenantId == tenantContext.TenantId);
-
-        // ── Franchise (tenant-scoped only) ───────────────────────────────────
-        // NOTE: FranchiseAgreement, RoyaltyPeriod, and FranchiseInvitation are
-        // explicitly NOT filtered — they bridge tenants or need public access.
-        modelBuilder.Entity<FranchiseSettings>()
-            .HasQueryFilter(fs => fs.TenantId == tenantContext.TenantId);
-
+        // FranchiseServiceTemplate scopes by FranchisorTenantId (not TenantId)
+        // because the catalogue is owned by the franchisor.
         modelBuilder.Entity<FranchiseServiceTemplate>()
             .HasQueryFilter(fst => fst.FranchisorTenantId == tenantContext.TenantId);
 
-        // ── Connect (customer-facing) ────────────────────────────────────────
-        // NOTE: ConnectUser, ConnectVehicle, ConnectRefreshToken, GlobalMake, and
-        // GlobalModel are intentionally NOT filtered — they are global (not tenant-scoped).
-        modelBuilder.Entity<ConnectUserTenantLink>()
-            .HasQueryFilter(l => l.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<BookingSetting>()
-            .HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Booking>()
-            .HasQueryFilter(b => b.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<BookingService>()
-            .HasQueryFilter(bs => bs.TenantId == tenantContext.TenantId);
-
-        modelBuilder.Entity<Referral>()
-            .HasQueryFilter(r => r.TenantId == tenantContext.TenantId);
+        // ── Intentionally unfiltered entities ──────────────────────────────────
+        // Tenant: root record. ConnectUser, ConnectVehicle, ConnectRefreshToken,
+        // GlobalMake, GlobalModel: global (not tenant-scoped). FranchiseAgreement,
+        // RoyaltyPeriod, FranchiseInvitation: cross-tenant or public access.
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <summary>
+    /// Builds the lambda <c>e =&gt; EF.Property&lt;string&gt;(e, "TenantId") == tenantContext.TenantId</c>
+    /// for the given CLR type. EF Core parameterizes the right-hand side at
+    /// query time so a single registered filter scopes correctly across requests.
+    /// </summary>
+    private LambdaExpression BuildTenantFilter(Type entityType)
+    {
+        var parameter = Expression.Parameter(entityType, "e");
+
+        // EF.Property<string>(e, "TenantId")
+        var efPropertyMethod = typeof(EF)
+            .GetMethod(nameof(EF.Property))!
+            .MakeGenericMethod(typeof(string));
+
+        var propertyAccess = Expression.Call(
+            efPropertyMethod,
+            parameter,
+            Expression.Constant("TenantId"));
+
+        // tenantContext.TenantId — captured by reference so the filter sees
+        // the per-request value of TenantId on every query execution.
+        var tenantContextExpr = Expression.Constant(tenantContext);
+        var tenantIdAccess = Expression.Property(
+            tenantContextExpr,
+            nameof(TenantContext.TenantId));
+
+        var body = Expression.Equal(propertyAccess, tenantIdAccess);
+        return Expression.Lambda(body, parameter);
     }
 }

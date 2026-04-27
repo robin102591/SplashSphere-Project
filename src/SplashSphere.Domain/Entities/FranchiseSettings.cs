@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// Franchise network configuration owned by a Franchisor tenant.
 /// Defines default royalty rates, standardization controls, and network limits.
 /// </summary>
-public sealed class FranchiseSettings : IAuditableEntity
+public sealed class FranchiseSettings : IAuditableEntity, ITenantScoped
 {
     private FranchiseSettings() { } // EF Core
 

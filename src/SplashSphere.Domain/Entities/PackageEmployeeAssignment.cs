@@ -12,7 +12,7 @@ namespace SplashSphere.Domain.Entities;
 /// assigned once per package line item.
 /// Cascade delete: deleted when parent <see cref="TransactionPackage"/> is deleted.
 /// </summary>
-public sealed class PackageEmployeeAssignment : IAuditableEntity
+public sealed class PackageEmployeeAssignment : IAuditableEntity, ITenantScoped
 {
     private PackageEmployeeAssignment() { } // EF Core
 

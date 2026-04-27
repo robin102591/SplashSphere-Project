@@ -10,7 +10,7 @@ namespace SplashSphere.Domain.Entities;
 ///   attended. Commissions are not earned.</item>
 /// </list>
 /// </summary>
-public sealed class Employee : IAuditableEntity
+public sealed class Employee : IAuditableEntity, ITenantScoped
 {
     private Employee() { } // EF Core
 

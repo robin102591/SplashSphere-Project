@@ -12,7 +12,7 @@ namespace SplashSphere.Domain.Entities;
 /// (see Prompt 22.4).
 /// </para>
 /// </summary>
-public sealed class Referral : IAuditableEntity
+public sealed class Referral : IAuditableEntity, ITenantScoped
 {
     private Referral() { } // EF Core
 

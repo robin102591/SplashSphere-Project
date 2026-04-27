@@ -8,7 +8,7 @@ namespace SplashSphere.Domain.Entities;
 /// represents the tenant-wide default; otherwise it overrides settings for that
 /// specific branch.
 /// </summary>
-public sealed class PayrollSettings : IAuditableEntity
+public sealed class PayrollSettings : IAuditableEntity, ITenantScoped
 {
     private PayrollSettings() { } // EF Core
 

@@ -16,7 +16,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Scoped per tenant; optionally restricted to a single branch via <see cref="BranchId"/>.
 /// </summary>
-public sealed class PricingModifier : IAuditableEntity
+public sealed class PricingModifier : IAuditableEntity, ITenantScoped
 {
     private PricingModifier() { } // EF Core
 

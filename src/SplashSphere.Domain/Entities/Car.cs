@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="CustomerId"/> is nullable — a walk-in vehicle can be serviced and queued
 /// without a registered customer record.
 /// </summary>
-public sealed class Car : IAuditableEntity
+public sealed class Car : IAuditableEntity, ITenantScoped
 {
     private Car() { } // EF Core
 

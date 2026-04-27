@@ -1,6 +1,6 @@
 namespace SplashSphere.Domain.Entities;
 
-public sealed class Notification : IAuditableEntity
+public sealed class Notification : IAuditableEntity, ITenantScoped
 {
     private Notification() { } // EF Core
 

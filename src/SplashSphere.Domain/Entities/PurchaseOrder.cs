@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// Can be <see cref="PurchaseOrderStatus.Cancelled"/> from Draft or Sent.
 /// </para>
 /// </summary>
-public sealed class PurchaseOrder : IAuditableEntity
+public sealed class PurchaseOrder : IAuditableEntity, ITenantScoped
 {
     private PurchaseOrder() { } // EF Core
 

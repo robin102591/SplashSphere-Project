@@ -7,7 +7,7 @@ namespace SplashSphere.Domain.Entities;
 /// Positive <see cref="Points"/> for earning, negative for redemption/expiry/adjustment.
 /// <see cref="BalanceAfter"/> enables auditable reconciliation.
 /// </summary>
-public sealed class PointTransaction
+public sealed class PointTransaction : ITenantScoped
 {
     private PointTransaction() { } // EF Core
 
