@@ -36,12 +36,12 @@ public static class PurchaseOrderEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetPurchaseOrders(
+    private static async Task<IResult> GetPurchaseOrders(
         [AsParameters] PurchaseOrderListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetPurchaseOrdersQuery(p.SupplierId, p.BranchId, p.Status, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<IResult> CreatePurchaseOrder(
@@ -59,11 +59,11 @@ public static class PurchaseOrderEndpoints
             : result.ToProblem();
     }
 
-    private static async Task<Results<Ok<object>, NotFound>> GetPurchaseOrderById(
+    private static async Task<IResult> GetPurchaseOrderById(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetPurchaseOrderByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<IResult> UpdatePurchaseOrder(

@@ -39,9 +39,9 @@ public static class BillingEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetCurrentPlan(
+    private static async Task<IResult> GetCurrentPlan(
         ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(
+        => TypedResults.Ok(
             await sender.Send(new GetCurrentPlanQuery(), ct));
 
     private static async Task<IResult> CreateCheckout(
@@ -74,11 +74,11 @@ public static class BillingEndpoints
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetBillingHistory(
+    private static async Task<IResult> GetBillingHistory(
         [AsParameters] BillingHistoryParams p,
         ISender sender,
         CancellationToken ct)
-        => TypedResults.Ok<object>(
+        => TypedResults.Ok(
             await sender.Send(new GetBillingHistoryQuery(p.Page, p.PageSize), ct));
 
     private static async Task<IResult> ProcessPaymentWebhook(

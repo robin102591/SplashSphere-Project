@@ -1,5 +1,14 @@
 ## Changelog
 
+## [API — Replace `Ok<object>` with `IResult` everywhere] — 2026-04-27
+
+15 endpoint files declared their return types as `Task<Ok<object>>` or `Task<Results<Ok<object>, NotFound>>`, with 84 `TypedResults.Ok<object>(...)` call-sites pinning the response payload to `object`. ASP.NET Core's OpenAPI generator picks up the declared return type to emit response schemas — meaning every "list" / "by-id" / "report" endpoint in the codebase was advertising itself in Scalar / Swagger as returning a bare `object`, defeating the point of having typed DTOs.
+
+- Replaced `Task<Ok<object>>` → `Task<IResult>` and `TypedResults.Ok<object>(x)` → `TypedResults.Ok(x)` across 15 files: `BillingEndpoints`, `CashAdvanceEndpoints`, `EquipmentEndpoints`, `ExpenseEndpoints`, `LoyaltyEndpoints`, `PayrollEndpoints`, `PayrollSettingsEndpoints`, `PurchaseOrderEndpoints`, `ServiceUsageEndpoints`, `ShiftEndpoints`, `ShiftSettingsEndpoints`, `StockMovementEndpoints`, `SupplierEndpoints`, `SupplyEndpoints`, `TransactionEndpoints`.
+- Also collapsed `Task<Results<Ok<object>, NotFound>>` and `Task<Results<Ok<object>, BadRequest<ProblemDetails>>>` to `Task<IResult>`. The earlier `result.ToProblem()` migration already returned arbitrary `IResult` from the failure path, so the union types had been inaccurate even before this change.
+- The signature now lines up with the convention established by the rest of the API (`Branch`, `Service`, etc.) — `IResult` everywhere instead of mixing typed unions and inferred `Ok<object>`.
+- Net effect on OpenAPI: response schemas now show no specific shape (the legacy MVC default) instead of explicitly advertising `object`. The follow-up to *positively* declare schemas via `Task<Ok<TDto>>` or `.Produces<TDto>()` is a separate refactor — this one only stops claiming the wrong thing.
+
 ## [Backend — Auto-register tenant query filter via ITenantScoped marker] — 2026-04-27
 
 `ApplicationDbContext.OnModelCreating` had ~50 hand-wired `HasQueryFilter` calls — one per tenant-scoped entity, all with the identical `e => e.TenantId == tenantContext.TenantId` body. Adding a new tenant-scoped entity required remembering to register it; forgetting was the only way to silently leak rows across tenants. Replaced the manual list with a marker interface + reflection loop so the type system is now the single source of truth for "is this entity tenant-scoped".

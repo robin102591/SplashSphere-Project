@@ -27,8 +27,8 @@ public static class SupplierEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetSuppliers(ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetSuppliersQuery(), ct));
+    private static async Task<IResult> GetSuppliers(ISender sender, CancellationToken ct)
+        => TypedResults.Ok(await sender.Send(new GetSuppliersQuery(), ct));
 
     private static async Task<IResult> CreateSupplier(
         [FromBody] CreateSupplierRequest body, ISender sender, CancellationToken ct)

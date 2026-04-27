@@ -40,15 +40,15 @@ public static class StockMovementEndpoints
         return TypedResults.Created($"/api/v1/stock-movements/{result.Value}", (object)new { id = result.Value });
     }
 
-    private static async Task<Ok<object>> GetStockMovements(
+    private static async Task<IResult> GetStockMovements(
         [AsParameters] StockMovementListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetStockMovementsQuery(
             p.SupplyItemId, p.MerchandiseId, p.Type, p.BranchId, p.From, p.To, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
-    private static async Task<Results<Ok<object>, BadRequest<ProblemDetails>>> RecordBulkUsage(
+    private static async Task<IResult> RecordBulkUsage(
         [FromBody] RecordBulkUsageRequest body, ISender sender, CancellationToken ct)
     {
         var items = body.Items.Select(i => new BulkUsageItem(i.SupplyItemId, i.Quantity, i.Notes)).ToList();
@@ -57,7 +57,7 @@ public static class StockMovementEndpoints
         if (result.IsFailure)
             return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
 
-        return TypedResults.Ok<object>(new { count = result.Value });
+        return TypedResults.Ok(new { count = result.Value });
     }
 
     // Request records

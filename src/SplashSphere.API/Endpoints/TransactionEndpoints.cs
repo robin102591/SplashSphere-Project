@@ -152,7 +152,7 @@ public static class TransactionEndpoints
 
     // ── GET / ─────────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetTransactions(
+    private static async Task<IResult> GetTransactions(
         [AsParameters] GetTransactionsParams p,
         ISender sender,
         CancellationToken ct)
@@ -167,12 +167,12 @@ public static class TransactionEndpoints
             p.Search);
 
         var result = await sender.Send(query, ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── GET /{id} ─────────────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetTransactionById(
+    private static async Task<IResult> GetTransactionById(
         string id,
         ISender sender,
         CancellationToken ct)
@@ -181,12 +181,12 @@ public static class TransactionEndpoints
 
         return result is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok<object>(result);
+            : TypedResults.Ok(result);
     }
 
     // ── GET /{id}/receipt ─────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetReceipt(
+    private static async Task<IResult> GetReceipt(
         string id,
         ISender sender,
         CancellationToken ct)
@@ -195,7 +195,7 @@ public static class TransactionEndpoints
 
         return result is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok<object>(result);
+            : TypedResults.Ok(result);
     }
 
     // ── GET /{id}/receipt/pdf ──────────────────────────────────────────────
@@ -215,7 +215,7 @@ public static class TransactionEndpoints
 
     // ── GET /daily-summary ────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, BadRequest<ProblemDetails>>> GetDailySummary(
+    private static async Task<IResult> GetDailySummary(
         [AsParameters] DailySummaryParams p,
         ISender sender,
         CancellationToken ct)
@@ -224,7 +224,7 @@ public static class TransactionEndpoints
             return TypedResults.BadRequest(new ProblemDetails { Detail = "branchId is required." });
 
         var result = await sender.Send(new GetDailySummaryQuery(p.BranchId!, p.Date), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── Request / response records ─────────────────────────────────────────────

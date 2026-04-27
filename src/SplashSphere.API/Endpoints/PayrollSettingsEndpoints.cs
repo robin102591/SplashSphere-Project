@@ -20,13 +20,13 @@ public static class PayrollSettingsEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetPayrollSettings(
+    private static async Task<IResult> GetPayrollSettings(
         string? branchId,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayrollSettingsQuery(branchId), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> UpdatePayrollSettings(

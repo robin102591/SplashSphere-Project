@@ -60,8 +60,8 @@ public static class LoyaltyEndpoints
 
     // ── Settings ────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetSettings(ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetLoyaltySettingsQuery(), ct));
+    private static async Task<IResult> GetSettings(ISender sender, CancellationToken ct)
+        => TypedResults.Ok(await sender.Send(new GetLoyaltySettingsQuery(), ct));
 
     private static async Task<IResult> UpsertSettings(
         [FromBody] UpsertSettingsRequest body, ISender sender, CancellationToken ct)
@@ -84,9 +84,9 @@ public static class LoyaltyEndpoints
 
     // ── Rewards ─────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetRewards(
+    private static async Task<IResult> GetRewards(
         [AsParameters] RewardListParams p, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(
+        => TypedResults.Ok(await sender.Send(
             new GetLoyaltyRewardsQuery(p.ActiveOnly, p.Page, p.PageSize), ct));
 
     private static async Task<IResult> CreateReward(
@@ -120,9 +120,9 @@ public static class LoyaltyEndpoints
 
     // ── Dashboard ───────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetDashboard(
+    private static async Task<IResult> GetDashboard(
         DateTime from, DateTime to, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetLoyaltyDashboardQuery(from, to), ct));
+        => TypedResults.Ok(await sender.Send(new GetLoyaltyDashboardQuery(from, to), ct));
 
     // ── Members ─────────────────────────────────────────────────────────────
 
@@ -135,17 +135,17 @@ public static class LoyaltyEndpoints
             : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetByCustomer(
+    private static async Task<IResult> GetByCustomer(
         string customerId, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetMembershipCardQuery(customerId), ct));
+        => TypedResults.Ok(await sender.Send(new GetMembershipCardQuery(customerId), ct));
 
-    private static async Task<Ok<object>> GetByCardNumber(
+    private static async Task<IResult> GetByCardNumber(
         string cardNumber, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetMembershipCardByNumberQuery(cardNumber), ct));
+        => TypedResults.Ok(await sender.Send(new GetMembershipCardByNumberQuery(cardNumber), ct));
 
-    private static async Task<Ok<object>> GetPointHistory(
+    private static async Task<IResult> GetPointHistory(
         string membershipCardId, int page, int pageSize, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(
+        => TypedResults.Ok(await sender.Send(
             new GetPointHistoryQuery(membershipCardId, page, pageSize), ct));
 
     private static async Task<IResult> Redeem(
@@ -165,9 +165,9 @@ public static class LoyaltyEndpoints
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetSummary(
+    private static async Task<IResult> GetSummary(
         string customerId, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetCustomerLoyaltySummaryQuery(customerId), ct));
+        => TypedResults.Ok(await sender.Send(new GetCustomerLoyaltySummaryQuery(customerId), ct));
 
     // ── Request records ─────────────────────────────────────────────────────
 

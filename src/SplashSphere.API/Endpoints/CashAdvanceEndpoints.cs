@@ -36,25 +36,25 @@ public static class CashAdvanceEndpoints
 
     // ── GET / ───────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetCashAdvances(
+    private static async Task<IResult> GetCashAdvances(
         [AsParameters] GetAdvancesParams p,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new GetCashAdvancesQuery(p.Page, p.PageSize, p.EmployeeId, p.Status), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── GET /{id} ───────────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetCashAdvanceById(
+    private static async Task<IResult> GetCashAdvanceById(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetCashAdvanceByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // ── POST / ──────────────────────────────────────────────────────────────

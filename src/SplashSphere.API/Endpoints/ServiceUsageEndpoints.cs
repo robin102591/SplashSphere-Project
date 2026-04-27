@@ -35,9 +35,9 @@ public static class ServiceUsageEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetServiceSupplyUsage(
+    private static async Task<IResult> GetServiceSupplyUsage(
         string id, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetServiceSupplyUsageQuery(id), ct));
+        => TypedResults.Ok(await sender.Send(new GetServiceSupplyUsageQuery(id), ct));
 
     private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> UpdateServiceSupplyUsage(
         string id, [FromBody] UpdateServiceSupplyUsageRequest body, ISender sender, CancellationToken ct)
@@ -50,11 +50,11 @@ public static class ServiceUsageEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok<object>, NotFound>> GetServiceCostBreakdown(
+    private static async Task<IResult> GetServiceCostBreakdown(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetServiceCostBreakdownQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // Request records

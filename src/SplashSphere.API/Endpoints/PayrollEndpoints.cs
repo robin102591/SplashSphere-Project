@@ -65,14 +65,14 @@ public static class PayrollEndpoints
 
     // ── GET /periods ──────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetPayrollPeriods(
+    private static async Task<IResult> GetPayrollPeriods(
         [AsParameters] GetPeriodsParams p,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new GetPayrollPeriodsQuery(p.Page, p.PageSize, p.Status, p.Year, p.BranchId), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── POST /periods ──────────────────────────────────────────────────────────
@@ -92,13 +92,13 @@ public static class PayrollEndpoints
 
     // ── GET /periods/{id} ─────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetPayrollPeriodById(
+    private static async Task<IResult> GetPayrollPeriodById(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayrollPeriodByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // ── POST /periods/{id}/close ──────────────────────────────────────────────
@@ -162,24 +162,24 @@ public static class PayrollEndpoints
 
     // ── GET /entries/{id}/detail ────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetPayrollEntryDetail(
+    private static async Task<IResult> GetPayrollEntryDetail(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayrollEntryDetailQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // ── GET /entries/{id}/payslip ────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetPayslip(
+    private static async Task<IResult> GetPayslip(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayslipQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // ── GET /entries/{id}/payslip/pdf ──────────────────────────────────────
@@ -252,12 +252,12 @@ public static class PayrollEndpoints
 
     // ── GET /templates ──────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetPayrollTemplates(
+    private static async Task<IResult> GetPayrollTemplates(
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetPayrollTemplatesQuery(), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── POST /templates ─────────────────────────────────────────────────────

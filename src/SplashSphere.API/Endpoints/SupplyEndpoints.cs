@@ -37,12 +37,12 @@ public static class SupplyEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetSupplies(
+    private static async Task<IResult> GetSupplies(
         [AsParameters] SupplyListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetSuppliesQuery(p.CategoryId, p.BranchId, p.StockStatus, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<IResult> CreateSupplyItem(
@@ -57,11 +57,11 @@ public static class SupplyEndpoints
             : result.ToProblem();
     }
 
-    private static async Task<Results<Ok<object>, NotFound>> GetSupplyById(
+    private static async Task<IResult> GetSupplyById(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetSupplyByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<IResult> UpdateSupplyItem(
@@ -81,8 +81,8 @@ public static class SupplyEndpoints
         return result.IsFailure ? TypedResults.NotFound() : TypedResults.NoContent();
     }
 
-    private static async Task<Ok<object>> GetSupplyCategories(ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetSupplyCategoriesQuery(), ct));
+    private static async Task<IResult> GetSupplyCategories(ISender sender, CancellationToken ct)
+        => TypedResults.Ok(await sender.Send(new GetSupplyCategoriesQuery(), ct));
 
     private static async Task<IResult> CreateSupplyCategory(
         [FromBody] CreateCategoryRequest body, ISender sender, CancellationToken ct)

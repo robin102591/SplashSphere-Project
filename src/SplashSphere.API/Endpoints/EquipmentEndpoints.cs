@@ -34,12 +34,12 @@ public static class EquipmentEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetEquipment(
+    private static async Task<IResult> GetEquipment(
         [AsParameters] EquipmentListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetEquipmentQuery(p.BranchId, p.Status, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<IResult> RegisterEquipment(
@@ -54,11 +54,11 @@ public static class EquipmentEndpoints
             : result.ToProblem();
     }
 
-    private static async Task<Results<Ok<object>, NotFound>> GetEquipmentById(
+    private static async Task<IResult> GetEquipmentById(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetEquipmentByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     private static async Task<IResult> UpdateEquipment(
