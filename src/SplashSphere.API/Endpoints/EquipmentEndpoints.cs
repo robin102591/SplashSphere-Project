@@ -103,9 +103,14 @@ public static class EquipmentEndpoints
         string? Location, string? Notes, bool IsActive);
 
     private sealed record LogMaintenanceRequest(
-        MaintenanceType Type, string Description, decimal? Cost = null,
-        string? PerformedBy = null, DateTime PerformedDate = default,
-        DateTime? NextDueDate = null, int? NextDueHours = null, string? Notes = null);
+        MaintenanceType Type,
+        string Description,
+        DateTime PerformedDate,
+        decimal? Cost = null,
+        string? PerformedBy = null,
+        DateTime? NextDueDate = null,
+        int? NextDueHours = null,
+        string? Notes = null);
 
     private sealed record UpdateEquipmentStatusRequest(EquipmentStatus Status);
 
