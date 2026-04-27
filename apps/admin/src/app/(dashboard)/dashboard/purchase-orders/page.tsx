@@ -9,7 +9,8 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { usePurchaseOrders, useSuppliers } from '@/hooks/use-inventory'
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
+import { useSuppliers } from '@/hooks/use-suppliers'
 import { useBranches } from '@/hooks/use-branches'
 import { formatPeso, formatDate } from '@/lib/format'
 import Link from 'next/link'

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   usePurchaseOrderById, useSendPurchaseOrder, useReceivePurchaseOrder, useCancelPurchaseOrder,
-} from '@/hooks/use-inventory'
+} from '@/hooks/use-purchase-orders'
 import { formatPeso, formatDate } from '@/lib/format'
 import { toast } from 'sonner'
 import Link from 'next/link'

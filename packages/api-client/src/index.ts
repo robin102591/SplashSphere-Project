@@ -98,29 +98,35 @@ async function download(
   URL.revokeObjectURL(url)
 }
 
+// `exactOptionalPropertyTypes` requires us to omit optional properties
+// rather than set them to `undefined`. This helper keeps call sites tidy.
+function withToken(token: string | undefined): { token?: string } {
+  return token === undefined ? {} : { token }
+}
+
 export const apiClient = {
   get: <T>(path: string, token?: string) =>
-    apiFetch<T>(path, { method: 'GET', token }),
+    apiFetch<T>(path, { method: 'GET', ...withToken(token) }),
 
   post: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body), token }),
+    apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body), ...withToken(token) }),
 
   put: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body), token }),
+    apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body), ...withToken(token) }),
 
   patch: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body), token }),
+    apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body), ...withToken(token) }),
 
   delete: <T>(path: string, token?: string) =>
-    apiFetch<T>(path, { method: 'DELETE', token }),
+    apiFetch<T>(path, { method: 'DELETE', ...withToken(token) }),
 
   /** POST a FormData payload. Caller is responsible for constructing the form. */
   upload: <T>(path: string, formData: FormData, token?: string) =>
     apiFetch<T>(path, {
       method: 'POST',
       body: formData,
-      token,
       skipContentType: true,
+      ...withToken(token),
     }),
 
   /** Trigger an authenticated browser download. Throws on non-OK. */

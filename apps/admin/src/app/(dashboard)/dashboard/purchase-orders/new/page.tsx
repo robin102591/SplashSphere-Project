@@ -11,7 +11,9 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { useSuppliers, useCreatePurchaseOrder, useSupplies } from '@/hooks/use-inventory'
+import { useSuppliers } from '@/hooks/use-suppliers'
+import { useCreatePurchaseOrder } from '@/hooks/use-purchase-orders'
+import { useSupplies } from '@/hooks/use-supplies'
 import { useMerchandiseList } from '@/hooks/use-merchandise'
 import { useBranches } from '@/hooks/use-branches'
 import { formatPeso } from '@/lib/format'

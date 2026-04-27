@@ -15,7 +15,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
-import { useEquipment, useRegisterEquipment } from '@/hooks/use-inventory'
+import { useEquipment, useRegisterEquipment } from '@/hooks/use-equipment'
 import { useBranches } from '@/hooks/use-branches'
 import { formatPeso, formatDate } from '@/lib/format'
 import { toast } from 'sonner'
