@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Payroll.Commands.AddPayrollAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.BulkApplyAdjustment;
 using SplashSphere.Application.Features.Payroll.Commands.ClosePayrollPeriod;
@@ -76,7 +77,7 @@ public static class PayrollEndpoints
 
     // ── POST /periods ──────────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreatePayrollPeriod(
+    private static async Task<IResult> CreatePayrollPeriod(
         [FromBody] CreatePeriodRequest body,
         ISender sender,
         CancellationToken ct)
@@ -84,10 +85,9 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new CreatePayrollPeriodCommand(body.StartDate, body.EndDate, body.BranchId), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/payroll/periods/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/payroll/periods/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
     // ── GET /periods/{id} ─────────────────────────────────────────────────────
@@ -103,59 +103,35 @@ public static class PayrollEndpoints
 
     // ── POST /periods/{id}/close ──────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ClosePayrollPeriod(
+    private static async Task<IResult> ClosePayrollPeriod(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new ClosePayrollPeriodCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── POST /periods/{id}/process ────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ProcessPayrollPeriod(
+    private static async Task<IResult> ProcessPayrollPeriod(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new ProcessPayrollPeriodCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── POST /periods/{id}/release ──────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ReleasePayrollPeriod(
+    private static async Task<IResult> ReleasePayrollPeriod(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new ReleasePayrollPeriodCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── GET /periods/{id}/export/csv ────────────────────────────────────────────
@@ -172,7 +148,7 @@ public static class PayrollEndpoints
 
     // ── PATCH /entries/{id} ───────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdatePayrollEntry(
+    private static async Task<IResult> UpdatePayrollEntry(
         string id,
         [FromBody] UpdateEntryRequest body,
         ISender sender,
@@ -181,14 +157,7 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new UpdatePayrollEntryCommand(id, body.Notes), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── GET /entries/{id}/detail ────────────────────────────────────────────
@@ -227,7 +196,7 @@ public static class PayrollEndpoints
 
     // ── POST /entries/bulk-adjust ───────────────────────────────────────────
 
-    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> BulkApplyAdjustment(
+    private static async Task<IResult> BulkApplyAdjustment(
         [FromBody] BulkAdjustRequest body,
         ISender sender,
         CancellationToken ct)
@@ -235,15 +204,12 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new BulkApplyAdjustmentCommand(body.EntryIds, body.AdjustmentType, body.Amount, body.Notes, body.TemplateId), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── POST /entries/{id}/adjustments ──────────────────────────────────────
 
-    private static async Task<Results<Created<object>, NotFound, BadRequest<ProblemDetails>>> AddPayrollAdjustment(
+    private static async Task<IResult> AddPayrollAdjustment(
         string id,
         [FromBody] AddAdjustmentRequest body,
         ISender sender,
@@ -252,19 +218,14 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new AddPayrollAdjustmentCommand(id, body.Type, body.Category, body.Amount, body.Notes, body.TemplateId), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.Created($"/api/v1/payroll/adjustments/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/payroll/adjustments/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
     // ── PUT /adjustments/{adjustmentId} ─────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdatePayrollAdjustment(
+    private static async Task<IResult> UpdatePayrollAdjustment(
         string adjustmentId,
         [FromBody] UpdateAdjustmentRequest body,
         ISender sender,
@@ -273,19 +234,12 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new UpdatePayrollAdjustmentCommand(adjustmentId, body.Amount, body.Notes), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── DELETE /adjustments/{adjustmentId} ──────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> DeletePayrollAdjustment(
+    private static async Task<IResult> DeletePayrollAdjustment(
         string adjustmentId,
         ISender sender,
         CancellationToken ct)
@@ -293,14 +247,7 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new DeletePayrollAdjustmentCommand(adjustmentId), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── GET /templates ──────────────────────────────────────────────────────
@@ -315,7 +262,7 @@ public static class PayrollEndpoints
 
     // ── POST /templates ─────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreatePayrollTemplate(
+    private static async Task<IResult> CreatePayrollTemplate(
         [FromBody] CreateTemplateRequest body,
         ISender sender,
         CancellationToken ct)
@@ -323,15 +270,14 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new CreatePayrollTemplateCommand(body.Name, body.Type, body.DefaultAmount), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/payroll/templates/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/payroll/templates/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
     // ── PUT /templates/{id} ─────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdatePayrollTemplate(
+    private static async Task<IResult> UpdatePayrollTemplate(
         string id,
         [FromBody] UpdateTemplateRequest body,
         ISender sender,
@@ -340,14 +286,7 @@ public static class PayrollEndpoints
         var result = await sender.Send(
             new UpdatePayrollTemplateCommand(id, body.Name, body.Type, body.DefaultAmount, body.SortOrder), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── DELETE /templates/{id} ───────────────────────────────────────────────

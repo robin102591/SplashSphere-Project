@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Inventory;
 using SplashSphere.Application.Features.Inventory.Commands.CreateSupplier;
 using SplashSphere.Application.Features.Inventory.Commands.UpdateSupplier;
@@ -29,28 +30,24 @@ public static class SupplierEndpoints
     private static async Task<Ok<object>> GetSuppliers(ISender sender, CancellationToken ct)
         => TypedResults.Ok<object>(await sender.Send(new GetSuppliersQuery(), ct));
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreateSupplier(
+    private static async Task<IResult> CreateSupplier(
         [FromBody] CreateSupplierRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new CreateSupplierCommand(
             body.Name, body.ContactPerson, body.Phone, body.Email, body.Address), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/suppliers/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/suppliers/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateSupplier(
+    private static async Task<IResult> UpdateSupplier(
         string id, [FromBody] UpdateSupplierRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpdateSupplierCommand(
             id, body.Name, body.ContactPerson, body.Phone, body.Email, body.Address, body.IsActive), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // Request records

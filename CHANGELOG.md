@@ -1,5 +1,15 @@
 ## Changelog
 
+## [API — Centralize ProblemDetails mapping; fix silent 404→400 bug] — 2026-04-27
+
+Endpoints across ten files were checking `result.Error.Code == "NotFound"` to decide whether to return 404, but the canonical code emitted by `Error.NotFound()` is `"NOT_FOUND"`. The check never matched, so genuine not-found failures silently returned **400 Bad Request** instead of **404 Not Found** — across 29 endpoint methods. Refactored the API surface to route every Result-failure through a single `ProblemDetailsMapper`, deleting the broken inline checks and the parallel mapping kept in `GlobalExceptionHandler`. Side benefit: `409 Conflict`, `422 Validation`, `401`, and `403` were also being flattened to 400 by the legacy pattern — those now surface with the right status too.
+
+- New `src/SplashSphere.API/Infrastructure/ProblemDetailsMapper.cs` — single source of truth for `errorCode → HTTP status` plus a `Problem(code, message)` IResult builder. Used by both `ResultExtensions.ToProblem()` and `GlobalExceptionHandler` so the two paths can never drift again.
+- `src/SplashSphere.API/Extensions/ResultExtensions.cs` — `ToProblem()` is now a 3-line delegation to the mapper (was 18 lines with its own switch).
+- `src/SplashSphere.API/Infrastructure/GlobalExceptionHandler.cs` — exception→status logic now derives status from `SplashSphereException.ErrorCode` via the shared mapper, killing the duplicate exception-type→status switch.
+- Migrated 10 endpoint files (`BillingEndpoints`, `CashAdvanceEndpoints`, `EquipmentEndpoints`, `ExpenseEndpoints`, `LoyaltyEndpoints`, `PayrollEndpoints`, `PurchaseOrderEndpoints`, `SupplierEndpoints`, `SupplyEndpoints`, `TransactionEndpoints`) from the legacy `if (result.IsFailure) { if (Code == "NotFound") NotFound() else BadRequest(new ProblemDetails {...}) }` pattern to the modern one-liner `result.IsSuccess ? <success> : result.ToProblem()`. Net diff: 174 insertions, 364 deletions.
+- Endpoint return signatures changed from typed `Results<NoContent, NotFound, BadRequest<ProblemDetails>>` (which was no longer accurate after the migration) to `IResult`, matching the convention already in place in `BranchEndpoints` / `ServiceEndpoints`.
+
 ## [Admin — Payroll entry sheet: tabs → stacked sections] — 2026-04-25
 
 Replaced the in-sheet `Tabs` (Adjustments / Commissions / Attendance) on the payroll employee detail panel with a stacked-sections layout fronted by a sticky anchor row. The sheet is `sm:max-w-3xl` — too narrow for a side-column SectionNav — but tabs were hiding two reference panels (commissions, attendance) behind a click that users almost never made unless they noticed the count. Stacking surfaces all three at once; the sticky `Adjustments · Commissions (N) · Attendance (N)` row gives the same jump affordance tabs did, without the panel-switch cognitive load.

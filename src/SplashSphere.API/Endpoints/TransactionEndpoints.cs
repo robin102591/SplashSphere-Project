@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Transactions.Commands.AddPayment;
 using SplashSphere.Application.Features.Transactions.Commands.CreateTransaction;
 using SplashSphere.Application.Features.Transactions.Commands.RefundTransaction;
@@ -45,7 +46,7 @@ public static class TransactionEndpoints
 
     // ── POST / ────────────────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<CreateTransactionResponse>, BadRequest<ProblemDetails>>> CreateTransaction(
+    private static async Task<IResult> CreateTransaction(
         [FromBody] CreateTransactionRequest body,
         ISender sender,
         CancellationToken ct)
@@ -68,36 +69,26 @@ public static class TransactionEndpoints
 
         var result = await sender.Send(command, ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/transactions/{result.Value}", new CreateTransactionResponse(result.Value!));
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/transactions/{result.Value}", new CreateTransactionResponse(result.Value!))
+            : result.ToProblem();
     }
 
     // ── PATCH /{id}/status ────────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateTransactionStatus(
+    private static async Task<IResult> UpdateTransactionStatus(
         string id,
         [FromBody] UpdateStatusRequest body,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new UpdateTransactionStatusCommand(id, body.NewStatus), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── PATCH /{id}/items ─────────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateTransactionItems(
+    private static async Task<IResult> UpdateTransactionItems(
         string id,
         [FromBody] UpdateTransactionItemsRequest body,
         ISender sender,
@@ -112,20 +103,12 @@ public static class TransactionEndpoints
             body.Notes);
 
         var result = await sender.Send(command, ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── POST /{id}/payments ────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<AddPaymentResponse>, NotFound, BadRequest<ProblemDetails>>> AddPayment(
+    private static async Task<IResult> AddPayment(
         string id,
         [FromBody] AddPaymentRequest body,
         ISender sender,
@@ -134,22 +117,16 @@ public static class TransactionEndpoints
         var result = await sender.Send(
             new AddPaymentCommand(id, body.PaymentMethod, body.Amount, body.ReferenceNumber), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.Created(
-            $"/api/v1/transactions/{id}/payments/{result.Value}",
-            new AddPaymentResponse(result.Value!));
+        return result.IsSuccess
+            ? TypedResults.Created(
+                $"/api/v1/transactions/{id}/payments/{result.Value}",
+                new AddPaymentResponse(result.Value!))
+            : result.ToProblem();
     }
 
     // ── PATCH /{id}/discount-tip ──────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateDiscountTip(
+    private static async Task<IResult> UpdateDiscountTip(
         string id,
         [FromBody] UpdateDiscountTipRequest body,
         ISender sender,
@@ -158,36 +135,19 @@ public static class TransactionEndpoints
         var result = await sender.Send(
             new UpdateDiscountTipCommand(id, body.DiscountAmount, body.TipAmount), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── POST /{id}/refund ─────────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> RefundTransaction(
+    private static async Task<IResult> RefundTransaction(
         string id,
         [FromBody] RefundRequest body,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new RefundTransactionCommand(id, body.Reason), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── GET / ─────────────────────────────────────────────────────────────────

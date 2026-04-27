@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Inventory;
 using SplashSphere.Application.Features.Inventory.Commands.CancelPurchaseOrder;
 using SplashSphere.Application.Features.Inventory.Commands.CreatePurchaseOrder;
@@ -43,7 +44,7 @@ public static class PurchaseOrderEndpoints
         return TypedResults.Ok<object>(result);
     }
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreatePurchaseOrder(
+    private static async Task<IResult> CreatePurchaseOrder(
         [FromBody] CreatePurchaseOrderRequest body, ISender sender, CancellationToken ct)
     {
         var lines = body.Lines.Select(l =>
@@ -53,10 +54,9 @@ public static class PurchaseOrderEndpoints
         var result = await sender.Send(new CreatePurchaseOrderCommand(
             body.SupplierId, body.BranchId, body.Notes, body.ExpectedDeliveryDate, lines), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/purchase-orders/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/purchase-orders/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
     private static async Task<Results<Ok<object>, NotFound>> GetPurchaseOrderById(
@@ -66,7 +66,7 @@ public static class PurchaseOrderEndpoints
         return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdatePurchaseOrder(
+    private static async Task<IResult> UpdatePurchaseOrder(
         string id, [FromBody] UpdatePurchaseOrderRequest body, ISender sender, CancellationToken ct)
     {
         var lines = body.Lines.Select(l =>
@@ -76,44 +76,30 @@ public static class PurchaseOrderEndpoints
         var result = await sender.Send(new UpdatePurchaseOrderCommand(
             id, body.Notes, body.ExpectedDeliveryDate, lines), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> SendPurchaseOrder(
+    private static async Task<IResult> SendPurchaseOrder(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new SendPurchaseOrderCommand(id), ct);
-
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ReceivePurchaseOrder(
+    private static async Task<IResult> ReceivePurchaseOrder(
         string id, [FromBody] ReceivePurchaseOrderRequest body, ISender sender, CancellationToken ct)
     {
         var lines = body.Lines.Select(l => new ReceiveLineRequest(l.LineId, l.ReceivedQuantity)).ToList();
         var result = await sender.Send(new ReceivePurchaseOrderCommand(id, lines), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> CancelPurchaseOrder(
+    private static async Task<IResult> CancelPurchaseOrder(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new CancelPurchaseOrderCommand(id), ct);
-
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // Request records
