@@ -12,7 +12,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
-import { useSuppliers, useCreateSupplier, useUpdateSupplier } from '@/hooks/use-inventory'
+import { useSuppliers, useCreateSupplier, useUpdateSupplier } from '@/hooks/use-suppliers'
 import { toast } from 'sonner'
 
 // ── Main Page ────────────────────────────────────────────────────────────────

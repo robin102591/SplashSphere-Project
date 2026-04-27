@@ -333,3 +333,114 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET` | `/reports/supply-usage` | Supply consumption over time |
 | `GET` | `/reports/equipment-maintenance` | Upcoming and overdue maintenance |
 | `GET` | `/reports/purchase-history` | Spending by supplier, category, period |
+
+## Booking Settings
+
+Per-branch online-booking configuration. Feature-gated behind `online_booking`.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/booking-settings?branchId={id}` | Get booking settings for a branch (falls back to tenant defaults) |
+| `PUT` | `/booking-settings?branchId={id}` | Upsert booking settings (hours, slot interval, capacity, lead/grace, toggles) |
+
+## Bookings (Admin / POS)
+
+Tenant-scoped booking management — consumed by the admin dashboard and the POS for cashier check-in + classification. Feature-gated behind `online_booking`.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/bookings?fromDate=&toDate=&branchId=&status=` | List bookings in a date window |
+| `GET` | `/bookings/{id}` | Booking detail with customer, vehicle, services, queue/transaction links |
+| `PATCH` | `/bookings/{id}/check-in` | Cashier check-in: flip Confirmed → Arrived and allocate a queue entry when missing |
+| `POST` | `/bookings/{id}/classify-vehicle` | Classify vehicle (VehicleType + Size) and lock exact service prices |
+
+---
+
+# Customer Connect
+
+The Customer Connect app authenticates end-customers (not tenant staff) via phone OTP. All routes below live under `/api/v1/connect/*` and use the **`ConnectJwt`** auth scheme instead of the default Clerk Bearer scheme. `ConnectUser`, `ConnectVehicle`, `GlobalMake`, and `GlobalModel` are globally-scoped entities (not tenant-partitioned); handlers use `IgnoreQueryFilters()` so a single customer identity works across every tenant they've joined.
+
+## Connect.Auth
+
+Anonymous endpoints — the caller is establishing identity.
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/connect/auth/otp/send` | Send a one-time code to a Philippine mobile number |
+| `POST` | `/connect/auth/otp/verify` | Verify the OTP and receive access + refresh tokens |
+| `POST` | `/connect/auth/refresh` | Rotate refresh token and receive a new access token |
+| `POST` | `/connect/auth/sign-out` | Revoke a refresh token |
+
+## Connect.Profile
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/profile` | Read the Connect user's profile with vehicles |
+| `PATCH` | `/connect/profile` | Update display name / email / avatar |
+| `POST` | `/connect/profile/vehicles` | Register a vehicle on the profile |
+| `PATCH` | `/connect/profile/vehicles/{id}` | Edit a vehicle |
+| `DELETE` | `/connect/profile/vehicles/{id}` | Remove a vehicle |
+
+## Connect.Catalogue
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/catalogue/makes` | List global vehicle makes |
+| `GET` | `/connect/catalogue/makes/{makeId}/models` | List models under a make |
+
+## Connect.Discovery
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes?search=&lat=&lng=&take=` | Search the public car-wash directory |
+| `GET` | `/connect/carwashes/{tenantId}` | Public car-wash detail (branches + services) |
+| `POST` | `/connect/carwashes/{tenantId}/join` | Link the authenticated user to a car wash |
+| `GET` | `/connect/my-carwashes` | List all car washes the user has joined |
+
+## Connect.Services
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes/{tenantId}/services?vehicleId=` | Services with exact or estimated pricing for the selected vehicle |
+
+## Connect.Booking
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes/{tenantId}/slots?branchId=&date=YYYY-MM-DD` | Available booking slots |
+| `POST` | `/connect/bookings` | Create a booking |
+| `GET` | `/connect/bookings?includePast=` | List the caller's bookings |
+| `GET` | `/connect/bookings/{id}` | Booking detail + queue status |
+| `PATCH` | `/connect/bookings/{id}/cancel` | Cancel a booking |
+| `PATCH` | `/connect/bookings/{id}/arrived` | Self check-in — mark booking as arrived |
+
+## Connect.Loyalty
+
+Per-tenant loyalty endpoints — feature-gated (handler returns degraded DTO when tenant plan lacks loyalty).
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes/{tenantId}/loyalty` | Caller's loyalty membership at a car wash |
+| `GET` | `/connect/carwashes/{tenantId}/rewards` | Rewards offered, with affordability flag |
+| `POST` | `/connect/carwashes/{tenantId}/rewards/redeem` | Redeem points for a reward |
+| `GET` | `/connect/carwashes/{tenantId}/points-history?take=` | Point-movement ledger |
+
+## Connect.Referral
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/carwashes/{tenantId}/referral-code` | Get (and lazily issue) the caller's referral code |
+| `GET` | `/connect/carwashes/{tenantId}/referrals` | List referrals the caller has made |
+| `POST` | `/connect/carwashes/{tenantId}/apply-referral` | Apply a referral code (rewards deferred until first wash) |
+
+## Connect.Queue
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/queue/active` | Caller's currently active queue entry across any tenant, or `204` |
+
+## Connect.History
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/connect/history?take=` | Cross-tenant completed-transaction history |

@@ -14,7 +14,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Unique constraint: [PayrollPeriodId, EmployeeId] — one entry per employee per period.
 /// </summary>
-public sealed class PayrollEntry : IAuditableEntity
+public sealed class PayrollEntry : IAuditableEntity, ITenantScoped
 {
     private PayrollEntry() { } // EF Core
 

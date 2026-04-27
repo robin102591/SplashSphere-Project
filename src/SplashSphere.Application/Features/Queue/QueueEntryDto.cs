@@ -22,7 +22,12 @@ public sealed record QueueEntryDto(
     DateTime? CompletedAt,
     DateTime? CancelledAt,
     DateTime? NoShowAt,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    // ── Booking context (null when queue entry is a walk-in) ─────────────────
+    string? BookingId,
+    DateTime? BookingSlotStart,
+    bool? IsVehicleClassified,
+    BookingStatus? BookingStatus);
 
 /// <summary>
 /// Slimmed-down projection for the public wall-display.

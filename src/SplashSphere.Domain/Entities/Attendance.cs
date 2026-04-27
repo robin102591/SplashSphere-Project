@@ -12,7 +12,7 @@ namespace SplashSphere.Domain.Entities;
 /// the application enforces <c>TimeIn &lt; TimeOut</c> on clock-out.
 /// Both timestamps are stored as UTC and converted to Asia/Manila for display.
 /// </summary>
-public sealed class Attendance : IAuditableEntity
+public sealed class Attendance : IAuditableEntity, ITenantScoped
 {
     private Attendance() { } // EF Core
 

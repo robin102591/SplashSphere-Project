@@ -72,14 +72,16 @@ description: Current frontend page inventory — updated by agents after each ta
 | /dashboard/purchase-orders/new | Create PO form with line items |
 | /dashboard/purchase-orders/[id] | PO detail with receive items workflow |
 | /dashboard/suppliers | Supplier CRUD list |
+| /dashboard/bookings | Bookings list + week calendar view (gated on online_booking) — branch/status/date filters, detail dialog |
+| /dashboard/settings/booking | Per-branch online-booking configuration (gated on online_booking) — hours, slot interval, lead time, availability toggles |
 
 ## POS App
 | Route | Page |
 |---|---|
 | / | POS Home — quick actions |
-| /queue | Queue Board — Kanban (WAITING / CALLED / IN_SERVICE) |
+| /queue | Queue Board — Kanban (WAITING / CALLED / IN_SERVICE). Booking entries show calendar badge + slot time, Confirmed bookings get a Check-In button, and Start Service on a booking with an unclassified vehicle opens a classification modal. |
 | /queue/add | Add to Queue — plate lookup, priority, preferred services |
-| /transactions/new | New Transaction (supports direct OR from-queue via ?queueEntryId) |
+| /transactions/new | New Transaction (supports direct OR from-queue via ?queueEntryId). When the queue entry has a bookingId, the page fetches booking detail, shows a "From booking" banner, and pre-fills services with the booking's locked prices. |
 | /transactions/[id] | Transaction detail + receipt |
 | /history | Today's transactions |
 | /customers/lookup | Plate/customer search |
@@ -90,3 +92,15 @@ description: Current frontend page inventory — updated by agents after each ta
 | /shift/cash-movement | Cash Movement Form — Cash In / Cash Out |
 | /shift/close | Close Shift — 3-step wizard |
 | /shift/report | Shift Report — printable EOD report |
+
+## Customer Connect App (apps/customer/)
+
+| Route | Purpose |
+|---|---|
+| / | Home — greeting, quick actions (Book / My bookings), "My car washes" list fetched from `GET /my-carwashes` |
+| /discover | Nearby branches (placeholder) |
+| /history | Cross-tenant service history — completed transactions grouped by Manila-time month, newest first, with points-earned badge and plate number |
+| /profile | Profile detail (edit name/email), vehicles CRUD (add/edit/remove with global Make/Model picker), language toggle (en/fil), sign-out |
+| /bookings | My Bookings list — Upcoming/Past tabs (URL `?tab=`), status badges, plate + est. total / range. Upcoming asc, Past desc |
+| /bookings/[id] | Booking detail — header card with status + slot + short code, services table with per-line price or range, vehicle card, live queue panel (polls `/queue/active` every 10s, pauses when tab hidden), cancel action (Confirmed/Arrived + future slot) |
+| /auth | Phone OTP sign-in flow |

@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// Each <see cref="Make"/> owns a set of <see cref="Model"/> records.
 /// Scoped per tenant so operators can add local or lesser-known brands.
 /// </summary>
-public sealed class Make : IAuditableEntity
+public sealed class Make : IAuditableEntity, ITenantScoped
 {
     private Make() { } // EF Core
 

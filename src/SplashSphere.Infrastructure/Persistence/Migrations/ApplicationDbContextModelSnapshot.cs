@@ -17,7 +17,7 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.14")
+                .HasAnnotation("ProductVersion", "9.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -201,6 +201,242 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("BillingRecords", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Booking", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CarId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("ConnectUserId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("ConnectVehicleId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("EstimatedDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("EstimatedTotal")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("EstimatedTotalMax")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("EstimatedTotalMin")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<bool>("IsVehicleClassified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("QueueEntryId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SlotEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SlotStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TransactionId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("ConnectUserId");
+
+                    b.HasIndex("ConnectVehicleId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("QueueEntryId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.HasIndex("Status", "SlotStart");
+
+                    b.HasIndex("TenantId", "BranchId", "SlotStart");
+
+                    b.ToTable("Bookings", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.BookingService", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("BookingId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("PriceMax")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("PriceMin")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("ServiceId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("BookingServices", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.BookingSetting", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<int>("AdvanceBookingDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(7);
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<TimeOnly>("CloseTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<bool>("IsBookingEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("MaxBookingsPerSlot")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(3);
+
+                    b.Property<int>("MinLeadTimeMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(120);
+
+                    b.Property<int>("NoShowGraceMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(15);
+
+                    b.Property<TimeOnly>("OpenTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<bool>("ShowInPublicDirectory")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("SlotIntervalMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(30);
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TenantId", "BranchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BookingSetting_Tenant_Branch");
+
+                    b.ToTable("BookingSettings", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Branch", b =>
                 {
                     b.Property<string>("Id")
@@ -233,6 +469,12 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -597,6 +839,203 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "CashierId", "Status");
 
                     b.ToTable("CashierShifts", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectRefreshToken", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("ConnectUserId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConnectUserId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ConnectRefreshToken_TokenHash");
+
+                    b.ToTable("ConnectRefreshTokens", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("Phone")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ConnectUser_Phone");
+
+                    b.ToTable("ConnectUsers", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectUserTenantLink", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("ConnectUserId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("LinkedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ConnectUserId", "TenantId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ConnectUserTenantLink_User_Tenant");
+
+                    b.ToTable("ConnectUserTenantLinks", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectVehicle", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ConnectUserId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("MakeId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("ModelId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("PlateNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConnectUserId");
+
+                    b.HasIndex("MakeId");
+
+                    b.HasIndex("ModelId");
+
+                    b.HasIndex("PlateNumber");
+
+                    b.HasIndex("ConnectUserId", "PlateNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ConnectVehicle_User_Plate");
+
+                    b.ToTable("ConnectVehicles", (string)null);
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Customer", b =>
@@ -1235,6 +1674,85 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("FranchiseSettings", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.GlobalMake", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GlobalMake_Name");
+
+                    b.ToTable("GlobalMakes", (string)null);
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.GlobalModel", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("GlobalMakeId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalMakeId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GlobalModel_Make_Name");
+
+                    b.ToTable("GlobalModels", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.GovernmentContributionBracket", b =>
                 {
                     b.Property<string>("Id")
@@ -1310,6 +1828,12 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("PointsPerCurrencyUnit")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("ReferredRewardPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReferrerRewardPoints")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -2911,6 +3435,77 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("QueueEntries", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Referral", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReferralCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ReferredCustomerId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("ReferredPointsEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ReferrerCustomerId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("ReferrerPointsEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReferredCustomerId");
+
+                    b.HasIndex("ReferrerCustomerId");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.HasIndex("TenantId", "ReferralCode")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Referral_Tenant_Code");
+
+                    b.HasIndex("TenantId", "ReferrerCustomerId");
+
+                    b.ToTable("Referrals", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.RoyaltyPeriod", b =>
                 {
                     b.Property<string>("Id")
@@ -4429,6 +5024,108 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Booking", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Car", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.ConnectUser", "ConnectUser")
+                        .WithMany()
+                        .HasForeignKey("ConnectUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.ConnectVehicle", "ConnectVehicle")
+                        .WithMany()
+                        .HasForeignKey("ConnectVehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.QueueEntry", "QueueEntry")
+                        .WithMany()
+                        .HasForeignKey("QueueEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Transaction", "Transaction")
+                        .WithMany()
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Car");
+
+                    b.Navigation("ConnectUser");
+
+                    b.Navigation("ConnectVehicle");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("QueueEntry");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Transaction");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.BookingService", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Booking", "Booking")
+                        .WithMany("Services")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.BookingSetting", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Branch", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
@@ -4557,6 +5254,71 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("ReviewedBy");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectRefreshToken", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.ConnectUser", "ConnectUser")
+                        .WithMany()
+                        .HasForeignKey("ConnectUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConnectUser");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectUserTenantLink", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.ConnectUser", "ConnectUser")
+                        .WithMany("TenantLinks")
+                        .HasForeignKey("ConnectUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConnectUser");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectVehicle", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.ConnectUser", "ConnectUser")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("ConnectUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.GlobalMake", "Make")
+                        .WithMany()
+                        .HasForeignKey("MakeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.GlobalModel", "Model")
+                        .WithMany()
+                        .HasForeignKey("ModelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConnectUser");
+
+                    b.Navigation("Make");
+
+                    b.Navigation("Model");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Customer", b =>
@@ -4711,6 +5473,17 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.GlobalModel", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.GlobalMake", "Make")
+                        .WithMany("Models")
+                        .HasForeignKey("GlobalMakeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Make");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyProgramSettings", b =>
@@ -5198,6 +5971,32 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Transaction");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Referral", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Customer", "Referred")
+                        .WithMany()
+                        .HasForeignKey("ReferredCustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Customer", "Referrer")
+                        .WithMany()
+                        .HasForeignKey("ReferrerCustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Referred");
+
+                    b.Navigation("Referrer");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.RoyaltyPeriod", b =>
                 {
                     b.HasOne("SplashSphere.Domain.Entities.FranchiseAgreement", "Agreement")
@@ -5682,6 +6481,11 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.Booking", b =>
+                {
+                    b.Navigation("Services");
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Branch", b =>
                 {
                     b.Navigation("CashierShifts");
@@ -5709,6 +6513,13 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Denominations");
 
                     b.Navigation("PaymentSummaries");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ConnectUser", b =>
+                {
+                    b.Navigation("TenantLinks");
+
+                    b.Navigation("Vehicles");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Customer", b =>
@@ -5750,6 +6561,11 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SplashSphere.Domain.Entities.FranchiseAgreement", b =>
                 {
                     b.Navigation("RoyaltyPeriods");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.GlobalMake", b =>
+                {
+                    b.Navigation("Models");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.LoyaltyProgramSettings", b =>

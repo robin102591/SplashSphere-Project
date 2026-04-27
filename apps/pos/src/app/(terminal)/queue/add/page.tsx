@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -54,7 +54,16 @@ const PRIORITY_OPTIONS = [
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AddToQueuePage() {
+  return (
+    <Suspense>
+      <AddToQueueContent />
+    </Suspense>
+  )
+}
+
+function AddToQueueContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
 
@@ -91,8 +100,9 @@ export default function AddToQueuePage() {
 
   // ── Plate lookup ────────────────────────────────────────────────────────────
 
-  const handlePlateLookup = async () => {
-    const plate = plateValue.trim().toUpperCase()
+  const handlePlateLookup = async (plateOverride?: string) => {
+    const raw = plateOverride ?? plateValue
+    const plate = raw.trim().toUpperCase()
     if (!plate || plate.length < 2) return
     setIsLookingUp(true)
     setLookupMsg(null)
@@ -111,6 +121,19 @@ export default function AddToQueuePage() {
       setIsLookingUp(false)
     }
   }
+
+  // ── Pre-fill plate from ?plate= query param (e.g. from customer lookup) ─────
+  const prefillDone = useRef(false)
+  useEffect(() => {
+    if (prefillDone.current) return
+    const plateParam = searchParams.get('plate')
+    if (!plateParam) return
+    prefillDone.current = true
+    const plate = plateParam.trim().toUpperCase()
+    setValue('plateNumber', plate, { shouldValidate: true })
+    if (plate.length >= 2) void handlePlateLookup(plate)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   // ── Service toggle ───────────────────────────────────────────────────────────
 
@@ -230,7 +253,7 @@ export default function AddToQueuePage() {
             />
             <button
               type="button"
-              onClick={handlePlateLookup}
+              onClick={() => void handlePlateLookup()}
               disabled={isLookingUp || !plateValue.trim()}
               className="min-h-14 px-4 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors duration-150 active:scale-[0.97]"
               title="Look up plate"

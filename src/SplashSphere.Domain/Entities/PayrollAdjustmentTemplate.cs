@@ -9,7 +9,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Unique constraint: [TenantId, Name] — no duplicate names within a tenant.
 /// </summary>
-public sealed class PayrollAdjustmentTemplate : IAuditableEntity
+public sealed class PayrollAdjustmentTemplate : IAuditableEntity, ITenantScoped
 {
     private PayrollAdjustmentTemplate() { } // EF Core
 

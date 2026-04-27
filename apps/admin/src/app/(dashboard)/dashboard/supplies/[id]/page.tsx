@@ -17,9 +17,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  useSupplyById, useStockMovements, useRecordStockMovement,
-} from '@/hooks/use-inventory'
+import { useSupplyById } from '@/hooks/use-supplies'
+import { useStockMovements, useRecordStockMovement } from '@/hooks/use-stock-movements'
 import { formatPeso, formatDateTime } from '@/lib/format'
 import { toast } from 'sonner'
 import Link from 'next/link'

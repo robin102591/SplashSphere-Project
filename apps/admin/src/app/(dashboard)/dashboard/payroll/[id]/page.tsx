@@ -1,7 +1,5 @@
 'use client'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-
 import { use, useState, useCallback } from 'react'
 import { Lock, CheckCheck, AlertTriangle, Pencil, Check, X, Trash2, Plus, FileText, Printer, Banknote, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,7 +23,6 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   usePayrollPeriod,
   useClosePayrollPeriod,
@@ -350,16 +347,15 @@ function PayslipDialog({
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={async () => {
                   const token = await getToken()
-                  const res = await fetch(`${API_BASE}/api/v1/payroll/entries/${entryId}/payslip/pdf`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  })
-                  if (!res.ok) return
-                  const blob = await res.blob()
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url; a.download = `payslip_${entryId}.pdf`
-                  document.body.appendChild(a); a.click(); a.remove()
-                  URL.revokeObjectURL(url)
+                  try {
+                    await apiClient.download(
+                      `/payroll/entries/${entryId}/payslip/pdf`,
+                      `payslip_${entryId}.pdf`,
+                      token ?? undefined,
+                    )
+                  } catch {
+                    /* surfaced silently — original behavior */
+                  }
                 }}>
                   <Download className="mr-1.5 h-3.5 w-3.5" /> PDF
                 </Button>
@@ -478,6 +474,10 @@ function EmployeeDetailSheet({
     ? (data.entry.bonuses > 0 || data.entry.deductions > 0) && data.adjustments.length === 0
     : false
 
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <Sheet open={!!entryId} onOpenChange={(open) => { if (!open) { onClose(); resetAddForm(); setEditingAdjId(null) } }}>
       <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
@@ -526,22 +526,47 @@ function EmployeeDetailSheet({
               </div>
             </div>
 
-            {/* Tabs */}
-            <Tabs defaultValue="adjustments" className="mt-5">
-              <TabsList variant="line">
-                <TabsTrigger value="adjustments">
-                  Adjustments ({data.adjustments.length})
-                </TabsTrigger>
-                <TabsTrigger value="commissions">
-                  Commissions ({data.commissionLineItems.length})
-                </TabsTrigger>
-                <TabsTrigger value="attendance">
-                  Attendance ({data.attendanceRecords.length})
-                </TabsTrigger>
-              </TabsList>
+            {/* Sticky anchor row — jump links instead of tabs */}
+            <div className="sticky top-0 z-10 -mx-6 mt-5 border-b bg-background/85 px-6 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+              <nav className="flex items-center gap-3 text-sm" aria-label="Entry sections">
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('adjustments')}
+                  className="font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Adjustments
+                  {data.adjustments.length > 0 && (
+                    <span className="ml-1 text-muted-foreground">({data.adjustments.length})</span>
+                  )}
+                </button>
+                <span className="text-muted-foreground/40">·</span>
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('commissions')}
+                  className="font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Commissions
+                  {data.commissionLineItems.length > 0 && (
+                    <span className="ml-1 text-muted-foreground">({data.commissionLineItems.length})</span>
+                  )}
+                </button>
+                <span className="text-muted-foreground/40">·</span>
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('attendance')}
+                  className="font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Attendance
+                  {data.attendanceRecords.length > 0 && (
+                    <span className="ml-1 text-muted-foreground">({data.attendanceRecords.length})</span>
+                  )}
+                </button>
+              </nav>
+            </div>
 
-              {/* ── Adjustments tab ──────────────────────────────────── */}
-              <TabsContent value="adjustments" className="mt-4 space-y-3">
+            {/* ── Adjustments section ──────────────────────────────────── */}
+            <section id="adjustments" className="mt-6 space-y-3 scroll-mt-20">
+              <h3 className="text-sm font-semibold">Adjustments</h3>
                 {hasLegacyAdjustments && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
                     This entry has {formatPeso(data.entry.bonuses)} in bonuses and {formatPeso(data.entry.deductions)} in
@@ -697,10 +722,11 @@ function EmployeeDetailSheet({
                     </table>
                   </div>
                 )}
-              </TabsContent>
+            </section>
 
-              {/* ── Commissions tab ──────────────────────────────────── */}
-              <TabsContent value="commissions" className="mt-4">
+            {/* ── Commissions section ──────────────────────────────────── */}
+            <section id="commissions" className="mt-8 space-y-3 scroll-mt-20">
+              <h3 className="text-sm font-semibold">Commissions</h3>
                 {data.commissionLineItems.length === 0 ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">No commissions earned this period</p>
                 ) : (
@@ -738,10 +764,11 @@ function EmployeeDetailSheet({
                     </table>
                   </div>
                 )}
-              </TabsContent>
+            </section>
 
-              {/* ── Attendance tab ──────────────────────────────────── */}
-              <TabsContent value="attendance" className="mt-4">
+            {/* ── Attendance section ──────────────────────────────────── */}
+            <section id="attendance" className="mt-8 space-y-3 scroll-mt-20">
+              <h3 className="text-sm font-semibold">Attendance</h3>
                 {data.attendanceRecords.length === 0 ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">No attendance recorded this period</p>
                 ) : (
@@ -781,8 +808,7 @@ function EmployeeDetailSheet({
                     </table>
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+            </section>
           </>
         )}
       </SheetContent>
@@ -971,19 +997,11 @@ export default function PayrollPeriodDetailPage({
     setExporting(true)
     try {
       const token = await getToken()
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-      const res = await fetch(`${apiBase}/api/v1/payroll/periods/${id}/export/csv`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = res.headers.get('content-disposition')?.match(/filename="?(.+?)"?$/)?.[1]
-        ?? `payroll_${id}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+      await apiClient.download(
+        `/payroll/periods/${id}/export/csv`,
+        `payroll_${id}.csv`,
+        token ?? undefined,
+      )
       toast.success('CSV exported')
     } catch {
       toast.error('Failed to export CSV')

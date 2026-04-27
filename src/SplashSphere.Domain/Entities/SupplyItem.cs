@@ -10,7 +10,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="CurrentStock"/> is updated as movements are recorded.
 /// </para>
 /// </summary>
-public sealed class SupplyItem : IAuditableEntity
+public sealed class SupplyItem : IAuditableEntity, ITenantScoped
 {
     private SupplyItem() { } // EF Core
 

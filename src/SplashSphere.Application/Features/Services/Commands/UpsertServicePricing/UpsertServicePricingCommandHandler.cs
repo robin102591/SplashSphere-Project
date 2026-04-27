@@ -9,14 +9,13 @@ namespace SplashSphere.Application.Features.Services.Commands.UpsertServicePrici
 
 /// <summary>
 /// Atomically replaces the pricing matrix for a service.
-/// Uses an explicit DB transaction because <c>BulkUpsertAsync</c> calls
-/// <c>ExecuteDeleteAsync</c> which bypasses EF change tracking and hits the
-/// database immediately — the delete and subsequent insert must share the same
-/// transaction to avoid a window where both are absent.
+/// Uses an explicit DB transaction because <c>ExecuteDeleteAsync</c> bypasses
+/// EF change tracking and hits the database immediately — the delete and the
+/// subsequent insert must share the same transaction to avoid a window where
+/// both are absent.
 /// </summary>
 public sealed class UpsertServicePricingCommandHandler(
     IApplicationDbContext context,
-    IServicePricingRepository pricingRepo,
     ITenantContext tenantContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpsertServicePricingCommand, Result>
@@ -43,7 +42,13 @@ public sealed class UpsertServicePricingCommandHandler(
         await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            await pricingRepo.BulkUpsertAsync(request.ServiceId, rows, cancellationToken);
+            // EF Core 7+ applies the global tenant filter to ExecuteDeleteAsync.
+            await context.ServicePricings
+                .Where(sp => sp.ServiceId == request.ServiceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await context.ServicePricings.AddRangeAsync(rows, cancellationToken);
+
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await unitOfWork.CommitTransactionAsync(cancellationToken);
         }

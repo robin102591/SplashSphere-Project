@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// completed onboarding. After onboarding (or invitation acceptance) it is
 /// populated with the Clerk Organization ID.
 /// </summary>
-public sealed class User : IAuditableEntity
+public sealed class User : IAuditableEntity, ITenantScoped
 {
     private User() { } // EF Core
 

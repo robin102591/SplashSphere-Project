@@ -1,0 +1,358 @@
+{
+  "app": {
+    "name": "SplashSphere Connect",
+    "tagline": "Mag-book ng car wash sa ilang segundo"
+  },
+  "nav": {
+    "home": "Home",
+    "book": "Mag-book",
+    "history": "Kasaysayan",
+    "profile": "Profile"
+  },
+  "common": {
+    "comingSoon": "Malapit nang darating",
+    "loading": "Naglo-load…",
+    "signOut": "Mag-sign out",
+    "change": "Palitan",
+    "continue": "Magpatuloy",
+    "verify": "I-verify",
+    "sending": "Pinapadala…",
+    "verifying": "Vine-verify…",
+    "cancel": "Kanselahin",
+    "save": "I-save",
+    "close": "Isara",
+    "delete": "Burahin",
+    "edit": "I-edit"
+  },
+  "auth": {
+    "phoneStep": {
+      "title": "Mag-sign in gamit ang iyong phone",
+      "subtitle": "Ipapadala namin sa iyo ang isang-beses na code sa text. Walang password, walang hassle.",
+      "phoneLabel": "Numero ng mobile",
+      "phonePlaceholder": "09XX XXX XXXX",
+      "phoneHint": "Philippine mobile number (11 digits na nagsisimula sa 09).",
+      "submit": "Ipadala ang code",
+      "errorInvalid": "Maglagay ng wastong PH mobile number (09XXXXXXXXX).",
+      "errorRateLimit": "Maghintay muna ng isang minuto bago humingi ng bagong code.",
+      "errorDailyLimit": "Umabot na sa araw-araw na limit. Subukan ulit bukas.",
+      "errorGeneric": "Hindi namin maipadala ang code. Subukan ulit."
+    },
+    "codeStep": {
+      "title": "Ilagay ang 6-digit na code",
+      "subtitle": "Nagpadala kami ng code sa {phone}.",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "123456",
+      "submit": "I-verify at mag-sign in",
+      "resend": "Magpadala ulit ng code",
+      "resendIn": "Magpadala ulit sa {seconds}s",
+      "resending": "Pinapadala…",
+      "devHint": "Dev mode: ginagamit ang fixed OTP code.",
+      "errorInvalid": "Dapat 6 na digit ang code.",
+      "errorWrongCode": "Mali o expired na ang code na iyon.",
+      "errorGeneric": "Hindi namin ma-verify ang code. Subukan ulit."
+    }
+  },
+  "history": {
+    "title": "Kasaysayan",
+    "subtitle": "Sa lahat ng iyong car wash",
+    "emptyTitle": "Wala pa.",
+    "emptyCta": "Mag-book ng una mong wash",
+    "pointsEarned": "+{points} puntos",
+    "loadMore": "Mag-load pa",
+    "errorTitle": "Hindi namin ma-load ang iyong kasaysayan.",
+    "errorRetry": "Subukan ulit"
+  },
+  "home": {
+    "greetingNamed": "Kumusta, {name}!",
+    "greetingAnon": "Maligayang pagbabalik",
+    "actions": {
+      "bookWash": "Mag-book ng wash",
+      "myBookings": "Aking mga booking"
+    },
+    "myCarWashes": {
+      "title": "Aking mga car wash",
+      "discoverMore": "Tumingin pa",
+      "emptyTitle": "Wala pang nasali na car wash",
+      "emptyCta": "Maghanap ng malapit sa iyo →",
+      "error": "Hindi namin ma-load ang iyong mga car wash. Subukan ulit."
+    }
+  },
+  "profile": {
+    "editProfile": "I-edit ang profile",
+    "loadError": "Hindi namin ma-load ang iyong profile. Subukan ulit.",
+    "edit": {
+      "title": "I-edit ang profile",
+      "nameLabel": "Buong pangalan",
+      "namePlaceholder": "Juan dela Cruz",
+      "emailLabel": "Email (opsyonal)",
+      "emailPlaceholder": "juan@example.com",
+      "errorRequired": "Kailangan ang pangalan.",
+      "errorEmail": "Maglagay ng wastong email.",
+      "errorGeneric": "Hindi namin ma-save ang mga pagbabago. Subukan ulit."
+    },
+    "vehicles": {
+      "title": "Aking mga sasakyan",
+      "add": "Magdagdag",
+      "edit": "I-edit",
+      "delete": "Burahin",
+      "emptyTitle": "Wala pang sasakyan",
+      "emptyHint": "Magdagdag ng sasakyan para mas mabilis kang mahanap ng cashier pagdating mo.",
+      "classificationHint": "Itatakda ng cashier ang type/size sa unang pagbisita",
+      "deleteConfirm": "Alisin ang {plate} sa iyong mga sasakyan?",
+      "deleteError": "Hindi namin maalis ang sasakyan na iyon. Subukan ulit."
+    },
+    "vehicleForm": {
+      "titleAdd": "Magdagdag ng sasakyan",
+      "titleEdit": "I-edit ang sasakyan",
+      "makeLabel": "Make",
+      "makePlaceholder": "Pumili ng make",
+      "modelLabel": "Model",
+      "modelPlaceholder": "Pumili ng model",
+      "plateLabel": "Plate number",
+      "colorLabel": "Kulay (opsyonal)",
+      "colorPlaceholder": "hal., Pearl White",
+      "yearLabel": "Taon (opsyonal)",
+      "submitAdd": "Idagdag ang sasakyan",
+      "errorRequired": "Kailangan ang field na ito.",
+      "errorYearRange": "Ang taon ay dapat {min} hanggang {max}.",
+      "errorGeneric": "Hindi namin ma-save ang sasakyan. Subukan ulit."
+    },
+    "settings": {
+      "title": "Mga setting"
+    },
+    "language": {
+      "title": "Wika"
+    }
+  },
+  "discover": {
+    "title": "Maghanap ng car wash",
+    "subtitle": "Hanapin ang mga SplashSphere wash malapit sa iyo",
+    "searchPlaceholder": "Hanapin ayon sa pangalan, branch, o address",
+    "heroTitle": "Maghanap ng car wash malapit sa iyo",
+    "heroSubtitle": "Mag-type ng pangalan, lungsod, o branch para magsimula.",
+    "emptyTitle": "Walang katugma",
+    "emptySubtitle": "Subukan ang ibang search term o suriin ang spelling.",
+    "errorTitle": "Hindi namin ma-load ang directory.",
+    "errorRetry": "Subukan ulit",
+    "joinedBadge": "Nakasali",
+    "distanceKm": "{km} km ang layo",
+    "branchesMore": "+{count} pang {count, plural, one {branch} other {mga branch}}",
+    "locatingHint": "Ginagamit ang iyong lokasyon para sa ranking ayon sa layo",
+    "locationDenied": "Naka-off ang location — alphabetical ang pagkakaayos",
+    "viewList": "Listahan",
+    "viewMap": "Mapa",
+    "noMapLocation": "{count, plural, one {# branch} other {# na branch}} na walang lokasyon sa mapa",
+    "mapEmpty": "Walang car wash na maipapakita sa mapa."
+  },
+  "carwash": {
+    "backLabel": "Bumalik",
+    "loadError": "Hindi namin ma-load ang car wash na ito.",
+    "retry": "Subukan ulit",
+    "notFound": "Wala na ang car wash na ito.",
+    "join": "Sumali sa car wash na ito",
+    "joining": "Sumasali…",
+    "joined": "Nakasali",
+    "joinError": "Hindi kami makasali sa car wash na ito. Subukan ulit.",
+    "aboutTitle": "Tungkol",
+    "branchesTitle": "Mga branch",
+    "servicesTitle": "Mga serbisyo",
+    "hoursToday": "Ngayon {open}–{close}",
+    "bookingDisabled": "In-store lang",
+    "bookCta": "Mag-book ng wash",
+    "rewardsCta": "Tingnan ang rewards",
+    "inStoreOnly": "Pumunta sa tindahan",
+    "fromPrice": "mula ₱{price}",
+    "priceRange": "₱{min}–₱{max}",
+    "emptyServices": "Wala pang nakalistang serbisyo.",
+    "emptyBranches": "Wala pang nakalistang branch."
+  },
+  "booking": {
+    "title": "Mag-book ng wash",
+    "steps": {
+      "ariaLabel": "Progreso ng booking",
+      "vehicle": "Sasakyan",
+      "services": "Serbisyo",
+      "schedule": "Oras",
+      "confirm": "Kumpirma"
+    },
+    "vehicle": {
+      "title": "Pumili ng sasakyan",
+      "subtitle": "Piliin kung aling kotse ang dadalhin mo.",
+      "emptyTitle": "Wala pang sasakyan",
+      "emptyHint": "Magdagdag muna ng sasakyan sa profile mo — ginagamit ito ng cashier para mas mabilis ang check-in.",
+      "addVehicle": "Magdagdag ng sasakyan"
+    },
+    "services": {
+      "title": "Pumili ng mga serbisyo",
+      "subtitle": "Pumili ng isa o higit pang serbisyo para sa wash na ito.",
+      "unclassifiedBanner": "Ang pangwakas na presyo ay kumpirmado sa unang bisita mo, pag na-assess na ang sasakyan.",
+      "empty": "Walang serbisyo para sa sasakyang ito.",
+      "loadError": "Hindi namin ma-load ang mga serbisyo ng car wash na ito.",
+      "retry": "Subukan ulit"
+    },
+    "schedule": {
+      "title": "Pumili ng oras",
+      "subtitle": "Pumili ng branch, petsa, at time slot.",
+      "branchLabel": "Branch",
+      "branchPlaceholder": "Pumili ng branch",
+      "noBookableBranches": "Wala pang branch sa car wash na ito ang tumatanggap ng online booking.",
+      "dateLabel": "Petsa",
+      "timeLabel": "Oras",
+      "pickBranchFirst": "Pumili muna ng branch para makita ang mga petsa.",
+      "pickBranchAndDate": "Pumili ng branch at petsa para makita ang mga available na oras.",
+      "noSlots": "Puno na ang lahat ng slot sa petsang ito. Subukan ang ibang araw.",
+      "slotsError": "Hindi namin ma-load ang mga oras.",
+      "retry": "Subukan ulit"
+    },
+    "confirm": {
+      "title": "Tingnan muli ang iyong booking",
+      "subtitle": "Huling tingin bago i-reserba ang slot mo.",
+      "vehicleLabel": "Sasakyan",
+      "servicesLabel": "Mga serbisyo",
+      "branchLabel": "Branch",
+      "slotLabel": "Kailan",
+      "total": "Kabuuan",
+      "estimatedTotal": "Tantyang kabuuan",
+      "notesLabel": "Paalala para sa cashier (opsyonal)",
+      "notesPlaceholder": "May dapat bang malaman ang cashier?",
+      "policy": "Makakakuha ka ng SMS at push na kumpirmasyon. Kung hindi ka dumating sa branch sa loob ng 15 minuto mula sa slot mo, ita-tag itong no-show."
+    },
+    "totals": {
+      "exact": "Kabuuan {total}",
+      "estimated": "Tantya {min}–{max}"
+    },
+    "actions": {
+      "confirmBooking": "Kumpirmahin ang booking"
+    },
+    "errors": {
+      "submitGeneric": "Hindi kami nakagawa ng booking. Subukan ulit."
+    }
+  },
+  "bookings": {
+    "title": "Aking mga booking",
+    "back": "Bumalik",
+    "tabs": {
+      "upcoming": "Paparating",
+      "past": "Nakaraan"
+    },
+    "status": {
+      "Confirmed": "Kumpirmado",
+      "Arrived": "Dumating na",
+      "InService": "Sinisimulan",
+      "Completed": "Tapos na",
+      "Cancelled": "Kinansela",
+      "NoShow": "Hindi dumating"
+    },
+    "servicesSummary": "{first}{count, plural, =0 {} =1 { + 1 pa} other { + # pa}}",
+    "estimatedRange": "Tantya ₱{min}–₱{max}",
+    "emptyUpcomingTitle": "Wala kang paparating na booking.",
+    "emptyUpcomingCta": "Mag-book na",
+    "emptyPastTitle": "Wala pang nakaraang booking.",
+    "errorTitle": "Hindi namin ma-load ang iyong mga booking.",
+    "errorRetry": "Subukan ulit",
+    "detail": {
+      "bookingCode": "Booking #{code}",
+      "servicesTitle": "Mga serbisyo",
+      "vehicleTitle": "Sasakyan",
+      "notesTitle": "Paalala",
+      "totalLabel": "Kabuuan",
+      "estimatedTotalLabel": "Tantyang kabuuan",
+      "classifiedBadge": "Classified {type} / {size}",
+      "unclassifiedHint": "Ang pangwakas na presyo ay kumpirmado kapag na-assess na ang iyong sasakyan sa pagdating.",
+      "loadError": "Hindi namin ma-load ang booking na ito.",
+      "notFound": "Wala na ang booking na ito.",
+      "retry": "Subukan ulit"
+    },
+    "queue": {
+      "title": "Live na queue",
+      "nowWashingBanner": "Nililinis na ang iyong sasakyan!",
+      "waitingLabel": "Naghihintay",
+      "calledLabel": "Ikaw na ang susunod!",
+      "inServiceLabel": "Nililinis",
+      "queueNumberLabel": "Queue number",
+      "aheadOfYou": "{count, plural, =0 {Ikaw na ang susunod} =1 {1 nasa unahan mo} other {# nasa unahan mo}}",
+      "estimatedWait": "~{minutes} min pa",
+      "elapsedLabel": "Lumipas",
+      "inactive": "Lalabas dito ang iyong queue position kapag dumating ka na."
+    },
+    "actions": {
+      "cancel": "Kanselahin ang booking",
+      "cancelling": "Kinakansela…",
+      "directions": "Direksyon",
+      "confirmCancelTitle": "Kanselahin ang booking na ito?",
+      "confirmCancelBody": "Pwede kang mag-book ulit kahit kailan, pero mawawala ang slot mo.",
+      "confirmCancelConfirm": "Oo, kanselahin",
+      "confirmCancelKeep": "Huwag kanselahin",
+      "cancelError": "Hindi namin makansela ang booking na iyon. Subukan ulit.",
+      "cancelSuccess": "Kinansela ang booking."
+    }
+  },
+  "membership": {
+    "title": "Membership",
+    "pointsBalance": "Puntos ngayon",
+    "lifetime": "Kabuuang nakuha",
+    "pointsUnit": "pts",
+    "tierBadge": "{tier} tier",
+    "progressTo": "Para sa {tier}",
+    "topTier": "Nasa pinakamataas na tier ka na — tangkilikin ang mga perks!",
+    "notEnrolled": {
+      "title": "Hindi pa naka-unlock ang loyalty",
+      "body": "Magpa-wash muna dito para magsimulang kumita ng puntos at rewards."
+    },
+    "rewards": {
+      "title": "Mga reward",
+      "pointsUnit": "pts",
+      "redeem": "I-redeem",
+      "notAffordable": "Kulang pa ang puntos",
+      "notEnrolled": "Hindi pa naka-enroll",
+      "empty": "Wala pang nakalistang reward. Balik ka muli mamaya.",
+      "confirmTitle": "I-redeem ang reward na ito?",
+      "confirmBody": "Ibabawas nito ang {points} na puntos para sa \"{name}\". Bibigyan ka ng code na ipapakita mo sa cashier.",
+      "confirmConfirm": "Oo, i-redeem",
+      "redeeming": "Nire-redeem…",
+      "redeemError": "Hindi namin na-redeem ang reward. Subukan ulit.",
+      "redeemedTitle": "Na-redeem!",
+      "showCashier": "Ipakita ang code na ito sa cashier",
+      "newBalance": "Bagong balanse: {balance} pts"
+    },
+    "history": {
+      "title": "Kasaysayan ng puntos",
+      "viewAll": "Tingnan lahat",
+      "empty": "Wala pang galaw ng puntos.",
+      "types": {
+        "earned": "Nadagdagang puntos",
+        "redeemed": "Nagamit na puntos",
+        "expired": "Nag-expire na puntos",
+        "adjustment": "Pag-aayos ng puntos"
+      }
+    }
+  },
+  "referral": {
+    "title": "Mag-imbita ng kaibigan, kumita ng puntos",
+    "subtitle": "Ibahagi ang iyong code — pareho kayong kikita ng bonus na puntos kapag natapos ng kaibigan mo ang kanyang unang wash.",
+    "defaultTenant": "ang car wash na ito",
+    "yourCode": "Iyong code",
+    "copy": "Kopyahin",
+    "copied": "Nakopya!",
+    "share": "I-share",
+    "shareTitle": "Subukan ang car wash na ito kasama ko",
+    "shareText": "Samahan mo ako sa {tenant} at gamitin ang code {code} para makakuha ng bonus na loyalty points sa iyong unang wash!",
+    "unavailable": "Wala pang referral program ang car wash na ito.",
+    "howItWorks": {
+      "title": "Paano gumagana",
+      "body": "Ibahagi ang code sa kaibigan. Kikita ka ng {referrerPoints} na puntos at sila naman ay {referredPoints} kapag natapos nila ang kanilang unang wash."
+    },
+    "stats": {
+      "total": "Naimbita",
+      "completed": "Natapos",
+      "pointsEarned": "Puntos"
+    },
+    "pastReferrals": "Mga referral mo",
+    "anonymousName": "Bagong customer",
+    "status": {
+      "pending": "Nakabinbin",
+      "completed": "Natapos",
+      "expired": "Nag-expire"
+    }
+  }
+}

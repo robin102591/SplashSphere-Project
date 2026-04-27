@@ -138,6 +138,10 @@ public static class DataSeeder
         await using var scope = serviceProvider.CreateAsyncScope();
         var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+        // Global vehicle catalogue — runs independently of tenant seeding so the
+        // Connect app always has makes/models available even in pre-seeded databases.
+        await SeedGlobalVehicleCatalogueAsync(ctx);
+
         // Idempotency guard — Tenants has no global query filter so this always works
         if (await ctx.Tenants.AnyAsync(t => t.Id == Ten))
             return;
@@ -192,8 +196,10 @@ public static class DataSeeder
             contactNumber: "+63 917 123 4567",
             address: "Mandaluyong City, Metro Manila, Philippines") { Id = Ten });
 
-        ctx.Add(new Branch(Ten, "Makati Branch", "MKT", "7849 Makati Ave, Makati City", "+63 2 8123 4567") { Id = BrMkt });
-        ctx.Add(new Branch(Ten, "BGC Branch",    "BGC", "26th St, Bonifacio Global City, Taguig", "+63 2 8987 6543") { Id = BrBgc });
+        ctx.Add(new Branch(Ten, "Makati Branch", "MKT", "7849 Makati Ave, Makati City", "+63 2 8123 4567")
+            { Id = BrMkt, Latitude = 14.5547m, Longitude = 121.0244m });
+        ctx.Add(new Branch(Ten, "BGC Branch", "BGC", "26th St, Bonifacio Global City, Taguig", "+63 2 8987 6543")
+            { Id = BrBgc, Latitude = 14.5507m, Longitude = 121.0480m });
 
         // System users (POS cashier logins — one per branch)
         ctx.Add(new User("clerk_mkt_cashier_seed", "cashier-mkt@sparklewash.ph", "Ana",   "Lim")
@@ -874,5 +880,79 @@ public static class DataSeeder
         ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Brushes & Tools", "Wash mitts, brushes, and applicator pads") { Id = "supcat-brushes" });
         ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Water & Utilities", "Water consumption and utility tracking") { Id = "supcat-water" });
         ctx.SupplyCategories.Add(new SupplyCategory(Ten, "Packaging & Miscellaneous", "Paper towels, plastic wraps, and misc supplies") { Id = "supcat-misc" });
+    }
+
+    // ── Global vehicle catalogue (Connect app) ────────────────────────────────
+    //
+    // Not tenant-scoped — seeded once per database. Covers the fifteen most
+    // common Philippine passenger/light-truck brands. Adding a new make or model
+    // later is safe: this method only inserts missing makes and missing models
+    // (matched by name), so re-running the seeder will top up the catalogue
+    // without duplicating existing rows.
+
+    private static async Task SeedGlobalVehicleCatalogueAsync(ApplicationDbContext ctx)
+    {
+        var existingMakes = await ctx.GlobalMakes
+            .Select(m => new { m.Id, m.Name })
+            .ToListAsync();
+        var existingMakeByName = existingMakes.ToDictionary(m => m.Name, m => m.Id, StringComparer.OrdinalIgnoreCase);
+
+        var catalogue = new (string Make, string[] Models)[]
+        {
+            ("Toyota",     new[] { "Vios", "Wigo", "Corolla Altis", "Fortuner", "Innova", "Hilux", "Rush", "Avanza", "Raize", "Camry", "Land Cruiser" }),
+            ("Mitsubishi", new[] { "Mirage", "Mirage G4", "Xpander", "Montero Sport", "Strada", "L300", "Xpander Cross" }),
+            ("Honda",      new[] { "City", "Civic", "Jazz", "Brio", "BR-V", "CR-V", "HR-V", "Accord" }),
+            ("Ford",       new[] { "Ranger", "Everest", "Territory", "EcoSport", "Mustang" }),
+            ("Suzuki",     new[] { "Ertiga", "Swift", "Jimny", "Dzire", "Celerio", "Vitara", "XL7" }),
+            ("Nissan",     new[] { "Almera", "Navara", "Terra", "Juke", "X-Trail", "Urvan", "Livina" }),
+            ("Hyundai",    new[] { "Accent", "Elantra", "Tucson", "Santa Fe", "Reina", "Creta", "Stargazer" }),
+            ("Kia",        new[] { "Picanto", "Rio", "Soluto", "Sportage", "Sorento", "Seltos", "Carnival", "Stonic" }),
+            ("Isuzu",      new[] { "D-Max", "mu-X", "Traviz", "Crosswind" }),
+            ("Chevrolet",  new[] { "Spark", "Trailblazer", "Colorado", "Captiva" }),
+            ("Mazda",      new[] { "Mazda2", "Mazda3", "CX-3", "CX-5", "CX-8", "CX-9", "BT-50" }),
+            ("MG",         new[] { "MG 5", "MG ZS", "MG RX5", "MG HS", "MG 3" }),
+            ("Geely",      new[] { "Coolray", "Azkarra", "Emgrand", "Okavango", "Tugella" }),
+            ("Chery",      new[] { "Tiggo 2", "Tiggo 5X", "Tiggo 7 Pro", "Tiggo 8 Pro" }),
+            ("Subaru",     new[] { "Forester", "Outback", "XV", "WRX", "BRZ" }),
+        };
+
+        var order = 0;
+        foreach (var (makeName, models) in catalogue)
+        {
+            if (!existingMakeByName.TryGetValue(makeName, out var makeId))
+            {
+                var newMake = new GlobalMake(makeName, order);
+                makeId = newMake.Id;
+                ctx.GlobalMakes.Add(newMake);
+                existingMakeByName[makeName] = makeId;
+            }
+            order++;
+        }
+
+        // Flush makes first so models can reference them by id
+        await ctx.SaveChangesAsync();
+
+        var existingModels = await ctx.GlobalModels
+            .Select(m => new { m.GlobalMakeId, m.Name })
+            .ToListAsync();
+        var existingModelKey = new HashSet<string>(
+            existingModels.Select(m => $"{m.GlobalMakeId}|{m.Name.ToLowerInvariant()}"));
+
+        foreach (var (makeName, models) in catalogue)
+        {
+            var makeId = existingMakeByName[makeName];
+            var modelOrder = 0;
+            foreach (var modelName in models)
+            {
+                var key = $"{makeId}|{modelName.ToLowerInvariant()}";
+                if (existingModelKey.Add(key))
+                {
+                    ctx.GlobalModels.Add(new GlobalModel(makeId, modelName, modelOrder));
+                }
+                modelOrder++;
+            }
+        }
+
+        await ctx.SaveChangesAsync();
     }
 }

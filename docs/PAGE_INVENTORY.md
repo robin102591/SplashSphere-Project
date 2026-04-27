@@ -50,6 +50,8 @@
 | `/dashboard/purchase-orders/new` | Create PO form with line items |
 | `/dashboard/purchase-orders/[id]` | PO detail with receive items workflow |
 | `/dashboard/suppliers` | Supplier CRUD list |
+| `/dashboard/bookings` | Bookings -- list + week calendar view with branch/status/date filters + detail dialog (gated on `online_booking`) |
+| `/dashboard/settings/booking` | Per-branch online-booking configuration -- hours, slot interval, lead time, availability toggles (gated on `online_booking`) |
 
 ## POS App
 
@@ -83,3 +85,36 @@
 ### New Transaction Screen -- supports `?queueEntryId=xxx` query param
 
 When `queueEntryId` is present: pre-fill vehicle/customer from queue entry, pre-select preferred services, on submit also link the queue entry.
+
+### Booking-aware POS behavior
+
+- **Queue Board (`/queue`)**: queue entries linked to a booking display a 📅 badge with the slot time (Manila TZ). `Confirmed` bookings show a **Check In** action that flips Confirmed → Arrived and ensures a queue entry exists.
+- **Start Service**: when a `Booked` queue entry has an unclassified vehicle (`IsVehicleClassified = false`), a classification modal is required before service can start — cashier picks VehicleType + Size, which locks exact service prices on the linked booking.
+- **New Transaction (`/transactions/new`)**: when navigated from a booked queue entry, a "From booking" banner is shown and the service list is auto-populated from `BookingService` rows with prices pre-locked; cashier still adjusts quantities and adds ad-hoc items as needed.
+
+## Customer Connect App (`apps/customer/`)
+
+End-customer PWA on port **3002**. Mobile-first, bottom-tab shell (Home / Book / History / Profile). Phone-OTP auth via the `ConnectJwt` scheme — **no Clerk, no SignalR** (polling for live data). All authed routes are wrapped in a client-side `<AuthGuard>`; there is no Next middleware because tokens live in `localStorage`. i18n via `next-intl` (en/fil, cookie-based). Serwist-backed PWA with offline fallback.
+
+| Route | Page |
+|---|---|
+| `/auth` | **Public** — Phone OTP sign-in (2 steps: phone → 6-digit code) |
+| `/` | Home — greeting + "My Car Washes" cards + quick actions (AuthGuard) |
+| `/discover` | Car-wash search — debounced, geolocation-aware tenant directory (AuthGuard) |
+| `/carwash/[tenantId]` | Car-wash detail — branches, services, Join / Book / View-rewards CTAs (AuthGuard) |
+| `/carwash/[tenantId]/book` | 4-step booking wizard — Vehicle → Services → Branch/Date/Time → Confirm (AuthGuard) |
+| `/carwash/[tenantId]/membership` | Loyalty — tier/points, rewards redemption, points history, referral code share (AuthGuard) |
+| `/bookings` | My bookings — Upcoming / Past tabs via `?tab=` URL param (AuthGuard) |
+| `/bookings/[id]` | Booking detail + **live queue panel** polling `/queue/active` every 10s, paused when tab hidden; cancel action (AuthGuard) |
+| `/history` | Cross-tenant service history grouped by month (Manila TZ, sticky headers) (AuthGuard) |
+| `/profile` | Profile edit, vehicles list + add/edit/delete, language toggle, sign out (AuthGuard) |
+| `/offline` | **Public** — Serwist offline fallback page |
+
+### Connect app UX notes
+
+- Bottom-tab nav sits on all `(tabs)/*` routes; `carwash/*` and `bookings/*` swap it for a back-button AppBar (`src/components/layout/app-bar.tsx`).
+- Classified vehicle → exact service prices; unclassified → `PriceMin`/`PriceMax` range with a "final price confirmed on first visit" banner (rule 27).
+- Booking wizard uses a reducer with cascading invalidation — vehicle change clears services + slot; branch/date change clears slot.
+- Live queue panel on booking detail pauses polling via `visibilitychange` + `refetchIntervalInBackground: false`.
+- Elapsed-time ticker renders for `InService` bookings.
+- Referral code sharing prefers the Web Share API with a clipboard fallback.

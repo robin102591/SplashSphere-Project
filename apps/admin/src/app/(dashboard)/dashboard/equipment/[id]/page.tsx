@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   useEquipmentById, useUpdateEquipmentStatus, useLogMaintenance,
-} from '@/hooks/use-inventory'
+} from '@/hooks/use-equipment'
 import { formatPeso, formatDate, formatDateTime } from '@/lib/format'
 import { toast } from 'sonner'
 import Link from 'next/link'

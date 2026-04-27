@@ -13,7 +13,6 @@ namespace SplashSphere.Application.Features.Services.Commands.UpsertServiceCommi
 /// </summary>
 public sealed class UpsertServiceCommissionCommandHandler(
     IApplicationDbContext context,
-    IServiceCommissionRepository commissionRepo,
     ITenantContext tenantContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpsertServiceCommissionCommand, Result>
@@ -42,7 +41,13 @@ public sealed class UpsertServiceCommissionCommandHandler(
         await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            await commissionRepo.BulkUpsertAsync(request.ServiceId, rows, cancellationToken);
+            // EF Core 7+ applies the global tenant filter to ExecuteDeleteAsync.
+            await context.ServiceCommissions
+                .Where(sc => sc.ServiceId == request.ServiceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await context.ServiceCommissions.AddRangeAsync(rows, cancellationToken);
+
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await unitOfWork.CommitTransactionAsync(cancellationToken);
         }

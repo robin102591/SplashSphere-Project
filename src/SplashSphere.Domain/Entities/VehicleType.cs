@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// look up <c>ServicePricing</c> and <c>ServiceCommission</c> matrix entries.
 /// Scoped per tenant so operators can customise the list.
 /// </summary>
-public sealed class VehicleType : IAuditableEntity
+public sealed class VehicleType : IAuditableEntity, ITenantScoped
 {
     private VehicleType() { } // EF Core
 

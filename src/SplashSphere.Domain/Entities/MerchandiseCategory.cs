@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// (e.g. "Car Care Products", "Accessories", "Air Fresheners").
 /// Scoped per tenant.
 /// </summary>
-public sealed class MerchandiseCategory : IAuditableEntity
+public sealed class MerchandiseCategory : IAuditableEntity, ITenantScoped
 {
     private MerchandiseCategory() { } // EF Core
 

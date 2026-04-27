@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// Immutable record of a data change — who did what, when, on which entity.
 /// Created automatically by <c>AuditLogInterceptor</c> during SaveChanges.
 /// </summary>
-public sealed class AuditLog
+public sealed class AuditLog : ITenantScoped
 {
     public AuditLog(
         string tenantId,

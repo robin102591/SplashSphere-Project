@@ -9,15 +9,17 @@ import {
   ArrowLeft, Search, RefreshCw, X, Plus, Minus,
   Banknote, Smartphone, CreditCard, Building2, CheckCircle2,
   ChevronDown, ChevronUp, AlertCircle, Layers, BadgeCheck,
+  CalendarClock,
 } from 'lucide-react'
 
 import { PaymentMethod, TransactionStatus, EmployeeType } from '@splashsphere/types'
 import type {
   Car, QueueEntry, ServiceSummary, PackageSummary, Merchandise,
   Employee, VehicleType, Size, PackageDetail, ServiceDetail, TransactionSummary,
-  ApiError,
+  ApiError, BookingAdminDetailDto,
 } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
+import { formatPeso } from '@splashsphere/format'
 
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
@@ -31,9 +33,6 @@ import {
 } from '@/lib/use-transaction-store'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const peso = (n: number) =>
-  `₱${n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 const PAYMENT_METHODS: {
   value: PaymentMethod
@@ -100,7 +99,7 @@ function EmployeePicker({
       </div>
       {count > 0 && (
         <p className="text-xs text-gray-500">
-          {count} assigned{commissionEach > 0 && <> &middot; <span className="font-mono tabular-nums text-gray-400">{peso(commissionEach)}</span> each</>}
+          {count} assigned{commissionEach > 0 && <> &middot; <span className="font-mono tabular-nums text-gray-400">{formatPeso(commissionEach)}</span> each</>}
         </p>
       )}
     </div>
@@ -144,7 +143,7 @@ function ServiceOrderRow({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-sm font-mono tabular-nums font-semibold text-white">
-            {displayPrice > 0 ? peso(displayPrice) : '₱—'}
+            {displayPrice > 0 ? formatPeso(displayPrice) : '₱—'}
           </span>
           <button
             type="button"
@@ -192,7 +191,7 @@ function MerchandiseOrderRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-800/60 border border-gray-700/50 p-3">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{item.merchandiseName}</p>
-        <p className="text-xs text-gray-500 font-mono tabular-nums">{peso(item.unitPrice)} each</p>
+        <p className="text-xs text-gray-500 font-mono tabular-nums">{formatPeso(item.unitPrice)} each</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button
@@ -212,7 +211,7 @@ function MerchandiseOrderRow({
         </button>
       </div>
       <span className="text-sm font-mono tabular-nums font-semibold text-white w-20 text-right shrink-0">
-        {peso(item.unitPrice * item.quantity)}
+        {formatPeso(item.unitPrice * item.quantity)}
       </span>
       <button
         type="button"
@@ -260,7 +259,7 @@ function ServiceCard({
       <div className="flex items-end justify-between gap-1">
         <span className="text-xs text-gray-500 truncate">{service.categoryName}</span>
         <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-blue-400' : isPriceFromMatrix ? 'text-emerald-400' : 'text-gray-400'}`}>
-          {peso(price)}
+          {formatPeso(price)}
         </span>
       </div>
     </button>
@@ -308,7 +307,7 @@ function PackageCard({
           <span className="text-xs font-mono tabular-nums text-gray-600">···</span>
         ) : displayPrice != null ? (
           <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-purple-400' : 'text-emerald-400'}`}>
-            {peso(displayPrice)}
+            {formatPeso(displayPrice)}
           </span>
         ) : (
           <span className="text-xs text-gray-600 italic">pick vehicle</span>
@@ -356,7 +355,7 @@ function MerchandiseCard({
               ×{cartQty}
             </span>
           )}
-          <span className="text-xs font-mono tabular-nums font-semibold text-gray-400">{peso(item.price)}</span>
+          <span className="text-xs font-mono tabular-nums font-semibold text-gray-400">{formatPeso(item.price)}</span>
         </div>
       </div>
     </button>
@@ -371,6 +370,8 @@ function NewTransactionContent() {
   const searchParams = useSearchParams()
   const queueEntryId = searchParams.get('queueEntryId')
   const editId = searchParams.get('editId')          // edit mode — tx already exists
+  const prefillCarId = searchParams.get('carId')     // pre-fill from customer lookup
+  const prefillPlate = searchParams.get('plate')     // pre-fill from customer lookup (no carId)
   const { branchId: contextBranchId } = useBranch()
   const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
   const shiftOpen = isShiftOpen(currentShift)
@@ -423,10 +424,12 @@ function NewTransactionContent() {
   const servicesInitDone = useRef(false)
   const editInitDone = useRef(false)
 
-  /** Reset store and strip query params (queueEntryId, editId) so the page is fully clean. */
+  /** Reset store and strip query params (queueEntryId, editId, carId, plate) so the page is fully clean. */
   const resetPage = () => {
     store.reset()
-    if (queueEntryId || editId) {
+    setLookupPlate('')
+    setCarNotFound(false)
+    if (queueEntryId || editId || prefillCarId || prefillPlate) {
       router.replace('/transactions/new')
     }
   }
@@ -455,6 +458,21 @@ function NewTransactionContent() {
     enabled: !!queueEntryId,
   })
 
+  // ── Booking detail (when queue entry is tied to a booking) ────────────────
+  const bookingId = queueEntry?.bookingId ?? null
+  const { data: bookingDetail } = useQuery({
+    queryKey: ['booking-detail-tx', bookingId],
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<BookingAdminDetailDto>(
+        `/bookings/${encodeURIComponent(bookingId!)}`,
+        token ?? undefined,
+      )
+    },
+    enabled: !!bookingId,
+    staleTime: 30_000,
+  })
+
   const { data: queueCar, isPending: isQueueCarPending } = useQuery({
     queryKey: ['car-for-tx-queue', queueEntry?.plateNumber],
     queryFn: async () => {
@@ -467,6 +485,47 @@ function NewTransactionContent() {
     enabled: !!queueEntry?.plateNumber,
     retry: false, // 404 = car doesn't exist yet, no need to retry
   })
+
+  // ── Prefill car from ?carId= (e.g. from customer lookup, direct flow) ─────
+  const { data: prefillCar } = useQuery({
+    queryKey: ['car-for-tx-prefill', prefillCarId],
+    queryFn: async () => {
+      const token = await getToken()
+      return apiClient.get<Car>(`/cars/${prefillCarId}`, token ?? undefined)
+    },
+    enabled: !!prefillCarId && !queueEntryId && !editId,
+    retry: false,
+  })
+
+  const prefillInitDone = useRef(false)
+  useEffect(() => {
+    if (prefillInitDone.current) return
+    if (queueEntryId || editId) return
+    // Plate-only prefill (no carId): trigger plate lookup on mount.
+    if (!prefillCarId && prefillPlate) {
+      prefillInitDone.current = true
+      const plate = prefillPlate.trim().toUpperCase()
+      setLookupPlate(plate)
+      void handlePlateLookup(plate)
+      return
+    }
+    // CarId prefill: wait for car fetch, then populate vehicle in store.
+    if (prefillCarId && prefillCar) {
+      prefillInitDone.current = true
+      setLookupPlate(prefillCar.plateNumber)
+      useTransactionStore.getState().setVehicle({
+        plateNumber: prefillCar.plateNumber,
+        carId: prefillCar.id,
+        customerId: prefillCar.customerId,
+        vehicleTypeId: prefillCar.vehicleTypeId,
+        sizeId: prefillCar.sizeId,
+        vehicleTypeName: prefillCar.vehicleTypeName,
+        sizeName: prefillCar.sizeName,
+      })
+      setCarNotFound(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillCar, prefillCarId, prefillPlate, queueEntryId, editId])
 
   // ── Edit mode: load existing transaction ──────────────────────────────────
 
@@ -656,9 +715,11 @@ function NewTransactionContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageDetailQueries, vehicleTypeId, sizeId])
 
-  // Sync cart service prices from catalog detail cache when vehicle type/size changes
+  // Sync cart service prices from catalog detail cache when vehicle type/size changes.
+  // Skip for booking-sourced carts so we don't clobber the booking's locked prices.
   useEffect(() => {
     if (!vehicleTypeId || !sizeId) return
+    if (bookingDetail) return
     const storeServices = useTransactionStore.getState().services
     storeServices.forEach((svcItem) => {
       const idx = allServices.findIndex((s) => s.id === svcItem.serviceId)
@@ -673,7 +734,7 @@ function NewTransactionContent() {
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicleTypeId, sizeId, serviceDetailQueries])
+  }, [vehicleTypeId, sizeId, serviceDetailQueries, bookingDetail])
 
   // Sync cart package prices from catalog detail cache when vehicle type/size changes
   useEffect(() => {
@@ -735,9 +796,36 @@ function NewTransactionContent() {
 
   useEffect(() => {
     if (!queueEntry || !allServices.length || servicesInitDone.current) return
+    // If the queue entry is tied to a booking, wait for the booking detail before
+    // pre-filling so that we can lock in the booking's exact prices.
+    if (queueEntry.bookingId && !bookingDetail) return
     servicesInitDone.current = true
-    const ids = parseServiceIds(queueEntry.preferredServices)
+
     const { addService } = useTransactionStore.getState()
+
+    // ── Booking-driven pre-fill: use locked booking prices (when available). ──
+    if (bookingDetail && bookingDetail.services.length > 0) {
+      bookingDetail.services.forEach((bs) => {
+        const svc = allServices.find((s) => s.id === bs.serviceId)
+        if (!svc) return
+        // Prefer exact locked price; fall back to midpoint of range, then basePrice.
+        const lockedPrice = bs.price
+          ?? (bs.priceMin != null && bs.priceMax != null
+                ? (bs.priceMin + bs.priceMax) / 2
+                : svc.basePrice)
+        addService({
+          serviceId: svc.id,
+          serviceName: svc.name,
+          categoryName: svc.categoryName,
+          basePrice: svc.basePrice,
+          unitPrice: lockedPrice,
+        })
+      })
+      return
+    }
+
+    // ── Walk-in / queue-only pre-fill: use preferredServices at basePrice. ──
+    const ids = parseServiceIds(queueEntry.preferredServices)
     ids.forEach((sid) => {
       const svc = allServices.find((s) => s.id === sid)
       if (svc) {
@@ -750,12 +838,13 @@ function NewTransactionContent() {
         })
       }
     })
-  }, [queueEntry, allServices])
+  }, [queueEntry, allServices, bookingDetail])
 
   // ── Plate lookup (direct flow) ─────────────────────────────────────────────
 
-  const handlePlateLookup = async () => {
-    const plate = lookupPlate.trim().toUpperCase()
+  const handlePlateLookup = async (plateOverride?: string) => {
+    const raw = plateOverride ?? lookupPlate
+    const plate = raw.trim().toUpperCase()
     if (!plate) return
     setIsLookingUp(true)
     setCarNotFound(false)
@@ -1080,6 +1169,23 @@ function NewTransactionContent() {
           </div>
         </div>
 
+        {/* Booking banner — present only when this transaction originated from a booking */}
+        {bookingDetail && (
+          <div className="mx-4 mt-3 flex items-start gap-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 px-3 py-2 shrink-0">
+            <CalendarClock className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0 text-xs text-indigo-200/90 space-y-0.5">
+              <p>
+                <span className="font-semibold text-indigo-300">From booking</span>
+                {' — '}
+                <span>Slot: {new Intl.DateTimeFormat('en-PH', {
+                  hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila',
+                }).format(new Date(bookingDetail.slotStartUtc))}</span>
+              </p>
+              <p className="text-indigo-200/70">Services auto-filled from the booking.</p>
+            </div>
+          </div>
+        )}
+
         {/* Vehicle bar */}
         <div className="px-4 py-3 border-b border-gray-800 shrink-0 space-y-2">
 
@@ -1349,7 +1455,7 @@ function NewTransactionContent() {
           <div className="px-4 py-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-400">
               <span>Subtotal</span>
-              <span className="font-mono tabular-nums">{peso(subtotal)}</span>
+              <span className="font-mono tabular-nums">{formatPeso(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-400">
               <span>Discount</span>
@@ -1371,7 +1477,7 @@ function NewTransactionContent() {
             {tip > 0 && (
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Service Total</span>
-                <span className="font-mono tabular-nums">{peso(estimatedTotal)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(estimatedTotal)}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm text-gray-400">
@@ -1399,7 +1505,7 @@ function NewTransactionContent() {
             )}
             <div className="flex justify-between font-bold text-white pt-0.5 border-t border-gray-800/60">
               <span className="text-base">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
-              <span className="font-mono tabular-nums text-2xl font-bold text-white">{peso(customerPayable)}</span>
+              <span className="font-mono tabular-nums text-2xl font-bold text-white">{formatPeso(customerPayable)}</span>
             </div>
           </div>
 
@@ -1415,7 +1521,7 @@ function NewTransactionContent() {
                   return (
                     <div key={p.localId} className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 w-14 text-xs shrink-0">{m?.label}</span>
-                      <span className="flex-1 font-mono tabular-nums text-green-400">{peso(p.amount)}</span>
+                      <span className="flex-1 font-mono tabular-nums text-green-400">{formatPeso(p.amount)}</span>
                       {p.reference && (
                         <span className="text-xs text-gray-600 truncate max-w-[4rem]">{p.reference}</span>
                       )}
@@ -1432,19 +1538,19 @@ function NewTransactionContent() {
                 <div className="flex justify-between text-sm pt-1 border-t border-gray-800/60">
                   <span className="text-gray-400">Paid</span>
                   <span className={`font-mono tabular-nums font-bold ${totalPaid >= customerPayable ? 'text-green-400' : 'text-white'}`}>
-                    {peso(totalPaid)}
+                    {formatPeso(totalPaid)}
                   </span>
                 </div>
                 {change > 0 && (
                   <div className="flex justify-between text-sm text-green-400">
                     <span>Change</span>
-                    <span className="font-mono tabular-nums font-bold">{peso(change)}</span>
+                    <span className="font-mono tabular-nums font-bold">{formatPeso(change)}</span>
                   </div>
                 )}
                 {balance > 0 && (
                   <div className="flex justify-between text-sm text-orange-400">
                     <span>Balance</span>
-                    <span className="font-mono tabular-nums font-bold">{peso(balance)}</span>
+                    <span className="font-mono tabular-nums font-bold">{formatPeso(balance)}</span>
                   </div>
                 )}
               </div>
@@ -1570,7 +1676,7 @@ function NewTransactionContent() {
                 )}
                 {canPayLater && !canComplete && !isSubmitting && (
                   <p className="text-xs text-gray-500 text-center">
-                    Add {peso(balance)} to pay now, or use Pay Later
+                    Add {formatPeso(balance)} to pay now, or use Pay Later
                   </p>
                 )}
               </>
@@ -1610,55 +1716,55 @@ function NewTransactionContent() {
               {receiptData.services.map((s, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{s.name}</span>
-                  <span className="font-mono tabular-nums">{peso(s.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(s.price)}</span>
                 </div>
               ))}
               {receiptData.packages.map((p, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{p.name} <span className="text-gray-400">(pkg)</span></span>
-                  <span className="font-mono tabular-nums">{peso(p.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(p.price)}</span>
                 </div>
               ))}
               {receiptData.merchandise.map((m, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{m.name} ×{m.qty}</span>
-                  <span className="font-mono tabular-nums">{peso(m.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(m.price)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-mono tabular-nums">{peso(receiptData.subtotal)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(receiptData.subtotal)}</span>
               </div>
               {receiptData.discount > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Discount</span>
-                  <span className="font-mono tabular-nums">-{peso(receiptData.discount)}</span>
+                  <span className="font-mono tabular-nums">-{formatPeso(receiptData.discount)}</span>
                 </div>
               )}
               {receiptData.tip > 0 && (
                 <div className="flex justify-between">
                   <span>Tip</span>
-                  <span className="font-mono tabular-nums">{peso(receiptData.tip)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(receiptData.tip)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-base pt-1 border-t border-gray-200">
                 <span>Total</span>
-                <span className="font-mono tabular-nums">{peso(receiptData.total)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(receiptData.total)}</span>
               </div>
             </div>
             <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
               {receiptData.payments.map((p, i) => (
                 <div key={i} className="flex justify-between">
                   <span className="text-gray-500">{p.method}</span>
-                  <span className="font-mono tabular-nums">{peso(p.amount)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(p.amount)}</span>
                 </div>
               ))}
               {receiptData.change > 0 && (
                 <div className="flex justify-between font-bold text-emerald-600">
                   <span>Change</span>
-                  <span className="font-mono tabular-nums">{peso(receiptData.change)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(receiptData.change)}</span>
                 </div>
               )}
             </div>
@@ -1702,7 +1808,7 @@ function NewTransactionContent() {
           </div>
           <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 py-4">
             <p className="text-xs text-yellow-500 uppercase tracking-wider mb-1">Amount to give</p>
-            <p className="text-4xl font-mono tabular-nums font-bold text-yellow-400">{peso(cashOutTip.amount)}</p>
+            <p className="text-4xl font-mono tabular-nums font-bold text-yellow-400">{formatPeso(cashOutTip.amount)}</p>
           </div>
           <div className="flex gap-2">
             <button

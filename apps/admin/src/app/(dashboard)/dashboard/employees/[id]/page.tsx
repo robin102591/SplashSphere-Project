@@ -2,13 +2,14 @@
 
 import { use, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import { Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock } from 'lucide-react'
+import { Pencil, Power, PowerOff, Mail, Phone, Calendar, KeyRound, Check, AlertCircle, Send, CheckCircle2, Clock, FileText, TrendingUp, CalendarCheck, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import {
   Sheet,
   SheetContent,
@@ -668,6 +669,7 @@ export default function EmployeeDetailPage({
 }) {
   const { id } = use(params)
   const [editOpen, setEditOpen] = useState(false)
+  const [section] = useSectionParam('section', 'details')
 
   const { data: emp, isLoading, isError } = useEmployee(id)
   const { mutate: toggleStatus, isPending: isToggling } = useToggleEmployeeStatus()
@@ -741,36 +743,28 @@ export default function EmployeeDetailPage({
         }
       />
 
-      {/* Tabs */}
-      <Tabs defaultValue="details">
-        <TabsList variant="line">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="commissions">Commission History</TabsTrigger>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll History</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
+      {/* Section nav + content */}
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="details"
+          items={[
+            { value: 'details', label: 'Details', icon: FileText },
+            { value: 'commissions', label: 'Commission History', icon: TrendingUp },
+            { value: 'attendance', label: 'Attendance', icon: CalendarCheck },
+            { value: 'payroll', label: 'Payroll History', icon: Receipt },
+            { value: 'security', label: 'Security', icon: ShieldCheck },
+          ]}
+        />
 
-        <TabsContent value="details" className="mt-6">
-          <DetailsTab emp={emp} />
-        </TabsContent>
-
-        <TabsContent value="commissions" className="mt-6">
-          <CommissionsTab employeeId={id} />
-        </TabsContent>
-
-        <TabsContent value="attendance" className="mt-6">
-          <AttendanceTab employeeId={id} />
-        </TabsContent>
-
-        <TabsContent value="payroll" className="mt-6">
-          <PayrollHistoryTab employeeId={id} />
-        </TabsContent>
-
-        <TabsContent value="security" className="mt-6">
-          <SecurityTab emp={emp} />
-        </TabsContent>
-      </Tabs>
+        <div className="min-w-0 flex-1">
+          {section === 'details' && <DetailsTab emp={emp} />}
+          {section === 'commissions' && <CommissionsTab employeeId={id} />}
+          {section === 'attendance' && <AttendanceTab employeeId={id} />}
+          {section === 'payroll' && <PayrollHistoryTab employeeId={id} />}
+          {section === 'security' && <SecurityTab emp={emp} />}
+        </div>
+      </div>
 
       {/* Edit sheet */}
       <Sheet open={editOpen} onOpenChange={setEditOpen}>

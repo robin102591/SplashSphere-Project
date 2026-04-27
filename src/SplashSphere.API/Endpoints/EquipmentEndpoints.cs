@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Inventory;
 using SplashSphere.Application.Features.Inventory.Commands.LogMaintenance;
 using SplashSphere.Application.Features.Inventory.Commands.RegisterEquipment;
@@ -33,35 +34,34 @@ public static class EquipmentEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetEquipment(
+    private static async Task<IResult> GetEquipment(
         [AsParameters] EquipmentListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetEquipmentQuery(p.BranchId, p.Status, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> RegisterEquipment(
+    private static async Task<IResult> RegisterEquipment(
         [FromBody] RegisterEquipmentRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new RegisterEquipmentCommand(
             body.BranchId, body.Name, body.Brand, body.Model, body.SerialNumber,
             body.PurchaseDate, body.PurchaseCost, body.WarrantyExpiry, body.Location, body.Notes), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/equipment/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/equipment/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Results<Ok<object>, NotFound>> GetEquipmentById(
+    private static async Task<IResult> GetEquipmentById(
         string id, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new GetEquipmentByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateEquipment(
+    private static async Task<IResult> UpdateEquipment(
         string id, [FromBody] UpdateEquipmentRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpdateEquipmentCommand(
@@ -69,35 +69,26 @@ public static class EquipmentEndpoints
             body.PurchaseDate, body.PurchaseCost, body.WarrantyExpiry,
             body.Location, body.Notes, body.IsActive), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<Created<object>, NotFound, BadRequest<ProblemDetails>>> LogMaintenance(
+    private static async Task<IResult> LogMaintenance(
         string id, [FromBody] LogMaintenanceRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new LogMaintenanceCommand(
             id, body.Type, body.Description, body.Cost, body.PerformedBy,
             body.PerformedDate, body.NextDueDate, body.NextDueHours, body.Notes), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/equipment/{id}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/equipment/{id}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateEquipmentStatus(
+    private static async Task<IResult> UpdateEquipmentStatus(
         string id, [FromBody] UpdateEquipmentStatusRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpdateEquipmentStatusCommand(id, body.Status), ct);
-
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // Request records
@@ -112,9 +103,14 @@ public static class EquipmentEndpoints
         string? Location, string? Notes, bool IsActive);
 
     private sealed record LogMaintenanceRequest(
-        MaintenanceType Type, string Description, decimal? Cost = null,
-        string? PerformedBy = null, DateTime PerformedDate = default,
-        DateTime? NextDueDate = null, int? NextDueHours = null, string? Notes = null);
+        MaintenanceType Type,
+        string Description,
+        DateTime PerformedDate,
+        decimal? Cost = null,
+        string? PerformedBy = null,
+        DateTime? NextDueDate = null,
+        int? NextDueHours = null,
+        string? Notes = null);
 
     private sealed record UpdateEquipmentStatusRequest(EquipmentStatus Status);
 

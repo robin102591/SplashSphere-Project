@@ -13,7 +13,7 @@ namespace SplashSphere.Domain.Entities;
 /// Unique constraint: [TransactionId, EmployeeId] — one summary row per employee per transaction.
 /// Cascade delete: deleted when parent <see cref="Transaction"/> is deleted.
 /// </summary>
-public sealed class TransactionEmployee : IAuditableEntity
+public sealed class TransactionEmployee : IAuditableEntity, ITenantScoped
 {
     private TransactionEmployee() { } // EF Core
 

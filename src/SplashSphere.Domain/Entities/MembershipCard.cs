@@ -7,7 +7,7 @@ namespace SplashSphere.Domain.Entities;
 /// One card per customer per tenant. Tracks current points balance, lifetime stats,
 /// and tier progression.
 /// </summary>
-public sealed class MembershipCard : IAuditableEntity
+public sealed class MembershipCard : IAuditableEntity, ITenantScoped
 {
     private MembershipCard() { } // EF Core
 

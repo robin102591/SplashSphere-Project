@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="StockMovement"/> records and decrement <see cref="SupplyItem.CurrentStock"/>.
 /// </para>
 /// </summary>
-public sealed class ServiceSupplyUsage
+public sealed class ServiceSupplyUsage : ITenantScoped
 {
     private ServiceSupplyUsage() { } // EF Core
 

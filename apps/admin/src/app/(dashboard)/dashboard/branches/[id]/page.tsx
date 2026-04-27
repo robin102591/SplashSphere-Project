@@ -1,12 +1,13 @@
 'use client'
 
 import { use, useState } from 'react'
-import { Pencil, Power, PowerOff, MapPin, Phone, Hash } from 'lucide-react'
+import { Pencil, Power, PowerOff, MapPin, Phone, Hash, Users, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import {
   Sheet,
   SheetContent,
@@ -177,6 +178,7 @@ export default function BranchDetailPage({
 }) {
   const { id } = use(params)
   const [editOpen, setEditOpen] = useState(false)
+  const [section] = useSectionParam('section', 'employees')
 
   const { data: branch, isLoading, isError } = useBranch(id)
   const { mutateAsync: updateBranch } = useUpdateBranch(id)
@@ -275,21 +277,21 @@ export default function BranchDetailPage({
         </div>
       </PageHeader>
 
-      {/* Tabs */}
-      <Tabs defaultValue="employees">
-        <TabsList variant="line">
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="employees" className="mt-4">
-          <EmployeesTab branchId={id} />
-        </TabsContent>
-
-        <TabsContent value="transactions" className="mt-4">
-          <TransactionsTab branchId={id} />
-        </TabsContent>
-      </Tabs>
+      {/* Section nav + content */}
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="employees"
+          items={[
+            { value: 'employees', label: 'Employees', icon: Users },
+            { value: 'transactions', label: 'Transactions', icon: Receipt },
+          ]}
+        />
+        <div className="min-w-0 flex-1">
+          {section === 'employees' && <EmployeesTab branchId={id} />}
+          {section === 'transactions' && <TransactionsTab branchId={id} />}
+        </div>
+      </div>
 
       {/* Edit sheet */}
       <Sheet open={editOpen} onOpenChange={setEditOpen}>

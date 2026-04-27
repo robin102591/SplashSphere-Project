@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Loyalty;
 using SplashSphere.Application.Features.Loyalty.Commands.AdjustPoints;
 using SplashSphere.Application.Features.Loyalty.Commands.CreateLoyaltyReward;
@@ -59,62 +60,55 @@ public static class LoyaltyEndpoints
 
     // ── Settings ────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetSettings(ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetLoyaltySettingsQuery(), ct));
+    private static async Task<IResult> GetSettings(ISender sender, CancellationToken ct)
+        => TypedResults.Ok(await sender.Send(new GetLoyaltySettingsQuery(), ct));
 
-    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> UpsertSettings(
+    private static async Task<IResult> UpsertSettings(
         [FromBody] UpsertSettingsRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpsertLoyaltySettingsCommand(
             body.PointsPerCurrencyUnit, body.CurrencyUnitAmount,
             body.IsActive, body.PointsExpirationMonths, body.AutoEnroll), ct);
 
-        return result.IsFailure
-            ? TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message })
-            : TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> UpsertTiers(
+    private static async Task<IResult> UpsertTiers(
         [FromBody] UpsertTiersRequest body, ISender sender, CancellationToken ct)
     {
         var tiers = body.Tiers.Select(t => new TierInput(t.Tier, t.Name, t.MinimumLifetimePoints, t.PointsMultiplier)).ToList();
         var result = await sender.Send(new UpsertLoyaltyTiersCommand(tiers), ct);
 
-        return result.IsFailure
-            ? TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message })
-            : TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── Rewards ─────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetRewards(
+    private static async Task<IResult> GetRewards(
         [AsParameters] RewardListParams p, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(
+        => TypedResults.Ok(await sender.Send(
             new GetLoyaltyRewardsQuery(p.ActiveOnly, p.Page, p.PageSize), ct));
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreateReward(
+    private static async Task<IResult> CreateReward(
         [FromBody] CreateRewardRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new CreateLoyaltyRewardCommand(
             body.Name, body.Description, body.RewardType, body.PointsCost,
             body.ServiceId, body.PackageId, body.DiscountAmount, body.DiscountPercent), ct);
 
-        return result.IsFailure
-            ? TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message })
-            : TypedResults.Created($"/api/v1/loyalty/rewards/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/loyalty/rewards/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateReward(
+    private static async Task<IResult> UpdateReward(
         string id, [FromBody] UpdateRewardRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpdateLoyaltyRewardCommand(
             id, body.Name, body.Description, body.RewardType, body.PointsCost,
             body.ServiceId, body.PackageId, body.DiscountAmount, body.DiscountPercent), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     private static async Task<Results<NoContent, NotFound>> ToggleRewardStatus(
@@ -126,59 +120,54 @@ public static class LoyaltyEndpoints
 
     // ── Dashboard ───────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetDashboard(
+    private static async Task<IResult> GetDashboard(
         DateTime from, DateTime to, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetLoyaltyDashboardQuery(from, to), ct));
+        => TypedResults.Ok(await sender.Send(new GetLoyaltyDashboardQuery(from, to), ct));
 
     // ── Members ─────────────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> Enroll(
+    private static async Task<IResult> Enroll(
         [FromBody] EnrollRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new EnrollCustomerCommand(body.CustomerId), ct);
-        return result.IsFailure
-            ? TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message })
-            : TypedResults.Created($"/api/v1/loyalty/members/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/loyalty/members/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetByCustomer(
+    private static async Task<IResult> GetByCustomer(
         string customerId, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetMembershipCardQuery(customerId), ct));
+        => TypedResults.Ok(await sender.Send(new GetMembershipCardQuery(customerId), ct));
 
-    private static async Task<Ok<object>> GetByCardNumber(
+    private static async Task<IResult> GetByCardNumber(
         string cardNumber, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetMembershipCardByNumberQuery(cardNumber), ct));
+        => TypedResults.Ok(await sender.Send(new GetMembershipCardByNumberQuery(cardNumber), ct));
 
-    private static async Task<Ok<object>> GetPointHistory(
+    private static async Task<IResult> GetPointHistory(
         string membershipCardId, int page, int pageSize, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(
+        => TypedResults.Ok(await sender.Send(
             new GetPointHistoryQuery(membershipCardId, page, pageSize), ct));
 
-    private static async Task<Results<Ok<object>, BadRequest<ProblemDetails>>> Redeem(
+    private static async Task<IResult> Redeem(
         string membershipCardId, [FromBody] RedeemRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new RedeemPointsCommand(
             membershipCardId, body.RewardId, body.TransactionId), ct);
 
-        return result.IsFailure
-            ? TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message })
-            : TypedResults.Ok<object>(result.Value);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> Adjust(
+    private static async Task<IResult> Adjust(
         string membershipCardId, [FromBody] AdjustRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new AdjustPointsCommand(membershipCardId, body.Points, body.Reason), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetSummary(
+    private static async Task<IResult> GetSummary(
         string customerId, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetCustomerLoyaltySummaryQuery(customerId), ct));
+        => TypedResults.Ok(await sender.Send(new GetCustomerLoyaltySummaryQuery(customerId), ct));
 
     // ── Request records ─────────────────────────────────────────────────────
 

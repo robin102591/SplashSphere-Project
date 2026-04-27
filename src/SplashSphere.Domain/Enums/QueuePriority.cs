@@ -20,8 +20,15 @@ public enum QueuePriority
     Express = 2,
 
     /// <summary>
+    /// Customer who pre-booked their slot via the Connect app.
+    /// Auto-assigned by the <c>CreateQueueFromBookings</c> job ~15 minutes
+    /// before the slot. Served before <see cref="Express"/> but below <see cref="Vip"/>.
+    /// </summary>
+    Booked = 3,
+
+    /// <summary>
     /// Premium membership holder or branch-manager override.
     /// Highest priority tier — served before all other entries.
     /// </summary>
-    Vip = 3,
+    Vip = 4,
 }

@@ -50,8 +50,6 @@ export interface ImportResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
-
 function buildFormData(
   file: File,
   type: number,
@@ -75,29 +73,8 @@ export function useDownloadTemplate() {
 
   const download = async (type: ImportType) => {
     const token = await getToken()
-    const res = await fetch(`${API_BASE}/api/v1/import/templates/${type}`, {
-      method: 'GET',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ title: res.statusText, status: res.status }))
-      throw err
-    }
-
-    const blob = await res.blob()
-    const disposition = res.headers.get('Content-Disposition')
-    const filenameMatch = disposition?.match(/filename="?([^";\n]+)"?/)
-    const filename = filenameMatch?.[1] ?? `import-template-${ImportType[type]?.toLowerCase() ?? type}.csv`
-
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    const fallback = `import-template-${ImportType[type]?.toLowerCase() ?? type}.csv`
+    await apiClient.download(`/import/templates/${type}`, fallback, token ?? undefined)
   }
 
   return { download }

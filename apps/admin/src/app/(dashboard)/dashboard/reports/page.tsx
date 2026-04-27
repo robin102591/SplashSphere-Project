@@ -4,21 +4,22 @@ import { useState, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { useAuth } from '@clerk/nextjs'
-import { Download } from 'lucide-react'
+import { Download, TrendingUp, Coins, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useRevenueReport, useCommissionsReport, useServicePopularityReport } from '@/hooks/use-reports'
 import { useBranches } from '@/hooks/use-branches'
 import { useEmployees } from '@/hooks/use-employees'
+import { apiClient } from '@/lib/api-client'
 import { formatPeso, formatPesoCompact } from '@/lib/format'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 const TOOLTIP_STYLE: React.CSSProperties = { backgroundColor: 'var(--color-popover)', color: 'var(--color-popover-foreground)', border: '1px solid var(--color-border)', borderRadius: '0.5rem' }
 
@@ -346,6 +347,7 @@ export default function ReportsPage() {
   const [branchId, setBranchId] = useState('')
   const [employeeId, setEmployeeId] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [section] = useSectionParam('section', 'revenue')
 
   const { getToken } = useAuth()
   const { data: branches = [] } = useBranches()
@@ -355,19 +357,7 @@ export default function ReportsPage() {
     setExporting(true)
     try {
       const token = await getToken()
-      const res = await fetch(`${API_BASE}/api/v1${path}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fallbackName
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      await apiClient.download(path, fallbackName, token ?? undefined)
     } finally {
       setExporting(false)
     }
@@ -401,60 +391,72 @@ export default function ReportsPage() {
         </Select>
       </div>
 
-      <Tabs defaultValue="revenue">
-        <TabsList variant="line">
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="commissions">Commissions</TabsTrigger>
-          <TabsTrigger value="popularity">Service Popularity</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="revenue"
+          items={[
+            { value: 'revenue', label: 'Revenue', icon: TrendingUp },
+            { value: 'commissions', label: 'Commissions', icon: Coins },
+            { value: 'popularity', label: 'Service Popularity', icon: BarChart3 },
+          ]}
+        />
 
-        <TabsContent value="revenue" className="mt-6">
-          <div className="flex justify-end mb-4">
-            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
-              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
-              downloadCsv(`/reports/revenue/export/csv?${qs}`, `revenue_${from}_${to}.csv`)
-            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
-          </div>
-          <RevenueTab from={from} to={to} branchId={branchId || undefined} />
-        </TabsContent>
+        <div className="min-w-0 flex-1">
+          {section === 'revenue' && (
+            <>
+              <div className="flex justify-end mb-4">
+                <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+                  const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
+                  downloadCsv(`/reports/revenue/export/csv?${qs}`, `revenue_${from}_${to}.csv`)
+                }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+              </div>
+              <RevenueTab from={from} to={to} branchId={branchId || undefined} />
+            </>
+          )}
 
-        <TabsContent value="commissions" className="mt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Select value={employeeId || '__all__'} onValueChange={(v) => setEmployeeId(v === '__all__' ? '' : v)}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="All employees" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">All employees</SelectItem>
-                {employeesPage?.items.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex-1" />
-            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
-              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId); if (employeeId) qs.set('employeeId', employeeId)
-              downloadCsv(`/reports/commissions/export/csv?${qs}`, `commissions_${from}_${to}.csv`)
-            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
-          </div>
-          <CommissionsTab
-            from={from}
-            to={to}
-            branchId={branchId || undefined}
-            employeeId={employeeId || undefined}
-          />
-        </TabsContent>
+          {section === 'commissions' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <Select value={employeeId || '__all__'} onValueChange={(v) => setEmployeeId(v === '__all__' ? '' : v)}>
+                  <SelectTrigger className="w-52">
+                    <SelectValue placeholder="All employees" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All employees</SelectItem>
+                    {employeesPage?.items.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex-1" />
+                <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+                  const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId); if (employeeId) qs.set('employeeId', employeeId)
+                  downloadCsv(`/reports/commissions/export/csv?${qs}`, `commissions_${from}_${to}.csv`)
+                }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+              </div>
+              <CommissionsTab
+                from={from}
+                to={to}
+                branchId={branchId || undefined}
+                employeeId={employeeId || undefined}
+              />
+            </>
+          )}
 
-        <TabsContent value="popularity" className="mt-6">
-          <div className="flex justify-end mb-4">
-            <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
-              const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
-              downloadCsv(`/reports/service-popularity/export/csv?${qs}`, `service_popularity_${from}_${to}.csv`)
-            }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
-          </div>
-          <ServicePopularityTab from={from} to={to} branchId={branchId || undefined} />
-        </TabsContent>
-      </Tabs>
+          {section === 'popularity' && (
+            <>
+              <div className="flex justify-end mb-4">
+                <Button variant="outline" size="sm" disabled={exporting} onClick={() => {
+                  const qs = new URLSearchParams({ from, to }); if (branchId) qs.set('branchId', branchId)
+                  downloadCsv(`/reports/service-popularity/export/csv?${qs}`, `service_popularity_${from}_${to}.csv`)
+                }}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+              </div>
+              <ServicePopularityTab from={from} to={to} branchId={branchId || undefined} />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

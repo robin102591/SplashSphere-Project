@@ -28,7 +28,7 @@ namespace SplashSphere.Domain.Entities;
 /// Employees, Payments) are deleted when this Transaction is deleted.
 /// </para>
 /// </summary>
-public sealed class Transaction : IAuditableEntity
+public sealed class Transaction : IAuditableEntity, ITenantScoped
 {
     private Transaction() { } // EF Core
 

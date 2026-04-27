@@ -103,8 +103,67 @@ public sealed class CreateTransactionCommandHandler(
                     "Only CALLED entries can be transitioned to IN_SERVICE."));
         }
 
+        // ── Booking linkage (if the queue entry came from an online booking) ──
+        // If the queue entry is tied to a Booking, we:
+        //   1. Reject if the vehicle isn't yet classified (cashier must classify first).
+        //   2. Auto-populate Services from the booking if the caller omitted them.
+        //   3. Validate ServiceId sets match if the caller DID supply them
+        //      (no add/remove at start-service time).
+        //   4. Use the booking's locked-in prices instead of the matrix.
+        //   5. After persisting the transaction, link it to the booking and flip
+        //      the booking to InService.
+        Booking? linkedBooking = null;
+        Dictionary<string, decimal>? bookingPriceOverrides = null;
+        var effectiveServiceRequests = request.Services;
+
+        if (queueEntry is not null)
+        {
+            linkedBooking = await context.Bookings
+                .Include(b => b.Services)
+                .FirstOrDefaultAsync(
+                    b => b.QueueEntryId == queueEntry.Id, cancellationToken);
+
+            if (linkedBooking is not null)
+            {
+                if (!linkedBooking.IsVehicleClassified)
+                    return Result.Failure<string>(Error.Validation(
+                        "BOOKING_VEHICLE_NOT_CLASSIFIED",
+                        "Classify the vehicle before starting service."));
+
+                var bookingServiceIds = linkedBooking.Services
+                    .Select(bs => bs.ServiceId)
+                    .ToHashSet();
+
+                if (request.Services.Count == 0)
+                {
+                    // Auto-fill: cashier didn't supply services, use the booking's.
+                    effectiveServiceRequests = linkedBooking.Services
+                        .Select(bs => new TransactionServiceRequest(
+                            bs.ServiceId, []))
+                        .ToList();
+                }
+                else
+                {
+                    // Validate the cashier didn't add or remove services at start time.
+                    var requestServiceIds = request.Services
+                        .Select(s => s.ServiceId)
+                        .ToHashSet();
+
+                    if (!bookingServiceIds.SetEquals(requestServiceIds))
+                        return Result.Failure<string>(Error.Validation(
+                            "BOOKING_SERVICES_MISMATCH",
+                            "Services on the booking cannot be added or removed at start-service. " +
+                            "Edit the booking first."));
+                }
+
+                bookingPriceOverrides = linkedBooking.Services
+                    .Where(bs => bs.Price.HasValue)
+                    .ToDictionary(bs => bs.ServiceId, bs => bs.Price!.Value);
+            }
+        }
+
         // Load all requested service entities
-        var serviceIds = request.Services.Select(s => s.ServiceId).ToList();
+        var serviceIds = effectiveServiceRequests.Select(s => s.ServiceId).ToList();
         var services = await context.Services
             .AsNoTracking()
             .Where(s => serviceIds.Contains(s.Id))
@@ -140,7 +199,7 @@ public sealed class CreateTransactionCommandHandler(
                 $"Package '{inactivePackage.Name}' is not active."));
 
         // Collect all employee IDs across services and packages
-        var allEmployeeIds = request.Services
+        var allEmployeeIds = effectiveServiceRequests
             .SelectMany(s => s.EmployeeIds)
             .Concat(request.Packages.SelectMany(p => p.EmployeeIds))
             .Distinct()
@@ -301,16 +360,28 @@ public sealed class CreateTransactionCommandHandler(
 
         decimal totalServiceAmount = 0;
 
-        foreach (var svcRequest in request.Services)
+        foreach (var svcRequest in effectiveServiceRequests)
         {
             var service = services.First(s => s.Id == svcRequest.ServiceId);
 
-            // Pricing: matrix row → fallback to BasePrice → apply modifiers
-            var basePrice = servicePricingMap.TryGetValue(svcRequest.ServiceId, out var pricingRow)
-                ? pricingRow.Price
-                : service.BasePrice;
+            // Pricing: booking-locked price (when fed from a booking) takes precedence
+            // over the live matrix, since the booking may have been classified
+            // minutes or hours earlier and the cashier should see the same number.
+            // Otherwise: matrix row → fallback to BasePrice → apply modifiers.
+            decimal finalPrice;
+            if (bookingPriceOverrides is not null
+                && bookingPriceOverrides.TryGetValue(svcRequest.ServiceId, out var lockedPrice))
+            {
+                finalPrice = lockedPrice;
+            }
+            else
+            {
+                var basePrice = servicePricingMap.TryGetValue(svcRequest.ServiceId, out var pricingRow)
+                    ? pricingRow.Price
+                    : service.BasePrice;
 
-            var finalPrice = ApplyModifiers(basePrice, effectiveModifiers);
+                finalPrice = ApplyModifiers(basePrice, effectiveModifiers);
+            }
 
             // Commission
             var totalCommission = CalculateServiceCommission(
@@ -437,7 +508,7 @@ public sealed class CreateTransactionCommandHandler(
         // This supports both payment scenarios:
         //   • Pay later (Scenario 1): stays InProgress until AddPayment auto-completes it.
         //   • Pay now   (Scenario 2): AddPayment receives InProgress, auto-completes immediately.
-        var isMerchandiseOnly = request.Services.Count == 0 && request.Packages.Count == 0;
+        var isMerchandiseOnly = effectiveServiceRequests.Count == 0 && request.Packages.Count == 0;
         transaction.Status = isMerchandiseOnly ? TransactionStatus.Pending : TransactionStatus.InProgress;
 
         context.Transactions.Add(transaction);
@@ -453,6 +524,14 @@ public sealed class CreateTransactionCommandHandler(
             queueEntry.TransactionId = transaction.Id;
             queueEntry.StartedAt     = now;
             linkedQueueEntryId       = queueEntry.Id;
+
+            // If this queue entry came from an online booking, promote the
+            // booking to InService and record the transaction link.
+            if (linkedBooking is not null)
+            {
+                linkedBooking.TransactionId = transaction.Id;
+                linkedBooking.Status        = BookingStatus.InService;
+            }
 
             eventPublisher.Enqueue(new QueueEntryInServiceEvent(
                 queueEntry.Id,

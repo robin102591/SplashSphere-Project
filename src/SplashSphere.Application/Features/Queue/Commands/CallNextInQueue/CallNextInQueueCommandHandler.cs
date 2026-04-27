@@ -20,7 +20,7 @@ public sealed class CallNextInQueueCommandHandler(
         CancellationToken cancellationToken)
     {
         // Pick highest priority WAITING entry; FIFO within the same priority tier.
-        // QueuePriority: Vip=3 > Express=2 > Regular=1 — order descending by value.
+        // QueuePriority: Vip=4 > Booked=3 > Express=2 > Regular=1 — order descending by value.
         var entry = await context.QueueEntries
             .Where(q => q.BranchId == request.BranchId && q.Status == QueueStatus.Waiting)
             .OrderByDescending(q => q.Priority)

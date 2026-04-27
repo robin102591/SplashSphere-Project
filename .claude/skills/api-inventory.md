@@ -250,3 +250,11 @@ Summary, revenue, commissions, service popularity.
 | PUT | /equipment/{id} | Update equipment |
 | POST | /equipment/{id}/maintenance | Log a maintenance activity |
 | PATCH | /equipment/{id}/status | Update equipment status |
+
+## Bookings (Admin / POS — Gated: online_booking)
+| Method | Route | Description |
+|---|---|---|
+| GET | /bookings | List bookings in a date window (filter by branch, status) |
+| GET | /bookings/{id} | Booking detail with customer, vehicle, services, queue/transaction links |
+| PATCH | /bookings/{id}/check-in | Cashier check-in: Confirmed → Arrived, allocates queue entry if missing |
+| POST | /bookings/{id}/classify-vehicle | Classify vehicle + lock exact service prices |

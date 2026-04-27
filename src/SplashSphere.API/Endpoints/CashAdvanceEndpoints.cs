@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.CashAdvances;
 using SplashSphere.Application.Features.CashAdvances.Commands.ApproveCashAdvance;
 using SplashSphere.Application.Features.CashAdvances.Commands.CancelCashAdvance;
@@ -35,30 +36,30 @@ public static class CashAdvanceEndpoints
 
     // ── GET / ───────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetCashAdvances(
+    private static async Task<IResult> GetCashAdvances(
         [AsParameters] GetAdvancesParams p,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new GetCashAdvancesQuery(p.Page, p.PageSize, p.EmployeeId, p.Status), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── GET /{id} ───────────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetCashAdvanceById(
+    private static async Task<IResult> GetCashAdvanceById(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetCashAdvanceByIdQuery(id), ct);
-        return result is null ? TypedResults.NotFound() : TypedResults.Ok<object>(result);
+        return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
 
     // ── POST / ──────────────────────────────────────────────────────────────
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreateCashAdvance(
+    private static async Task<IResult> CreateCashAdvance(
         [FromBody] CreateAdvanceRequest body,
         ISender sender,
         CancellationToken ct)
@@ -66,67 +67,42 @@ public static class CashAdvanceEndpoints
         var result = await sender.Send(
             new CreateCashAdvanceCommand(body.EmployeeId, body.Amount, body.DeductionPerPeriod, body.Reason), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/cash-advances/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/cash-advances/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
     // ── PATCH /{id}/approve ─────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> ApproveCashAdvance(
+    private static async Task<IResult> ApproveCashAdvance(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new ApproveCashAdvanceCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── PATCH /{id}/disburse ────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> DisburseCashAdvance(
+    private static async Task<IResult> DisburseCashAdvance(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new DisburseCashAdvanceCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── PATCH /{id}/cancel ──────────────────────────────────────────────────
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> CancelCashAdvance(
+    private static async Task<IResult> CancelCashAdvance(
         string id,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new CancelCashAdvanceCommand(id), ct);
-
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     // ── Request / query-param records ───────────────────────────────────────

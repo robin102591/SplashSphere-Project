@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="Code"/> is the short prefix used in transaction numbers:
 /// <c>{Code}-{YYYYMMDD}-{Sequence}</c>.
 /// </summary>
-public sealed class Branch : IAuditableEntity
+public sealed class Branch : IAuditableEntity, ITenantScoped
 {
     private Branch() { } // EF Core
 
@@ -35,6 +35,18 @@ public sealed class Branch : IAuditableEntity
     public string Address { get; set; } = string.Empty;
     public string ContactNumber { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Branch latitude for Connect app auto-nearest-branch resolution.
+    /// Nullable — admins fill this in post-creation. WGS84 decimal degrees.
+    /// </summary>
+    public decimal? Latitude { get; set; }
+
+    /// <summary>
+    /// Branch longitude for Connect app auto-nearest-branch resolution.
+    /// Nullable — admins fill this in post-creation. WGS84 decimal degrees.
+    /// </summary>
+    public decimal? Longitude { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

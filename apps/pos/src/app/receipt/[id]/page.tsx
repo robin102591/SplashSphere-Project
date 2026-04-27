@@ -80,7 +80,7 @@ export default function ReceiptPage({ params }: Props) {
         <h1 className="text-sm font-semibold text-gray-700">Receipt: {receipt.transactionNumber}</h1>
         <div className="flex gap-2">
           <a
-            href={`${process.env.NEXT_PUBLIC_API_URL}/api/v1/transactions/${id}/receipt/pdf`}
+            href={apiClient.fileUrl(`/transactions/${id}/receipt/pdf`)}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-2 text-xs rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50"

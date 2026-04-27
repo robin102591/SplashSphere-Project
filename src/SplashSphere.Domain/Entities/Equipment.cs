@@ -7,7 +7,7 @@ namespace SplashSphere.Domain.Entities;
 /// foam cannon, air compressor). Tracks purchase info, warranty, and current
 /// operational status. Maintenance activities are logged via <see cref="MaintenanceLog"/>.
 /// </summary>
-public sealed class Equipment : IAuditableEntity
+public sealed class Equipment : IAuditableEntity, ITenantScoped
 {
     private Equipment() { } // EF Core
 

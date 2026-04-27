@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// <see cref="Subtotal"/> = <see cref="DenominationValue"/> × <see cref="Count"/>.
 /// All denomination rows are cascade-deleted when the parent shift is deleted.
 /// </summary>
-public sealed class ShiftDenomination
+public sealed class ShiftDenomination : ITenantScoped
 {
     private ShiftDenomination() { } // EF Core
 

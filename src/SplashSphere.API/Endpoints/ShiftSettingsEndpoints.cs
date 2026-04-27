@@ -20,12 +20,12 @@ public static class ShiftSettingsEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetShiftSettings(
+    private static async Task<IResult> GetShiftSettings(
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new GetShiftSettingsQuery(), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> UpdateShiftSettings(

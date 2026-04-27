@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Expenses;
 using SplashSphere.Application.Features.Expenses.Commands.CreateExpenseCategory;
 using SplashSphere.Application.Features.Expenses.Commands.DeleteExpense;
@@ -48,7 +49,7 @@ public static class ExpenseEndpoints
         return app;
     }
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> RecordExpense(
+    private static async Task<IResult> RecordExpense(
         [FromBody] RecordExpenseRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new RecordExpenseCommand(
@@ -56,31 +57,27 @@ public static class ExpenseEndpoints
             body.ExpenseDate, body.Vendor, body.ReceiptReference,
             body.Frequency, body.IsRecurring), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Created($"/api/v1/expenses/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/expenses/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetExpenses(
+    private static async Task<IResult> GetExpenses(
         [AsParameters] ExpenseListParams p, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetExpensesQuery(p.BranchId, p.CategoryId, p.From, p.To, p.Page, p.PageSize), ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
-    private static async Task<Results<NoContent, NotFound, BadRequest<ProblemDetails>>> UpdateExpense(
+    private static async Task<IResult> UpdateExpense(
         string id, [FromBody] UpdateExpenseRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new UpdateExpenseCommand(
             id, body.CategoryId, body.Amount, body.Description, body.ExpenseDate,
             body.Vendor, body.ReceiptReference, body.Frequency, body.IsRecurring), ct);
 
-        if (result.IsFailure)
-            return result.Error.Code == "NotFound" ? TypedResults.NotFound()
-                : TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteExpense(
@@ -90,21 +87,21 @@ public static class ExpenseEndpoints
         return result.IsFailure ? TypedResults.NotFound() : TypedResults.NoContent();
     }
 
-    private static async Task<Ok<object>> GetCategories(ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetExpenseCategoriesQuery(), ct));
+    private static async Task<IResult> GetCategories(ISender sender, CancellationToken ct)
+        => TypedResults.Ok(await sender.Send(new GetExpenseCategoriesQuery(), ct));
 
-    private static async Task<Results<Created<object>, BadRequest<ProblemDetails>>> CreateCategory(
+    private static async Task<IResult> CreateCategory(
         [FromBody] CreateCategoryRequest body, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send(new CreateExpenseCategoryCommand(body.Name, body.Icon), ct);
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        return TypedResults.Created($"/api/v1/expense-categories/{result.Value}", (object)new { id = result.Value });
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/v1/expense-categories/{result.Value}", new { id = result.Value })
+            : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetProfitLossReport(
+    private static async Task<IResult> GetProfitLossReport(
         DateOnly from, DateOnly to, string? branchId, ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(await sender.Send(new GetProfitLossReportQuery(from, to, branchId), ct));
+        => TypedResults.Ok(await sender.Send(new GetProfitLossReportQuery(from, to, branchId), ct));
 
     // Request records
     private sealed record RecordExpenseRequest(

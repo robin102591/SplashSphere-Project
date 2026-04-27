@@ -4,7 +4,7 @@ import { use, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Pencil, Power, PowerOff } from 'lucide-react'
+import { Pencil, Power, PowerOff, FileText, DollarSign, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -12,7 +12,8 @@ import { PageHeader } from '@/components/ui/page-header'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import {
   Sheet,
   SheetContent,
@@ -208,6 +209,7 @@ export default function ServiceDetailPage({
 }) {
   const { id } = use(params)
   const [editOpen, setEditOpen] = useState(false)
+  const [section] = useSectionParam('section', 'details')
 
   const { data: service, isLoading, isError } = useService(id)
   const { data: vehicleTypes = [], isLoading: vtLoading } = useVehicleTypes()
@@ -285,60 +287,60 @@ export default function ServiceDetailPage({
         }
       />
 
-      {/* Tabs */}
-      <Tabs defaultValue="details">
-        <TabsList variant="line">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="pricing">
-            Pricing Matrix
-            {service.pricing.length > 0 && (
-              <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
-                {service.pricing.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="commissions">
-            Commission Matrix
-            {service.commissions.length > 0 && (
-              <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
-                {service.commissions.length}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+      {/* Section nav + content */}
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="details"
+          items={[
+            { value: 'details', label: 'Details', icon: FileText },
+            {
+              value: 'pricing',
+              label: 'Pricing Matrix',
+              icon: DollarSign,
+              badge: service.pricing.length > 0 ? service.pricing.length : undefined,
+            },
+            {
+              value: 'commissions',
+              label: 'Commission Matrix',
+              icon: Percent,
+              badge: service.commissions.length > 0 ? service.commissions.length : undefined,
+            },
+          ]}
+        />
 
-        <TabsContent value="details" className="mt-6">
-          <DetailsTab
-            basePrice={service.basePrice}
-            description={service.description}
-            categoryName={service.categoryName}
-            createdAt={service.createdAt}
-            updatedAt={service.updatedAt}
-          />
-        </TabsContent>
-
-        <TabsContent value="pricing" className="mt-6">
-          <PricingMatrixEditor
-            vehicleTypes={vehicleTypes}
-            sizes={sizes}
-            initialRows={service.pricing}
-            basePrice={service.basePrice}
-            onSave={upsertPricing}
-            isSaving={isPricingSaving}
-            isLoading={matrixLoading}
-          />
-        </TabsContent>
-
-        <TabsContent value="commissions" className="mt-6">
-          <CommissionMatrixEditor
-            serviceId={id}
-            vehicleTypes={vehicleTypes}
-            sizes={sizes}
-            initialRows={service.commissions}
-            isLoading={matrixLoading}
-          />
-        </TabsContent>
-      </Tabs>
+        <div className="min-w-0 flex-1">
+          {section === 'details' && (
+            <DetailsTab
+              basePrice={service.basePrice}
+              description={service.description}
+              categoryName={service.categoryName}
+              createdAt={service.createdAt}
+              updatedAt={service.updatedAt}
+            />
+          )}
+          {section === 'pricing' && (
+            <PricingMatrixEditor
+              vehicleTypes={vehicleTypes}
+              sizes={sizes}
+              initialRows={service.pricing}
+              basePrice={service.basePrice}
+              onSave={upsertPricing}
+              isSaving={isPricingSaving}
+              isLoading={matrixLoading}
+            />
+          )}
+          {section === 'commissions' && (
+            <CommissionMatrixEditor
+              serviceId={id}
+              vehicleTypes={vehicleTypes}
+              sizes={sizes}
+              initialRows={service.commissions}
+              isLoading={matrixLoading}
+            />
+          )}
+        </div>
+      </div>
 
       <EditSheet
         open={editOpen}

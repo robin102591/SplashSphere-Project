@@ -42,6 +42,13 @@ public sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
             .IsRequired()
             .HasDefaultValue(true);
 
+        // ── Geolocation (optional — filled in by admin for Connect auto-nearest) ──
+        builder.Property(b => b.Latitude)
+            .HasColumnType("decimal(9,6)");
+
+        builder.Property(b => b.Longitude)
+            .HasColumnType("decimal(9,6)");
+
         // ── Audit timestamps ──────────────────────────────────────────────────
         builder.Property(b => b.CreatedAt)
             .IsRequired()

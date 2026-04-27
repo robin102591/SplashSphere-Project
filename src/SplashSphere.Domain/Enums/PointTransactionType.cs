@@ -16,4 +16,7 @@ public enum PointTransactionType
 
     /// <summary>Manual admin correction (positive or negative).</summary>
     Adjustment = 3,
+
+    /// <summary>Bonus points awarded via the referral program.</summary>
+    Referral = 4,
 }

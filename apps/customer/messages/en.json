@@ -1,0 +1,358 @@
+{
+  "app": {
+    "name": "SplashSphere Connect",
+    "tagline": "Book your car wash in seconds"
+  },
+  "nav": {
+    "home": "Home",
+    "book": "Book",
+    "history": "History",
+    "profile": "Profile"
+  },
+  "common": {
+    "comingSoon": "Coming soon",
+    "loading": "Loading…",
+    "signOut": "Sign out",
+    "change": "Change",
+    "continue": "Continue",
+    "verify": "Verify",
+    "sending": "Sending…",
+    "verifying": "Verifying…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "auth": {
+    "phoneStep": {
+      "title": "Sign in with your phone",
+      "subtitle": "We'll text you a one-time code. No passwords, no hassle.",
+      "phoneLabel": "Mobile number",
+      "phonePlaceholder": "09XX XXX XXXX",
+      "phoneHint": "Philippine mobile number (11 digits starting with 09).",
+      "submit": "Send code",
+      "errorInvalid": "Enter a valid PH mobile number (09XXXXXXXXX).",
+      "errorRateLimit": "Please wait a minute before requesting another code.",
+      "errorDailyLimit": "Daily limit reached. Try again tomorrow.",
+      "errorGeneric": "We couldn't send a code. Please try again."
+    },
+    "codeStep": {
+      "title": "Enter the 6-digit code",
+      "subtitle": "We sent a code to {phone}.",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "123456",
+      "submit": "Verify & sign in",
+      "resend": "Resend code",
+      "resendIn": "Resend in {seconds}s",
+      "resending": "Sending…",
+      "devHint": "Dev mode: using fixed OTP code.",
+      "errorInvalid": "The code must be 6 digits.",
+      "errorWrongCode": "That code is incorrect or expired.",
+      "errorGeneric": "We couldn't verify that code. Please try again."
+    }
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "Across all your car washes",
+    "emptyTitle": "No washes yet.",
+    "emptyCta": "Book your first one",
+    "pointsEarned": "+{points} pts",
+    "loadMore": "Load more",
+    "errorTitle": "We couldn't load your history.",
+    "errorRetry": "Try again"
+  },
+  "home": {
+    "greetingNamed": "Hi, {name}!",
+    "greetingAnon": "Welcome back",
+    "actions": {
+      "bookWash": "Book a wash",
+      "myBookings": "My bookings"
+    },
+    "myCarWashes": {
+      "title": "My car washes",
+      "discoverMore": "Discover more",
+      "emptyTitle": "No car washes joined yet",
+      "emptyCta": "Discover one near you →",
+      "error": "We couldn't load your car washes. Please try again."
+    }
+  },
+  "profile": {
+    "editProfile": "Edit profile",
+    "loadError": "We couldn't load your profile. Please try again.",
+    "edit": {
+      "title": "Edit profile",
+      "nameLabel": "Full name",
+      "namePlaceholder": "Juan dela Cruz",
+      "emailLabel": "Email (optional)",
+      "emailPlaceholder": "juan@example.com",
+      "errorRequired": "Name is required.",
+      "errorEmail": "Enter a valid email address.",
+      "errorGeneric": "We couldn't save your changes. Please try again."
+    },
+    "vehicles": {
+      "title": "My vehicles",
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "emptyTitle": "No vehicles yet",
+      "emptyHint": "Add a vehicle so cashiers can find you faster on arrival.",
+      "classificationHint": "Type/size set by cashier on first visit",
+      "deleteConfirm": "Remove {plate} from your vehicles?",
+      "deleteError": "We couldn't remove that vehicle. Please try again."
+    },
+    "vehicleForm": {
+      "titleAdd": "Add vehicle",
+      "titleEdit": "Edit vehicle",
+      "makeLabel": "Make",
+      "makePlaceholder": "Select a make",
+      "modelLabel": "Model",
+      "modelPlaceholder": "Select a model",
+      "plateLabel": "Plate number",
+      "colorLabel": "Color (optional)",
+      "colorPlaceholder": "e.g., Pearl White",
+      "yearLabel": "Year (optional)",
+      "submitAdd": "Add vehicle",
+      "errorRequired": "This field is required.",
+      "errorYearRange": "Year must be between {min} and {max}.",
+      "errorGeneric": "We couldn't save this vehicle. Please try again."
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "language": {
+      "title": "Language"
+    }
+  },
+  "discover": {
+    "title": "Find a car wash",
+    "subtitle": "Browse SplashSphere-powered washes near you",
+    "searchPlaceholder": "Search by name, branch, or address",
+    "heroTitle": "Search for a car wash near you",
+    "heroSubtitle": "Type a name, city, or branch to get started.",
+    "emptyTitle": "No car washes match",
+    "emptySubtitle": "Try a different search term or check your spelling.",
+    "errorTitle": "We couldn't load the directory.",
+    "errorRetry": "Try again",
+    "joinedBadge": "Joined",
+    "distanceKm": "{km} km away",
+    "branchesMore": "+{count} more {count, plural, one {branch} other {branches}}",
+    "locatingHint": "Using your location to sort by distance",
+    "locationDenied": "Location turned off — showing results alphabetically",
+    "viewList": "List",
+    "viewMap": "Map",
+    "noMapLocation": "{count, plural, one {# branch} other {# branches}} without map location",
+    "mapEmpty": "No car washes to show on the map."
+  },
+  "carwash": {
+    "backLabel": "Back",
+    "loadError": "We couldn't load this car wash.",
+    "retry": "Try again",
+    "notFound": "This car wash is no longer available.",
+    "join": "Join this car wash",
+    "joining": "Joining…",
+    "joined": "Joined",
+    "joinError": "We couldn't join this car wash. Please try again.",
+    "aboutTitle": "About",
+    "branchesTitle": "Branches",
+    "servicesTitle": "Services",
+    "hoursToday": "Today {open}–{close}",
+    "bookingDisabled": "In-store only",
+    "bookCta": "Book a wash",
+    "rewardsCta": "View rewards",
+    "inStoreOnly": "Visit in-store",
+    "fromPrice": "from ₱{price}",
+    "priceRange": "₱{min}–₱{max}",
+    "emptyServices": "No services listed yet.",
+    "emptyBranches": "No branches listed yet."
+  },
+  "booking": {
+    "title": "Book a wash",
+    "steps": {
+      "ariaLabel": "Booking progress",
+      "vehicle": "Vehicle",
+      "services": "Services",
+      "schedule": "Schedule",
+      "confirm": "Confirm"
+    },
+    "vehicle": {
+      "title": "Pick a vehicle",
+      "subtitle": "Choose which car you'll bring in.",
+      "emptyTitle": "No vehicles yet",
+      "emptyHint": "Add a vehicle to your profile first — cashiers use it to speed up check-in.",
+      "addVehicle": "Add a vehicle"
+    },
+    "services": {
+      "title": "Pick your services",
+      "subtitle": "Choose one or more services for this wash.",
+      "unclassifiedBanner": "Final price confirmed when your vehicle is assessed on your first visit.",
+      "empty": "No services available for this vehicle.",
+      "loadError": "We couldn't load this car wash's services.",
+      "retry": "Try again"
+    },
+    "schedule": {
+      "title": "Pick a time",
+      "subtitle": "Choose a branch, date, and time slot.",
+      "branchLabel": "Branch",
+      "branchPlaceholder": "Select a branch",
+      "noBookableBranches": "No branches at this car wash take online bookings yet.",
+      "dateLabel": "Date",
+      "timeLabel": "Time",
+      "pickBranchFirst": "Pick a branch to see available dates.",
+      "pickBranchAndDate": "Pick a branch and date to see available times.",
+      "noSlots": "No slots left on this date. Try another day.",
+      "slotsError": "We couldn't load available times.",
+      "retry": "Try again"
+    },
+    "confirm": {
+      "title": "Review your booking",
+      "subtitle": "One last look before we reserve your slot.",
+      "vehicleLabel": "Vehicle",
+      "servicesLabel": "Services",
+      "branchLabel": "Branch",
+      "slotLabel": "When",
+      "total": "Total",
+      "estimatedTotal": "Estimated total",
+      "notesLabel": "Notes for the cashier (optional)",
+      "notesPlaceholder": "Anything the cashier should know?",
+      "policy": "You'll get a confirmation over SMS and push. If you're not at the branch within 15 minutes of your slot, we'll mark your booking as a no-show."
+    },
+    "totals": {
+      "exact": "Total {total}",
+      "estimated": "Estimated {min}–{max}"
+    },
+    "actions": {
+      "confirmBooking": "Confirm booking"
+    },
+    "errors": {
+      "submitGeneric": "We couldn't create that booking. Please try again."
+    }
+  },
+  "bookings": {
+    "title": "My bookings",
+    "back": "Back",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "past": "Past"
+    },
+    "status": {
+      "Confirmed": "Confirmed",
+      "Arrived": "Arrived",
+      "InService": "In service",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled",
+      "NoShow": "No-show"
+    },
+    "servicesSummary": "{first}{count, plural, =0 {} =1 { + 1 more} other { + # more}}",
+    "estimatedRange": "Est. ₱{min}–₱{max}",
+    "emptyUpcomingTitle": "No upcoming bookings.",
+    "emptyUpcomingCta": "Book now",
+    "emptyPastTitle": "No past bookings yet.",
+    "errorTitle": "We couldn't load your bookings.",
+    "errorRetry": "Try again",
+    "detail": {
+      "bookingCode": "Booking #{code}",
+      "servicesTitle": "Services",
+      "vehicleTitle": "Vehicle",
+      "notesTitle": "Notes",
+      "totalLabel": "Total",
+      "estimatedTotalLabel": "Estimated total",
+      "classifiedBadge": "Classified {type} / {size}",
+      "unclassifiedHint": "Final price confirmed when your vehicle is assessed on arrival.",
+      "loadError": "We couldn't load this booking.",
+      "notFound": "This booking is no longer available.",
+      "retry": "Try again"
+    },
+    "queue": {
+      "title": "Live queue",
+      "nowWashingBanner": "Now washing your car!",
+      "waitingLabel": "Waiting",
+      "calledLabel": "You're next!",
+      "inServiceLabel": "Being washed",
+      "queueNumberLabel": "Queue number",
+      "aheadOfYou": "{count, plural, =0 {You're up next} =1 {1 ahead of you} other {# ahead of you}}",
+      "estimatedWait": "~{minutes} min wait",
+      "elapsedLabel": "Elapsed",
+      "inactive": "Your queue position will show here once you arrive."
+    },
+    "actions": {
+      "cancel": "Cancel booking",
+      "cancelling": "Cancelling…",
+      "directions": "Directions",
+      "confirmCancelTitle": "Cancel this booking?",
+      "confirmCancelBody": "You can rebook anytime, but your slot will be given up.",
+      "confirmCancelConfirm": "Yes, cancel",
+      "confirmCancelKeep": "Keep booking",
+      "cancelError": "We couldn't cancel that booking. Please try again.",
+      "cancelSuccess": "Booking cancelled."
+    }
+  },
+  "membership": {
+    "title": "Membership",
+    "pointsBalance": "Points balance",
+    "lifetime": "Lifetime earned",
+    "pointsUnit": "pts",
+    "tierBadge": "{tier} tier",
+    "progressTo": "To {tier}",
+    "topTier": "You've reached our top tier — enjoy the perks!",
+    "notEnrolled": {
+      "title": "Loyalty not yet unlocked",
+      "body": "Complete a wash at this car wash to start earning points toward rewards."
+    },
+    "rewards": {
+      "title": "Rewards",
+      "pointsUnit": "pts",
+      "redeem": "Redeem",
+      "notAffordable": "Need more points",
+      "notEnrolled": "Not enrolled",
+      "empty": "No rewards listed yet. Check back soon.",
+      "confirmTitle": "Redeem this reward?",
+      "confirmBody": "This will deduct {points} points for \"{name}\". You'll get a code to show the cashier.",
+      "confirmConfirm": "Yes, redeem",
+      "redeeming": "Redeeming…",
+      "redeemError": "We couldn't redeem that reward. Please try again.",
+      "redeemedTitle": "Redeemed!",
+      "showCashier": "Show this code to the cashier",
+      "newBalance": "New balance: {balance} pts"
+    },
+    "history": {
+      "title": "Points history",
+      "viewAll": "View all",
+      "empty": "No point activity yet.",
+      "types": {
+        "earned": "Points earned",
+        "redeemed": "Points redeemed",
+        "expired": "Points expired",
+        "adjustment": "Points adjustment"
+      }
+    }
+  },
+  "referral": {
+    "title": "Invite friends, earn points",
+    "subtitle": "Share your code — both of you get bonus points when they finish their first wash.",
+    "defaultTenant": "this car wash",
+    "yourCode": "Your code",
+    "copy": "Copy code",
+    "copied": "Copied!",
+    "share": "Share",
+    "shareTitle": "Try this car wash with me",
+    "shareText": "Join me at {tenant} and use code {code} to get bonus loyalty points on your first wash!",
+    "unavailable": "This car wash doesn't offer a referral program yet.",
+    "howItWorks": {
+      "title": "How it works",
+      "body": "Share your code with a friend. You earn {referrerPoints} points and they earn {referredPoints} points once they complete their first wash."
+    },
+    "stats": {
+      "total": "Invited",
+      "completed": "Completed",
+      "pointsEarned": "Points earned"
+    },
+    "pastReferrals": "Your referrals",
+    "anonymousName": "New customer",
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "expired": "Expired"
+    }
+  }
+}

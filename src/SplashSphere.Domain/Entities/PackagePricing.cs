@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// (package, vehicleType, size) combination.
 /// Unique constraint: (packageId, vehicleTypeId, sizeId).
 /// </summary>
-public sealed class PackagePricing : IAuditableEntity
+public sealed class PackagePricing : IAuditableEntity, ITenantScoped
 {
     private PackagePricing() { } // EF Core
 

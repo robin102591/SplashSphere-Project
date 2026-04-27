@@ -33,6 +33,7 @@ import {
   Percent,
   Banknote,
   CalendarCheck,
+  CalendarDays,
   Lock,
   ScrollText,
   Crown,
@@ -103,6 +104,7 @@ const navGroups: { labelKey: string; items: NavItem[]; tenantTypes?: number[]; f
       { labelKey: 'customers', href: '/dashboard/customers', icon: Users },
       { labelKey: 'loyalty', href: '/dashboard/loyalty', icon: Award, feature: FeatureKeys.CustomerLoyalty },
       { labelKey: 'vehicles', href: '/dashboard/vehicles', icon: Car },
+      { labelKey: 'bookings', href: '/dashboard/bookings', icon: CalendarDays, feature: FeatureKeys.OnlineBooking },
     ],
   },
   {

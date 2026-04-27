@@ -32,6 +32,9 @@ public static class FeatureKeys
     public const string ProfitLossReports = "profit_loss_reports";
     public const string SmsNotifications = "sms_notifications";
     public const string PricingModifiers = "pricing_modifiers";
+    public const string OnlineBooking = "online_booking";
+    public const string ConnectDirectoryListing = "connect_directory_listing";
+    public const string ReferralProgram = "referral_program";
 
     // ── Enterprise only ──────────────────────────────────────────────────────
     public const string ApiAccess = "api_access";

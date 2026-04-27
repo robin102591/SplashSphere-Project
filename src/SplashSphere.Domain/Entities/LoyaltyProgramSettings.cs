@@ -4,7 +4,7 @@ namespace SplashSphere.Domain.Entities;
 /// Per-tenant loyalty program configuration (singleton per tenant, upsert pattern).
 /// Controls how points are earned, whether they expire, and the master on/off switch.
 /// </summary>
-public sealed class LoyaltyProgramSettings : IAuditableEntity
+public sealed class LoyaltyProgramSettings : IAuditableEntity, ITenantScoped
 {
     private LoyaltyProgramSettings() { } // EF Core
 
@@ -31,6 +31,18 @@ public sealed class LoyaltyProgramSettings : IAuditableEntity
 
     /// <summary>Whether to auto-enroll customers when they first complete a transaction.</summary>
     public bool AutoEnroll { get; set; } = true;
+
+    /// <summary>
+    /// Points awarded to the referrer when a referred customer completes their first wash.
+    /// Nullable so existing rows pre-22.4 fall back to the hardcoded default (100).
+    /// </summary>
+    public int? ReferrerRewardPoints { get; set; }
+
+    /// <summary>
+    /// Points awarded to the referred customer on their first wash.
+    /// Nullable so existing rows pre-22.4 fall back to the hardcoded default (50).
+    /// </summary>
+    public int? ReferredRewardPoints { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

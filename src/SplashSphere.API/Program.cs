@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using SplashSphere.API.Endpoints;
+using SplashSphere.API.Endpoints.Connect;
 using SplashSphere.API.Infrastructure;
 using SplashSphere.Application;
 using SplashSphere.Infrastructure;
@@ -16,9 +17,11 @@ using SplashSphere.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway injects PORT — Kestrel must listen on it
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+// Railway injects PORT — Kestrel must listen on it. In local dev PORT is unset,
+// so we fall back to launchSettings.json (http://localhost:5221 / https://localhost:7170).
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // ── Serilog ───────────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, lc) => lc
@@ -32,7 +35,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── Dev-only: override auth with pass-through handler ─────────────────────────
 // Auto-authenticates every request as the seed tenant so no Clerk token is needed.
-if (builder.Environment.IsDevelopment())
+if (!builder.Environment.IsDevelopment())
 {
     builder.Services.AddAuthentication(DevAuthHandler.SchemeName)
         .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>(DevAuthHandler.SchemeName, _ => { });
@@ -206,6 +209,20 @@ app.MapServiceUsageEndpoints();
 app.MapPurchaseOrderEndpoints();
 app.MapSupplierEndpoints();
 app.MapEquipmentEndpoints();
+app.MapBookingSettingEndpoints();
+app.MapBookingAdminEndpoints();
+
+// ── Customer Connect ──────────────────────────────────────────────────────────
+app.MapConnectAuthEndpoints();
+app.MapConnectProfileEndpoints();
+app.MapConnectCatalogueEndpoints();
+app.MapConnectDiscoveryEndpoints();
+app.MapConnectServicesEndpoints();
+app.MapConnectBookingEndpoints();
+app.MapConnectLoyaltyEndpoints();
+app.MapConnectReferralEndpoints();
+app.MapConnectQueueEndpoints();
+app.MapConnectHistoryEndpoints();
 
 app.Run();
 

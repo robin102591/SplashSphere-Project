@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// A reward that customers can redeem using loyalty points.
 /// Rewards can grant a free service/package or a peso/percentage discount.
 /// </summary>
-public sealed class LoyaltyReward : IAuditableEntity
+public sealed class LoyaltyReward : IAuditableEntity, ITenantScoped
 {
     private LoyaltyReward() { } // EF Core
 

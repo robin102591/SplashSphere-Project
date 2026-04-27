@@ -173,7 +173,7 @@ public static class ShiftEndpoints
 
     // ── GET /current ──────────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetCurrentShift(
+    private static async Task<IResult> GetCurrentShift(
         [AsParameters] GetCurrentShiftParams p,
         ISender sender,
         CancellationToken ct)
@@ -182,12 +182,12 @@ public static class ShiftEndpoints
 
         return result is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok<object>(result);
+            : TypedResults.Ok(result);
     }
 
     // ── GET / ─────────────────────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetShifts(
+    private static async Task<IResult> GetShifts(
         [AsParameters] GetShiftsParams p,
         ISender sender,
         CancellationToken ct)
@@ -203,12 +203,12 @@ public static class ShiftEndpoints
             p.PageSize);
 
         var result = await sender.Send(query, ct);
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── GET /{id} ─────────────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetShiftById(
+    private static async Task<IResult> GetShiftById(
         string id,
         ISender sender,
         CancellationToken ct)
@@ -217,12 +217,12 @@ public static class ShiftEndpoints
 
         return result is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok<object>(result);
+            : TypedResults.Ok(result);
     }
 
     // ── GET /{id}/report ──────────────────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound>> GetShiftReport(
+    private static async Task<IResult> GetShiftReport(
         string id,
         ISender sender,
         CancellationToken ct)
@@ -231,12 +231,12 @@ public static class ShiftEndpoints
 
         return result is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok<object>(result);
+            : TypedResults.Ok(result);
     }
 
     // ── GET /variance-report ──────────────────────────────────────────────────
 
-    private static async Task<Ok<object>> GetVarianceReport(
+    private static async Task<IResult> GetVarianceReport(
         [AsParameters] GetVarianceReportParams p,
         ISender sender,
         CancellationToken ct)
@@ -244,7 +244,7 @@ public static class ShiftEndpoints
         var result = await sender.Send(
             new GetShiftVarianceReportQuery(p.BranchId, p.CashierId, p.DateFrom, p.DateTo), ct);
 
-        return TypedResults.Ok<object>(result);
+        return TypedResults.Ok(result);
     }
 
     // ── Request / Response records ────────────────────────────────────────────

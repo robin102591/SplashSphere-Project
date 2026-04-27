@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Billing.Commands.CancelSubscription;
 using SplashSphere.Application.Features.Billing.Commands.ChangePlan;
 using SplashSphere.Application.Features.Billing.Commands.CreateCheckout;
@@ -38,12 +39,12 @@ public static class BillingEndpoints
         return app;
     }
 
-    private static async Task<Ok<object>> GetCurrentPlan(
+    private static async Task<IResult> GetCurrentPlan(
         ISender sender, CancellationToken ct)
-        => TypedResults.Ok<object>(
+        => TypedResults.Ok(
             await sender.Send(new GetCurrentPlanQuery(), ct));
 
-    private static async Task<Results<Ok<object>, BadRequest<ProblemDetails>>> CreateCheckout(
+    private static async Task<IResult> CreateCheckout(
         [FromBody] CreateCheckoutRequest body,
         ISender sender,
         CancellationToken ct)
@@ -51,42 +52,33 @@ public static class BillingEndpoints
         var result = await sender.Send(
             new CreateCheckoutCommand((PlanTier)body.TargetPlan, body.SuccessUrl, body.CancelUrl), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.Ok<object>(result.Value);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> ChangePlan(
+    private static async Task<IResult> ChangePlan(
         [FromBody] ChangePlanRequest body,
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new ChangePlanCommand((PlanTier)body.NewPlan), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Results<NoContent, BadRequest<ProblemDetails>>> CancelSubscription(
+    private static async Task<IResult> CancelSubscription(
         ISender sender,
         CancellationToken ct)
     {
         var result = await sender.Send(new CancelSubscriptionCommand(), ct);
 
-        if (result.IsFailure)
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-
-        return TypedResults.NoContent();
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
-    private static async Task<Ok<object>> GetBillingHistory(
+    private static async Task<IResult> GetBillingHistory(
         [AsParameters] BillingHistoryParams p,
         ISender sender,
         CancellationToken ct)
-        => TypedResults.Ok<object>(
+        => TypedResults.Ok(
             await sender.Send(new GetBillingHistoryQuery(p.Page, p.PageSize), ct));
 
     private static async Task<IResult> ProcessPaymentWebhook(
@@ -116,7 +108,7 @@ public static class BillingEndpoints
 
     // ── POST /invoices/{id}/pay ──────────────────────────────────────────
 
-    private static async Task<Results<Ok<object>, NotFound, BadRequest<ProblemDetails>>> PayInvoice(
+    private static async Task<IResult> PayInvoice(
         string id,
         [FromBody] PayInvoiceRequest body,
         ISender sender,
@@ -125,14 +117,7 @@ public static class BillingEndpoints
         var result = await sender.Send(
             new PayInvoiceCommand(id, body.SuccessUrl, body.CancelUrl), ct);
 
-        if (result.IsFailure)
-        {
-            if (result.Error.Code == "NotFound")
-                return TypedResults.NotFound();
-            return TypedResults.BadRequest(new ProblemDetails { Detail = result.Error.Message });
-        }
-
-        return TypedResults.Ok<object>(result.Value);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblem();
     }
 
     // ── Request records ─────────────────────────────────────────────────────

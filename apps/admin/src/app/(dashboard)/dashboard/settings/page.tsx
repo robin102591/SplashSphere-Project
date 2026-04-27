@@ -2,9 +2,10 @@
 
 import { useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell } from 'lucide-react'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell, CalendarCheck, Car, Ruler, Tag, List, Wallet, Receipt, User } from 'lucide-react'
 import Link from 'next/link'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useHasFeature } from '@/hooks/use-plan'
 import { useVehicleTypes, useCreateVehicleType, useUpdateVehicleType, useToggleVehicleType } from '@/hooks/use-vehicle-types'
 import { useSizes, useCreateSize, useUpdateSize, useToggleSize } from '@/hooks/use-sizes'
 import { useServiceCategories, useCreateServiceCategory, useUpdateServiceCategory, useToggleServiceCategory } from '@/hooks/use-service-categories'
@@ -29,7 +31,7 @@ import { useBranches } from '@/hooks/use-branches'
 import { useShiftSettings, useUpdateShiftSettings } from '@/hooks/use-shifts'
 import { usePayrollTemplates, useCreatePayrollTemplate, useUpdatePayrollTemplate, useDeletePayrollTemplate, usePayrollSettings, useUpdatePayrollSettings } from '@/hooks/use-payroll'
 import type { VehicleType, Size, Make, VehicleModel, ServiceCategory, PayrollAdjustmentTemplate } from '@splashsphere/types'
-import { AdjustmentType } from '@splashsphere/types'
+import { AdjustmentType, FeatureKeys } from '@splashsphere/types'
 import { formatPeso } from '@/lib/format'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
@@ -943,50 +945,67 @@ function AccountTab() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const hasOnlineBooking = useHasFeature(FeatureKeys.OnlineBooking)
+  const [section] = useSectionParam('section', 'vehicle-types')
+
+  const actions = [
+    ...(hasOnlineBooking
+      ? [{ label: 'Booking', href: '/dashboard/settings/booking', icon: CalendarCheck }]
+      : []),
+    { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell },
+    { label: 'Import Data', href: '/dashboard/settings/import', icon: Upload },
+  ]
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/settings/notifications">
-            <Button variant="outline">
-              <Bell className="mr-2 h-4 w-4" /> Notifications
-            </Button>
-          </Link>
-          <Link href="/dashboard/settings/import">
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" /> Import Data
-            </Button>
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">Configure vehicle types, sizes, makes, categories, and shift settings</p>
       </div>
 
-      <Tabs defaultValue="vehicle-types">
-        <TabsList variant="line" className="flex-wrap h-auto">
-          <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
-          <TabsTrigger value="sizes">Sizes</TabsTrigger>
-          <TabsTrigger value="makes-models">Makes & Models</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="shift-config">Cash Drawer</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
-        </TabsList>
+      {/* Mobile-only action row — on md+ these live inside the SectionNav. */}
+      <div className="flex flex-wrap gap-2 md:hidden">
+        {actions.map((action) => (
+          <Link key={action.href} href={action.href}>
+            <Button variant="outline">
+              <action.icon className="mr-2 h-4 w-4" /> {action.label}
+            </Button>
+          </Link>
+        ))}
+      </div>
 
-        <TabsContent value="vehicle-types" className="mt-6"><VehicleTypesTab /></TabsContent>
-        <TabsContent value="sizes" className="mt-6"><SizesTab /></TabsContent>
-        <TabsContent value="makes-models" className="mt-6"><MakesModelsTab /></TabsContent>
-        <TabsContent value="categories" className="mt-6"><CategoriesTab /></TabsContent>
-        <TabsContent value="shift-config" className="mt-6"><ShiftConfigTab /></TabsContent>
-        <TabsContent value="payroll" className="mt-6">
-          <PayrollConfigSection />
-          <div className="my-6 border-t" />
-          <PayrollTemplatesTab />
-        </TabsContent>
-        <TabsContent value="account" className="mt-6"><AccountTab /></TabsContent>
-      </Tabs>
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="vehicle-types"
+          items={[
+            { value: 'vehicle-types', label: 'Vehicle Types', icon: Car },
+            { value: 'sizes', label: 'Sizes', icon: Ruler },
+            { value: 'makes-models', label: 'Makes & Models', icon: Tag },
+            { value: 'categories', label: 'Categories', icon: List },
+            { value: 'shift-config', label: 'Cash Drawer', icon: Wallet },
+            { value: 'payroll', label: 'Payroll', icon: Receipt },
+            { value: 'account', label: 'Account', icon: User },
+          ]}
+          actions={actions}
+        />
+
+        <div className="min-w-0 flex-1">
+          {section === 'vehicle-types' && <VehicleTypesTab />}
+          {section === 'sizes' && <SizesTab />}
+          {section === 'makes-models' && <MakesModelsTab />}
+          {section === 'categories' && <CategoriesTab />}
+          {section === 'shift-config' && <ShiftConfigTab />}
+          {section === 'payroll' && (
+            <>
+              <PayrollConfigSection />
+              <div className="my-6 border-t" />
+              <PayrollTemplatesTab />
+            </>
+          )}
+          {section === 'account' && <AccountTab />}
+        </div>
+      </div>
     </div>
   )
 }

@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// fast retrieval on the end-of-day report without re-querying all payments.
 /// </para>
 /// </summary>
-public sealed class ShiftPaymentSummary
+public sealed class ShiftPaymentSummary : ITenantScoped
 {
     private ShiftPaymentSummary() { } // EF Core
 

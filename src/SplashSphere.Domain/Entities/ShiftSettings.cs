@@ -4,7 +4,7 @@ namespace SplashSphere.Domain.Entities;
 /// Tenant-level configuration for cashier shift behaviour.
 /// One record per tenant; created on demand (upsert).
 /// </summary>
-public sealed class ShiftSettings : IAuditableEntity
+public sealed class ShiftSettings : IAuditableEntity, ITenantScoped
 {
     private ShiftSettings() { } // EF Core
 

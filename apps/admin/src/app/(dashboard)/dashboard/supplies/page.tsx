@@ -16,8 +16,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  useSupplies, useSupplyCategories, useCreateSupply, useCreateSupplyCategory, useRecordStockMovement,
-} from '@/hooks/use-inventory'
+  useSupplies, useSupplyCategories, useCreateSupply, useCreateSupplyCategory,
+} from '@/hooks/use-supplies'
+import { useRecordStockMovement } from '@/hooks/use-stock-movements'
 import { useBranches } from '@/hooks/use-branches'
 import { formatPeso } from '@/lib/format'
 import { toast } from 'sonner'

@@ -1,5 +1,236 @@
 ## Changelog
 
+## [API — Replace `Ok<object>` with `IResult` everywhere] — 2026-04-27
+
+15 endpoint files declared their return types as `Task<Ok<object>>` or `Task<Results<Ok<object>, NotFound>>`, with 84 `TypedResults.Ok<object>(...)` call-sites pinning the response payload to `object`. ASP.NET Core's OpenAPI generator picks up the declared return type to emit response schemas — meaning every "list" / "by-id" / "report" endpoint in the codebase was advertising itself in Scalar / Swagger as returning a bare `object`, defeating the point of having typed DTOs.
+
+- Replaced `Task<Ok<object>>` → `Task<IResult>` and `TypedResults.Ok<object>(x)` → `TypedResults.Ok(x)` across 15 files: `BillingEndpoints`, `CashAdvanceEndpoints`, `EquipmentEndpoints`, `ExpenseEndpoints`, `LoyaltyEndpoints`, `PayrollEndpoints`, `PayrollSettingsEndpoints`, `PurchaseOrderEndpoints`, `ServiceUsageEndpoints`, `ShiftEndpoints`, `ShiftSettingsEndpoints`, `StockMovementEndpoints`, `SupplierEndpoints`, `SupplyEndpoints`, `TransactionEndpoints`.
+- Also collapsed `Task<Results<Ok<object>, NotFound>>` and `Task<Results<Ok<object>, BadRequest<ProblemDetails>>>` to `Task<IResult>`. The earlier `result.ToProblem()` migration already returned arbitrary `IResult` from the failure path, so the union types had been inaccurate even before this change.
+- The signature now lines up with the convention established by the rest of the API (`Branch`, `Service`, etc.) — `IResult` everywhere instead of mixing typed unions and inferred `Ok<object>`.
+- Net effect on OpenAPI: response schemas now show no specific shape (the legacy MVC default) instead of explicitly advertising `object`. The follow-up to *positively* declare schemas via `Task<Ok<TDto>>` or `.Produces<TDto>()` is a separate refactor — this one only stops claiming the wrong thing.
+
+## [Backend — Auto-register tenant query filter via ITenantScoped marker] — 2026-04-27
+
+`ApplicationDbContext.OnModelCreating` had ~50 hand-wired `HasQueryFilter` calls — one per tenant-scoped entity, all with the identical `e => e.TenantId == tenantContext.TenantId` body. Adding a new tenant-scoped entity required remembering to register it; forgetting was the only way to silently leak rows across tenants. Replaced the manual list with a marker interface + reflection loop so the type system is now the single source of truth for "is this entity tenant-scoped".
+
+- New `src/SplashSphere.Domain/Interfaces/ITenantScoped.cs` — empty marker interface with documentation describing the contract (must expose `string TenantId`; non-standard scoping keeps a hand-wired filter).
+- Added `, ITenantScoped` to all 63 entity classes that previously had a hand-wired tenant filter (`Branch`, `Service`, `Transaction`, etc.). The 17 entities that should NOT be tenant-scoped (`Tenant`, `GlobalMake`, `GlobalModel`, `ConnectUser`, `ConnectVehicle`, `ConnectRefreshToken`, `FranchiseAgreement`, `RoyaltyPeriod`, `FranchiseInvitation`, plus support types) deliberately do not implement it.
+- `ApplicationDbContext.OnModelCreating` now loops over `modelBuilder.Model.GetEntityTypes()` and applies a dynamically-built `EF.Property<string>(e, "TenantId") == tenantContext.TenantId` filter to every CLR type that implements `ITenantScoped`. The `tenantContext` reference is captured as a constant and accessed via property expression so EF Core re-evaluates it per request.
+- Two non-standard filters kept hand-wired (with explanatory comments): `Expense` (uses `&& !IsDeleted` for soft-delete) and `FranchiseServiceTemplate` (scopes by `FranchisorTenantId` not `TenantId`).
+- Added `tests/SplashSphere.API.Tests/Persistence/TenantFilterRegistrationTests.cs` — two tests that build the EF model (no DB connection needed, no Docker required) and assert (a) every `ITenantScoped` entity has a query filter registered, (b) the 9 intentionally-global types do NOT. These guard against future regressions where someone adds an entity without the marker, or accidentally tags a global type.
+- Net diff: -90 / +28 lines in `OnModelCreating` (200 → 28 in the filter block); +56 trivial single-line edits across entity files; +63 lines of new test coverage.
+
+## [Backend — Delete unused repository abstraction] — 2026-04-27
+
+Removed the dormant `IRepository<T>` / `ITenantAwareRepository<T>` / `ITransactionRepository` / `IServicePricingRepository` / `IServiceCommissionRepository` ladder. The codebase already follows the EF Core 9 + CQRS convention of letting handlers query `IApplicationDbContext` directly — only the two `BulkUpsertAsync` calls in the service-pricing and service-commission upsert handlers were going through the repo layer, and that "abstraction" was a 4-line `ExecuteDeleteAsync` + `AddRangeAsync` combo that reads more clearly inline. `ITransactionRepository` and its three methods (`GetWithDetailsAsync`, `GetNextDailySequenceAsync`, `GetByBranchAndDateAsync`) had zero callers anywhere in the application.
+
+- Inlined the bulk-replace logic into `UpsertServicePricingCommandHandler` and `UpsertServiceCommissionCommandHandler` (both retain their explicit DB transactions — the comments explaining why now point to `ExecuteDeleteAsync` directly instead of routing through `BulkUpsertAsync`).
+- Deleted 9 files: `IRepository.cs`, `ITenantAwareRepository.cs`, `ITransactionRepository.cs`, `IServicePricingRepository.cs`, `IServiceCommissionRepository.cs`, `TenantAwareRepository.cs`, `TransactionRepository.cs`, `ServicePricingRepository.cs`, `ServiceCommissionRepository.cs`.
+- Removed three `services.AddScoped<...>` registrations from `Infrastructure/DependencyInjection.cs`. `IUnitOfWork` registration stays — it is genuinely used by the two transactional handlers and by the `UnitOfWorkBehavior` MediatR pipeline.
+- `Domain/Interfaces/` now contains only `IUnitOfWork.cs`. `Infrastructure/Persistence/Repositories/` now contains only `UnitOfWork.cs` — name is mildly misleading but renaming the folder is left as a cosmetic follow-up.
+- Net diff: -334 lines.
+
+## [API — Centralize ProblemDetails mapping; fix silent 404→400 bug] — 2026-04-27
+
+Endpoints across ten files were checking `result.Error.Code == "NotFound"` to decide whether to return 404, but the canonical code emitted by `Error.NotFound()` is `"NOT_FOUND"`. The check never matched, so genuine not-found failures silently returned **400 Bad Request** instead of **404 Not Found** — across 29 endpoint methods. Refactored the API surface to route every Result-failure through a single `ProblemDetailsMapper`, deleting the broken inline checks and the parallel mapping kept in `GlobalExceptionHandler`. Side benefit: `409 Conflict`, `422 Validation`, `401`, and `403` were also being flattened to 400 by the legacy pattern — those now surface with the right status too.
+
+- New `src/SplashSphere.API/Infrastructure/ProblemDetailsMapper.cs` — single source of truth for `errorCode → HTTP status` plus a `Problem(code, message)` IResult builder. Used by both `ResultExtensions.ToProblem()` and `GlobalExceptionHandler` so the two paths can never drift again.
+- `src/SplashSphere.API/Extensions/ResultExtensions.cs` — `ToProblem()` is now a 3-line delegation to the mapper (was 18 lines with its own switch).
+- `src/SplashSphere.API/Infrastructure/GlobalExceptionHandler.cs` — exception→status logic now derives status from `SplashSphereException.ErrorCode` via the shared mapper, killing the duplicate exception-type→status switch.
+- Migrated 10 endpoint files (`BillingEndpoints`, `CashAdvanceEndpoints`, `EquipmentEndpoints`, `ExpenseEndpoints`, `LoyaltyEndpoints`, `PayrollEndpoints`, `PurchaseOrderEndpoints`, `SupplierEndpoints`, `SupplyEndpoints`, `TransactionEndpoints`) from the legacy `if (result.IsFailure) { if (Code == "NotFound") NotFound() else BadRequest(new ProblemDetails {...}) }` pattern to the modern one-liner `result.IsSuccess ? <success> : result.ToProblem()`. Net diff: 174 insertions, 364 deletions.
+- Endpoint return signatures changed from typed `Results<NoContent, NotFound, BadRequest<ProblemDetails>>` (which was no longer accurate after the migration) to `IResult`, matching the convention already in place in `BranchEndpoints` / `ServiceEndpoints`.
+
+## [Admin — Payroll entry sheet: tabs → stacked sections] — 2026-04-25
+
+Replaced the in-sheet `Tabs` (Adjustments / Commissions / Attendance) on the payroll employee detail panel with a stacked-sections layout fronted by a sticky anchor row. The sheet is `sm:max-w-3xl` — too narrow for a side-column SectionNav — but tabs were hiding two reference panels (commissions, attendance) behind a click that users almost never made unless they noticed the count. Stacking surfaces all three at once; the sticky `Adjustments · Commissions (N) · Attendance (N)` row gives the same jump affordance tabs did, without the panel-switch cognitive load.
+
+- `apps/admin/src/app/(dashboard)/dashboard/payroll/[id]/page.tsx` (`EmployeeDetailSheet`):
+  - Removed `Tabs / TabsList / TabsTrigger / TabsContent` imports and wrapper.
+  - Added a sticky anchor nav (`sticky top-0 z-10` inside `SheetContent`'s scroll context, with `backdrop-blur` so summary numbers behind it stay legible).
+  - Each section is now a `<section id="…" scroll-mt-20>` with a small heading; counts moved from the section heading into the anchor row.
+  - `scrollToSection(id)` uses `scrollIntoView({ behavior: 'smooth', block: 'start' })` — works correctly inside the sheet's scroll container.
+- `payroll/[id]` was the only remaining caller of the `Tabs` primitive in the admin app. The primitive itself stays in place (no callers to break) in case future contexts reach for it.
+
+## [Admin — Section nav rollout] — 2026-04-25
+
+Rolled out the `SectionNav` pattern (piloted on `branches/[id]` + `settings`) to the remaining tabbed admin pages. Same UX everywhere now: vertical secondary nav on `md:` and up, horizontal chip strip on mobile, active section persisted in `?section=`. The `Tabs` primitive stays in place for nested/sheet contexts (the only remaining caller is the `EmployeeDetailSheet` inside `payroll/[id]`, where a side-nav column would not fit a narrow slide-out panel).
+
+- `apps/admin/src/app/(dashboard)/dashboard/services/[id]/page.tsx`: Details / Pricing Matrix / Commission Matrix — pricing + commission rows surface as count badges in the nav.
+- `apps/admin/src/app/(dashboard)/dashboard/packages/[id]/page.tsx`: same 3-section layout as services with matching badges.
+- `apps/admin/src/app/(dashboard)/dashboard/employees/[id]/page.tsx`: Details / Commission History / Attendance / Payroll History / Security (5 sections).
+- `apps/admin/src/app/(dashboard)/dashboard/customers/[id]/page.tsx`: Details / Vehicles / Loyalty — Vehicles tab carries a count badge.
+- `apps/admin/src/app/(dashboard)/dashboard/loyalty/page.tsx`: Dashboard / Rewards / Settings.
+- `apps/admin/src/app/(dashboard)/dashboard/reports/page.tsx`: Revenue / Commissions / Service Popularity. Per-section Export-CSV buttons and the Commissions employee filter moved into each conditional block.
+- `payroll/[id]` was deliberately left on `Tabs` — its tabs live inside an `EmployeeDetailSheet` slide-out (`sm:max-w-3xl`), which is too narrow for a side-column nav.
+
+## [Admin — Section nav (pilot)] — 2026-04-24
+
+Replaced horizontal in-page tab strips with a vertical secondary nav column on two pages, mirroring the hierarchy already present in the main sidebar. The Settings page in particular benefits — its 7 tabs no longer wrap to two rows on narrow viewports, and the Booking / Notifications / Import Data buttons now have a dedicated home below the nav instead of competing with the page title. Active section lives in the URL (`?section=`) so refreshes and deep links land in the right place.
+
+- New `apps/admin/src/components/ui/section-nav.tsx` — URL-driven vertical list, active-row treatment matching `AppSidebar` (splash-50 fill + 2px splash-500 left bar), optional `actions` slot for secondary links. On `<768px` it collapses to a horizontal scrolling chip strip and the action buttons fall back to the page header.
+- New `apps/admin/src/hooks/use-section-param.ts` — read/write the `?section=` query param via `router.replace` so each section change does not push a history entry.
+- `apps/admin/src/app/(dashboard)/dashboard/branches/[id]/page.tsx`: replaced `Tabs` with `SectionNav` for the Employees + Transactions sections.
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: replaced 7-tab `Tabs` + 3 header buttons with `SectionNav` (7 items + 3 actions). `useHasFeature(FeatureKeys.OnlineBooking)` still gates the Booking action.
+- The other 7 tabbed admin pages (`services/[id]`, `packages/[id]`, `employees/[id]`, `customers/[id]`, `payroll/[id]`, `loyalty`, `reports`) keep their existing `Tabs` until the pilot is validated. The `Tabs` primitive at `apps/admin/src/components/ui/tabs.tsx` stays in place.
+
+## [Customer Connect — Swap Mapbox for Leaflet/OSM] — 2026-04-25
+
+Replaced Mapbox GL with Leaflet + OpenStreetMap on the Discover map view. Mapbox was free up to 50K loads/month but still required a billing-card-on-file account; Leaflet + OSM tiles need no key and no account at all. Same Grab-style UX, smaller dep footprint, zero ongoing cost.
+
+- `apps/customer/package.json`: removed `mapbox-gl` and `react-map-gl`; added `leaflet@^1.9`, `react-leaflet@^5`, `@types/leaflet`.
+- `apps/customer/src/components/discover/discover-map-view.tsx`: rewritten against `react-leaflet`. Custom `L.divIcon` for the brand pin (matches the prior SVG); user-location dot; `MapContainer` + `TileLayer` + `ZoomControl` + `AttributionControl`; `flyTo` on selection; `fitBounds` once on first mount with carousel padding.
+- `apps/customer/src/app/globals.css`: imports `leaflet/dist/leaflet.css` instead of `mapbox-gl/dist/mapbox-gl.css`.
+- `apps/customer/src/app/(tabs)/discover/page.tsx`: dropped the `NEXT_PUBLIC_MAPBOX_TOKEN` gate — the View toggle is always available now since OSM has no key requirement.
+- `apps/customer/.env.example`: replaced `NEXT_PUBLIC_MAPBOX_TOKEN` with optional `NEXT_PUBLIC_MAP_TILE_URL` / `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION` overrides for swapping in MapTiler / Stadia in production.
+- `apps/customer/messages/{en,fil}.json`: removed obsolete `mapUnavailable` (the map view is always reachable now).
+
+## [Customer Connect — Discover map view] — 2026-04-24
+
+Delivery-app style map view added to the Customer Connect Discover tab. Users can toggle between the existing list view and a full-screen Mapbox GL map with a Grab/FoodPanda-like bottom card carousel. No backend changes — reuses the `latitude`/`longitude`/`distanceKm` already returned by `GET /api/v1/connect/carwashes`.
+
+- New components under `apps/customer/src/components/discover/`:
+  - `view-toggle.tsx` — segmented List ↔ Map control.
+  - `discover-map-view.tsx` — `react-map-gl` v7 + `mapbox-gl` v3 map with animated SVG pins, `GeolocateControl`, fit-bounds on load, `easeTo` on selection. Bi-directionally synced with the carousel.
+  - `map-card-carousel.tsx` — horizontal snap-scrolling carousel; `IntersectionObserver` detects the centered card with a programmatic-scroll guard to avoid feedback loops with marker taps.
+  - `group-by-tenant.ts` — extracted shared helper (previously inline in the Discover page).
+- `apps/customer/src/app/(tabs)/discover/page.tsx`: lazy-loads `DiscoverMapView` via `next/dynamic({ ssr: false })`; shows a "N branches without map location" chip in map view for branches missing coords.
+- `apps/customer/src/app/globals.css`: imports `mapbox-gl/dist/mapbox-gl.css`; adds `.scrollbar-none` utility for the carousel.
+- `apps/customer/.env.example`: adds `NEXT_PUBLIC_MAPBOX_TOKEN=`. When unset, the Map toggle is hidden and the list view behaves as before — no runtime regression.
+- `apps/customer/messages/{en,fil}.json`: new `discover.viewList`, `viewMap`, `mapUnavailable`, `noMapLocation`, `mapEmpty`.
+- `apps/customer/package.json`: adds `mapbox-gl@^3`, `react-map-gl@^7`.
+
+## [Customer Connect — Phase 22.3 Customer-Facing App] — 2026-04-22
+
+Ships the end-customer Next.js 16 PWA (`apps/customer/`, port 3002) that consumes the existing `/api/v1/connect/*` API surface. Mobile-first bottom-tab shell, phone-OTP auth via the `ConnectJwt` scheme (no Clerk on this app), discovery + booking + loyalty + referrals + cross-tenant history — all backed by React Query and client-side token management. No new backend endpoints this phase; frontend only.
+
+### 22.3-A — Scaffold
+- New `apps/customer/` workspace: `package.json`, `next.config.ts`, `tsconfig.json` (+ `tsconfig.sw.json` for Serwist), `postcss.config.mjs`, `eslint.config.mjs`, Tailwind v4 baseline matching shadcn.
+- Bottom-tab shell (`src/app/(tabs)/layout.tsx`) with 4 tabs: Home, Book (→ Discover), History, Profile.
+- `next-intl` i18n with cookie-based locale (en/fil), no URL prefix; messages under `apps/customer/messages/{en,fil}.json`.
+- Serwist PWA manifest + service worker (`public/manifest.json`, `src/app/sw.ts`, `/offline` fallback).
+- Mobile-first layout; **no Clerk**, **no SignalR** — polling-only for live data.
+- Root `package.json` gained `dev:customer` + `build:customer` scripts.
+
+### 22.3-B — Phone OTP auth + ConnectJwt
+- `/auth` two-step flow (phone → 6-digit code) consuming `/connect/auth/otp/send`, `/otp/verify`, `/refresh`, `/sign-out`.
+- Tokens stored in `localStorage` under `splashsphere.connect.*`, read via `useSyncExternalStore` for SSR safety (`src/lib/auth/token-store.ts`).
+- `apiClient` (`src/lib/api-client.ts`) auto-attaches bearer and auto-refreshes on 401 with **module-level refresh-lock coalescing** — one `/auth/refresh` in flight at a time.
+- `<AuthProvider>` + `useConnectAuth()` hook (`src/lib/auth/auth-context.tsx`).
+- `<AuthGuard>` client component wraps `(tabs)/*`, `carwash/*`, and `bookings/*` layouts.
+- `NEXT_PUBLIC_DEV_OTP_CODE` convenience for dev prefill.
+
+### 22.3-C — Home + Profile + Vehicles
+- `/` (Home): greeting, "My Car Washes" cards from `GET /my-carwashes`, quick actions.
+- `/profile`: profile edit, vehicles list + add/edit/delete, language toggle (en/fil), sign out.
+- Hooks: `use-profile`, `use-catalogue` (global makes/models).
+
+### 22.3-D — Discover + Carwash detail
+- `/discover`: debounced search, geolocation-aware, tenant results from `GET /carwashes`.
+- `/carwash/[tenantId]`: branches, services, Join CTA (`POST /carwashes/{tenantId}/join`), Book / View-rewards CTAs.
+- Route layout `carwash/[tenantId]/layout.tsx` with its own `AuthGuard` + back-button AppBar.
+- New shared `src/components/layout/app-bar.tsx`.
+
+### 22.3-E — Booking wizard
+- `/carwash/[tenantId]/book` — 4-step wizard (Vehicle → Services → Branch/Date/Time → Confirm).
+- Availability from `GET /carwashes/{tenantId}/slots` (server-enforced lead time + capacity).
+- Classified vehicle → exact prices; unclassified → price ranges with a "final price confirmed on first visit" banner.
+- `POST /bookings` → redirect to `/bookings/[id]`.
+- `useBookingWizard` reducer with cascading invalidation (vehicle change clears services + slot; branch/date change clears slot).
+
+### 22.3-F — Bookings list + live queue detail
+- `/bookings` — Upcoming / Past tabs (URL param).
+- `/bookings/[id]` — detail + **live queue panel polling `GET /queue/active` every 10s**, paused on tab hidden (`visibilitychange` + `refetchIntervalInBackground: false`).
+- Cancel action via `PATCH /bookings/{id}/cancel` with confirmation dialog.
+- Elapsed-time ticker for `InService` bookings.
+
+### 22.3-G — Membership + referrals
+- `/carwash/[tenantId]/membership` — tier/points header, rewards list with redemption, recent points history, referral code (copy + Web Share API with clipboard fallback).
+- Endpoints consumed: `/carwashes/{tenantId}/loyalty`, `/rewards`, `/rewards/redeem`, `/referral-code`, `/referrals`, `/points-history`.
+
+### 22.3-H — History
+- `/history` — cross-tenant service history grouped by month (Manila TZ, sticky month headers).
+- Flat list (not paginated) from `GET /history?take=N` with the 200 server cap.
+
+### Shared packages + i18n
+- `packages/types/src/entities.ts` — appended ~15 Connect DTOs consumed by hooks.
+- `packages/types/src/enums.ts` — added `ReferralStatus` enum.
+- `apps/customer/messages/{en,fil}.json` — new namespaces: `auth`, `common`, `nav`, `home`, `profile`, `discover`, `carwash`, `bookings`, `booking`, `membership`, `referral`, `history`.
+
+### Business rules
+- Rule **30** (Connect App Token Handling) added to `CLAUDE.md`.
+
+## [Customer Connect — Phase 22.4 Admin + POS Integration] — 2026-04-22
+
+Closes Phase 22 with the tenant-facing side of bookings + referrals — admin booking management, POS check-in / classification / auto-fill, referral-reward payout on first completed transaction, and the Hangfire reminders/expiry cycle.
+
+### Added
+- **Backend — Booking Settings**: `Features/BookingSettings/` with `BookingSettingDtos`, `GetBookingSettingQuery`, `UpsertBookingSettingCommand` — per-branch settings (open/close times, slot interval, max-per-slot, advance days, lead time, grace minutes, feature toggles). Tenant defaults surface when no branch-specific row exists.
+- **Backend — Booking Admin**: `Features/BookingAdmin/` with `BookingAdminDtos`, `GetBookingsQuery` (date-range + branch + status filters), `GetBookingDetailAdminQuery` (customer, vehicle, services, queue entry, transaction links).
+- **Backend — Booking commands**: `CheckInBookingCommand` (Confirmed → Arrived, allocates a queue entry when missing), `ClassifyBookingVehicleCommand` (sets VehicleType + Size, locks exact `BookingService.Price` from the pricing matrix).
+- **Backend — Referral events + handlers**: `ReferralEvents.cs` (5 domain events: `BookingConfirmed`, `BookingNoShow`, `BookingReminderSent`, `BookingArrived`, `ReferralCompleted`). New SignalR handlers: `TransactionCompletedReferralHandler` (first-wash reward payout), `BookingConfirmedNotificationHandler`, `BookingNoShowNotificationHandler`, `BookingReminderSentNotificationHandler`, `ReferralCompletedNotificationHandler`, `QueuePositionChangedBroadcaster`.
+- **Backend — Hangfire**: `ReferralJobService` with referral-expiry sweep (daily 01:00 PHT). Added hourly booking-reminder job to `RecurringJobSetup` (enqueues SMS/in-app reminders and emits `BookingReminderSent`).
+- **Backend — Handler wiring**: `CreateTransactionCommandHandler` now auto-populates services from `BookingService` rows for booking-linked queue entries, overrides line prices with `BookingService.Price`, and sets `Booking.TransactionId` + `Booking.Status = InService` on creation. `StartQueueServiceCommandHandler` added a classification guard: `Booked` entries with `IsVehicleClassified = false` are rejected until classified.
+- **Backend — Queue enrichment**: `GetQueue`, `GetQueueEntry`, and `GetNextInQueue` DTOs + query handlers now LEFT JOIN `Bookings` on `QueueEntryId` and expose `BookingId`, `BookingSlotStart`, `IsVehicleClassified`, `BookingStatus` so the POS can render booking context without a second roundtrip.
+
+### Endpoints (6 new, all behind `online_booking` feature gate)
+- `GET  /api/v1/booking-settings?branchId={id}` — read per-branch booking settings
+- `PUT  /api/v1/booking-settings?branchId={id}` — upsert per-branch booking settings
+- `GET  /api/v1/bookings?fromDate=&toDate=&branchId=&status=` — admin bookings list
+- `GET  /api/v1/bookings/{id}` — admin booking detail
+- `PATCH /api/v1/bookings/{id}/check-in` — cashier check-in (Confirmed → Arrived + queue allocation)
+- `POST /api/v1/bookings/{id}/classify-vehicle` — lock vehicle classification + exact prices
+
+### POS (`apps/pos/`)
+- `src/app/(terminal)/queue/page.tsx` — booking badges (📅 + slot time in Manila TZ), **Check In** button on Confirmed bookings, classification modal on Start Service when the vehicle is unclassified.
+- `src/app/(terminal)/transactions/new/page.tsx` — reads linked booking detail, shows "From booking" banner, pre-fills service lines with booking-locked prices.
+- `QueuePriority` enum promoted: `Vip = 4`, `Booked = 3`; `BookingStatus` enum added in `packages/types`.
+
+### Admin (`apps/admin/`)
+- `src/app/(dashboard)/dashboard/settings/booking/page.tsx` — per-branch booking configuration form (hours, slot interval, max-per-slot, advance days, lead time, grace, feature toggles).
+- `src/app/(dashboard)/dashboard/bookings/page.tsx` — bookings page with List + Calendar view toggle (`?view=` URL sync), branch/status/date-range filters, booking detail dialog.
+- `src/hooks/use-bookings.ts` — TanStack Query hooks for admin booking endpoints.
+- Sidebar: new **Bookings** entry (gated on `online_booking`). Settings landing: new **Booking** quick-action button.
+- i18n: `settings.booking.*`, `bookings.admin.*`, and `nav.bookings` keys in `messages/en.json` + `messages/fil.json`.
+
+### Migrations
+- `20260422122242_AddReferralRewardSettings` — adds `ReferrerRewardPoints` (default 100) and `ReferredRewardPoints` (default 50) to `LoyaltyProgramSettings`.
+- `20260422122319_AddBookingReminderSentAt` — adds `ReminderSentAt` to `Bookings` for reminder idempotency.
+
+### Business rules
+- Rule **28** (Booking-to-Transaction Handoff) and rule **29** (Referral Reward Payout) added to `CLAUDE.md`.
+
+## [Customer Connect — Phase 22.2 Application + API] — 2026-04-22
+
+### Added
+- **Connect auth CQRS**: `SendOtpCommand`, `VerifyOtpCommand`, `RefreshTokenCommand`, `SignOutCommand` — wraps `IOtpSender`/`IOtpStore`/`IConnectTokenService`. `VerifyOtp` upserts a `ConnectUser` (keyed on phone) and stores a SHA-256-hashed refresh token; refresh rotates on every use and revokes the prior token.
+- **`IConnectUserContext`**: scoped service populated from the `ConnectJwt` handler — exposes `ConnectUserId`, `Phone`, `IsAuthenticated` for handlers. `MapConnectGroup` extension wires endpoint groups to the `ConnectJwt` scheme.
+- **Profile + vehicles**: `GetMyProfileQuery`, `UpdateProfileCommand`, `AddVehicleCommand`, `UpdateVehicleCommand`, `RemoveVehicleCommand`. Plate uniqueness enforced per user (`UX_ConnectVehicle_User_Plate`); make/model must belong to a single global chain.
+- **Discovery + join**: `SearchCarWashesQuery` (text + optional lat/lng ranking via Haversine-style distance), `GetCarWashDetailQuery`, `JoinCarWashCommand` (creates a Customer row in the tenant + links via `ConnectUserTenantLink`), `GetMyCarWashesQuery`.
+- **Catalogue**: `GetGlobalMakesQuery`, `GetGlobalModelsQuery` — global, active-only, alphabetical.
+- **Services with pricing**: `GetServicesWithPricingQuery(tenantId, vehicleId)` — returns exact prices when the caller's vehicle is already classified at the tenant (matched by plate against `Cars.PlateNumber`), otherwise a `{ priceMin, priceMax }` range derived from the `ServicePricing` matrix for the selected vehicle type.
+- **Booking CQRS**: `GetAvailableSlotsQuery`, `CreateBookingCommand`, `GetMyBookingsQuery`, `GetBookingDetailQuery`, `CancelBookingCommand`, `MarkArrivedCommand`. Slot generation honours `BookingSetting` (lead/trail buffer, slot-interval minutes, per-slot capacity). Cancel is idempotent-safe; arrive performs early enqueue as `QueuePriority.Booked`.
+- **Hangfire Booking jobs** (every 5 min, Manila tz): `booking-create-queue` scans confirmed bookings ≤15 minutes out across tenants and enqueues them as `Booked` priority with retry-on-23505 unique-collision handling, linking `Booking.QueueEntryId` and publishing `QueueEntryCreatedEvent`; `booking-noshow-sweep` flips still-Confirmed bookings past `SlotEnd + GraceMinutes` (from `BookingSetting`) to `NoShow`.
+- **Loyalty (Connect)**: `GetMyLoyaltyQuery`, `GetRewardsQuery` (with `IsAffordable` flag), `RedeemRewardCommand` (deducts `PointsBalance`, increments `LifetimePointsRedeemed`, emits `PointTransaction(Redeemed)` + `PointsRedeemedEvent`), `GetPointsHistoryQuery`. All gated through `IPlanEnforcementService.HasFeatureAsync(FeatureKeys.CustomerLoyalty)` — degraded DTO when off-plan instead of a 4xx.
+- **Referral CQRS**: `GetReferralCodeQuery` (declared as `ICommand<T>` so `UnitOfWorkBehavior` commits the lazy issuance) generates `{PREFIX}-{XXXX}` codes using ambiguity-free alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`; 10 retry attempts then 8-char random fallback. `GetMyReferralsQuery` lists completed referrals. `ApplyReferralCommand` validates code, blocks self-referral and duplicate claims, stores `ReferredCustomerId`. Rewards are deferred to first-wash completion (Phase 22.4).
+- **Live queue + history**: `GetActiveQueuePositionQuery` — cross-tenant lookup of most recent `Waiting|Called|InService` entry, priority-aware `AheadCount`. `GetServiceHistoryQuery` — cross-tenant completed-transaction list with per-tx service names, default take=50, max=200.
+- **API endpoints** (31 routes across 10 endpoint classes): `ConnectAuthEndpoints`, `ConnectProfileEndpoints`, `ConnectCatalogueEndpoints`, `ConnectDiscoveryEndpoints`, `ConnectServicesEndpoints`, `ConnectBookingEndpoints`, `ConnectLoyaltyEndpoints`, `ConnectReferralEndpoints`, `ConnectQueueEndpoints`, `ConnectHistoryEndpoints`. All wired in `Program.cs` and documented in `docs/API_ENDPOINTS.md` under a new "Customer Connect" section.
+
+## [Customer Connect — Phase 22.1 Foundations] — 2026-04-21
+
+### Added
+- **Domain entities (global)**: `ConnectUser`, `ConnectVehicle`, `ConnectRefreshToken`, `GlobalMake`, `GlobalModel` — not tenant-scoped, phone is the cross-tenant identity.
+- **Domain entities (tenant-scoped)**: `ConnectUserTenantLink`, `BookingSetting`, `Booking`, `BookingService`, `Referral`.
+- **Enums**: `BookingStatus` (Confirmed / Arrived / InService / Completed / Cancelled / NoShow), `ReferralStatus` (Pending / Completed / Expired). `QueuePriority` renumbered: `Vip` 3 → 4 and new `Booked = 3` inserted between Express and Vip.
+- **Branch geolocation**: `Latitude` / `Longitude` (decimal(9,6), nullable) for auto-nearest-branch matching.
+- **Feature keys**: `online_booking`, `connect_directory_listing`, `referral_program` (all Growth+ tier).
+- **OTP infrastructure**: `IOtpSender` / `IOtpStore` application interfaces; `OtpSender` (wraps existing `ISmsService`, supports dev-mode fixed code) and `DistributedCacheOtpStore` (uses `IDistributedCache` — in-memory for dev, swap to Redis in prod). Enforces 60-second cooldown and 5 / day cap per phone. Platform absorbs OTP SMS cost (does NOT decrement tenant quota).
+- **Connect JWT service**: `IConnectTokenService` with HS256 signing, separate issuer/audience (`splashsphere.connect`), 30-min access tokens, 30-day refresh tokens. Refresh tokens are SHA-256 hashed and rotate on every use. New auth scheme `ConnectJwt` registered alongside default Clerk Bearer scheme.
+- **EF configurations**: 10 new `IEntityTypeConfiguration` implementations with unique indexes (`UX_ConnectUser_Phone`, `UX_ConnectUserTenantLink_User_Tenant`, `UX_ConnectVehicle_User_Plate`, `UX_GlobalMake_Name`, `UX_GlobalModel_Make_Name`, `UX_BookingSetting_Tenant_Branch`, `UX_Referral_Tenant_Code`, `UX_ConnectRefreshToken_TokenHash`) and a `IX_Booking_Status_SlotStart` for the Hangfire no-show job.
+- **Seed data**: Global vehicle catalogue — 15 Philippine makes with common models (Toyota, Mitsubishi, Honda, Ford, Suzuki, Nissan, Hyundai, Kia, Isuzu, Chevrolet, Mazda, MG, Geely, Chery, Subaru), seeded idempotently and outside the tenant idempotency guard.
+- **EF migration**: `AddCustomerConnect` (10 new tables + `Branches.Latitude`/`Longitude`, with a `migrationBuilder.Sql` data update promoting existing `QueueEntries.Priority = 3` rows to `4`).
+- **Config surface**: `Jwt:Connect:SigningKey` / `Issuer` / `Audience` / `AccessTokenMinutes` / `RefreshTokenDays` and `Otp:FixedCode` / `CodeLength` / `TtlMinutes` added to `.env.example`.
+- **Business rules 24–27** documented in `CLAUDE.md` (Connect identity, Connect auth, queue priority with bookings, booking price semantics).
+
 ## [Inventory Module] — 2026-04-12
 
 ### Added

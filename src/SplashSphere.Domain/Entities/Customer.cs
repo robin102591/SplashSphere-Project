@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// Customers are optional — a <see cref="Car"/> can exist without a linked customer
 /// (walk-in vehicle), but associating one enables history tracking and loyalty features.
 /// </summary>
-public sealed class Customer : IAuditableEntity
+public sealed class Customer : IAuditableEntity, ITenantScoped
 {
     private Customer() { } // EF Core
 

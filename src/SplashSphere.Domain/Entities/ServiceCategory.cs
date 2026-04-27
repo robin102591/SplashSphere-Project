@@ -5,7 +5,7 @@ namespace SplashSphere.Domain.Entities;
 /// (e.g. "Exterior Wash", "Interior Detailing", "Engine Treatment").
 /// Scoped per tenant.
 /// </summary>
-public sealed class ServiceCategory : IAuditableEntity
+public sealed class ServiceCategory : IAuditableEntity, ITenantScoped
 {
     private ServiceCategory() { } // EF Core
 

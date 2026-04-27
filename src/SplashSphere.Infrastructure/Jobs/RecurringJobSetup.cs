@@ -76,6 +76,42 @@ public static class RecurringJobSetup
             cronExpression: "*/5 * * * *",
             options: new RecurringJobOptions { TimeZone = Manila });
 
+        // ── Booking (Customer Connect) ───────────────────────────────────────
+
+        // Every 5 minutes — auto-enqueue Confirmed/Arrived bookings whose slot
+        // starts within the next 15 minutes and have no queue entry yet.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-create-queue",
+            methodCall: job => job.CreateQueueFromBookingsAsync(CancellationToken.None),
+            cronExpression: "*/5 * * * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // Every 5 minutes — flip still-Confirmed bookings to NoShow once the
+        // slot's end + per-branch grace window has elapsed.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-noshow-sweep",
+            methodCall: job => job.MarkBookingNoShowsAsync(CancellationToken.None),
+            cronExpression: "*/5 * * * *",
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // Every hour — fire 2-hour pre-slot reminder SMS to customers with
+        // Confirmed bookings. Counts against tenant SMS monthly quota.
+        manager.AddOrUpdate<BookingJobService>(
+            recurringJobId: "booking-reminder",
+            methodCall: job => job.SendBookingReminderAsync(CancellationToken.None),
+            cronExpression: Cron.Hourly(),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
+        // ── Referrals ────────────────────────────────────────────────────────
+
+        // Daily 01:00 PHT — expire Pending referral codes older than 90 days
+        // that were never redeemed (no ReferredCustomerId).
+        manager.AddOrUpdate<ReferralJobService>(
+            recurringJobId: "referral-expiry",
+            methodCall: job => job.ExpireReferralsAsync(CancellationToken.None),
+            cronExpression: Cron.Daily(hour: 1),
+            options: new RecurringJobOptions { TimeZone = Manila });
+
         // ── Billing ──────────────────────────────────────────────────────────
 
         // Daily 9 AM PHT — remind tenants with trials expiring in 1-3 days.

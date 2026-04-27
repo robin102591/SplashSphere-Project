@@ -14,7 +14,7 @@ namespace SplashSphere.Domain.Entities;
 /// Inventory is <b>not</b> restored on cascade delete — use the Refund or Cancel flow.
 /// </para>
 /// </summary>
-public sealed class TransactionMerchandise : IAuditableEntity
+public sealed class TransactionMerchandise : IAuditableEntity, ITenantScoped
 {
     private TransactionMerchandise() { } // EF Core
 

@@ -5,9 +5,11 @@
   "scripts": {
     "dev:admin": "pnpm --filter @splashsphere/admin dev",
     "dev:pos": "pnpm --filter @splashsphere/pos dev",
+    "dev:customer": "pnpm --filter @splashsphere/customer dev",
     "dev:marketing": "pnpm --filter @splashsphere/marketing dev",
     "build:admin": "pnpm --filter @splashsphere/admin build",
     "build:pos": "pnpm --filter @splashsphere/pos build",
+    "build:customer": "pnpm --filter @splashsphere/customer build",
     "build:marketing": "pnpm --filter @splashsphere/marketing build"
   }
 }

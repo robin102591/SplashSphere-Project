@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// look up <c>ServicePricing</c> and <c>ServiceCommission</c> matrix entries.
 /// Scoped per tenant.
 /// </summary>
-public sealed class Size : IAuditableEntity
+public sealed class Size : IAuditableEntity, ITenantScoped
 {
     private Size() { } // EF Core
 

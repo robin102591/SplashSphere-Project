@@ -11,7 +11,7 @@ namespace SplashSphere.Domain.Entities;
 /// whether stock increases ("In" types) or decreases ("Out" types).
 /// </para>
 /// </summary>
-public sealed class StockMovement : IAuditableEntity
+public sealed class StockMovement : IAuditableEntity, ITenantScoped
 {
     private StockMovement() { } // EF Core
 

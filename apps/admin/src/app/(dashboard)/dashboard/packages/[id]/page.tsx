@@ -1,13 +1,14 @@
 'use client'
 
 import { use, useState } from 'react'
-import { Pencil, Power, PowerOff, CheckCircle2 } from 'lucide-react'
+import { Pencil, Power, PowerOff, CheckCircle2, FileText, DollarSign, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SectionNav } from '@/components/ui/section-nav'
+import { useSectionParam } from '@/hooks/use-section-param'
 import {
   Sheet,
   SheetContent,
@@ -105,6 +106,7 @@ export default function PackageDetailPage({
 }) {
   const { id } = use(params)
   const [editOpen, setEditOpen] = useState(false)
+  const [section] = useSectionParam('section', 'details')
 
   const { data: pkg, isLoading, isError } = usePackage(id)
   const { data: vehicleTypes = [], isLoading: vtLoading } = useVehicleTypes()
@@ -194,60 +196,60 @@ export default function PackageDetailPage({
         }
       />
 
-      {/* Tabs */}
-      <Tabs defaultValue="details">
-        <TabsList variant="line">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="pricing">
-            Pricing Matrix
-            {pkg.pricing.length > 0 && (
-              <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
-                {pkg.pricing.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="commissions">
-            Commission Matrix
-            {pkg.commissions.length > 0 && (
-              <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
-                {pkg.commissions.length}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+      {/* Section nav + content */}
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        <SectionNav
+          className="md:w-56 md:shrink-0"
+          defaultValue="details"
+          items={[
+            { value: 'details', label: 'Details', icon: FileText },
+            {
+              value: 'pricing',
+              label: 'Pricing Matrix',
+              icon: DollarSign,
+              badge: pkg.pricing.length > 0 ? pkg.pricing.length : undefined,
+            },
+            {
+              value: 'commissions',
+              label: 'Commission Matrix',
+              icon: Percent,
+              badge: pkg.commissions.length > 0 ? pkg.commissions.length : undefined,
+            },
+          ]}
+        />
 
-        <TabsContent value="details" className="mt-6">
-          <DetailsTab
-            description={pkg.description}
-            services={pkg.services}
-            createdAt={pkg.createdAt}
-            updatedAt={pkg.updatedAt}
-          />
-        </TabsContent>
-
-        <TabsContent value="pricing" className="mt-6">
-          <PricingMatrixEditor
-            vehicleTypes={vehicleTypes}
-            sizes={sizes}
-            initialRows={pkg.pricing}
-            basePrice={0}
-            onSave={upsertPricing}
-            isSaving={isPricingSaving}
-            isLoading={matrixLoading}
-          />
-        </TabsContent>
-
-        <TabsContent value="commissions" className="mt-6">
-          <PackageCommissionMatrixEditor
-            vehicleTypes={vehicleTypes}
-            sizes={sizes}
-            initialRows={pkg.commissions}
-            onSave={upsertCommissions}
-            isSaving={isCommissionSaving}
-            isLoading={matrixLoading}
-          />
-        </TabsContent>
-      </Tabs>
+        <div className="min-w-0 flex-1">
+          {section === 'details' && (
+            <DetailsTab
+              description={pkg.description}
+              services={pkg.services}
+              createdAt={pkg.createdAt}
+              updatedAt={pkg.updatedAt}
+            />
+          )}
+          {section === 'pricing' && (
+            <PricingMatrixEditor
+              vehicleTypes={vehicleTypes}
+              sizes={sizes}
+              initialRows={pkg.pricing}
+              basePrice={0}
+              onSave={upsertPricing}
+              isSaving={isPricingSaving}
+              isLoading={matrixLoading}
+            />
+          )}
+          {section === 'commissions' && (
+            <PackageCommissionMatrixEditor
+              vehicleTypes={vehicleTypes}
+              sizes={sizes}
+              initialRows={pkg.commissions}
+              onSave={upsertCommissions}
+              isSaving={isCommissionSaving}
+              isLoading={matrixLoading}
+            />
+          )}
+        </div>
+      </div>
 
       {/* Edit sheet */}
       <Sheet open={editOpen} onOpenChange={setEditOpen}>

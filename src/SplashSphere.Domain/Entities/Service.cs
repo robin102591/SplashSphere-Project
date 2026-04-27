@@ -6,7 +6,7 @@ namespace SplashSphere.Domain.Entities;
 /// (vehicleTypeId, sizeId). If no matrix row exists, <see cref="BasePrice"/> is used
 /// as the fallback. Commissions come from a separate <see cref="ServiceCommission"/> matrix.
 /// </summary>
-public sealed class Service : IAuditableEntity
+public sealed class Service : IAuditableEntity, ITenantScoped
 {
     private Service() { } // EF Core
 

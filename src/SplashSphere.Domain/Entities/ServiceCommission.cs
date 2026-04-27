@@ -14,7 +14,7 @@ namespace SplashSphere.Domain.Entities;
 /// </para>
 /// Unique constraint: (serviceId, vehicleTypeId, sizeId).
 /// </summary>
-public sealed class ServiceCommission : IAuditableEntity
+public sealed class ServiceCommission : IAuditableEntity, ITenantScoped
 {
     private ServiceCommission() { } // EF Core
 
