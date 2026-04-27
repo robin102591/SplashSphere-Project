@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell, CalendarCheck, Car, Ruler, Tag, List, Wallet, Receipt, User } from 'lucide-react'
+import { Plus, Pencil, Trash2, KeyRound, Check, Eye, EyeOff, Upload, Bell, CalendarCheck, Car, Ruler, Tag, List, Wallet, Receipt, User, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { SectionNav } from '@/components/ui/section-nav'
 import { useSectionParam } from '@/hooks/use-section-param'
@@ -949,6 +949,7 @@ export default function SettingsPage() {
   const [section] = useSectionParam('section', 'vehicle-types')
 
   const actions = [
+    { label: 'Company Profile', href: '/dashboard/settings/company', icon: Building2 },
     ...(hasOnlineBooking
       ? [{ label: 'Booking', href: '/dashboard/settings/booking', icon: CalendarCheck }]
       : []),

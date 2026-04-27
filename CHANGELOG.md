@@ -1,5 +1,16 @@
 ## Changelog
 
+## [Settings — Company Profile (Slice 1 of Company Profile + Receipt Designer)] — 2026-04-27
+
+First slice of the Company Profile + Receipt Designer feature. Tenants can now edit their full business identity from `/dashboard/settings/company` — structured address, tax/registration (TIN, DTI/SEC, VAT flag), social URLs (Facebook, Instagram), GCash number, tagline. Logo and GCash QR uploads come in slice 3; the receipt designer that consumes these fields ships in slice 2. Existing readers (Auth/me, Billing PDF, Connect listings, Franchise detail) all continue to read the legacy single-string `Tenant.Address` — the update handler re-derives it from the structured fields on every save, so the two views stay in sync without a backfill migration.
+
+- Domain: extended `Tenant` with `Tagline`, `Website`, `StreetAddress`, `Barangay`, `City`, `Province`, `ZipCode`, `IsVatRegistered`, `FacebookUrl`, `InstagramHandle`, `GCashNumber`. Existing `TaxId` / `BusinessPermitNo` (≈ TIN / Business Registration in the spec) reused as-is. Migration `ExtendTenantProfile` adds 11 nullable columns + 1 boolean default.
+- Application: new feature folder `Features/Settings/` with `GetCompanyProfileQuery` + `UpdateCompanyProfileCommand` + `UpdateCompanyProfileCommandValidator`. Validator rejects malformed URLs and enforces max-lengths matching the EF column constraints. Update handler composes the structured address into `Tenant.Address` (comma-separated) so legacy readers stay correct.
+- API: new `SettingsEndpoints` with `GET /api/v1/settings/company` and `PUT /api/v1/settings/company`. Wired via `app.MapSettingsEndpoints()` in Program.cs.
+- Shared types: new `packages/types/src/settings.ts` with `CompanyProfileDto` + `UpdateCompanyProfilePayload`, re-exported from the package index.
+- Admin frontend: new `apps/admin/src/hooks/use-company-profile.ts` (useCompanyProfile + useUpdateCompanyProfile) and new page at `apps/admin/src/app/(dashboard)/dashboard/settings/company/page.tsx` — sectioned form (Identity / Contact / Address / Tax / Social) with `react-hook-form` + `zod` + `zodResolver`, sticky save button in the page header (only enabled when dirty), toast on success / API error detail on failure. Settings index gains a "Company Profile" action link as the first nav action.
+- Skipped from the spec for slice 1: logo / GCash QR uploads (need file storage — slice 3) and pushing the new fields into `GetReceiptQueryHandler` (waits for the receipt designer's toggles in slice 2; for now the receipt continues to render branch-level data).
+
 ## [API — Replace `Ok<object>` with `IResult` everywhere] — 2026-04-27
 
 15 endpoint files declared their return types as `Task<Ok<object>>` or `Task<Results<Ok<object>, NotFound>>`, with 84 `TypedResults.Ok<object>(...)` call-sites pinning the response payload to `object`. ASP.NET Core's OpenAPI generator picks up the declared return type to emit response schemas — meaning every "list" / "by-id" / "report" endpoint in the codebase was advertising itself in Scalar / Swagger as returning a bare `object`, defeating the point of having typed DTOs.

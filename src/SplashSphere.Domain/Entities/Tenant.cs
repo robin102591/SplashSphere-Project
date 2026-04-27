@@ -30,6 +30,38 @@ public sealed class Tenant : IAuditableEntity
     public string Address { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 
+    // ── Branding (slice 1) ───────────────────────────────────────────────────
+    /// <summary>Optional one-liner shown beneath the business name on receipts and the Connect listing.</summary>
+    public string? Tagline { get; set; }
+
+    /// <summary>Optional public website URL.</summary>
+    public string? Website { get; set; }
+
+    // ── Structured headquarters address ──────────────────────────────────────
+    // Each branch carries its own address (Branch.Address). These tenant-level
+    // fields are the headquarters / display address used on email receipts,
+    // reports, and invoices. Kept nullable so existing tenants don't need a
+    // backfill — Address (the legacy single string) is still derived/maintained.
+    public string? StreetAddress { get; set; }
+    public string? Barangay { get; set; }
+    public string? City { get; set; }
+    public string? Province { get; set; }
+    public string? ZipCode { get; set; }
+
+    // ── Tax & registration ──────────────────────────────────────────────────
+    /// <summary>True for VAT-registered businesses (12% PH VAT applies). Most car washes are non-VAT.</summary>
+    public bool IsVatRegistered { get; set; }
+
+    // ── Social & payment display ────────────────────────────────────────────
+    /// <summary>Full Facebook page URL (e.g. https://facebook.com/aquashinecarwash).</summary>
+    public string? FacebookUrl { get; set; }
+
+    /// <summary>Instagram handle, optionally with leading @ (stored as-entered).</summary>
+    public string? InstagramHandle { get; set; }
+
+    /// <summary>GCash MSISDN displayed on receipts. Format is free-form (not validated).</summary>
+    public string? GCashNumber { get; set; }
+
     // ── Franchise ────────────────────────────────────────────────────────────
     public TenantType TenantType { get; set; } = TenantType.Independent;
     public string? ParentTenantId { get; set; }

@@ -40,6 +40,7 @@
 | `/dashboard/franchise/my-royalties` | Franchisee: paginated royalty statements |
 | `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
 | `/franchise/accept` | **Public** -- franchise invitation acceptance (token validation + onboarding form) |
+| `/dashboard/settings/company` | Company Profile -- business identity, contact, structured address, tax/registration (TIN, DTI/SEC, VAT flag), social URLs, GCash number. Drives branding on receipts, reports, and Connect listing. |
 | `/dashboard/settings/import` | Data Import Wizard -- 4-step CSV/Excel import (upload, column mapping, validation, execute) |
 | `/dashboard/settings/notifications` | Notification Preferences -- per-type SMS/email channel toggles with mandatory indicators |
 | `/dashboard/supplies` | Supply list with category/branch/stock filters, quick actions |

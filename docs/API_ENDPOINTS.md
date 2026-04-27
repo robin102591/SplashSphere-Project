@@ -188,6 +188,13 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/audit-logs` | Paginated audit log list (filter by entityType, entityId, userId, from, to) |
 
+## Settings
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/settings/company` | Get the current tenant's company profile (identity, contact, structured address, tax/registration, social, GCash) |
+| `PUT` | `/settings/company` | Update the current tenant's company profile. Server re-derives the legacy single-string `Address` from the structured fields |
+
 ## Expenses
 
 | Method | Route | Description |

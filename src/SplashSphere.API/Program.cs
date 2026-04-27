@@ -211,6 +211,7 @@ app.MapSupplierEndpoints();
 app.MapEquipmentEndpoints();
 app.MapBookingSettingEndpoints();
 app.MapBookingAdminEndpoints();
+app.MapSettingsEndpoints();
 
 // ── Customer Connect ──────────────────────────────────────────────────────────
 app.MapConnectAuthEndpoints();
