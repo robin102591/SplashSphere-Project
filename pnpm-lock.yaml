@@ -64,6 +64,9 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@splashsphere/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@splashsphere/format':
         specifier: workspace:*
         version: link:../../packages/format
@@ -346,6 +349,9 @@ importers:
       '@microsoft/signalr':
         specifier: ^8.0.0
         version: 8.0.17
+      '@splashsphere/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@splashsphere/format':
         specifier: workspace:*
         version: link:../../packages/format
@@ -418,6 +424,12 @@ importers:
         version: 4.2.1
       typescript:
         specifier: ^5
+        version: 5.9.3
+
+  packages/api-client:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
         version: 5.9.3
 
   packages/format:

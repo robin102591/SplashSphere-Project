@@ -13,6 +13,7 @@
     "@clerk/nextjs": "^6.36.0",
     "@hookform/resolvers": "^3.0.0",
     "@microsoft/signalr": "^8.0.0",
+    "@splashsphere/api-client": "workspace:*",
     "@splashsphere/format": "workspace:*",
     "@splashsphere/types": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
