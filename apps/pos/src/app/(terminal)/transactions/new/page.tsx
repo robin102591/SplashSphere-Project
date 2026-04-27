@@ -19,6 +19,7 @@ import type {
   ApiError, BookingAdminDetailDto,
 } from '@splashsphere/types'
 import type { PagedResult } from '@splashsphere/types'
+import { formatPeso } from '@splashsphere/format'
 
 import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
@@ -32,9 +33,6 @@ import {
 } from '@/lib/use-transaction-store'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const peso = (n: number) =>
-  `₱${n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 const PAYMENT_METHODS: {
   value: PaymentMethod
@@ -101,7 +99,7 @@ function EmployeePicker({
       </div>
       {count > 0 && (
         <p className="text-xs text-gray-500">
-          {count} assigned{commissionEach > 0 && <> &middot; <span className="font-mono tabular-nums text-gray-400">{peso(commissionEach)}</span> each</>}
+          {count} assigned{commissionEach > 0 && <> &middot; <span className="font-mono tabular-nums text-gray-400">{formatPeso(commissionEach)}</span> each</>}
         </p>
       )}
     </div>
@@ -145,7 +143,7 @@ function ServiceOrderRow({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-sm font-mono tabular-nums font-semibold text-white">
-            {displayPrice > 0 ? peso(displayPrice) : '₱—'}
+            {displayPrice > 0 ? formatPeso(displayPrice) : '₱—'}
           </span>
           <button
             type="button"
@@ -193,7 +191,7 @@ function MerchandiseOrderRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-800/60 border border-gray-700/50 p-3">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{item.merchandiseName}</p>
-        <p className="text-xs text-gray-500 font-mono tabular-nums">{peso(item.unitPrice)} each</p>
+        <p className="text-xs text-gray-500 font-mono tabular-nums">{formatPeso(item.unitPrice)} each</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button
@@ -213,7 +211,7 @@ function MerchandiseOrderRow({
         </button>
       </div>
       <span className="text-sm font-mono tabular-nums font-semibold text-white w-20 text-right shrink-0">
-        {peso(item.unitPrice * item.quantity)}
+        {formatPeso(item.unitPrice * item.quantity)}
       </span>
       <button
         type="button"
@@ -261,7 +259,7 @@ function ServiceCard({
       <div className="flex items-end justify-between gap-1">
         <span className="text-xs text-gray-500 truncate">{service.categoryName}</span>
         <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-blue-400' : isPriceFromMatrix ? 'text-emerald-400' : 'text-gray-400'}`}>
-          {peso(price)}
+          {formatPeso(price)}
         </span>
       </div>
     </button>
@@ -309,7 +307,7 @@ function PackageCard({
           <span className="text-xs font-mono tabular-nums text-gray-600">···</span>
         ) : displayPrice != null ? (
           <span className={`text-lg font-mono tabular-nums font-semibold shrink-0 ${inCart ? 'text-purple-400' : 'text-emerald-400'}`}>
-            {peso(displayPrice)}
+            {formatPeso(displayPrice)}
           </span>
         ) : (
           <span className="text-xs text-gray-600 italic">pick vehicle</span>
@@ -357,7 +355,7 @@ function MerchandiseCard({
               ×{cartQty}
             </span>
           )}
-          <span className="text-xs font-mono tabular-nums font-semibold text-gray-400">{peso(item.price)}</span>
+          <span className="text-xs font-mono tabular-nums font-semibold text-gray-400">{formatPeso(item.price)}</span>
         </div>
       </div>
     </button>
@@ -1457,7 +1455,7 @@ function NewTransactionContent() {
           <div className="px-4 py-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-400">
               <span>Subtotal</span>
-              <span className="font-mono tabular-nums">{peso(subtotal)}</span>
+              <span className="font-mono tabular-nums">{formatPeso(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-400">
               <span>Discount</span>
@@ -1479,7 +1477,7 @@ function NewTransactionContent() {
             {tip > 0 && (
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Service Total</span>
-                <span className="font-mono tabular-nums">{peso(estimatedTotal)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(estimatedTotal)}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm text-gray-400">
@@ -1507,7 +1505,7 @@ function NewTransactionContent() {
             )}
             <div className="flex justify-between font-bold text-white pt-0.5 border-t border-gray-800/60">
               <span className="text-base">{tip > 0 ? 'Customer Pays' : 'Est. Total'}</span>
-              <span className="font-mono tabular-nums text-2xl font-bold text-white">{peso(customerPayable)}</span>
+              <span className="font-mono tabular-nums text-2xl font-bold text-white">{formatPeso(customerPayable)}</span>
             </div>
           </div>
 
@@ -1523,7 +1521,7 @@ function NewTransactionContent() {
                   return (
                     <div key={p.localId} className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 w-14 text-xs shrink-0">{m?.label}</span>
-                      <span className="flex-1 font-mono tabular-nums text-green-400">{peso(p.amount)}</span>
+                      <span className="flex-1 font-mono tabular-nums text-green-400">{formatPeso(p.amount)}</span>
                       {p.reference && (
                         <span className="text-xs text-gray-600 truncate max-w-[4rem]">{p.reference}</span>
                       )}
@@ -1540,19 +1538,19 @@ function NewTransactionContent() {
                 <div className="flex justify-between text-sm pt-1 border-t border-gray-800/60">
                   <span className="text-gray-400">Paid</span>
                   <span className={`font-mono tabular-nums font-bold ${totalPaid >= customerPayable ? 'text-green-400' : 'text-white'}`}>
-                    {peso(totalPaid)}
+                    {formatPeso(totalPaid)}
                   </span>
                 </div>
                 {change > 0 && (
                   <div className="flex justify-between text-sm text-green-400">
                     <span>Change</span>
-                    <span className="font-mono tabular-nums font-bold">{peso(change)}</span>
+                    <span className="font-mono tabular-nums font-bold">{formatPeso(change)}</span>
                   </div>
                 )}
                 {balance > 0 && (
                   <div className="flex justify-between text-sm text-orange-400">
                     <span>Balance</span>
-                    <span className="font-mono tabular-nums font-bold">{peso(balance)}</span>
+                    <span className="font-mono tabular-nums font-bold">{formatPeso(balance)}</span>
                   </div>
                 )}
               </div>
@@ -1678,7 +1676,7 @@ function NewTransactionContent() {
                 )}
                 {canPayLater && !canComplete && !isSubmitting && (
                   <p className="text-xs text-gray-500 text-center">
-                    Add {peso(balance)} to pay now, or use Pay Later
+                    Add {formatPeso(balance)} to pay now, or use Pay Later
                   </p>
                 )}
               </>
@@ -1718,55 +1716,55 @@ function NewTransactionContent() {
               {receiptData.services.map((s, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{s.name}</span>
-                  <span className="font-mono tabular-nums">{peso(s.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(s.price)}</span>
                 </div>
               ))}
               {receiptData.packages.map((p, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{p.name} <span className="text-gray-400">(pkg)</span></span>
-                  <span className="font-mono tabular-nums">{peso(p.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(p.price)}</span>
                 </div>
               ))}
               {receiptData.merchandise.map((m, i) => (
                 <div key={i} className="flex justify-between">
                   <span>{m.name} ×{m.qty}</span>
-                  <span className="font-mono tabular-nums">{peso(m.price)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(m.price)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-mono tabular-nums">{peso(receiptData.subtotal)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(receiptData.subtotal)}</span>
               </div>
               {receiptData.discount > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Discount</span>
-                  <span className="font-mono tabular-nums">-{peso(receiptData.discount)}</span>
+                  <span className="font-mono tabular-nums">-{formatPeso(receiptData.discount)}</span>
                 </div>
               )}
               {receiptData.tip > 0 && (
                 <div className="flex justify-between">
                   <span>Tip</span>
-                  <span className="font-mono tabular-nums">{peso(receiptData.tip)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(receiptData.tip)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-base pt-1 border-t border-gray-200">
                 <span>Total</span>
-                <span className="font-mono tabular-nums">{peso(receiptData.total)}</span>
+                <span className="font-mono tabular-nums">{formatPeso(receiptData.total)}</span>
               </div>
             </div>
             <div className="border-t border-dashed border-gray-300 pt-3 space-y-1 text-sm">
               {receiptData.payments.map((p, i) => (
                 <div key={i} className="flex justify-between">
                   <span className="text-gray-500">{p.method}</span>
-                  <span className="font-mono tabular-nums">{peso(p.amount)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(p.amount)}</span>
                 </div>
               ))}
               {receiptData.change > 0 && (
                 <div className="flex justify-between font-bold text-emerald-600">
                   <span>Change</span>
-                  <span className="font-mono tabular-nums">{peso(receiptData.change)}</span>
+                  <span className="font-mono tabular-nums">{formatPeso(receiptData.change)}</span>
                 </div>
               )}
             </div>
@@ -1810,7 +1808,7 @@ function NewTransactionContent() {
           </div>
           <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 py-4">
             <p className="text-xs text-yellow-500 uppercase tracking-wider mb-1">Amount to give</p>
-            <p className="text-4xl font-mono tabular-nums font-bold text-yellow-400">{peso(cashOutTip.amount)}</p>
+            <p className="text-4xl font-mono tabular-nums font-bold text-yellow-400">{formatPeso(cashOutTip.amount)}</p>
           </div>
           <div className="flex gap-2">
             <button

@@ -19,27 +19,12 @@ import type {
   ConnectBookingServiceDto,
 } from '@splashsphere/types'
 import { QueueStatus } from '@splashsphere/types'
+import { formatPeso, formatPesoNoSymbol } from '@splashsphere/format'
 import { useActiveQueue } from '@/hooks/use-active-queue'
 import { useBooking, useCancelBooking } from '@/hooks/use-bookings'
 import { cn } from '@/lib/utils'
 
 const MANILA_TZ = 'Asia/Manila'
-
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const pesoNoSymbolFormatter = new Intl.NumberFormat('en-PH', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-function formatPeso(amount: number): string {
-  return pesoFormatter.format(amount ?? 0)
-}
 
 const slotFormatter = new Intl.DateTimeFormat('en-PH', {
   weekday: 'short',
@@ -348,8 +333,8 @@ function ServicesCard({
                 ? formatPeso(s.price)
                 : s.priceMin !== null && s.priceMax !== null
                   ? t('estimatedRange', {
-                      min: pesoNoSymbolFormatter.format(s.priceMin),
-                      max: pesoNoSymbolFormatter.format(s.priceMax),
+                      min: formatPesoNoSymbol(s.priceMin),
+                      max: formatPesoNoSymbol(s.priceMax),
                     })
                   : '—'}
             </p>
@@ -364,10 +349,10 @@ function ServicesCard({
         <p className="text-base font-bold tabular-nums">
           {isRange
             ? t('estimatedRange', {
-                min: pesoNoSymbolFormatter.format(
+                min: formatPesoNoSymbol(
                   booking.estimatedTotalMin ?? 0,
                 ),
-                max: pesoNoSymbolFormatter.format(
+                max: formatPesoNoSymbol(
                   booking.estimatedTotalMax ?? 0,
                 ),
               })

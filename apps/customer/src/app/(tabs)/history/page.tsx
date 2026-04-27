@@ -5,24 +5,10 @@ import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowRight, Building2, Sparkles } from 'lucide-react'
 import type { ConnectHistoryItemDto } from '@splashsphere/types'
+import { formatPeso } from '@splashsphere/format'
 import { useHistory } from '@/hooks/use-history'
 import { formatShortDateTime, groupByMonth } from '@/lib/date'
 import { cn } from '@/lib/utils'
-
-/**
- * Peso formatter using the native `en-PH` locale — gives us the proper
- * "₱" prefix and the usual 1,234.56 grouping without a 3rd-party dep.
- */
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-function formatPeso(amount: number): string {
-  return pesoFormatter.format(amount ?? 0)
-}
 
 /**
  * History tab — the signed-in customer's completed transactions across

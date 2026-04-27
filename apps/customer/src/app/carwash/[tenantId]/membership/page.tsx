@@ -29,6 +29,7 @@ import {
   type ConnectRewardDto,
   type RedeemRewardResponseDto,
 } from '@splashsphere/types'
+import { formatDate } from '@splashsphere/format'
 import { AppBar } from '@/components/layout/app-bar'
 import { useCarwashDetail } from '@/hooks/use-carwash'
 import {
@@ -964,13 +965,3 @@ function formatNumber(n: number): string {
   return new Intl.NumberFormat('en-PH').format(n)
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return new Intl.DateTimeFormat('en-PH', {
-    timeZone: 'Asia/Manila',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(d)
-}

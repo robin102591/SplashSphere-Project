@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Building2, ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { ConnectBookingListItemDto } from '@splashsphere/types'
+import { formatPeso, formatPesoNoSymbol } from '@splashsphere/format'
 import { useBookings } from '@/hooks/use-bookings'
 import { formatShortDateTime } from '@/lib/date'
 import { cn } from '@/lib/utils'
@@ -14,17 +15,6 @@ type Tab = 'upcoming' | 'past'
 
 const UPCOMING_STATUSES = new Set(['Confirmed', 'Arrived', 'InService'])
 const TERMINAL_STATUSES = new Set(['Completed', 'Cancelled', 'NoShow'])
-
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-function formatPeso(amount: number): string {
-  return pesoFormatter.format(amount ?? 0)
-}
 
 /**
  * My Bookings — list view with Upcoming/Past tabs.
@@ -259,12 +249,8 @@ function BookingRow({ item }: { item: ConnectBookingListItemDto }) {
             item.estimatedTotalMax === null
               ? formatPeso(item.estimatedTotal)
               : t('estimatedRange', {
-                  min: pesoFormatter
-                    .format(item.estimatedTotalMin)
-                    .replace('₱', ''),
-                  max: pesoFormatter
-                    .format(item.estimatedTotalMax)
-                    .replace('₱', ''),
+                  min: formatPesoNoSymbol(item.estimatedTotalMin),
+                  max: formatPesoNoSymbol(item.estimatedTotalMax),
                 })}
           </p>
         </div>

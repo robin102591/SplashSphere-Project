@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.0.0",
+    "@splashsphere/format": "workspace:*",
     "@splashsphere/types": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "clsx": "^2.0.0",

@@ -16,6 +16,7 @@ import type {
 } from '@splashsphere/types'
 import type { PagedResult, QueueUpdatedPayload } from '@splashsphere/types'
 import { QueueStatus, QueuePriority, BookingStatus } from '@splashsphere/types'
+import { formatPeso } from '@splashsphere/format'
 import { apiClient } from '@/lib/api-client'
 import { useSignalREvent } from '@/lib/signalr-context'
 import { useBranch } from '@/lib/branch-context'
@@ -617,10 +618,7 @@ export default function QueuePage() {
         { vehicleTypeId, sizeId },
         token ?? undefined,
       )
-      const peso = `₱${(result.total ?? 0).toLocaleString('en-PH', {
-        minimumFractionDigits: 2, maximumFractionDigits: 2,
-      })}`
-      setClassifyFinalPrice(peso)
+      setClassifyFinalPrice(formatPeso(result.total ?? 0))
       await queryClient.invalidateQueries({ queryKey: ['queue'] })
       // Briefly show final price, then proceed to transaction page.
       const entryId = classifyEntry.id

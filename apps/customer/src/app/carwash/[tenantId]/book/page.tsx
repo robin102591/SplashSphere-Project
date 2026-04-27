@@ -45,6 +45,10 @@ const MANILA_TZ = 'Asia/Manila'
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
 
+// Note: this is the only place that uses minimumFractionDigits:0 — the booking
+// wizard intentionally renders integer prices without trailing zeros so range
+// displays ("₱500–₱1,000") stay short. The rest of the app uses the standard
+// `formatPeso` from @splashsphere/format (always 2 decimals).
 const pesoFormatter = new Intl.NumberFormat('en-PH', {
   style: 'currency',
   currency: 'PHP',
