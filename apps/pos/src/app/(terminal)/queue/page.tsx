@@ -552,6 +552,14 @@ export default function QueuePage() {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
+  // Returns true when the given entry is the one currently in flight. The
+  // explicit `busyId !== null` guard is critical: walk-ins have a null
+  // `bookingId`, so without the guard `busyId === entry.bookingId` resolves
+  // to `null === null === true` whenever no action is in flight, marking
+  // every walk-in row as permanently busy.
+  const isEntryBusy = (entry: QueueEntry) =>
+    busyId !== null && (busyId === entry.id || busyId === entry.bookingId)
+
   // Busy → enabled flow:
   //   1. setBusyId(id) — row shows spinner.
   //   2. Await ONLY the server PATCH. Once it returns, the action is committed
@@ -733,7 +741,7 @@ export default function QueuePage() {
                 onStartService={startService}
                 onViewTransaction={viewTransaction}
                 onCheckIn={checkInBooking}
-                isBusy={busyId === entry.id || busyId === entry.bookingId}
+                isBusy={isEntryBusy(entry)}
               />
             ))
           )}
@@ -753,7 +761,7 @@ export default function QueuePage() {
                 onStartService={startService}
                 onViewTransaction={viewTransaction}
                 onCheckIn={checkInBooking}
-                isBusy={busyId === entry.id || busyId === entry.bookingId}
+                isBusy={isEntryBusy(entry)}
               />
             ))
           )}
@@ -773,7 +781,7 @@ export default function QueuePage() {
                 onStartService={startService}
                 onViewTransaction={viewTransaction}
                 onCheckIn={checkInBooking}
-                isBusy={busyId === entry.id || busyId === entry.bookingId}
+                isBusy={isEntryBusy(entry)}
               />
             ))
           )}
