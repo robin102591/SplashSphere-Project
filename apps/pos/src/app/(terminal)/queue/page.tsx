@@ -552,16 +552,27 @@ export default function QueuePage() {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
+  // Busy → enabled flow:
+  //   1. setBusyId(id) — row shows spinner.
+  //   2. Await ONLY the server PATCH. Once it returns, the action is committed
+  //      and the spinner is no longer meaningful — clear busy here.
+  //   3. Refresh the data in the background. We do NOT await refetch() because
+  //      a) SignalR's QueueUpdated event also invalidates the same query —
+  //         awaiting our own refetch can deadlock with the SignalR handler's
+  //         in-flight invalidation when the connection drops mid-flight, and
+  //      b) the user shouldn't see a stuck spinner just because data sync is
+  //         slow. The refetchInterval (30s) and SignalR will reconcile.
+
   const callEntry = async (id: string) => {
     setBusyId(id)
     try {
       const token = await getToken()
       // Endpoint {id} is branchId — it picks the highest-priority waiting entry automatically
       await apiClient.patch(`/queue/${branchId}/call`, {}, token ?? undefined)
-      await refetch()
     } finally {
       setBusyId(null)
     }
+    void refetch()
   }
 
   const noShowEntry = async (id: string) => {
@@ -569,10 +580,10 @@ export default function QueuePage() {
     try {
       const token = await getToken()
       await apiClient.patch(`/queue/${id}/no-show`, {}, token ?? undefined)
-      await refetch()
     } finally {
       setBusyId(null)
     }
+    void refetch()
   }
 
   const checkInBooking = async (bookingId: string) => {
