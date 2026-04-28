@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.API.Extensions;
+using SplashSphere.Application.Features.Settings.Commands.DeleteLogo;
 using SplashSphere.Application.Features.Settings.Commands.UpdateCompanyProfile;
 using SplashSphere.Application.Features.Settings.Commands.UpdateReceiptSetting;
+using SplashSphere.Application.Features.Settings.Commands.UploadLogo;
 using SplashSphere.Application.Features.Settings.Queries.GetCompanyProfile;
 using SplashSphere.Application.Features.Settings.Queries.GetReceiptSetting;
 using SplashSphere.Domain.Enums;
@@ -39,6 +41,16 @@ public static class SettingsEndpoints
         group.MapPut("/receipt", UpdateReceiptSetting)
             .WithName("UpdateReceiptSetting")
             .WithSummary("Update receipt-design settings (upserts the tenant default)");
+
+        // ── Company logo (multipart upload) ───────────────────────────────────
+        group.MapPost("/company/logo", UploadLogo)
+            .WithName("UploadCompanyLogo")
+            .WithSummary("Upload a logo image (multipart/form-data, field name 'file'). Resized to 500/200/80px PNG variants and stored in R2.")
+            .DisableAntiforgery();
+
+        group.MapDelete("/company/logo", DeleteLogo)
+            .WithName("DeleteCompanyLogo")
+            .WithSummary("Remove the current tenant's logo");
 
         return app;
     }
@@ -134,6 +146,45 @@ public static class SettingsEndpoints
             body.FontSize,
             body.AutoCutPaper), ct);
 
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    // ── Logo upload handlers ──────────────────────────────────────────────────
+
+    private static async Task<IResult> UploadLogo(
+        HttpRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!request.HasFormContentType)
+            return TypedResults.Problem(new ProblemDetails
+            {
+                Title  = "VALIDATION",
+                Detail = "Expected multipart/form-data.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+
+        var form = await request.ReadFormAsync(ct);
+        var file = form.Files.GetFile("file");
+
+        if (file is null || file.Length == 0)
+            return TypedResults.Problem(new ProblemDetails
+            {
+                Title  = "VALIDATION",
+                Detail = "Form field 'file' is required.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+
+        await using var stream = file.OpenReadStream();
+        var result = await sender.Send(new UploadLogoCommand(
+            stream, file.ContentType, file.Length), ct);
+
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblem();
+    }
+
+    private static async Task<IResult> DeleteLogo(ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new DeleteLogoCommand(), ct);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 

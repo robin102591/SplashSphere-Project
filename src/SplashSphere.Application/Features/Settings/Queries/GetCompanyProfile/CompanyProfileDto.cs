@@ -36,4 +36,10 @@ public sealed record CompanyProfileDto(
     // Social & payment
     string? FacebookUrl,
     string? InstagramHandle,
-    string? GCashNumber);
+    string? GCashNumber,
+
+    // Logo (slice 3) — never modified by UpdateCompanyProfile; managed by
+    // POST /settings/company/logo and DELETE /settings/company/logo.
+    string? LogoUrl,
+    string? LogoThumbnailUrl,
+    string? LogoIconUrl);

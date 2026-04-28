@@ -188,7 +188,18 @@ export default function ReceiptSettingsPage() {
 
         {/* ── Preview column ─────────────────────────────────────────── */}
         <div className="lg:sticky lg:top-4 lg:self-start">
-          <ReceiptPreview form={form} businessName={company?.name ?? 'Your Business'} tagline={company?.tagline ?? null} taxId={company?.taxId ?? null} address={company?.address ?? null} contact={company?.contactNumber ?? null} facebookUrl={company?.facebookUrl ?? null} instagramHandle={company?.instagramHandle ?? null} gcashNumber={company?.gcashNumber ?? null} />
+          <ReceiptPreview
+            form={form}
+            businessName={company?.name ?? 'Your Business'}
+            tagline={company?.tagline ?? null}
+            taxId={company?.taxId ?? null}
+            address={company?.address ?? null}
+            contact={company?.contactNumber ?? null}
+            facebookUrl={company?.facebookUrl ?? null}
+            instagramHandle={company?.instagramHandle ?? null}
+            gcashNumber={company?.gcashNumber ?? null}
+            logoUrl={company?.logoThumbnailUrl ?? null}
+          />
         </div>
       </div>
 
@@ -217,7 +228,7 @@ function HeaderSection({ form }: { form: FormApi }) {
         <CardDescription>What appears at the top of every receipt.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Toggle form={form} name="showLogo" label="Show logo" hint="Logo upload is part of the next slice." />
+        <Toggle form={form} name="showLogo" label="Show logo" hint="Upload your logo on the Company Profile page." />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <SelectField form={form} name="logoSize" label="Logo size" options={[
@@ -431,7 +442,7 @@ const SAMPLE = {
 
 function ReceiptPreview({
   form, businessName, tagline, taxId, address, contact,
-  facebookUrl, instagramHandle, gcashNumber,
+  facebookUrl, instagramHandle, gcashNumber, logoUrl,
 }: {
   form: FormApi
   businessName: string
@@ -442,6 +453,7 @@ function ReceiptPreview({
   facebookUrl: string | null
   instagramHandle: string | null
   gcashNumber: string | null
+  logoUrl: string | null
 }) {
   // Subscribe to all form values so every toggle re-renders the preview.
   const v = useWatch({ control: form.control })
@@ -463,17 +475,27 @@ function ReceiptPreview({
       >
         {/* Header */}
         <div className={v.logoPosition === LogoPosition.Left ? 'text-left' : 'text-center'}>
-          {v.showLogo && (
-            <div
-              className="mx-auto mb-1.5 rounded bg-gray-200 text-[9px] uppercase text-gray-500 flex items-center justify-center"
-              style={{
-                width: v.logoSize === LogoSize.Small ? 36 : v.logoSize === LogoSize.Large ? 72 : 54,
-                height: v.logoSize === LogoSize.Small ? 36 : v.logoSize === LogoSize.Large ? 72 : 54,
-              }}
-            >
-              logo
-            </div>
-          )}
+          {v.showLogo && (() => {
+            const px = v.logoSize === LogoSize.Small ? 36 : v.logoSize === LogoSize.Large ? 72 : 54
+            // Real logo when uploaded; gray placeholder otherwise so the
+            // toggle's effect is visible even on a fresh tenant.
+            return logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt="Logo"
+                className={v.logoPosition === LogoPosition.Left ? 'mb-1.5' : 'mx-auto mb-1.5'}
+                style={{ width: px, height: px, objectFit: 'contain' }}
+              />
+            ) : (
+              <div
+                className="mx-auto mb-1.5 rounded bg-gray-200 text-[9px] uppercase text-gray-500 flex items-center justify-center"
+                style={{ width: px, height: px }}
+              >
+                logo
+              </div>
+            )
+          })()}
           {v.showBusinessName && <div className="font-bold">{businessName}</div>}
           {v.showTagline && tagline && <div className="text-[0.85em] italic">{tagline}</div>}
           {v.showBranchName    && <div>Makati Branch</div>}

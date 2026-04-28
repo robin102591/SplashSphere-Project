@@ -35,7 +35,8 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
                     t.Tenant.IsVatRegistered,
                     t.Tenant.FacebookUrl,
                     t.Tenant.InstagramHandle,
-                    t.Tenant.GCashNumber),
+                    t.Tenant.GCashNumber,
+                    t.Tenant.LogoThumbnailUrl),
                 Branch = new ReceiptBranchDto(
                     t.Branch.Id,
                     t.Branch.Name,

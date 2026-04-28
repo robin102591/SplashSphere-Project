@@ -35,7 +35,10 @@ public sealed class GetCompanyProfileQueryHandler(
                 t.IsVatRegistered,
                 t.FacebookUrl,
                 t.InstagramHandle,
-                t.GCashNumber))
+                t.GCashNumber,
+                t.LogoUrl,
+                t.LogoThumbnailUrl,
+                t.LogoIconUrl))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

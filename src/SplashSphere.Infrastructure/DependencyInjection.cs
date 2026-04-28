@@ -88,6 +88,31 @@ public static class DependencyInjection
             services.AddScoped<IEmailService, ExternalServices.MockEmailService>();
         }
 
+        // ── File storage (Cloudflare R2) ────────────────────────────────────
+        // The SDK is always registered; until real R2 credentials are populated
+        // in appsettings (Cloudflare:R2:*), upload calls fail with the SDK's
+        // invalid-credentials error. Build, DI, and the command pipeline all
+        // work — only the network call to R2 fails. This lets us scaffold the
+        // full feature without committing to a paid Cloudflare bucket yet.
+        var r2Options = new ExternalServices.R2Options();
+        configuration.GetSection(ExternalServices.R2Options.SectionName).Bind(r2Options);
+        services.AddSingleton(r2Options);
+        services.AddSingleton<Amazon.S3.IAmazonS3>(_ => new Amazon.S3.AmazonS3Client(
+            new Amazon.Runtime.BasicAWSCredentials(r2Options.AccessKeyId, r2Options.SecretAccessKey),
+            new Amazon.S3.AmazonS3Config
+            {
+                ServiceURL          = r2Options.ServiceUrl,
+                ForcePathStyle      = true,        // R2 requires path-style addressing.
+                AuthenticationRegion = "auto",     // R2 ignores region; "auto" is the documented value.
+            }));
+        services.AddScoped<IFileStorageService, ExternalServices.R2FileStorageService>();
+
+        // ── Image processing (ImageSharp) ───────────────────────────────────
+        services.AddSingleton<IImageProcessor, ExternalServices.ImageSharpImageProcessor>();
+
+        // ── Default HttpClient (for ad-hoc fetches like the receipt logo) ───
+        services.AddHttpClient();
+
         // ── SMS service ─────────────────────────────────────────────────────
         // Uses Semaphore (PH gateway) when API key is configured, otherwise logs to console.
         if (!string.IsNullOrEmpty(configuration["Semaphore:ApiKey"]))

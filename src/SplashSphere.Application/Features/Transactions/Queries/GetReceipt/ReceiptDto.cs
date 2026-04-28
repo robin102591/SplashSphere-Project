@@ -32,7 +32,8 @@ public sealed record ReceiptCompanyDto(
     bool IsVatRegistered,
     string? FacebookUrl,
     string? InstagramHandle,
-    string? GCashNumber);
+    string? GCashNumber,
+    string? LogoThumbnailUrl);
 
 public sealed record ReceiptBranchDto(
     string Id,

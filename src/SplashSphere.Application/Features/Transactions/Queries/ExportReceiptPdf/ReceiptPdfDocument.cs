@@ -14,7 +14,14 @@ namespace SplashSphere.Application.Features.Transactions.Queries.ExportReceiptPd
 /// (loyalty info, service durations) are no-ops in the renderer; the toggles
 /// stay in the form so they take effect when the data lands.
 /// </summary>
-public sealed class ReceiptPdfDocument(ReceiptDto data) : IDocument
+/// <param name="data">Composed receipt data for this transaction.</param>
+/// <param name="logoBytes">
+/// Optional logo image bytes. When non-null AND <see cref="ReceiptSettingsDto.ShowLogo"/>
+/// is true, QuestPDF embeds the image at the top of the header. The handler
+/// (not the document) is responsible for fetching from R2 — keeping I/O out
+/// of the synchronous Compose() pipeline.
+/// </param>
+public sealed class ReceiptPdfDocument(ReceiptDto data, byte[]? logoBytes = null) : IDocument
 {
     // 1mm = 2.83465 points. We render at the configured width minus margins.
     private const float Mm58Width = 164f;   // 58mm  → ~164pt
@@ -149,24 +156,31 @@ public sealed class ReceiptPdfDocument(ReceiptDto data) : IDocument
         });
     }
 
-    private static void ComposeHeader(
+    private void ComposeHeader(
         ColumnDescriptor col,
         ReceiptSettingsDto s,
         ReceiptDto data,
         int titleFont,
         int smallFont)
     {
-        // Logo placeholder — actual upload arrives in slice 3. The toggle is
-        // honored by reserving vertical space proportional to LogoSize.
-        if (s.ShowLogo)
+        // Logo: when ShowLogo is on AND we have prefetched bytes, embed the
+        // image. When the toggle is on but bytes are null (no logo uploaded
+        // or fetch failed), we render nothing — the text-only header below
+        // still gives the receipt identity.
+        if (s.ShowLogo && logoBytes is not null)
         {
             var px = s.LogoSize switch
             {
-                LogoSize.Small  => 24,
-                LogoSize.Large  => 48,
-                _               => 36,
+                LogoSize.Small  => 32,
+                LogoSize.Large  => 64,
+                _               => 48,
             };
-            col.Item().Height(px).AlignCenter().Text("[LOGO]").FontColor(Colors.Grey.Lighten1).FontSize(smallFont);
+
+            var logoBlock = s.LogoPosition == LogoPosition.Left
+                ? col.Item().AlignLeft()
+                : col.Item().AlignCenter();
+
+            logoBlock.Height(px).Image(logoBytes).FitArea();
         }
 
         // Center vs left alignment of the textual header is governed by the

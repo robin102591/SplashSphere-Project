@@ -34,6 +34,20 @@ export interface CompanyProfileDto {
   readonly facebookUrl: string | null;
   readonly instagramHandle: string | null;
   readonly gcashNumber: string | null;
+
+  // Logo (slice 3) — managed by POST/DELETE /settings/company/logo, NOT
+  // by PUT /settings/company. The three URLs are returned with
+  // cache-busting query suffixes so the browser refetches after re-upload.
+  readonly logoUrl: string | null;
+  readonly logoThumbnailUrl: string | null;
+  readonly logoIconUrl: string | null;
+}
+
+/** Response from POST /api/v1/settings/company/logo. */
+export interface UploadLogoResult {
+  readonly logoUrl: string;
+  readonly logoThumbnailUrl: string;
+  readonly logoIconUrl: string;
 }
 
 /**

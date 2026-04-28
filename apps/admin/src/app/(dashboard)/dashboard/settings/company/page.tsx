@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCompanyProfile, useUpdateCompanyProfile } from '@/hooks/use-company-profile'
 import type { ApiError, UpdateCompanyProfilePayload } from '@splashsphere/types'
+import { LogoUploader } from './_components/logo-uploader'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -166,6 +167,17 @@ export default function CompanyProfilePage() {
             {isPending ? 'Saving…' : 'Save changes'}
           </Button>
         }
+      />
+
+      {/* ── Logo ─────────────────────────────────────────────────────────── */}
+      {/*
+        Lives outside react-hook-form because uploads happen via their own
+        mutation and don't share the form's "dirty" / "save" lifecycle.
+        Saving / replacing the logo is committed immediately on file drop.
+      */}
+      <LogoUploader
+        currentUrl={profile?.logoUrl ?? null}
+        thumbnailUrl={profile?.logoThumbnailUrl ?? null}
       />
 
       {/* ── Identity ─────────────────────────────────────────────────────── */}

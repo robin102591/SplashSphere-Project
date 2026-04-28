@@ -62,6 +62,21 @@ public sealed class Tenant : IAuditableEntity
     /// <summary>GCash MSISDN displayed on receipts. Format is free-form (not validated).</summary>
     public string? GCashNumber { get; set; }
 
+    // ── Logo (slice 3) ──────────────────────────────────────────────────────
+    // Three resized PNG variants uploaded to Cloudflare R2 by UploadLogoCommand.
+    // The API never stores image bytes — only the public URLs returned by the
+    // file-storage service. Update via POST /settings/company/logo, never by
+    // the regular profile-update command (so a profile save never wipes them).
+
+    /// <summary>500×500 PNG. Connect listing detail page, admin sidebar branding.</summary>
+    public string? LogoUrl { get; set; }
+
+    /// <summary>200×200 PNG. Receipt header thumbnail.</summary>
+    public string? LogoThumbnailUrl { get; set; }
+
+    /// <summary>80×80 PNG. Connect directory list rows, dense UI surfaces.</summary>
+    public string? LogoIconUrl { get; set; }
+
     // ── Franchise ────────────────────────────────────────────────────────────
     public TenantType TenantType { get; set; } = TenantType.Independent;
     public string? ParentTenantId { get; set; }

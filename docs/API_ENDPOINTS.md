@@ -196,6 +196,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `PUT` | `/settings/company` | Update the current tenant's company profile. Server re-derives the legacy single-string `Address` from the structured fields |
 | `GET` | `/settings/receipt[?branchId={id}]` | Get receipt-design settings. Resolution: branch-specific row → tenant default → in-memory default. Slice 2 only exercises the tenant-default path; `branchId` is reserved for slice 4 |
 | `PUT` | `/settings/receipt[?branchId={id}]` | Upsert receipt-design settings. With no `branchId`, upserts the tenant default. Body is the full setting (all toggles, custom text, format) |
+| `POST` | `/settings/company/logo` | Upload a logo (multipart/form-data, field name `file`). Server resizes to 500/200/80px PNG variants and stores in Cloudflare R2. Returns `{logoUrl, logoThumbnailUrl, logoIconUrl}` with cache-busting `?v=` suffixes |
+| `DELETE` | `/settings/company/logo` | Remove the current tenant's logo. Best-effort R2 delete (orphan blobs are not a correctness issue — next upload overwrites) |
 
 ## Expenses
 
