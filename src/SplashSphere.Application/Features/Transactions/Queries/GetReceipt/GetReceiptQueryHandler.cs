@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
+using SplashSphere.Domain.Entities;
 
 namespace SplashSphere.Application.Features.Transactions.Queries.GetReceipt;
 
@@ -11,7 +12,10 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
         GetReceiptQuery request,
         CancellationToken cancellationToken)
     {
-        // ── Query 1: header (transaction + branch + car + customer + cashier) ─
+        // ── Query 1: header + tenant branding ─────────────────────────────────
+        // The transaction has a global tenant filter; the projection pulls
+        // the owning Tenant's display fields so the renderer doesn't need
+        // a separate round-trip.
         var header = await context.Transactions
             .AsNoTracking()
             .Where(t => t.Id == request.TransactionId)
@@ -22,7 +26,17 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
                 t.CreatedAt,
                 t.Notes,
                 t.CashierId,
+                t.BranchId,
                 CashierName = t.Cashier.FirstName + " " + t.Cashier.LastName,
+                Company = new ReceiptCompanyDto(
+                    t.Tenant.Name,
+                    t.Tenant.Tagline,
+                    t.Tenant.TaxId,
+                    t.Tenant.IsVatRegistered,
+                    t.Tenant.FacebookUrl,
+                    t.Tenant.InstagramHandle,
+                    t.Tenant.GCashNumber,
+                    t.Tenant.LogoThumbnailUrl),
                 Branch = new ReceiptBranchDto(
                     t.Branch.Id,
                     t.Branch.Name,
@@ -51,6 +65,19 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
 
         if (header is null)
             return null;
+
+        // ── Resolve receipt setting ───────────────────────────────────────────
+        // Branch-specific row first (slice 4), then tenant default. Falls back
+        // to in-memory defaults for tenants from before slice 2.
+        var setting = await context.ReceiptSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.BranchId == header.BranchId, cancellationToken);
+
+        setting ??= await context.ReceiptSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.BranchId == null, cancellationToken);
+
+        setting ??= new ReceiptSetting(string.Empty); // unsaved defaults
 
         // ── Query 2: service lines ─────────────────────────────────────────────
         var serviceLines = await context.TransactionServices
@@ -131,10 +158,49 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
             m.Quantity * m.UnitPrice,
             [])));
 
+        var settingsDto = new ReceiptSettingsDto(
+            // Header
+            setting.ShowLogo,
+            setting.LogoSize,
+            setting.LogoPosition,
+            setting.ShowBusinessName,
+            setting.ShowTagline,
+            setting.ShowBranchName,
+            setting.ShowBranchAddress,
+            setting.ShowBranchContact,
+            setting.ShowTIN,
+            setting.CustomHeaderText,
+            // Body
+            setting.ShowServiceDuration,
+            setting.ShowEmployeeNames,
+            setting.ShowVehicleInfo,
+            setting.ShowDiscountBreakdown,
+            setting.ShowTaxLine,
+            setting.ShowTransactionNumber,
+            setting.ShowDateTime,
+            setting.ShowCashierName,
+            // Customer
+            setting.ShowCustomerName,
+            setting.ShowCustomerPhone,
+            setting.ShowLoyaltyPointsEarned,
+            setting.ShowLoyaltyBalance,
+            setting.ShowLoyaltyTier,
+            // Footer
+            setting.ThankYouMessage,
+            setting.PromoText,
+            setting.ShowSocialMedia,
+            setting.ShowGCashQr,
+            setting.ShowGCashNumber,
+            setting.CustomFooterText,
+            // Format
+            setting.ReceiptWidth,
+            setting.FontSize);
+
         return new ReceiptDto(
             header.Id,
             header.TransactionNumber,
             header.CreatedAt,
+            header.Company,
             header.Branch,
             header.Vehicle,
             header.Customer,
@@ -145,6 +211,7 @@ public sealed class GetReceiptQueryHandler(IApplicationDbContext context)
             header.TaxAmount,
             header.FinalAmount,
             payments,
-            header.Notes);
+            header.Notes,
+            settingsDto);
     }
 }

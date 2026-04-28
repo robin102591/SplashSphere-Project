@@ -24,14 +24,15 @@ public static class PlanCatalog
         FeatureKeys.SmsNotifications, FeatureKeys.PricingModifiers,
         FeatureKeys.PurchaseOrders, FeatureKeys.EquipmentManagement,
         FeatureKeys.SupplyUsageAutoDeduction, FeatureKeys.CostPerWashReports,
-        FeatureKeys.OnlineBooking, FeatureKeys.ConnectDirectoryListing, FeatureKeys.ReferralProgram
+        FeatureKeys.OnlineBooking, FeatureKeys.ConnectDirectoryListing, FeatureKeys.ReferralProgram,
+        FeatureKeys.DigitalReceipts
     ];
 
     private static readonly HashSet<string> EnterpriseFeatures =
     [
         ..GrowthFeatures,
         FeatureKeys.ApiAccess, FeatureKeys.CustomIntegrations,
-        FeatureKeys.FranchiseManagement
+        FeatureKeys.FranchiseManagement, FeatureKeys.BranchReceiptOverrides
     ];
 
     public static readonly PlanDefinition Trial = new()

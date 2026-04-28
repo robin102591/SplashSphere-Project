@@ -40,6 +40,8 @@
 | `/dashboard/franchise/my-royalties` | Franchisee: paginated royalty statements |
 | `/dashboard/franchise/benchmarks` | Franchisee: performance vs network benchmarks |
 | `/franchise/accept` | **Public** -- franchise invitation acceptance (token validation + onboarding form) |
+| `/dashboard/settings/company` | Company Profile -- business identity, contact, structured address, tax/registration (TIN, DTI/SEC, VAT flag), social URLs, GCash number. Drives branding on receipts, reports, and Connect listing. |
+| `/dashboard/settings/receipt` | Receipt Designer -- per-section toggles (Header / Body / Customer / Footer / Format), custom header/footer text, thank-you message, paper width + font size. Live thermal-receipt preview that updates as toggles change. "Apply to" branch selector at the top: Tenant default (always available) or any specific branch (Enterprise-only via the `branch_receipt_overrides` feature). When viewing a branch with its own override row, a **Reset to default** button removes the override. Non-Enterprise tenants who pick a branch see a lock banner — they can browse the resolved settings but can't save. |
 | `/dashboard/settings/import` | Data Import Wizard -- 4-step CSV/Excel import (upload, column mapping, validation, execute) |
 | `/dashboard/settings/notifications` | Notification Preferences -- per-type SMS/email channel toggles with mandatory indicators |
 | `/dashboard/supplies` | Supply list with category/branch/stock filters, quick actions |

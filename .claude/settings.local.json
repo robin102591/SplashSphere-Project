@@ -208,7 +208,15 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(./node_modules/.bin/eslint src *)",
       "Bash(./node_modules/.bin/eslint --max-warnings 0 src)",
-      "Bash(./node_modules/.bin/eslint . --max-warnings 0)"
+      "Bash(./node_modules/.bin/eslint . --max-warnings 0)",
+      "PowerShell(pnpm *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(corepack pnpm *)",
+      "PowerShell(dotnet build *)",
+      "Bash(git *)",
+      "PowerShell(npx --no-install pnpm --filter @splashsphere/admin typecheck 2>&1 | Select-Object -Last 60)",
+      "PowerShell(npx --no-install pnpm --filter @splashsphere/admin lint 2>&1 | Select-Object -Last 80)",
+      "PowerShell(npx --no-install pnpm --filter @splashsphere/admin typecheck 2>&1 | Select-Object -Last 30)"
     ]
   }
 }

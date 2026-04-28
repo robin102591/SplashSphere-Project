@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Entities;
@@ -99,6 +99,9 @@ public sealed class ApplicationDbContext(
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<Expense> Expenses => Set<Expense>();
 
+    // ── Receipt settings ────────────────────────────────────────────────────
+    public DbSet<ReceiptSetting> ReceiptSettings => Set<ReceiptSetting>();
+
     // ── Loyalty ───────────────────────────────────────────────────────────
     public DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings => Set<LoyaltyProgramSettings>();
     public DbSet<LoyaltyTierConfig> LoyaltyTierConfigs => Set<LoyaltyTierConfig>();
@@ -148,12 +151,17 @@ public sealed class ApplicationDbContext(
         // Use .IgnoreQueryFilters() in handlers that need cross-tenant access
         // (e.g. user lookup in TenantResolutionMiddleware, admin tooling).
 
+        var applyMethod = typeof(ApplicationDbContext).GetMethod(
+            nameof(ApplyTenantFilter),
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(ITenantScoped).IsAssignableFrom(entityType.ClrType))
             {
-                modelBuilder.Entity(entityType.ClrType)
-                    .HasQueryFilter(BuildTenantFilter(entityType.ClrType));
+                applyMethod
+                    .MakeGenericMethod(entityType.ClrType)
+                    .Invoke(this, [modelBuilder]);
             }
         }
 
@@ -176,32 +184,18 @@ public sealed class ApplicationDbContext(
     }
 
     /// <summary>
-    /// Builds the lambda <c>e =&gt; EF.Property&lt;string&gt;(e, "TenantId") == tenantContext.TenantId</c>
-    /// for the given CLR type. EF Core parameterizes the right-hand side at
-    /// query time so a single registered filter scopes correctly across requests.
+    /// Registers the standard tenant query filter for one ITenantScoped entity.
+    /// Called dynamically (via <see cref="MethodInfo.MakeGenericMethod"/>) for
+    /// every CLR type implementing the marker. The lambda body uses ordinary
+    /// C# closure capture over <c>tenantContext</c> — exactly the same pattern
+    /// as the hand-wired filters above — so EF Core parameterizes the
+    /// right-hand side at query time and re-evaluates it per request, instead
+    /// of inlining the first request's value as a constant.
     /// </summary>
-    private LambdaExpression BuildTenantFilter(Type entityType)
+    private void ApplyTenantFilter<TEntity>(ModelBuilder modelBuilder)
+        where TEntity : class, ITenantScoped
     {
-        var parameter = Expression.Parameter(entityType, "e");
-
-        // EF.Property<string>(e, "TenantId")
-        var efPropertyMethod = typeof(EF)
-            .GetMethod(nameof(EF.Property))!
-            .MakeGenericMethod(typeof(string));
-
-        var propertyAccess = Expression.Call(
-            efPropertyMethod,
-            parameter,
-            Expression.Constant("TenantId"));
-
-        // tenantContext.TenantId — captured by reference so the filter sees
-        // the per-request value of TenantId on every query execution.
-        var tenantContextExpr = Expression.Constant(tenantContext);
-        var tenantIdAccess = Expression.Property(
-            tenantContextExpr,
-            nameof(TenantContext.TenantId));
-
-        var body = Expression.Equal(propertyAccess, tenantIdAccess);
-        return Expression.Lambda(body, parameter);
+        modelBuilder.Entity<TEntity>()
+            .HasQueryFilter(e => EF.Property<string>(e, "TenantId") == tenantContext.TenantId);
     }
 }

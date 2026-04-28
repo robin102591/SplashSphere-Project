@@ -1,10 +1,10 @@
 'use client'
 
-import { use, useEffect, useRef } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Receipt } from '@splashsphere/types'
+import type { ApiError, Receipt } from '@splashsphere/types'
 import { PaymentMethod } from '@splashsphere/types'
 
 const PAYMENT_LABEL: Record<number, string> = {
@@ -87,6 +87,7 @@ export default function ReceiptPage({ params }: Props) {
           >
             Download PDF
           </a>
+          <EmailReceiptButton transactionId={id} />
           <button
             onClick={() => window.print()}
             className="px-4 py-2 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
@@ -185,5 +186,61 @@ export default function ReceiptPage({ params }: Props) {
         )}
       </div>
     </>
+  )
+}
+
+// ── Email button ─────────────────────────────────────────────────────────────
+//
+// Sends the digital receipt via the backend manual-resend endpoint. The
+// backend uses the customer's on-file email when no override is supplied;
+// the cashier can force a different address through the prompt for cases
+// where the customer just gave a corrected email at the counter and we
+// don't want to make them update their profile first.
+
+function EmailReceiptButton({ transactionId }: { transactionId: string }) {
+  const { getToken } = useAuth()
+  const [sending, setSending] = useState(false)
+  const [done, setDone]     = useState(false)
+
+  const send = async (overrideEmail: string | null) => {
+    setSending(true)
+    setDone(false)
+    try {
+      const token = await getToken()
+      await apiClient.post<void>(
+        `/transactions/${transactionId}/receipt/send`,
+        { overrideEmail },
+        token ?? undefined,
+      )
+      setDone(true)
+      setTimeout(() => setDone(false), 2500)
+    } catch (err) {
+      const apiErr = err as ApiError
+      alert(apiErr?.detail ?? apiErr?.title ?? 'Failed to send email.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const onClick = async () => {
+    const choice = window.prompt(
+      'Send to which email?\n\nLeave blank to use the customer\'s on-file address.',
+      '',
+    )
+    // null = user clicked Cancel; '' = use on-file.
+    if (choice === null) return
+    const trimmed = choice.trim()
+    void send(trimmed === '' ? null : trimmed)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={sending}
+      className="px-3 py-2 text-xs rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+    >
+      {sending ? 'Sending…' : done ? 'Sent ✓' : 'Email'}
+    </button>
   )
 }

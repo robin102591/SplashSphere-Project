@@ -30,6 +30,53 @@ public sealed class Tenant : IAuditableEntity
     public string Address { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 
+    // ── Branding (slice 1) ───────────────────────────────────────────────────
+    /// <summary>Optional one-liner shown beneath the business name on receipts and the Connect listing.</summary>
+    public string? Tagline { get; set; }
+
+    /// <summary>Optional public website URL.</summary>
+    public string? Website { get; set; }
+
+    // ── Structured headquarters address ──────────────────────────────────────
+    // Each branch carries its own address (Branch.Address). These tenant-level
+    // fields are the headquarters / display address used on email receipts,
+    // reports, and invoices. Kept nullable so existing tenants don't need a
+    // backfill — Address (the legacy single string) is still derived/maintained.
+    public string? StreetAddress { get; set; }
+    public string? Barangay { get; set; }
+    public string? City { get; set; }
+    public string? Province { get; set; }
+    public string? ZipCode { get; set; }
+
+    // ── Tax & registration ──────────────────────────────────────────────────
+    /// <summary>True for VAT-registered businesses (12% PH VAT applies). Most car washes are non-VAT.</summary>
+    public bool IsVatRegistered { get; set; }
+
+    // ── Social & payment display ────────────────────────────────────────────
+    /// <summary>Full Facebook page URL (e.g. https://facebook.com/aquashinecarwash).</summary>
+    public string? FacebookUrl { get; set; }
+
+    /// <summary>Instagram handle, optionally with leading @ (stored as-entered).</summary>
+    public string? InstagramHandle { get; set; }
+
+    /// <summary>GCash MSISDN displayed on receipts. Format is free-form (not validated).</summary>
+    public string? GCashNumber { get; set; }
+
+    // ── Logo (slice 3) ──────────────────────────────────────────────────────
+    // Three resized PNG variants uploaded to Cloudflare R2 by UploadLogoCommand.
+    // The API never stores image bytes — only the public URLs returned by the
+    // file-storage service. Update via POST /settings/company/logo, never by
+    // the regular profile-update command (so a profile save never wipes them).
+
+    /// <summary>500×500 PNG. Connect listing detail page, admin sidebar branding.</summary>
+    public string? LogoUrl { get; set; }
+
+    /// <summary>200×200 PNG. Receipt header thumbnail.</summary>
+    public string? LogoThumbnailUrl { get; set; }
+
+    /// <summary>80×80 PNG. Connect directory list rows, dense UI surfaces.</summary>
+    public string? LogoIconUrl { get; set; }
+
     // ── Franchise ────────────────────────────────────────────────────────────
     public TenantType TenantType { get; set; } = TenantType.Independent;
     public string? ParentTenantId { get; set; }

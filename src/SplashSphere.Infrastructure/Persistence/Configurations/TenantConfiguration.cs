@@ -41,6 +41,35 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue(true);
 
+        // ── Branding ──────────────────────────────────────────────────────────
+        builder.Property(t => t.Tagline)
+            .HasMaxLength(200);
+
+        builder.Property(t => t.Website)
+            .HasMaxLength(256);
+
+        // ── Structured address ────────────────────────────────────────────────
+        builder.Property(t => t.StreetAddress).HasMaxLength(256);
+        builder.Property(t => t.Barangay).HasMaxLength(128);
+        builder.Property(t => t.City).HasMaxLength(128);
+        builder.Property(t => t.Province).HasMaxLength(128);
+        builder.Property(t => t.ZipCode).HasMaxLength(20);
+
+        // ── Tax flag ──────────────────────────────────────────────────────────
+        builder.Property(t => t.IsVatRegistered)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        // ── Social & payment ──────────────────────────────────────────────────
+        builder.Property(t => t.FacebookUrl).HasMaxLength(256);
+        builder.Property(t => t.InstagramHandle).HasMaxLength(64);
+        builder.Property(t => t.GCashNumber).HasMaxLength(50);
+
+        // ── Logo URLs (Cloudflare R2) ────────────────────────────────────────
+        builder.Property(t => t.LogoUrl).HasMaxLength(512);
+        builder.Property(t => t.LogoThumbnailUrl).HasMaxLength(512);
+        builder.Property(t => t.LogoIconUrl).HasMaxLength(512);
+
         // ── Audit timestamps ──────────────────────────────────────────────────
         builder.Property(t => t.CreatedAt)
             .IsRequired()

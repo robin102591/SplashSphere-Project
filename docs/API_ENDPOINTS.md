@@ -70,6 +70,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `POST` | `/transactions/{id}/payments` | Add payment |
 | `GET` | `/transactions/{id}/receipt` | Receipt-formatted transaction data (JSON) |
 | `GET` | `/transactions/{id}/receipt/pdf` | Download receipt as PDF (QuestPDF, 80mm thermal) |
+| `POST` | `/transactions/{id}/receipt/send` | Email the digital receipt. Body `{ overrideEmail?: string }` — empty/missing uses the customer's on-file email; supplied uses that address instead. Gated on the `digital_receipts` feature. Auto-fires on completion via `TransactionCompletedDigitalReceiptHandler`; this endpoint is for cashier-initiated resends |
 | `GET` | `/transactions/daily-summary` | Daily branch summary |
 
 ## Merchandise -- CRUD + stock adjustment
@@ -187,6 +188,18 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | Method | Route | Description |
 |---|---|---|
 | `GET` | `/audit-logs` | Paginated audit log list (filter by entityType, entityId, userId, from, to) |
+
+## Settings
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/settings/company` | Get the current tenant's company profile (identity, contact, structured address, tax/registration, social, GCash) |
+| `PUT` | `/settings/company` | Update the current tenant's company profile. Server re-derives the legacy single-string `Address` from the structured fields |
+| `GET` | `/settings/receipt[?branchId={id}]` | Get receipt-design settings. Resolution: branch-specific row → tenant default → in-memory default. With `branchId`, returns the override row for that branch (or the tenant default falling through if no override exists) |
+| `PUT` | `/settings/receipt[?branchId={id}]` | Upsert receipt-design settings. With no `branchId`, upserts the tenant default. With `branchId`, upserts a per-branch override (Enterprise only — handler returns 403 `Error.Forbidden` if the tenant lacks the `branch_receipt_overrides` feature) |
+| `DELETE` | `/settings/receipt?branchId={id}` | Remove a per-branch override; the branch falls back to the tenant default. `branchId` is required — the tenant default cannot be deleted (always exists). Idempotent (deleting a missing override succeeds) |
+| `POST` | `/settings/company/logo` | Upload a logo (multipart/form-data, field name `file`). Server resizes to 500/200/80px PNG variants and stores in Cloudflare R2. Returns `{logoUrl, logoThumbnailUrl, logoIconUrl}` with cache-busting `?v=` suffixes |
+| `DELETE` | `/settings/company/logo` | Remove the current tenant's logo. Best-effort R2 delete (orphan blobs are not a correctness issue — next upload overwrites) |
 
 ## Expenses
 

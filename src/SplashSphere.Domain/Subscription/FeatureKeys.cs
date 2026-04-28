@@ -36,8 +36,14 @@ public static class FeatureKeys
     public const string ConnectDirectoryListing = "connect_directory_listing";
     public const string ReferralProgram = "referral_program";
 
+    /// <summary>HTML email receipt sent automatically on transaction completion (when the customer has an email on file).</summary>
+    public const string DigitalReceipts = "digital_receipts";
+
     // ── Enterprise only ──────────────────────────────────────────────────────
     public const string ApiAccess = "api_access";
     public const string CustomIntegrations = "custom_integrations";
     public const string FranchiseManagement = "franchise_management";
+
+    /// <summary>Per-branch receipt-design overrides on top of the tenant default. Multi-branch operation only.</summary>
+    public const string BranchReceiptOverrides = "branch_receipt_overrides";
 }

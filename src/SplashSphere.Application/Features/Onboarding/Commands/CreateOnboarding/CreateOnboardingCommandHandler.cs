@@ -156,6 +156,14 @@ public sealed class CreateOnboardingCommandHandler(
         foreach (var name in merchCategories)
             context.MerchandiseCategories.Add(new MerchandiseCategory(orgId, name));
 
+        // ── Pre-seed default ReceiptSetting (tenant-level, BranchId = null) ──
+        // Slice 4 will allow per-branch overrides — this is the always-present
+        // fallback every tenant has from day one.
+        context.ReceiptSettings.Add(new ReceiptSetting(orgId)
+        {
+            ThankYouMessage = $"Thank you for choosing {request.BusinessName}!",
+        });
+
         // Populate TenantContext so downstream UnitOfWork / query filters work
         // correctly if any subsequent command in this request needs them.
         tenantContext.TenantId = orgId;

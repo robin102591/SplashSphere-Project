@@ -3435,6 +3435,149 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.ToTable("QueueEntries", (string)null);
                 });
 
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ReceiptSetting", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<bool>("AutoCutPaper")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BranchId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("CustomFooterText")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("CustomHeaderText")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("FontSize")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LogoPosition")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LogoSize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PromoText")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("ReceiptWidth")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ShowBranchAddress")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowBranchContact")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowBranchName")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowBusinessName")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowCashierName")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowCustomerName")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowCustomerPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowDateTime")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowDiscountBreakdown")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowEmployeeNames")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowGCashNumber")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowGCashQr")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowLogo")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowLoyaltyBalance")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowLoyaltyPointsEarned")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowLoyaltyTier")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowServiceDuration")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowSocialMedia")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowTIN")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowTagline")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowTaxLine")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowTransactionNumber")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowVehicleInfo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ThankYouMessage")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasDefaultValue("Thank you for your patronage!");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique()
+                        .HasFilter("\"BranchId\" IS NULL");
+
+                    b.HasIndex("TenantId", "BranchId")
+                        .IsUnique()
+                        .HasFilter("\"BranchId\" IS NOT NULL");
+
+                    b.ToTable("ReceiptSettings", (string)null);
+                });
+
             modelBuilder.Entity("SplashSphere.Domain.Entities.Referral", b =>
                 {
                     b.Property<string>("Id")
@@ -4395,9 +4538,17 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("Barangay")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<string>("BusinessPermitNo")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("ContactNumber")
                         .IsRequired()
@@ -4414,14 +4565,43 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("FranchiseCode")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("GCashNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InstagramHandle")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("IsVatRegistered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LogoIconUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("LogoThumbnailUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -4431,6 +4611,18 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Property<string>("ParentTenantId")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Province")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("StreetAddress")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Tagline")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("TaxId")
                         .HasMaxLength(50)
@@ -4443,6 +4635,14 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ZipCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -5969,6 +6169,24 @@ namespace SplashSphere.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("Transaction");
+                });
+
+            modelBuilder.Entity("SplashSphere.Domain.Entities.ReceiptSetting", b =>
+                {
+                    b.HasOne("SplashSphere.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SplashSphere.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("SplashSphere.Domain.Entities.Referral", b =>
