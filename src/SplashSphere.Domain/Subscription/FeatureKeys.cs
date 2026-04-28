@@ -40,4 +40,7 @@ public static class FeatureKeys
     public const string ApiAccess = "api_access";
     public const string CustomIntegrations = "custom_integrations";
     public const string FranchiseManagement = "franchise_management";
+
+    /// <summary>Per-branch receipt-design overrides on top of the tenant default. Multi-branch operation only.</summary>
+    public const string BranchReceiptOverrides = "branch_receipt_overrides";
 }

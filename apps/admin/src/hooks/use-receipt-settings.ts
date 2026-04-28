@@ -26,7 +26,7 @@ export function useReceiptSetting(branchId?: string | null) {
   })
 }
 
-/** Upsert the tenant-default (or per-branch in slice 4) receipt setting. */
+/** Upsert the tenant-default (or a per-branch override) receipt setting. */
 export function useUpdateReceiptSetting() {
   const { getToken } = useAuth()
   const qc = useQueryClient()
@@ -46,5 +46,26 @@ export function useUpdateReceiptSetting() {
     },
     onSuccess: (_data, vars) =>
       qc.invalidateQueries({ queryKey: QK(vars.branchId ?? null) }),
+  })
+}
+
+/**
+ * Remove a per-branch override; the branch reverts to the tenant default.
+ * The tenant default itself (branchId === null) cannot be deleted — the
+ * server returns a 400 if called without a branchId.
+ */
+export function useDeleteReceiptBranchOverride() {
+  const { getToken } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (branchId: string) => {
+      const token = await getToken()
+      return apiClient.delete<void>(
+        `/settings/receipt?branchId=${encodeURIComponent(branchId)}`,
+        token ?? undefined,
+      )
+    },
+    onSuccess: (_data, branchId) =>
+      qc.invalidateQueries({ queryKey: QK(branchId) }),
   })
 }

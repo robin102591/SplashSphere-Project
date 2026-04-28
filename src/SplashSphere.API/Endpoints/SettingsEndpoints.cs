@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.API.Extensions;
 using SplashSphere.Application.Features.Settings.Commands.DeleteLogo;
+using SplashSphere.Application.Features.Settings.Commands.DeleteReceiptSetting;
 using SplashSphere.Application.Features.Settings.Commands.UpdateCompanyProfile;
 using SplashSphere.Application.Features.Settings.Commands.UpdateReceiptSetting;
 using SplashSphere.Application.Features.Settings.Commands.UploadLogo;
@@ -40,7 +41,11 @@ public static class SettingsEndpoints
 
         group.MapPut("/receipt", UpdateReceiptSetting)
             .WithName("UpdateReceiptSetting")
-            .WithSummary("Update receipt-design settings (upserts the tenant default)");
+            .WithSummary("Update receipt-design settings. With no `branchId` query param, upserts the tenant default. With `branchId`, upserts a per-branch override (Enterprise only).");
+
+        group.MapDelete("/receipt", DeleteReceiptSetting)
+            .WithName("DeleteReceiptBranchOverride")
+            .WithSummary("Remove a per-branch receipt-setting override; the branch falls back to the tenant default. `branchId` query param is required (the tenant default cannot be deleted).");
 
         // ── Company logo (multipart upload) ───────────────────────────────────
         group.MapPost("/company/logo", UploadLogo)
@@ -146,6 +151,27 @@ public static class SettingsEndpoints
             body.FontSize,
             body.AutoCutPaper), ct);
 
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    private static async Task<IResult> DeleteReceiptSetting(
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        // Guard at the wire: a missing branchId means "delete the tenant
+        // default", which we don't allow — the validator turns this into a
+        // proper VALIDATION error, but checking here gives a faster rejection
+        // and a clearer client error message.
+        if (string.IsNullOrWhiteSpace(branchId))
+            return TypedResults.Problem(new ProblemDetails
+            {
+                Title  = "VALIDATION",
+                Detail = "branchId query parameter is required. The tenant default cannot be deleted.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+
+        var result = await sender.Send(new DeleteReceiptSettingCommand(branchId), ct);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 

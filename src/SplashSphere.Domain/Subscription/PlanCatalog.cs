@@ -31,7 +31,7 @@ public static class PlanCatalog
     [
         ..GrowthFeatures,
         FeatureKeys.ApiAccess, FeatureKeys.CustomIntegrations,
-        FeatureKeys.FranchiseManagement
+        FeatureKeys.FranchiseManagement, FeatureKeys.BranchReceiptOverrides
     ];
 
     public static readonly PlanDefinition Trial = new()

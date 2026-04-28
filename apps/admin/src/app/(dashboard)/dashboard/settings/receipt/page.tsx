@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Receipt as ReceiptIcon } from 'lucide-react'
+import { Lock, Receipt as ReceiptIcon, RotateCcw } from 'lucide-react'
 
 import {
+  FeatureKeys,
   LogoPosition,
   LogoSize,
   ReceiptFontSize,
@@ -35,8 +36,11 @@ import {
 import {
   useReceiptSetting,
   useUpdateReceiptSetting,
+  useDeleteReceiptBranchOverride,
 } from '@/hooks/use-receipt-settings'
 import { useCompanyProfile } from '@/hooks/use-company-profile'
+import { useBranches } from '@/hooks/use-branches'
+import { useHasFeature } from '@/hooks/use-plan'
 import { formatPeso } from '@splashsphere/format'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -115,9 +119,24 @@ function formToPayload(v: FormValues): UpdateReceiptSettingPayload {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ReceiptSettingsPage() {
-  const { data: setting, isLoading } = useReceiptSetting()
+  // `null` selectedBranchId means "tenant default". Non-null = a per-branch
+  // override. Per-branch is gated on the Enterprise-only
+  // BranchReceiptOverrides feature; the dropdown only shows other branches
+  // when the feature is active.
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
+  const hasBranchOverrides = useHasFeature(FeatureKeys.BranchReceiptOverrides)
+
+  const { data: branches = [] } = useBranches()
+  const { data: setting, isLoading } = useReceiptSetting(selectedBranchId)
   const { data: company } = useCompanyProfile()
   const { mutateAsync: save, isPending } = useUpdateReceiptSetting()
+  const { mutateAsync: removeOverride, isPending: isRemoving } =
+    useDeleteReceiptBranchOverride()
+
+  // True when the loaded setting is a real branch-specific row (not just the
+  // tenant default we fell back to). Drives the "Reset to default" button.
+  const hasBranchOverride =
+    selectedBranchId !== null && setting?.branchId === selectedBranchId
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -146,11 +165,29 @@ export default function ReceiptSettingsPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await save({ payload: formToPayload(values) })
-      toast.success('Receipt settings saved.')
+      await save({
+        payload: formToPayload(values),
+        branchId: selectedBranchId,
+      })
+      toast.success(
+        selectedBranchId
+          ? 'Branch override saved.'
+          : 'Tenant default saved.',
+      )
     } catch (err) {
       const apiErr = err as ApiError
       toast.error(apiErr?.detail ?? apiErr?.title ?? 'Failed to save settings.')
+    }
+  }
+
+  const onResetToDefault = async () => {
+    if (!selectedBranchId) return
+    try {
+      await removeOverride(selectedBranchId)
+      toast.success('Branch override removed; using tenant default.')
+    } catch (err) {
+      const apiErr = err as ApiError
+      toast.error(apiErr?.detail ?? apiErr?.title ?? 'Failed to remove override.')
     }
   }
 
@@ -163,6 +200,11 @@ export default function ReceiptSettingsPage() {
     )
   }
 
+  // The form is locked (read-only) when a branch is selected but the tenant's
+  // plan doesn't include per-branch overrides. They can still browse the
+  // setting (which falls back to the tenant default), just not save changes.
+  const locked = selectedBranchId !== null && !hasBranchOverrides
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-12">
       <PageHeader
@@ -170,11 +212,68 @@ export default function ReceiptSettingsPage() {
         description="Control what appears on every printed and digital receipt. Live preview on the right."
         back="/dashboard/settings"
         actions={
-          <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+          <Button
+            type="submit"
+            disabled={isPending || !form.formState.isDirty || locked}
+          >
             {isPending ? 'Saving…' : 'Save changes'}
           </Button>
         }
       />
+
+      {/* ── Scope selector ─────────────────────────────────────────────────
+          Tenant default is the always-available baseline. When the Enterprise
+          BranchReceiptOverrides feature is active, the dropdown lets the user
+          edit per-branch overrides on top. Without the feature, the dropdown
+          stays — but only the "Tenant default" option is selectable. */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Label className="text-sm font-medium shrink-0">Apply to</Label>
+            <Select
+              value={selectedBranchId ?? 'default'}
+              onValueChange={(v) => setSelectedBranchId(v === 'default' ? null : v)}
+            >
+              <SelectTrigger className="w-full sm:w-72">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Tenant default (all branches)</SelectItem>
+                {hasBranchOverrides && branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name} (branch override)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {hasBranchOverride && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetToDefault}
+              disabled={isRemoving}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              {isRemoving ? 'Removing…' : 'Reset to default'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {locked && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-medium">Per-branch receipt overrides require the Enterprise plan.</p>
+            <p className="mt-0.5 text-xs opacity-90">
+              You can browse the resolved settings for this branch, but you can&apos;t save changes here. Edit the tenant default to apply across all branches.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* ── Form column ─────────────────────────────────────────────── */}
@@ -204,7 +303,10 @@ export default function ReceiptSettingsPage() {
       </div>
 
       <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+        <Button
+          type="submit"
+          disabled={isPending || !form.formState.isDirty || locked}
+        >
           {isPending ? 'Saving…' : 'Save changes'}
         </Button>
       </div>

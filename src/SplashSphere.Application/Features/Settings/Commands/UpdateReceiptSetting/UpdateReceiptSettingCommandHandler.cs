@@ -2,19 +2,37 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Entities;
+using SplashSphere.Domain.Subscription;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Settings.Commands.UpdateReceiptSetting;
 
 public sealed class UpdateReceiptSettingCommandHandler(
     IApplicationDbContext context,
-    ITenantContext tenantContext)
+    ITenantContext tenantContext,
+    IPlanEnforcementService planService)
     : IRequestHandler<UpdateReceiptSettingCommand, Result>
 {
     public async Task<Result> Handle(
         UpdateReceiptSettingCommand request,
         CancellationToken cancellationToken)
     {
+        // Per-branch overrides are an Enterprise feature. The tenant default
+        // (BranchId = null) is always available. We can't gate this at the
+        // endpoint level via RequiresFeatureAttribute because the gate only
+        // applies when branchId is non-null on the same route.
+        if (!string.IsNullOrWhiteSpace(request.BranchId))
+        {
+            var allowed = await planService.HasFeatureAsync(
+                tenantContext.TenantId,
+                FeatureKeys.BranchReceiptOverrides,
+                cancellationToken);
+
+            if (!allowed)
+                return Result.Failure(Error.Forbidden(
+                    "Per-branch receipt overrides require the Enterprise plan."));
+        }
+
         // Find existing row by (tenant, branch). The unique partial indexes
         // on (TenantId, BranchId IS NULL) and (TenantId, BranchId IS NOT NULL)
         // guarantee at most one match.
