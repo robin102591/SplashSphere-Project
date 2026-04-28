@@ -1,5 +1,20 @@
 ## Changelog
 
+## [Marketing — Sync /features and /pricing with shipped backend] — 2026-04-28
+
+The marketing site was advertising a stale subset of features — the receipt-designer feature (slices 1–5), the Customer Connect app, online booking, the referral program, pricing modifiers, and cost-per-wash reports were all shipped but invisible on the public site. Updated `/features` and `/pricing` to reflect what's actually in `PlanCatalog.cs` today.
+
+- `apps/marketing/src/app/features/page.tsx`:
+  - Two new categories: **Receipt Designer & Branding** (logo upload, ~30 toggles, live preview, digital email, branch overrides) and **Customer Connect App** (phone OTP, discover, online booking, queue tracking, cross-tenant history).
+  - **Queue Management** renamed to **Queue & Online Booking** with the booking-priority order called out.
+  - **Operations** gains pricing modifiers (peak / weekends / holidays / promotions / weather) and cost-per-wash reports.
+  - **Customer Management** renamed to **Customer Management & Loyalty**, gains the referral program bullet.
+  - **POS & Transactions** mentions the auto-sent email receipt and "branded receipts" (linking to the new designer category).
+  - Two new icon imports: `Receipt`, `Smartphone`.
+- `apps/marketing/src/app/pricing/page.tsx`:
+  - Plan card features rewritten to match what each tier actually unlocks. Starter now correctly lists branded receipts + supply tracking; Growth lists online booking, Connect listing, referrals, digital receipts, pricing modifiers, cost-per-wash; Enterprise lists per-branch receipt overrides.
+  - Comparison table gains 7 new rows: Receipt Designer + Logo Upload, Supply Tracking, Online Booking + Connect Listing, Referral Program, Digital Email Receipts, Pricing Modifiers, Branch Receipt Overrides. P&L row clarified to "P&L + Cost-per-Wash Reports".
+
 ## [Settings — Digital receipt email (Slice 5 of Company Profile + Receipt Designer)] — 2026-04-28
 
 Final slice of the Company Profile + Receipt Designer feature. Customers with an email on file now receive an HTML email receipt automatically when their transaction completes — same content as the printed PDF, honoring every receipt-designer toggle. Cashiers get a manual **Email** button on the POS receipt screen for re-sending (spam folder, typo'd address, retroactive sends for transactions that predate the feature). Gated on the new `digital_receipts` feature key (Growth + Enterprise + Trial; Starter does not include email receipts).
