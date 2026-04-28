@@ -70,6 +70,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `POST` | `/transactions/{id}/payments` | Add payment |
 | `GET` | `/transactions/{id}/receipt` | Receipt-formatted transaction data (JSON) |
 | `GET` | `/transactions/{id}/receipt/pdf` | Download receipt as PDF (QuestPDF, 80mm thermal) |
+| `POST` | `/transactions/{id}/receipt/send` | Email the digital receipt. Body `{ overrideEmail?: string }` — empty/missing uses the customer's on-file email; supplied uses that address instead. Gated on the `digital_receipts` feature. Auto-fires on completion via `TransactionCompletedDigitalReceiptHandler`; this endpoint is for cashier-initiated resends |
 | `GET` | `/transactions/daily-summary` | Daily branch summary |
 
 ## Merchandise -- CRUD + stock adjustment

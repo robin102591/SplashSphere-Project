@@ -998,7 +998,8 @@ export const FeatureKeys = {
   CostPerWashReports: 'cost_per_wash_reports',
   // Customer Connect / Online Booking (Growth+)
   OnlineBooking: 'online_booking',
-  // Receipt designer (Enterprise)
+  // Receipt designer (Growth+ for digital receipts; Enterprise-only for branch overrides)
+  DigitalReceipts: 'digital_receipts',
   BranchReceiptOverrides: 'branch_receipt_overrides',
 } as const;
 

@@ -9,6 +9,7 @@ using SplashSphere.Application.Features.Transactions.Commands.UpdateDiscountTip;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionItems;
 using SplashSphere.Application.Features.Transactions.Commands.UpdateTransactionStatus;
 using SplashSphere.Application.Features.Transactions.Queries.GetDailySummary;
+using SplashSphere.Application.Features.Transactions.Commands.SendDigitalReceipt;
 using SplashSphere.Application.Features.Transactions.Queries.ExportReceiptPdf;
 using SplashSphere.Application.Features.Transactions.Queries.GetReceipt;
 using SplashSphere.Application.Features.Transactions.Queries.GetTransactionById;
@@ -40,6 +41,7 @@ public static class TransactionEndpoints
         group.MapGet("/{id}",                        GetTransactionById).WithSummary("Get transaction by ID");
         group.MapGet("/{id}/receipt",                GetReceipt).WithSummary("Get receipt data");
         group.MapGet("/{id}/receipt/pdf",            ExportReceiptPdf).WithSummary("Download receipt PDF");
+        group.MapPost("/{id}/receipt/send",          SendReceipt).WithSummary("Email the digital receipt to the customer (or to an override address). Gated on the digital_receipts feature.");
 
         return app;
     }
@@ -212,6 +214,27 @@ public static class TransactionEndpoints
 
         return TypedResults.File(result.Content, "application/pdf", result.FileName);
     }
+
+    // ── POST /{id}/receipt/send ────────────────────────────────────────────
+
+    private static async Task<IResult> SendReceipt(
+        string id,
+        [FromBody] SendReceiptRequest? body,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new SendDigitalReceiptCommand(id, body?.OverrideEmail), ct);
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    /// <summary>
+    /// Optional body for <c>POST /{id}/receipt/send</c>. When omitted entirely,
+    /// the email goes to the customer's on-file address; when supplied with a
+    /// value, the email goes there instead — useful when the cashier needs to
+    /// resend to a corrected address without touching the customer profile.
+    /// </summary>
+    private sealed record SendReceiptRequest(string? OverrideEmail);
 
     // ── GET /daily-summary ────────────────────────────────────────────────────
 
