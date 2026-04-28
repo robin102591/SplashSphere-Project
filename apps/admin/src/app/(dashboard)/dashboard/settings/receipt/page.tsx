@@ -472,7 +472,11 @@ function Toggle({
   label: string
   hint?: string
 }) {
-  const checked = form.watch(name) as boolean
+  // useWatch — not form.watch — so this Toggle only re-renders when ITS value
+  // changes, not every time any field in the (~30-toggle) form mutates.
+  // form.watch() subscribes the whole calling component to every form change,
+  // which made each toggle click trigger a full sectioned-form rerender.
+  const checked = useWatch({ control: form.control, name }) as boolean
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="space-y-0.5">
@@ -496,7 +500,8 @@ function SelectField<TName extends keyof FormValues>({
   label: string
   options: { value: number; label: string }[]
 }) {
-  const value = form.watch(name) as number
+  // useWatch — see Toggle comment.
+  const value = useWatch({ control: form.control, name }) as number
   return (
     <div className="space-y-1.5">
       <Label className="text-sm font-medium">{label}</Label>
