@@ -46,6 +46,16 @@ const HUB_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'}/h
  * state plus a connection-status indicator. Auto-reconnects with the SDK's
  * built-in exponential backoff. The completion screen auto-reverts to Idle
  * after `completionHoldSeconds` (configured via display settings).
+ *
+ * Auth model: waits for Clerk's `isLoaded` before attempting any connection
+ * — calling `getToken()` before that returns null and would put us in a
+ * fake "disconnected" state forever. The token is fetched lazily via
+ * SignalR's `accessTokenFactory` so every reconnect grabs a fresh JWT.
+ *
+ * Effect deps: only branchId / stationId / isSignedIn / isLoaded. `getToken`
+ * is stashed in a ref because its function identity changes on auth-state
+ * shifts and would otherwise tear down + rebuild the connection on every
+ * render.
  */
 export function useDisplayConnection({
   branchId,
@@ -59,11 +69,16 @@ export function useDisplayConnection({
   state: DisplayState
   connection: ConnectionStatus
 } {
-  const { getToken } = useAuth()
+  const { getToken, isLoaded, isSignedIn } = useAuth()
   const [state, dispatch] = useReducer(reducer, { kind: 'idle' } as DisplayState)
   const connectionRef = useRef<signalR.HubConnection | null>(null)
   const statusRef = useRef<ConnectionStatus>('connecting')
   const [, force] = useReducer((x: number) => x + 1, 0)
+
+  // Keep getToken in a ref so the connect effect doesn't re-fire on each
+  // render. We still want the freshest function the next time we call it.
+  const getTokenRef = useRef(getToken)
+  useEffect(() => { getTokenRef.current = getToken }, [getToken])
 
   // Auto-revert to Idle after the hold timer when on the completion screen.
   useEffect(() => {
@@ -78,8 +93,17 @@ export function useDisplayConnection({
   useEffect(() => {
     if (!branchId || !stationId) return
 
+    // Wait for Clerk to finish hydrating before we try to connect.
+    if (!isLoaded) return
+    if (!isSignedIn) {
+      statusRef.current = 'disconnected'
+      force()
+      return
+    }
+
     let cancelled = false
     const setStatus = (s: ConnectionStatus) => {
+      if (cancelled) return
       statusRef.current = s
       force()
     }
@@ -92,61 +116,63 @@ export function useDisplayConnection({
      */
     const rehydrate = async (): Promise<void> => {
       try {
-        const token = await getToken()
+        const token = await getTokenRef.current()
         const path = `/display/current?branchId=${encodeURIComponent(branchId)}&stationId=${encodeURIComponent(stationId)}`
         const result = await apiClient.get<DisplayCurrentResultDto>(path, token ?? undefined)
+        if (cancelled) return
         if (result.transaction) {
           dispatch({ type: 'updated', transaction: result.transaction })
-        } else {
-          dispatch({ type: 'cancelled' })
         }
-      } catch {
-        // Best-effort — if the rehydrate call fails we just stay on
-        // whatever state we had (likely Idle) and let SignalR catch up.
+        // No active transaction → leave whatever state we had. Don't dispatch
+        // 'cancelled' here: it would force-clear a Complete screen mid-hold,
+        // which would feel jumpy on a fast reconnect.
+      } catch (err) {
+        console.warn('[display] rehydrate failed', err)
       }
     }
 
-    const start = async () => {
-      const token = await getToken()
-      if (!token) {
-        setStatus('disconnected')
-        return
-      }
-
-      const conn = new signalR.HubConnectionBuilder()
-        .withUrl(HUB_URL, { accessTokenFactory: () => token })
-        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Warning)
-        .build()
-
-      conn.onreconnecting(() => setStatus('reconnecting'))
-      conn.onreconnected(async () => {
-        // Re-join the group after a reconnect — group memberships are
-        // dropped on connection loss. Then rehydrate from REST so we don't
-        // miss any events that fired during the gap.
-        try {
-          await conn.invoke('JoinDisplayGroup', branchId, stationId)
-          setStatus('connected')
-          await rehydrate()
-        } catch {
-          setStatus('disconnected')
-        }
+    const conn = new signalR.HubConnectionBuilder()
+      .withUrl(HUB_URL, {
+        // Fresh token per connection attempt so SignalR's auto-reconnect
+        // doesn't reuse an expired JWT.
+        accessTokenFactory: async () => (await getTokenRef.current()) ?? '',
       })
-      conn.onclose(() => setStatus('disconnected'))
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build()
 
-      conn.on(HubEvents.DisplayTransactionStarted, (p: DisplayTransactionPayload) =>
-        dispatch({ type: 'started', transaction: p }),
-      )
-      conn.on(HubEvents.DisplayTransactionUpdated, (p: DisplayTransactionPayload) =>
-        dispatch({ type: 'updated', transaction: p }),
-      )
-      conn.on(HubEvents.DisplayTransactionCompleted, (p: DisplayCompletionPayload) =>
-        dispatch({ type: 'completed', completion: p }),
-      )
-      conn.on(HubEvents.DisplayTransactionCancelled, () =>
-        dispatch({ type: 'cancelled' }),
-      )
+    conn.onreconnecting(() => setStatus('reconnecting'))
+    conn.onreconnected(async () => {
+      try {
+        await conn.invoke('JoinDisplayGroup', branchId, stationId)
+        setStatus('connected')
+        await rehydrate()
+      } catch (err) {
+        console.warn('[display] rejoin after reconnect failed', err)
+        setStatus('disconnected')
+      }
+    })
+    conn.onclose((err) => {
+      if (err) console.warn('[display] connection closed with error', err)
+      setStatus('disconnected')
+    })
 
+    conn.on(HubEvents.DisplayTransactionStarted, (p: DisplayTransactionPayload) =>
+      dispatch({ type: 'started', transaction: p }),
+    )
+    conn.on(HubEvents.DisplayTransactionUpdated, (p: DisplayTransactionPayload) =>
+      dispatch({ type: 'updated', transaction: p }),
+    )
+    conn.on(HubEvents.DisplayTransactionCompleted, (p: DisplayCompletionPayload) =>
+      dispatch({ type: 'completed', completion: p }),
+    )
+    conn.on(HubEvents.DisplayTransactionCancelled, () =>
+      dispatch({ type: 'cancelled' }),
+    )
+
+    connectionRef.current = conn
+
+    void (async () => {
       try {
         await conn.start()
         if (cancelled) {
@@ -155,27 +181,28 @@ export function useDisplayConnection({
         }
         await conn.invoke('JoinDisplayGroup', branchId, stationId)
         setStatus('connected')
-        connectionRef.current = conn
-        // Initial rehydrate — covers the case where the cashier already had
-        // a transaction in progress before the display device booted.
+        // Initial rehydrate — covers the case where a transaction was already
+        // in progress before the display device booted.
         await rehydrate()
-      } catch {
+      } catch (err) {
+        console.error('[display] failed to start connection or join group', err)
         setStatus('disconnected')
       }
-    }
-
-    void start()
+    })()
 
     return () => {
       cancelled = true
-      const conn = connectionRef.current
+      const c = connectionRef.current
       connectionRef.current = null
-      if (conn) {
-        conn.invoke('LeaveDisplayGroup', branchId, stationId).catch(() => {})
-        conn.stop().catch(() => {})
+      if (c) {
+        // Best-effort leave — silent if connection isn't open yet.
+        if (c.state === signalR.HubConnectionState.Connected) {
+          c.invoke('LeaveDisplayGroup', branchId, stationId).catch(() => {})
+        }
+        c.stop().catch(() => {})
       }
     }
-  }, [branchId, stationId, getToken])
+  }, [branchId, stationId, isLoaded, isSignedIn])
 
   return { state, connection: statusRef.current }
 }
