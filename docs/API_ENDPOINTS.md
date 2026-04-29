@@ -72,6 +72,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `JoinDisplayGroup(branchId, stationId)` | Client → Server | Subscribe to `display:{branchId}:{stationId}`. Authenticated. |
 | `LeaveDisplayGroup(branchId, stationId)` | Client → Server | Unsubscribe. |
+| `BroadcastDraftDisplay(branchId, stationId, payload)` | Client → Server | Cashier-pushed: relays the in-progress cart on `/transactions/new` to the station's display group as `DisplayTransactionUpdated`. Lets customers see items build live before the transaction is POSTed. Authenticated. |
 | `DisplayTransactionStarted` | Server → Client | Broadcast on transaction creation. Payload: `DisplayTransactionPayload`. |
 | `DisplayTransactionUpdated` | Server → Client | Broadcast on every line-item / discount / customer-link change. |
 | `DisplayTransactionCompleted` | Server → Client | Broadcast on payment. Payload: `DisplayCompletionPayload`. |
