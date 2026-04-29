@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, MonitorSmartphone } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { PageHeader } from '@/components/ui/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,16 +40,11 @@ export default function PosStationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <MonitorSmartphone className="h-6 w-6" />
-          POS Stations
-        </h1>
-        <p className="text-muted-foreground">
-          Each station pairs one cashier device with one optional customer display.
-          Use multiple stations when a branch runs more than one POS at the same time.
-        </p>
-      </div>
+      <PageHeader
+        title="POS Stations"
+        description="Each station pairs one cashier device with one optional customer display. Use multiple stations when a branch runs more than one POS at the same time."
+        back="/dashboard/settings"
+      />
 
       <Card>
         <CardHeader>
