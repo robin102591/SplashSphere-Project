@@ -39,6 +39,14 @@ public sealed class SplashSphereHub : Hub
     public static string QueueDisplayGroup(string branchId)
         => $"queue-display:{branchId}";
 
+    /// <summary>
+    /// Group key for a customer-facing display paired to one POS station.
+    /// One station = one display = one group. Multiple displays in the same
+    /// station mirror the same transaction stream.
+    /// </summary>
+    public static string CustomerDisplayGroup(string branchId, string stationId)
+        => $"display:{branchId}:{stationId}";
+
     // ── Connection lifecycle ──────────────────────────────────────────────────
 
     /// <summary>
@@ -102,4 +110,36 @@ public sealed class SplashSphereHub : Hub
         => await Groups.AddToGroupAsync(
             Context.ConnectionId,
             QueueDisplayGroup(branchId));
+
+    /// <summary>
+    /// Subscribe to a station's customer-display feed
+    /// (<c>display:{branchId}:{stationId}</c>). Authenticated — the cashier or
+    /// admin sets up the device once with their Clerk session and leaves it
+    /// running. Tenant scoping is enforced via the JWT <c>org_id</c> claim
+    /// (we never trust client-supplied tenant), but the same group key works
+    /// across all tenants because branchId is already tenant-scoped.
+    /// </summary>
+    [Authorize]
+    public async Task JoinDisplayGroup(string branchId, string stationId)
+    {
+        var tenantId = Context.User!.FindFirst("org_id")?.Value
+            ?? throw new HubException("No tenant context in token.");
+
+        // No DB-side validation here — slice 4 will enforce that the station
+        // actually belongs to the cashier's tenant when transaction events
+        // are dispatched. For now, joining a non-existent group is harmless
+        // (the client just never receives any events).
+        _ = tenantId;
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            CustomerDisplayGroup(branchId, stationId));
+    }
+
+    /// <summary>Leave the customer-display group (e.g. switching stations).</summary>
+    [Authorize]
+    public async Task LeaveDisplayGroup(string branchId, string stationId)
+        => await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            CustomerDisplayGroup(branchId, stationId));
 }

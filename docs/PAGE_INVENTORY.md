@@ -71,6 +71,8 @@
 | `/customers/lookup` | Plate/customer search |
 | `/attendance` | Clock in/out |
 | `/queue-display` | **PUBLIC (no auth)** full-screen queue for wall TV |
+| `/display` | Customer Display setup -- branch + station selector, "Start Display" button. Authed (Clerk). Saves picks to localStorage and requests fullscreen on click before navigating to `/display/live`. |
+| `/display/live` | Customer Display fullscreen runtime -- 3 states (Idle / Building / Complete) driven by SignalR events to `display:{branchId}:{stationId}`. Theme (Dark/Light/Brand), font size, orientation come from display settings. Auto-reconnects with exponential backoff. Subtle reconnecting banner — no internal data ever shown to the customer. |
 | `/shift/open` | Open Shift -- opening cash fund entry with quick presets |
 | `/shift` | Active Shift Panel -- stats, cash movements log, payment breakdown, actions |
 | `/shift/cash-movement` | Cash Movement Form -- Cash In / Cash Out with presets |

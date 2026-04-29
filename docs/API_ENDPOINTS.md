@@ -57,6 +57,23 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `PUT` | `/settings/display?branchId={id}` | Upsert branch override (Enterprise only — `branch_display_overrides` feature) |
 | `DELETE` | `/settings/display?branchId={id}` | Remove a branch override (tenant default cannot be deleted) |
 
+## Customer Display (read-only render config)
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/display/config?branchId={id}` | Combined render config: settings (with branch fallback) + customer-safe tenant branding (no tax IDs, permits, etc). |
+
+## SignalR — Customer Display
+
+| Method | Direction | Description |
+|---|---|---|
+| `JoinDisplayGroup(branchId, stationId)` | Client → Server | Subscribe to `display:{branchId}:{stationId}`. Authenticated. |
+| `LeaveDisplayGroup(branchId, stationId)` | Client → Server | Unsubscribe. |
+| `DisplayTransactionStarted` | Server → Client | Broadcast on transaction creation. Payload: `DisplayTransactionPayload`. |
+| `DisplayTransactionUpdated` | Server → Client | Broadcast on every line-item / discount / customer-link change. |
+| `DisplayTransactionCompleted` | Server → Client | Broadcast on payment. Payload: `DisplayCompletionPayload`. |
+| `DisplayTransactionCancelled` | Server → Client | Broadcast on void/cancel. Display reverts to Idle. |
+
 ## Services
 
 | Method | Route | Description |

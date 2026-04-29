@@ -252,3 +252,28 @@ export interface UpdateDisplaySettingPayload {
   fontSize: DisplayFontSize;
   orientation: DisplayOrientation;
 }
+
+/**
+ * Customer-display-safe subset of the tenant's company profile. Includes
+ * only fields that are appropriate for a public, customer-facing screen —
+ * NOT tax IDs, business permits, or other compliance metadata.
+ */
+export interface DisplayBrandingDto {
+  readonly businessName: string;
+  readonly tagline: string | null;
+  readonly logoUrl: string | null;
+  readonly facebookUrl: string | null;
+  readonly instagramHandle: string | null;
+  readonly gCashNumber: string | null;
+  readonly gCashQrUrl: string | null;
+}
+
+/**
+ * Combined render config for the customer-facing display device. Returned by
+ * `GET /api/v1/display/config?branchId={id}` so the device fetches once at
+ * boot and then listens for SignalR events.
+ */
+export interface DisplayConfigDto {
+  readonly settings: DisplaySettingDto;
+  readonly branding: DisplayBrandingDto;
+}

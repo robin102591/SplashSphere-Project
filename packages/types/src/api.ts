@@ -185,6 +185,56 @@ export interface LowStockAlertPayload {
   lowStockThreshold: number;
 }
 
+// ── Customer display payloads ─────────────────────────────────────────────────
+//
+// Broadcast to display:{branchId}:{stationId} groups when a station's
+// transaction state changes. Privacy: NEVER includes employee names,
+// commission data, cost prices, profit margins, or other internal data.
+
+export interface DisplayLineItemPayload {
+  readonly id: string;
+  readonly name: string;
+  readonly type: 'service' | 'package' | 'merchandise';
+  readonly quantity: number;
+  readonly unitPrice: number;
+  readonly totalPrice: number;
+}
+
+export interface DisplayTransactionPayload {
+  readonly transactionId: string;
+
+  // Vehicle (shown if available)
+  readonly vehiclePlate: string | null;
+  readonly vehicleMakeModel: string | null;
+  readonly vehicleTypeSize: string | null;
+
+  // Customer (shown if linked + display setting allows)
+  readonly customerName: string | null;
+  readonly loyaltyTier: string | null;
+
+  readonly items: readonly DisplayLineItemPayload[];
+
+  readonly subtotal: number;
+  readonly discountAmount: number;
+  readonly discountLabel: string | null;
+  readonly taxAmount: number;
+  readonly total: number;
+}
+
+export interface DisplayCompletionPayload {
+  readonly transaction: DisplayTransactionPayload;
+
+  readonly paymentMethod: string;
+  readonly amountPaid: number;
+  readonly changeAmount: number;
+
+  readonly pointsEarned: number | null;
+  readonly pointsBalance: number | null;
+
+  readonly thankYouMessage: string | null;
+  readonly promoText: string | null;
+}
+
 // ── Hub event names (type-safe constants) ─────────────────────────────────────
 
 export const HubEvents = {
@@ -195,6 +245,13 @@ export const HubEvents = {
   QueueDisplayUpdated: 'QueueDisplayUpdated',
   NotificationReceived: 'NotificationReceived',
   LowStockAlert: 'LowStockAlert',
+
+  // Customer display — distinct names so a single client connection can't
+  // confuse them with the branch-scoped TransactionUpdated above.
+  DisplayTransactionStarted:   'DisplayTransactionStarted',
+  DisplayTransactionUpdated:   'DisplayTransactionUpdated',
+  DisplayTransactionCompleted: 'DisplayTransactionCompleted',
+  DisplayTransactionCancelled: 'DisplayTransactionCancelled',
 } as const;
 
 export type HubEventName = (typeof HubEvents)[keyof typeof HubEvents];

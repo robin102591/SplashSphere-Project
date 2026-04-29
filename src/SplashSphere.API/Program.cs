@@ -173,6 +173,7 @@ app.MapWebhookEndpoints();
 
 app.MapBranchEndpoints();
 app.MapPosStationEndpoints();
+app.MapDisplayEndpoints();
 app.MapVehicleTypeEndpoints();
 app.MapSizeEndpoints();
 app.MapMakeEndpoints();

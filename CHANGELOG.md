@@ -1,5 +1,33 @@
 ## Changelog
 
+## [Customer Display — Slice 3: display frontend + SignalR contract] — 2026-04-29
+
+The customer-facing display goes live: a fullscreen Next.js page in the POS app that pairs to a station and renders three states (Idle / Building / Complete). This slice is built against the SignalR contract — POS doesn't broadcast events yet (slice 4 wires that up), so today the display sits at Idle and any test broadcast goes through cleanly. The plumbing is the work; the runtime data flow is verified by code inspection.
+
+Backend
+- `Hubs/SplashSphereHub.cs`: new `JoinDisplayGroup(branchId, stationId)` and `LeaveDisplayGroup` methods. Authenticated. Group key = `display:{branchId}:{stationId}` (helper exposed as `CustomerDisplayGroup`).
+- `Hubs/HubPayloads.cs`: new `DisplayLineItemPayload`, `DisplayTransactionPayload`, `DisplayCompletionPayload`. Payloads are deliberately customer-safe — no employee names, commissions, costs, profit, or payroll data.
+- `Application/Features/Display/Queries/GetDisplayConfig/`: combined render config (`DisplayConfigDto` = `DisplaySettingDto` + `DisplayBrandingDto`). Branding is a curated subset of company profile (no tax ID / permit). Resolver delegates to `GetDisplaySettingQuery` for the settings half.
+- `API/Endpoints/DisplayEndpoints.cs`: new `/api/v1/display/config?branchId={id}` GET endpoint. Wired in `Program.cs`.
+
+Frontend (POS app)
+- `apps/pos/src/app/display/layout.tsx`: Clerk auth (redirects to /sign-in). Deliberately omits the POS chrome (navbar, shift banner, lock guard) — this surface is customer-facing.
+- `apps/pos/src/app/display/page.tsx`: setup screen. Branch + station selectors. Saves picks to localStorage. Requests fullscreen on the user gesture before navigating to `/display/live?branchId=…&stationId=…`.
+- `apps/pos/src/app/display/live/page.tsx`: fullscreen runtime. Fetches `DisplayConfigDto`, applies theme + font + orientation classes, hosts the three state components, shows a subtle "Reconnecting…" banner on transient drops.
+- `apps/pos/src/app/display/live/use-display-connection.ts`: SignalR client + reducer. Subscribes to the four `Display*` events, dispatches into a 3-state union, auto-reconnects via the SDK's exponential backoff `[0, 2s, 5s, 10s, 30s]`. On reconnect re-joins the station group. Completion state auto-reverts to Idle after the configured `completionHoldSeconds`.
+- `apps/pos/src/app/display/live/idle-screen.tsx`: branding, rotating promos (configurable interval), live clock at minute precision, optional GCash/social footer.
+- `apps/pos/src/app/display/live/building-screen.tsx`: vehicle/customer band, item rows with slide-in animation, totals strip with the grand total as the visual anchor.
+- `apps/pos/src/app/display/live/complete-screen.tsx`: payment-complete banner, item summary, payment + change band, loyalty band, footer thank-you/promo lines.
+- `apps/pos/src/app/globals.css`: `animate-fade-in`, `animate-slide-in`, `animate-pulse-slow` keyframes for state transitions.
+
+Shared types
+- `packages/types/src/api.ts`: `DisplayLineItemPayload`, `DisplayTransactionPayload`, `DisplayCompletionPayload`. Four new event names under `HubEvents` (`DisplayTransactionStarted/Updated/Completed/Cancelled`) — distinct from the branch-scoped `TransactionUpdated` to prevent client-side handler ambiguity.
+- `packages/types/src/settings.ts`: `DisplayBrandingDto`, `DisplayConfigDto`.
+
+Docs: `docs/API_ENDPOINTS.md` (new sections for `/display/config` + Hub methods), `docs/PAGE_INVENTORY.md` (`/display` and `/display/live`).
+
+Build: `dotnet build` clean. POS + Admin both `tsc --noEmit` clean.
+
 ## [Customer Display — Slice 2: Display Settings + admin UI] — 2026-04-29
 
 Adds `DisplaySetting` — the per-tenant configuration that drives what the customer-facing screen shows in each of its three states (Idle / Building / Complete) plus appearance (theme/font/orientation). Mirrors the `ReceiptSetting` pattern: one row per `(TenantId, BranchId)`, with `BranchId IS NULL` as the tenant default and per-branch rows as overrides. The same partial-filtered-index approach guarantees one row per slot. Resolution: branch row → tenant default → in-memory defaults.
