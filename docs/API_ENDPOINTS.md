@@ -47,6 +47,16 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `PUT` | `/branches/{branchId}/stations/{id}` | Update station name + active flag |
 | `DELETE` | `/branches/{branchId}/stations/{id}` | Delete station |
 
+## Customer Display Settings
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/settings/display` | Tenant default (resolved-with-fallback) |
+| `GET` | `/settings/display?branchId={id}` | Branch override (falls back to default if none exists) |
+| `PUT` | `/settings/display` | Upsert tenant default |
+| `PUT` | `/settings/display?branchId={id}` | Upsert branch override (Enterprise only — `branch_display_overrides` feature) |
+| `DELETE` | `/settings/display?branchId={id}` | Remove a branch override (tenant default cannot be deleted) |
+
 ## Services
 
 | Method | Route | Description |

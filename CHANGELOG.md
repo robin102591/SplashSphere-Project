@@ -1,5 +1,31 @@
 ## Changelog
 
+## [Customer Display — Slice 2: Display Settings + admin UI] — 2026-04-29
+
+Adds `DisplaySetting` — the per-tenant configuration that drives what the customer-facing screen shows in each of its three states (Idle / Building / Complete) plus appearance (theme/font/orientation). Mirrors the `ReceiptSetting` pattern: one row per `(TenantId, BranchId)`, with `BranchId IS NULL` as the tenant default and per-branch rows as overrides. The same partial-filtered-index approach guarantees one row per slot. Resolution: branch row → tenant default → in-memory defaults.
+
+The admin page lives at `/dashboard/settings/display`. Promo messages use `useFieldArray` so admins can add up to 20 rotating idle-screen lines. Per-branch overrides are gated on the new Enterprise-only `branch_display_overrides` feature; non-Enterprise tenants who pick a branch see a lock banner — they can browse the resolved settings but can't save changes (same UX as receipt designer).
+
+- `src/SplashSphere.Domain/Entities/DisplaySetting.cs`: new entity (idle/building/completion/appearance toggles, `PromoMessages` as `List<string>`, `Theme/FontSize/Orientation` enums, audit timestamps), `IAuditableEntity + ITenantScoped`.
+- `src/SplashSphere.Domain/Enums/DisplayEnums.cs`: `DisplayTheme` (Dark/Light/Brand), `DisplayFontSize` (Normal/Large/ExtraLarge), `DisplayOrientation` (Landscape/Portrait).
+- `src/SplashSphere.Domain/Subscription/FeatureKeys.cs`: new `BranchDisplayOverrides` key (Enterprise only).
+- `src/SplashSphere.Domain/Subscription/PlanCatalog.cs`: added to `EnterpriseFeatures`.
+- `src/SplashSphere.Infrastructure/Persistence/Configurations/DisplaySettingConfiguration.cs`: JSONB column with `ValueConverter` + `ValueComparer` for the `List<string>` (so EF change-tracking notices in-place mutations), unique partial indexes on `(TenantId)` filtered by `BranchId IS NULL` and `(TenantId, BranchId)` filtered by `BranchId IS NOT NULL`.
+- `src/SplashSphere.Infrastructure/Persistence/Migrations/20260429074115_AddDisplaySettings.cs`: migration applied locally.
+- `src/SplashSphere.Application/Features/Settings/Queries/GetDisplaySetting/`: query + handler + DTO. Resolver: branch row → tenant default → in-memory defaults.
+- `src/SplashSphere.Application/Features/Settings/Commands/UpdateDisplaySetting/`: upsert command with validator (3-60s rotation, 3-30s hold, max 20 messages × 200 chars). Branch overrides gated inside the handler against `BranchDisplayOverrides`.
+- `src/SplashSphere.Application/Features/Settings/Commands/DeleteDisplaySetting/`: removes a branch override. Validator rejects empty `BranchId` (tenant default is permanent).
+- `src/SplashSphere.API/Endpoints/SettingsEndpoints.cs`: `/api/v1/settings/display` GET/PUT/DELETE wired in.
+- `apps/admin/src/hooks/use-display-settings.ts`: TanStack Query hooks (`useDisplaySetting`, `useUpdateDisplaySetting`, `useDeleteDisplayBranchOverride`).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/display/page.tsx`: new page — branch scope selector + 5 sectioned cards (Idle / Promos / Building / Completion / Appearance) using `react-hook-form` + `zod` + `useWatch` per-field subscriptions (avoids the same all-toggles-rerender perf trap the receipt designer hit).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: nav action added between POS Stations and Booking.
+- `packages/types/src/enums.ts`: `DisplayTheme`, `DisplayFontSize`, `DisplayOrientation`.
+- `packages/types/src/settings.ts`: `DisplaySettingDto` + `UpdateDisplaySettingPayload`.
+- `packages/types/src/entities.ts`: `BranchDisplayOverrides` added to `FeatureKeys` const.
+- `docs/API_ENDPOINTS.md` + `docs/PAGE_INVENTORY.md`: updated.
+
+Build: `dotnet build` clean, admin `tsc --noEmit` clean. Migration applied.
+
 ## [Customer Display — Slice 1: POS Stations foundation] — 2026-04-29
 
 Kickoff of the Customer Display feature (`/.claude/CUSTOMER_DISPLAY.md`). Slice 1 builds the *station* primitive that the rest of the feature hangs off of — every customer-facing display pairs to one station, and the SignalR group key is `display:{branchId}:{stationId}`. Without stations, there's nowhere to route transaction events.

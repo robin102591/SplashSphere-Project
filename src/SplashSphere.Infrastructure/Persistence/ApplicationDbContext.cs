@@ -103,6 +103,9 @@ public sealed class ApplicationDbContext(
     // ── Receipt settings ────────────────────────────────────────────────────
     public DbSet<ReceiptSetting> ReceiptSettings => Set<ReceiptSetting>();
 
+    // ── Display settings ────────────────────────────────────────────────────
+    public DbSet<DisplaySetting> DisplaySettings => Set<DisplaySetting>();
+
     // ── Loyalty ───────────────────────────────────────────────────────────
     public DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings => Set<LoyaltyProgramSettings>();
     public DbSet<LoyaltyTierConfig> LoyaltyTierConfigs => Set<LoyaltyTierConfig>();

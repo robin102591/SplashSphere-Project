@@ -1012,6 +1012,8 @@ export const FeatureKeys = {
   // Receipt designer (Growth+ for digital receipts; Enterprise-only for branch overrides)
   DigitalReceipts: 'digital_receipts',
   BranchReceiptOverrides: 'branch_receipt_overrides',
+  // Customer display (Enterprise-only for branch overrides)
+  BranchDisplayOverrides: 'branch_display_overrides',
 } as const;
 
 // ── Attendance Reports ────────────────────────────────────────────────────────

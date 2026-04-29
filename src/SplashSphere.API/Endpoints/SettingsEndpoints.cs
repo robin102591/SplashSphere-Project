@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SplashSphere.API.Extensions;
+using SplashSphere.Application.Features.Settings.Commands.DeleteDisplaySetting;
 using SplashSphere.Application.Features.Settings.Commands.DeleteLogo;
 using SplashSphere.Application.Features.Settings.Commands.DeleteReceiptSetting;
 using SplashSphere.Application.Features.Settings.Commands.UpdateCompanyProfile;
+using SplashSphere.Application.Features.Settings.Commands.UpdateDisplaySetting;
 using SplashSphere.Application.Features.Settings.Commands.UpdateReceiptSetting;
 using SplashSphere.Application.Features.Settings.Commands.UploadLogo;
 using SplashSphere.Application.Features.Settings.Queries.GetCompanyProfile;
+using SplashSphere.Application.Features.Settings.Queries.GetDisplaySetting;
 using SplashSphere.Application.Features.Settings.Queries.GetReceiptSetting;
 using SplashSphere.Domain.Enums;
 
@@ -46,6 +49,19 @@ public static class SettingsEndpoints
         group.MapDelete("/receipt", DeleteReceiptSetting)
             .WithName("DeleteReceiptBranchOverride")
             .WithSummary("Remove a per-branch receipt-setting override; the branch falls back to the tenant default. `branchId` query param is required (the tenant default cannot be deleted).");
+
+        // ── Customer display ──────────────────────────────────────────────────
+        group.MapGet("/display", GetDisplaySetting)
+            .WithName("GetDisplaySetting")
+            .WithSummary("Get customer-display settings. Pass `branchId` to view branch override; omit for the tenant default. Falls back to default → in-memory defaults.");
+
+        group.MapPut("/display", UpdateDisplaySetting)
+            .WithName("UpdateDisplaySetting")
+            .WithSummary("Upsert customer-display settings. With no `branchId`, upserts the tenant default. With `branchId`, upserts a per-branch override (Enterprise only).");
+
+        group.MapDelete("/display", DeleteDisplaySetting)
+            .WithName("DeleteDisplayBranchOverride")
+            .WithSummary("Remove a per-branch display-setting override; the branch falls back to the tenant default. `branchId` query param is required.");
 
         // ── Company logo (multipart upload) ───────────────────────────────────
         group.MapPost("/company/logo", UploadLogo)
@@ -175,6 +191,73 @@ public static class SettingsEndpoints
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
 
+    // ── Display setting handlers ──────────────────────────────────────────────
+
+    private static async Task<IResult> GetDisplaySetting(
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var setting = await sender.Send(new GetDisplaySettingQuery(branchId), ct);
+        return TypedResults.Ok(setting);
+    }
+
+    private static async Task<IResult> UpdateDisplaySetting(
+        [FromBody] UpdateDisplaySettingRequest body,
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateDisplaySettingCommand(
+            branchId,
+            // Idle
+            body.ShowLogo,
+            body.ShowBusinessName,
+            body.ShowTagline,
+            body.ShowDateTime,
+            body.ShowGCashQr,
+            body.ShowSocialMedia,
+            body.PromoMessages,
+            body.PromoRotationSeconds,
+            // Building
+            body.ShowVehicleInfo,
+            body.ShowCustomerName,
+            body.ShowLoyaltyTier,
+            body.ShowDiscountBreakdown,
+            body.ShowTaxLine,
+            // Completion
+            body.ShowPaymentMethod,
+            body.ShowChangeAmount,
+            body.ShowPointsEarned,
+            body.ShowPointsBalance,
+            body.ShowThankYouMessage,
+            body.ShowPromoText,
+            body.CompletionHoldSeconds,
+            // Appearance
+            body.Theme,
+            body.FontSize,
+            body.Orientation), ct);
+
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
+    private static async Task<IResult> DeleteDisplaySetting(
+        [FromQuery] string? branchId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(branchId))
+            return TypedResults.Problem(new ProblemDetails
+            {
+                Title  = "VALIDATION",
+                Detail = "branchId query parameter is required. The tenant default cannot be deleted.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+
+        var result = await sender.Send(new DeleteDisplaySettingCommand(branchId), ct);
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
+    }
+
     // ── Logo upload handlers ──────────────────────────────────────────────────
 
     private static async Task<IResult> UploadLogo(
@@ -282,4 +365,34 @@ public static class SettingsEndpoints
         ReceiptWidth ReceiptWidth,
         ReceiptFontSize FontSize,
         bool AutoCutPaper);
+
+    /// <summary>PUT body for <c>UpdateDisplaySetting</c>. branchId comes from the query string.</summary>
+    private sealed record UpdateDisplaySettingRequest(
+        // Idle
+        bool ShowLogo,
+        bool ShowBusinessName,
+        bool ShowTagline,
+        bool ShowDateTime,
+        bool ShowGCashQr,
+        bool ShowSocialMedia,
+        IReadOnlyList<string> PromoMessages,
+        int PromoRotationSeconds,
+        // Building / transaction
+        bool ShowVehicleInfo,
+        bool ShowCustomerName,
+        bool ShowLoyaltyTier,
+        bool ShowDiscountBreakdown,
+        bool ShowTaxLine,
+        // Completion
+        bool ShowPaymentMethod,
+        bool ShowChangeAmount,
+        bool ShowPointsEarned,
+        bool ShowPointsBalance,
+        bool ShowThankYouMessage,
+        bool ShowPromoText,
+        int CompletionHoldSeconds,
+        // Appearance
+        DisplayTheme Theme,
+        DisplayFontSize FontSize,
+        DisplayOrientation Orientation);
 }

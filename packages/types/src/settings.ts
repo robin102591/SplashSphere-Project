@@ -3,7 +3,15 @@
  * Mirrors `SplashSphere.Application.Features.Settings.*` on the backend.
  */
 
-import type { LogoPosition, LogoSize, ReceiptFontSize, ReceiptWidth } from './enums';
+import type {
+  DisplayFontSize,
+  DisplayOrientation,
+  DisplayTheme,
+  LogoPosition,
+  LogoSize,
+  ReceiptFontSize,
+  ReceiptWidth,
+} from './enums';
 
 // ── Company profile ───────────────────────────────────────────────────────────
 
@@ -169,4 +177,78 @@ export interface UpdateReceiptSettingPayload {
   receiptWidth: ReceiptWidth;
   fontSize: ReceiptFontSize;
   autoCutPaper: boolean;
+}
+
+// ── Customer display ──────────────────────────────────────────────────────────
+
+export interface DisplaySettingDto {
+  readonly branchId: string | null;
+
+  // Idle
+  readonly showLogo: boolean;
+  readonly showBusinessName: boolean;
+  readonly showTagline: boolean;
+  readonly showDateTime: boolean;
+  readonly showGCashQr: boolean;
+  readonly showSocialMedia: boolean;
+  readonly promoMessages: readonly string[];
+  readonly promoRotationSeconds: number;
+
+  // Building / transaction
+  readonly showVehicleInfo: boolean;
+  readonly showCustomerName: boolean;
+  readonly showLoyaltyTier: boolean;
+  readonly showDiscountBreakdown: boolean;
+  readonly showTaxLine: boolean;
+
+  // Completion
+  readonly showPaymentMethod: boolean;
+  readonly showChangeAmount: boolean;
+  readonly showPointsEarned: boolean;
+  readonly showPointsBalance: boolean;
+  readonly showThankYouMessage: boolean;
+  readonly showPromoText: boolean;
+  readonly completionHoldSeconds: number;
+
+  // Appearance
+  readonly theme: DisplayTheme;
+  readonly fontSize: DisplayFontSize;
+  readonly orientation: DisplayOrientation;
+}
+
+/**
+ * Mutable shape of {@link DisplaySettingDto} — drops `readonly` and `branchId`
+ * (branch comes from the query string on PUT, not the payload).
+ */
+export interface UpdateDisplaySettingPayload {
+  // Idle
+  showLogo: boolean;
+  showBusinessName: boolean;
+  showTagline: boolean;
+  showDateTime: boolean;
+  showGCashQr: boolean;
+  showSocialMedia: boolean;
+  promoMessages: string[];
+  promoRotationSeconds: number;
+
+  // Building / transaction
+  showVehicleInfo: boolean;
+  showCustomerName: boolean;
+  showLoyaltyTier: boolean;
+  showDiscountBreakdown: boolean;
+  showTaxLine: boolean;
+
+  // Completion
+  showPaymentMethod: boolean;
+  showChangeAmount: boolean;
+  showPointsEarned: boolean;
+  showPointsBalance: boolean;
+  showThankYouMessage: boolean;
+  showPromoText: boolean;
+  completionHoldSeconds: number;
+
+  // Appearance
+  theme: DisplayTheme;
+  fontSize: DisplayFontSize;
+  orientation: DisplayOrientation;
 }
