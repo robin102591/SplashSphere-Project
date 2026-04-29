@@ -244,6 +244,14 @@ This system complements CLAUDE.md (which remains the authoritative project spec)
 - **Currency: Philippine Peso (PHP).** Decimal with 2 places.
 - **i18n: English + Filipino.** Use `useTranslations()` from `next-intl` for all user-facing strings. Translation files in `messages/en.json` and `messages/fil.json`. Cookie-based locale (`NEXT_LOCALE`), no URL prefix. Navigation strings are fully extracted; remaining pages should follow the same pattern incrementally.
 
+## Branching & Release
+
+`staging` is the active development branch. `main` mirrors production. Full rules are in **[CONTRIBUTING.md](CONTRIBUTING.md)**, but the load-bearing one is:
+
+> **Never squash-merge `staging` → `main`.** Always use `git merge --no-ff staging`. Squashing severs the commit graph and causes massive false conflicts on the next release. After releasing, fast-forward `staging` from `main` to keep them in sync.
+
+`feature/*` → `staging` may squash or rebase. Branch protection on `main` should disable the "Squash and merge" button and require PRs.
+
 ## Living Documentation Rules
 
 1. **Changelog:** Append an entry to `CHANGELOG.md` after every task (not in this file).
