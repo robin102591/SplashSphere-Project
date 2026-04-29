@@ -1,5 +1,35 @@
 ## Changelog
 
+## [Customer Display — Slice 4: POS broadcasting goes live] — 2026-04-29
+
+The customer display starts showing real data. Slice 3 built the contract; this slice fills in the producer side. Cashiers now pick a station next to the branch picker; transactions created on that station broadcast lifecycle events to the paired display group. The display reconnect-syncs from REST so a momentary SignalR drop doesn't strand it on Idle while a transaction is mid-build.
+
+Backend
+- `Domain/Entities/Transaction.cs`: nullable `PosStationId` + `PosStation` navigation. Constructor accepts the station ID. SetNull on station deletion (transaction history is sacred).
+- `Infrastructure/Persistence/Configurations/TransactionConfiguration.cs`: new FK + filtered `(PosStationId, Status)` index for the reconnect-sync lookup.
+- `Migrations/20260429082714_AddPosStationToTransaction.cs`: applied locally.
+- `Application/Common/Interfaces/IDisplayBroadcaster.cs`: 4-method abstraction — `BroadcastStarted/Updated/Completed/Cancelled`. All no-op when transaction has no station.
+- `Infrastructure/ExternalServices/SignalRDisplayBroadcaster.cs`: SignalR-backed impl using `IHubContext<SplashSphereHub>`. **Failures are swallowed and logged at warning** so a SignalR hiccup never tears down the rest of completion-pipeline (loyalty, SMS, payroll commission accumulation).
+- `Application/Features/Display/DTOs/DisplayTransactionLoader.cs`: shared materialiser used by **both** the SignalR broadcaster and the new reconnect-sync handler. Single code path → byte-identical payloads.
+- `Application/Features/Display/DTOs/DisplayTransactionResultDto.cs` + `DisplayCompletionResultDto`: canonical customer-safe DTOs (no employee names, commissions, costs, profit). Replace the Hub-layer payload records that lived in `HubPayloads.cs`.
+- `Infrastructure/Hubs/Handlers/TransactionCreatedDisplayHandler.cs` / `TransactionUpdatedDisplayHandler.cs` / `TransactionCompletedDisplayHandler.cs` / `TransactionCancelledDisplayHandler.cs`: 4 thin handlers that call `IDisplayBroadcaster` from the existing domain events. Cancellation listens on `TransactionStatusChangedEvent` filtered to `NewStatus == Cancelled`.
+- `Application/Features/Transactions/Commands/UpdateDiscountTip/UpdateDiscountTipCommandHandler.cs`: now raises `TransactionUpdatedEvent` so discount/tip edits flow to the customer display in real time (previously only line-item changes did).
+- `Application/Features/Display/Queries/GetCurrentDisplayTransaction/`: query + handler returning `DisplayCurrentResultDto { transaction: DisplayTransactionResultDto | null }`. Powers the reconnect-sync endpoint.
+- `API/Endpoints/DisplayEndpoints.cs`: new `GET /api/v1/display/current?branchId=…&stationId=…`.
+- `Application/Features/Transactions/Commands/CreateTransaction/`: optional `PosStationId` parameter threaded through to the `Transaction(...)` constructor.
+- `API/Endpoints/TransactionEndpoints.cs`: `CreateTransactionRequest` gains `PosStationId`.
+
+Frontend (POS app)
+- `apps/pos/src/lib/branch-context.tsx`: `BranchProvider` extended with `stationId / stationName / stations / setStationId`. Stations fetched per-branch via TanStack Query; branch switch clears station; auto-picks when there's exactly one active station.
+- `apps/pos/src/components/layout/pos-navbar.tsx`: new `StationSelector` (emerald accent to differentiate from the blue branch picker). Hidden when the branch has no active stations.
+- `apps/pos/src/app/(terminal)/transactions/new/page.tsx`: `buildCreateBody()` now sends `posStationId: contextStationId || null`.
+- `apps/pos/src/app/display/live/use-display-connection.ts`: rehydrates from `GET /display/current` on initial connect AND after each SignalR reconnect — covers the case where a transaction was already in progress before the device booted, and any events fired during a connection gap.
+
+Shared types
+- `packages/types/src/api.ts`: `DisplayCurrentResultDto`.
+
+Build: `dotnet build` clean. Admin + POS both `tsc --noEmit` clean. Migration applied.
+
 ## [Customer Display — Slice 3: display frontend + SignalR contract] — 2026-04-29
 
 The customer-facing display goes live: a fullscreen Next.js page in the POS app that pairs to a station and renders three states (Idle / Building / Complete). This slice is built against the SignalR contract — POS doesn't broadcast events yet (slice 4 wires that up), so today the display sits at Idle and any test broadcast goes through cleanly. The plumbing is the work; the runtime data flow is verified by code inspection.

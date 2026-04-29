@@ -110,6 +110,9 @@ public static class DependencyInjection
         // ── Image processing (ImageSharp) ───────────────────────────────────
         services.AddSingleton<IImageProcessor, ExternalServices.ImageSharpImageProcessor>();
 
+        // ── Customer-display broadcaster (SignalR) ──────────────────────────
+        services.AddScoped<IDisplayBroadcaster, ExternalServices.SignalRDisplayBroadcaster>();
+
         // ── Default HttpClient (for ad-hoc fetches like the receipt logo) ───
         services.AddHttpClient();
 

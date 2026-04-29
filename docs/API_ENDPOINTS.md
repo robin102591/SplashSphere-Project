@@ -62,6 +62,7 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | Method | Route | Description |
 |---|---|---|
 | `GET` | `/display/config?branchId={id}` | Combined render config: settings (with branch fallback) + customer-safe tenant branding (no tax IDs, permits, etc). |
+| `GET` | `/display/current?branchId={id}&stationId={id}` | Reconnect-sync: returns the in-progress transaction for a station as a customer-safe DTO, or `{ transaction: null }` when nothing is active. |
 
 ## SignalR — Customer Display
 

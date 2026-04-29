@@ -235,6 +235,16 @@ export interface DisplayCompletionPayload {
   readonly promoText: string | null;
 }
 
+/**
+ * Response shape of `GET /api/v1/display/current?branchId=…&stationId=…`.
+ * Used by the customer-display app to rehydrate after a SignalR drop.
+ * `transaction` is null when no Pending/InProgress transaction exists for
+ * the station — the display stays on Idle.
+ */
+export interface DisplayCurrentResultDto {
+  readonly transaction: DisplayTransactionPayload | null;
+}
+
 // ── Hub event names (type-safe constants) ─────────────────────────────────────
 
 export const HubEvents = {

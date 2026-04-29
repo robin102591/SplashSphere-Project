@@ -6,8 +6,10 @@ import * as signalR from '@microsoft/signalr'
 import {
   HubEvents,
   type DisplayCompletionPayload,
+  type DisplayCurrentResultDto,
   type DisplayTransactionPayload,
 } from '@splashsphere/types'
+import { apiClient } from '@/lib/api-client'
 
 /** Discriminated union of what's currently on the screen. */
 export type DisplayState =
@@ -82,6 +84,28 @@ export function useDisplayConnection({
       force()
     }
 
+    /**
+     * Pulls the current in-progress transaction (if any) from the API and
+     * rehydrates the reducer. Used both on first connect and after a
+     * reconnect — events fired between the drop and reconnect would
+     * otherwise leave the screen out of sync.
+     */
+    const rehydrate = async (): Promise<void> => {
+      try {
+        const token = await getToken()
+        const path = `/display/current?branchId=${encodeURIComponent(branchId)}&stationId=${encodeURIComponent(stationId)}`
+        const result = await apiClient.get<DisplayCurrentResultDto>(path, token ?? undefined)
+        if (result.transaction) {
+          dispatch({ type: 'updated', transaction: result.transaction })
+        } else {
+          dispatch({ type: 'cancelled' })
+        }
+      } catch {
+        // Best-effort — if the rehydrate call fails we just stay on
+        // whatever state we had (likely Idle) and let SignalR catch up.
+      }
+    }
+
     const start = async () => {
       const token = await getToken()
       if (!token) {
@@ -98,10 +122,12 @@ export function useDisplayConnection({
       conn.onreconnecting(() => setStatus('reconnecting'))
       conn.onreconnected(async () => {
         // Re-join the group after a reconnect — group memberships are
-        // dropped on connection loss.
+        // dropped on connection loss. Then rehydrate from REST so we don't
+        // miss any events that fired during the gap.
         try {
           await conn.invoke('JoinDisplayGroup', branchId, stationId)
           setStatus('connected')
+          await rehydrate()
         } catch {
           setStatus('disconnected')
         }
@@ -130,6 +156,9 @@ export function useDisplayConnection({
         await conn.invoke('JoinDisplayGroup', branchId, stationId)
         setStatus('connected')
         connectionRef.current = conn
+        // Initial rehydrate — covers the case where the cashier already had
+        // a transaction in progress before the display device booted.
+        await rehydrate()
       } catch {
         setStatus('disconnected')
       }

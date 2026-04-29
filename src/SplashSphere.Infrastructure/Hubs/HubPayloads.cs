@@ -98,62 +98,7 @@ public sealed record LowStockAlertPayload(
     int CurrentStock,
     int LowStockThreshold);
 
-// ── Customer display payloads ────────────────────────────────────────────────
-//
-// Broadcast to display:{branchId}:{stationId} groups whenever a station's
-// transaction state changes. The display device subscribes via JoinDisplayGroup
-// and renders these payloads in its three states (Idle / Building / Complete).
-//
-// Privacy: NEVER include employee names, commission data, cost prices, profit
-// margins, payroll info, or other internal data in these payloads. The display
-// is customer-facing.
-
-/// <summary>One line on the customer display's transaction screen.</summary>
-public sealed record DisplayLineItemPayload(
-    string Id,
-    string Name,
-    string Type,        // "service" | "package" | "merchandise"
-    int Quantity,
-    decimal UnitPrice,
-    decimal TotalPrice);
-
-/// <summary>
-/// Sent on <c>TransactionStarted</c> and <c>TransactionUpdated</c>.
-/// Drives the display's Building state.
-/// </summary>
-public sealed record DisplayTransactionPayload(
-    string TransactionId,
-
-    // Vehicle (shown if available)
-    string? VehiclePlate,
-    string? VehicleMakeModel,
-    string? VehicleTypeSize,
-
-    // Customer (shown if linked and the display setting allows)
-    string? CustomerName,
-    string? LoyaltyTier,
-
-    IReadOnlyList<DisplayLineItemPayload> Items,
-
-    decimal Subtotal,
-    decimal DiscountAmount,
-    string? DiscountLabel,
-    decimal TaxAmount,
-    decimal Total);
-
-/// <summary>
-/// Sent on <c>TransactionCompleted</c>. Drives the display's Complete state
-/// for the configured hold duration before reverting to Idle.
-/// </summary>
-public sealed record DisplayCompletionPayload(
-    DisplayTransactionPayload Transaction,
-
-    string PaymentMethod,
-    decimal AmountPaid,
-    decimal ChangeAmount,
-
-    int? PointsEarned,
-    int? PointsBalance,
-
-    string? ThankYouMessage,
-    string? PromoText);
+// Customer display payloads live in
+// SplashSphere.Application.Features.Display.DTOs.DisplayTransactionResultDto
+// (and DisplayCompletionResultDto) so the SignalR broadcaster and the
+// reconnect-sync REST endpoint share one canonical shape.

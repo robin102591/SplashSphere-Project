@@ -39,6 +39,9 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(t => t.CustomerId)
             .HasMaxLength(36);
 
+        builder.Property(t => t.PosStationId)
+            .HasMaxLength(36);
+
         // "{BranchCode}-{YYYYMMDD}-{DailySequence}" — e.g. "MKT-20240115-0042"
         builder.Property(t => t.TransactionNumber)
             .IsRequired()
@@ -116,6 +119,16 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // SetNull on station deletion — removing a station should not erase
+        // transaction history; the station ID just becomes null and the
+        // transaction stops broadcasting future updates (the customer-facing
+        // display would already have been switched off in that scenario).
+        builder.HasOne(t => t.PosStation)
+            .WithMany()
+            .HasForeignKey(t => t.PosStationId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // One-to-one with QueueEntry — FK is on QueueEntry.TransactionId (dependent side)
         // Configured from the QueueEntry side in QueueEntryConfiguration
         // EF Core discovers the inverse navigation (Transaction.QueueEntry) automatically
@@ -134,5 +147,11 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
 
         // Daily summary: all transactions for a branch on a given day
         builder.HasIndex(t => new { t.BranchId, t.CreatedAt });
+
+        // Reconnect-sync lookup: find the active transaction for a station.
+        // Filtered to Pending/InProgress so terminal-state rows don't bloat
+        // the index. (TransactionStatus 0=Pending, 1=InProgress)
+        builder.HasIndex(t => new { t.PosStationId, t.Status })
+            .HasFilter("\"PosStationId\" IS NOT NULL");
     }
 }

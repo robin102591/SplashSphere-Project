@@ -345,7 +345,8 @@ public sealed class CreateTransactionCommandHandler(
             request.BranchId,
             tenantContext.UserId,
             car.Id,
-            request.CustomerId)
+            request.CustomerId,
+            request.PosStationId)
         {
             TransactionNumber = transactionNumber,
             DiscountAmount    = request.DiscountAmount,

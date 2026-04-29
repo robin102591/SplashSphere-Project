@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   MapPin,
+  MonitorPlay,
   Wallet,
   Lock,
 } from 'lucide-react'
@@ -131,6 +132,81 @@ function BranchSelector({
   )
 }
 
+// ── Station selector dropdown ─────────────────────────────────────────────────
+//
+// Mirrors BranchSelector — when set, the cashier's transactions broadcast to
+// the paired customer-display group `display:{branchId}:{stationId}`. When no
+// stations exist, the picker is hidden (the broadcaster will simply skip
+// dispatch on commands without a station). Inactive stations are filtered out.
+
+function StationSelector({
+  stationId,
+  stationName,
+  stations,
+  onSelect,
+}: {
+  stationId: string
+  stationName: string
+  stations: { id: string; name: string; isActive: boolean }[]
+  onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const active = stations.filter((s) => s.isActive)
+  if (active.length === 0) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-2.5 h-9 text-sm text-gray-300 hover:bg-gray-750 hover:border-gray-600 transition-colors duration-150 active:scale-[0.98] max-w-[180px]"
+        title="POS station — paired customer display"
+      >
+        <MonitorPlay className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+        <span className="truncate">{stationName || 'Pick station…'}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 text-gray-500 shrink-0 transition-transform duration-150', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-[200px] rounded-xl bg-gray-800 border border-gray-700 shadow-xl py-1 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150">
+          {active.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                onSelect(s.id)
+                setOpen(false)
+              }}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors duration-100',
+                s.id === stationId
+                  ? 'bg-emerald-600/15 text-emerald-400'
+                  : 'text-gray-300 hover:bg-gray-700/60'
+              )}
+            >
+              <MonitorPlay className={cn('h-3.5 w-3.5 shrink-0', s.id === stationId ? 'text-emerald-400' : 'text-gray-600')} />
+              <span className="truncate">{s.name}</span>
+              {s.id === stationId && (
+                <svg className="ml-auto h-4 w-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Top bar ────────────────────────────────────────────────────────────────────
 
 function TopBar() {
@@ -138,7 +214,10 @@ function TopBar() {
   const { signOut } = useAuth()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { branchId, branchName, branches, setBranchId } = useBranch()
+  const {
+    branchId, branchName, branches, setBranchId,
+    stationId, stationName, stations, setStationId,
+  } = useBranch()
   const lockScreen = useLockStore((s) => s.lock)
 
   const handleSignOut = async () => {
@@ -164,6 +243,14 @@ function TopBar() {
           )}
           {!branchId && (
             <span className="text-sm text-yellow-500 font-medium">No branch</span>
+          )}
+          {branchId && stations.length > 0 && (
+            <StationSelector
+              stationId={stationId}
+              stationName={stationName}
+              stations={stations}
+              onSelect={setStationId}
+            />
           )}
           <ConnectionStatusDot />
         </div>

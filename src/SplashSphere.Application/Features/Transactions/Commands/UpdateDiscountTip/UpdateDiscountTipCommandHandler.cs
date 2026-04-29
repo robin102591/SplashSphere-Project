@@ -2,12 +2,14 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SplashSphere.Application.Common.Interfaces;
 using SplashSphere.Domain.Enums;
+using SplashSphere.Domain.Events;
 using SplashSphere.SharedKernel.Results;
 
 namespace SplashSphere.Application.Features.Transactions.Commands.UpdateDiscountTip;
 
 public sealed class UpdateDiscountTipCommandHandler(
-    IApplicationDbContext context)
+    IApplicationDbContext context,
+    IEventPublisher eventPublisher)
     : IRequestHandler<UpdateDiscountTipCommand, Result>
 {
     public async Task<Result> Handle(
@@ -54,6 +56,15 @@ public sealed class UpdateDiscountTipCommandHandler(
         transaction.DiscountAmount = request.DiscountAmount;
         transaction.TipAmount      = request.TipAmount;
         transaction.FinalAmount    = newFinalAmount;
+
+        // Mirror the line-item-changed flow so the customer display picks up
+        // discount edits in real time. The branch-scoped TransactionUpdated
+        // signal is also useful for any POS clients viewing this row.
+        eventPublisher.Enqueue(new TransactionUpdatedEvent(
+            transaction.Id,
+            transaction.TenantId,
+            transaction.BranchId,
+            transaction.FinalAmount));
 
         return Result.Success();
     }

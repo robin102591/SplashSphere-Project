@@ -372,7 +372,7 @@ function NewTransactionContent() {
   const editId = searchParams.get('editId')          // edit mode — tx already exists
   const prefillCarId = searchParams.get('carId')     // pre-fill from customer lookup
   const prefillPlate = searchParams.get('plate')     // pre-fill from customer lookup (no carId)
-  const { branchId: contextBranchId } = useBranch()
+  const { branchId: contextBranchId, stationId: contextStationId } = useBranch()
   const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
   const shiftOpen = isShiftOpen(currentShift)
 
@@ -956,6 +956,8 @@ function NewTransactionContent() {
     sizeId,
     plateNumber,
     queueEntryId,
+    // Drives customer-display routing — null when no station is paired.
+    posStationId: contextStationId || null,
     services: services.map((s) => ({ serviceId: s.serviceId, employeeIds: s.employeeIds, notes: null })),
     packages: packages.map((p) => ({ packageId: p.packageId, employeeIds: p.employeeIds, notes: null })),
     merchandise: merchandise.map((m) => ({ merchandiseId: m.merchandiseId, quantity: m.quantity })),

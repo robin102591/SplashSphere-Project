@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SplashSphere.Application.Features.Display.Queries.GetCurrentDisplayTransaction;
 using SplashSphere.Application.Features.Display.Queries.GetDisplayConfig;
 
 namespace SplashSphere.API.Endpoints;
@@ -23,6 +24,10 @@ public static class DisplayEndpoints
             .WithName("GetDisplayConfig")
             .WithSummary("Combined render config for the display device: settings (with branch fallback) + customer-safe tenant branding.");
 
+        group.MapGet("/current", GetCurrentTransaction)
+            .WithName("GetCurrentDisplayTransaction")
+            .WithSummary("Returns the in-progress transaction for a station (or null) so the display can rebuild after a SignalR reconnect.");
+
         return app;
     }
 
@@ -33,5 +38,26 @@ public static class DisplayEndpoints
     {
         var config = await sender.Send(new GetDisplayConfigQuery(branchId), ct);
         return TypedResults.Ok(config);
+    }
+
+    private static async Task<IResult> GetCurrentTransaction(
+        [FromQuery] string branchId,
+        [FromQuery] string stationId,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(branchId) || string.IsNullOrWhiteSpace(stationId))
+        {
+            return TypedResults.Problem(new ProblemDetails
+            {
+                Title  = "VALIDATION",
+                Detail = "branchId and stationId are required.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        var result = await sender.Send(
+            new GetCurrentDisplayTransactionQuery(branchId, stationId), ct);
+        return TypedResults.Ok(result);
     }
 }
