@@ -75,6 +75,27 @@ public sealed class SignalRDisplayBroadcaster(
         }
     }
 
+    public async Task ClearStationAsync(
+        string branchId,
+        string stationId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var group = SplashSphereHub.CustomerDisplayGroup(branchId, stationId);
+            await hub.Clients.Group(group).SendAsync(
+                "DisplayTransactionCancelled",
+                new { },
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Failed to clear display for station {BranchId}/{StationId}.",
+                branchId, stationId);
+        }
+    }
+
     private async Task SafeDispatchAsync(
         string transactionId,
         string eventName,

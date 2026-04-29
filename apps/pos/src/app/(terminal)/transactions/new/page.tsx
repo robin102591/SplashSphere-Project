@@ -25,6 +25,7 @@ import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
 import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 import { useCustomerLoyalty } from '@/lib/use-loyalty'
+import { useDisplayControl } from '@/hooks/use-display-control'
 import {
   useTransactionStore,
   type ServiceLineItem,
@@ -373,6 +374,7 @@ function NewTransactionContent() {
   const prefillCarId = searchParams.get('carId')     // pre-fill from customer lookup
   const prefillPlate = searchParams.get('plate')     // pre-fill from customer lookup (no carId)
   const { branchId: contextBranchId, stationId: contextStationId } = useBranch()
+  const { clear: clearDisplay } = useDisplayControl()
   const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
   const shiftOpen = isShiftOpen(currentShift)
 
@@ -1035,8 +1037,13 @@ function NewTransactionContent() {
       const { transactionId } = await apiClient.post<{ transactionId: string }>(
         '/transactions', buildCreateBody(), token ?? undefined
       )
+      // Customer is walking away — release the display from Tx so the next
+      // customer at the counter sees Idle (branding + promos), not the
+      // parked bill. The ?parked=1 flag tells the detail page not to
+      // re-show on mount.
+      void clearDisplay()
       resetPage()
-      router.push(`/transactions/${transactionId}`)
+      router.push(`/transactions/${transactionId}?parked=1`)
     } catch (err) {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')

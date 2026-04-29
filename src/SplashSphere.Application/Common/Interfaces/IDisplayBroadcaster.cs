@@ -25,4 +25,14 @@ public interface IDisplayBroadcaster
 
     /// <summary>Fired on void/cancel from any non-terminal state. Display: any → Idle.</summary>
     Task BroadcastCancelledAsync(string transactionId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Force-reverts a specific station's display to Idle without touching any
+    /// transaction. Used when the cashier parks a transaction (Pay Later) and
+    /// walks away — from the customer's perspective the screen should be ready
+    /// for the next person, even though the transaction is still Pending in
+    /// the DB. Unlike <see cref="BroadcastCancelledAsync"/> which routes by
+    /// transaction → station, this targets the station directly.
+    /// </summary>
+    Task ClearStationAsync(string branchId, string stationId, CancellationToken cancellationToken);
 }

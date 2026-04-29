@@ -63,6 +63,8 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 |---|---|---|
 | `GET` | `/display/config?branchId={id}` | Combined render config: settings (with branch fallback) + customer-safe tenant branding (no tax IDs, permits, etc). |
 | `GET` | `/display/current?branchId={id}&stationId={id}` | Reconnect-sync: returns the in-progress transaction for a station as a customer-safe DTO, or `{ transaction: null }` when nothing is active. |
+| `POST` | `/display/show/{transactionId}` | Pushes a transaction to its station's display. Used when the cashier opens an existing transaction page (mount of `/transactions/[id]`) so the display follows their focus even when no domain event fires. |
+| `POST` | `/display/clear` (body: `{ branchId, stationId }`) | Reverts a station's display to Idle. Used after Pay Later — customer is walking away, screen should be ready for the next person. |
 
 ## SignalR — Customer Display
 
