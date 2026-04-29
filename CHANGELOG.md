@@ -1,5 +1,29 @@
 ## Changelog
 
+## [Customer Display — Slice 1: POS Stations foundation] — 2026-04-29
+
+Kickoff of the Customer Display feature (`/.claude/CUSTOMER_DISPLAY.md`). Slice 1 builds the *station* primitive that the rest of the feature hangs off of — every customer-facing display pairs to one station, and the SignalR group key is `display:{branchId}:{stationId}`. Without stations, there's nowhere to route transaction events.
+
+Stations are tenant-scoped, branch-owned, and few in count (typical car wash runs 1–3 per branch). Names are unique within a branch but not across branches — "Counter A" can exist in Makati and BGC. The dialog accepts a name on create; edit also lets you flip `IsActive`.
+
+- `src/SplashSphere.Domain/Entities/PosStation.cs`: new entity (`Id`, `TenantId`, `BranchId`, `Name`, `IsActive`, audit timestamps), `IAuditableEntity + ITenantScoped`. Tenant filter auto-registers via the marker.
+- `src/SplashSphere.Domain/Entities/Branch.cs`: added `PosStations` navigation collection.
+- `src/SplashSphere.Infrastructure/Persistence/Configurations/PosStationConfiguration.cs`: table + cascade FK on `Branch` (and `Tenant`), unique `(BranchId, Name)`, `TenantId` lookup index.
+- `src/SplashSphere.Infrastructure/Persistence/Migrations/20260429061847_AddPosStations.cs`: migration applied locally.
+- `src/SplashSphere.Application/Features/PosStations/`:
+  - `PosStationDto`
+  - Commands: `CreatePosStation`, `UpdatePosStation`, `DeletePosStation` (+ validators on the first two)
+  - Queries: `GetPosStations` (per-branch list, no pagination), `GetPosStationById`
+  - All commands return `Result`/`Result<T>`; create/update guard against duplicate names within the same branch.
+- `src/SplashSphere.API/Endpoints/PosStationEndpoints.cs`: nested under `/api/v1/branches/{branchId}/stations` — list, get, create, update, delete. Wired in `Program.cs`.
+- `apps/admin/src/hooks/use-pos-stations.ts`: TanStack Query hooks (`usePosStations`, `useCreatePosStation`, `useUpdatePosStation`, `useDeletePosStation`).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/pos-stations/page.tsx`: new page — branch selector card + station list with add/edit dialog and delete confirmation.
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: nav action added next to Company Profile / Receipt Designer.
+- `packages/types/src/entities.ts`: `PosStation` interface for the admin app.
+- `docs/API_ENDPOINTS.md` + `docs/PAGE_INVENTORY.md`: updated.
+
+Build status: `dotnet build` clean, admin `tsc --noEmit` clean. Migration applied to local PostgreSQL.
+
 ## [Marketing — Sync /features and /pricing with shipped backend] — 2026-04-28
 
 The marketing site was advertising a stale subset of features — the receipt-designer feature (slices 1–5), the Customer Connect app, online booking, the referral program, pricing modifiers, and cost-per-wash reports were all shipped but invisible on the public site. Updated `/features` and `/pricing` to reflect what's actually in `PlanCatalog.cs` today.

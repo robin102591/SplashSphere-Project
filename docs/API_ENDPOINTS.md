@@ -37,6 +37,16 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET/POST/PUT` | `/branches/{id}` | CRUD |
 | `PATCH` | `/branches/{id}/status` | Activate/deactivate |
 
+## POS Stations
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/branches/{branchId}/stations` | List stations for a branch |
+| `GET` | `/branches/{branchId}/stations/{id}` | Get station by ID |
+| `POST` | `/branches/{branchId}/stations` | Create station |
+| `PUT` | `/branches/{branchId}/stations/{id}` | Update station name + active flag |
+| `DELETE` | `/branches/{branchId}/stations/{id}` | Delete station |
+
 ## Services
 
 | Method | Route | Description |

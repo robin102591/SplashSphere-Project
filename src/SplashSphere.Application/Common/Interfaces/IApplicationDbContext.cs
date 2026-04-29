@@ -26,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<Tenant> Tenants { get; }
     DbSet<Branch> Branches { get; }
     DbSet<User> Users { get; }
+    DbSet<PosStation> PosStations { get; }
 
     // ── Vehicle master data ───────────────────────────────────────────────────
     DbSet<VehicleType> VehicleTypes { get; }

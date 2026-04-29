@@ -77,6 +77,17 @@ export interface Branch {
   updatedAt: string;
 }
 
+// ── POS Station ──────────────────────────────────────────────────────────────
+
+export interface PosStation {
+  id: string;
+  branchId: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Vehicle master data ───────────────────────────────────────────────────────
 
 export interface VehicleType {

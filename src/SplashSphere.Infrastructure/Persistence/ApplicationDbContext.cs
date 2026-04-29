@@ -16,6 +16,7 @@ public sealed class ApplicationDbContext(
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<PosStation> PosStations => Set<PosStation>();
 
     // ── Vehicle master data ───────────────────────────────────────────────────
     public DbSet<VehicleType> VehicleTypes => Set<VehicleType>();

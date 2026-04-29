@@ -59,4 +59,5 @@ public sealed class Branch : IAuditableEntity, ITenantScoped
     public ICollection<CashierShift> CashierShifts { get; set; } = [];
     public ICollection<SupplyItem> SupplyItems { get; set; } = [];
     public ICollection<Equipment> Equipment { get; set; } = [];
+    public ICollection<PosStation> PosStations { get; set; } = [];
 }
