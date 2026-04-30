@@ -53,6 +53,12 @@ public sealed class UpdateCompanyProfileCommandHandler(
         tenant.FacebookUrl     = request.FacebookUrl;
         tenant.InstagramHandle = request.InstagramHandle;
         tenant.GCashNumber     = request.GCashNumber;
+        // Brand color: normalize empty/whitespace to null and uppercase the hex
+        // so equality comparisons (and the customer-display CSS variable) are
+        // stable regardless of how the user typed it.
+        tenant.PrimaryColorHex = string.IsNullOrWhiteSpace(request.PrimaryColorHex)
+            ? null
+            : request.PrimaryColorHex.ToUpperInvariant();
 
         // UnitOfWorkBehavior commits.
         return Result.Success();

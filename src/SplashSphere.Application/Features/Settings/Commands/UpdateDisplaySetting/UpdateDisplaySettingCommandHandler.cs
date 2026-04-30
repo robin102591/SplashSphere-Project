@@ -32,6 +32,17 @@ public sealed class UpdateDisplaySettingCommandHandler(
                     "Per-branch display overrides require the Enterprise plan."));
         }
 
+        // ── Plan gate: promo message cap ────────────────────────────────────
+        // Starter = 1, Growth = 5, Enterprise = 20. The validator enforces the
+        // hard 20 ceiling globally; this enforces the per-plan limit on top.
+        var plan = await planService.GetActivePlanAsync(tenantContext.TenantId, cancellationToken);
+        if (request.PromoMessages.Count > plan.MaxPromoMessages)
+        {
+            return Result.Failure(Error.Validation(
+                $"Your {plan.Name} plan allows up to {plan.MaxPromoMessages} promo message(s). " +
+                "Upgrade for more, or remove some entries."));
+        }
+
         var setting = string.IsNullOrWhiteSpace(request.BranchId)
             ? await context.DisplaySettings.FirstOrDefaultAsync(
                 d => d.BranchId == null, cancellationToken)

@@ -59,10 +59,20 @@ function DisplayLive() {
   const fontClasses = fontToClasses(config.settings.fontSize)
   const isPortrait = config.settings.orientation === DisplayOrientation.Portrait
 
+  // Brand theme: tenant's primary color drives the accent colour. We expose
+  // it as the CSS variable `--display-accent` on the root, and themeClasses
+  // resolves accent to `text-[color:var(--display-accent)]` for that theme.
+  // Other themes ignore the variable and use their hard-coded blue.
+  const rootStyle =
+    config.settings.theme === DisplayTheme.Brand && config.branding.primaryColorHex
+      ? ({ ['--display-accent' as never]: config.branding.primaryColorHex } as React.CSSProperties)
+      : undefined
+
   return (
     <div
       className={`min-h-screen flex flex-col select-none ${themeClasses.bg} ${themeClasses.text} ${fontClasses}`}
       data-orientation={isPortrait ? 'portrait' : 'landscape'}
+      style={rootStyle}
     >
       {/* ── Reconnecting banner — subtle so it doesn't alarm customers ─── */}
       {connection === 'reconnecting' && (
@@ -137,15 +147,16 @@ function themeToClasses(theme: DisplayTheme): ThemeClasses {
         banner: 'bg-amber-200 text-amber-900',
       }
     case DisplayTheme.Brand:
-      // For now Brand resolves to Dark with blue accents until the company
-      // profile feeds in a primary brand color.
+      // Brand theme reads the tenant's primary color from the CSS variable
+      // `--display-accent` set at the root (see DisplayLive). When the tenant
+      // hasn't picked a color yet we fall back to a friendly blue.
       return {
         bg: 'bg-gradient-to-br from-blue-950 to-slate-950',
         text: 'text-white',
         textMuted: 'text-slate-400',
         surface: 'bg-blue-900/30',
         border: 'border-blue-800/40',
-        accent: 'text-blue-300',
+        accent: 'text-[color:var(--display-accent,#60A5FA)]',
         banner: 'bg-blue-500/30 text-blue-100',
       }
     case DisplayTheme.Dark:

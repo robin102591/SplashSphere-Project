@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Receipt,
   Smartphone,
+  MonitorPlay,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -129,6 +130,23 @@ const categories: FeatureCategory[] = [
       'Per-branch receipt overrides for franchises and multi-branch operators (Enterprise)',
     ],
     imagePlaceholder: 'Receipt Designer',
+  },
+  {
+    icon: MonitorPlay,
+    title: 'Customer-Facing Display',
+    description:
+      'A second screen that builds trust at the counter. Pair any tablet, monitor, or smart TV to a POS station and customers watch their bill build in real time as the cashier rings them up — no surprises, no disputes, just clean transparency.',
+    features: [
+      'Three live states: Idle (branding + rotating promos), Building (live cart), Complete (payment + loyalty)',
+      'SignalR-driven — every line item, discount, and total updates instantly',
+      'Three themes (Dark, Light, Brand) with per-tenant primary color',
+      'Up to 20 rotating promo messages on the idle screen',
+      'Loyalty points earned + new balance shown on completion',
+      'Auto-reverts to Idle after payment so the next customer sees a fresh screen',
+      'Multiple POS stations per branch with one display each (Growth: 3, Enterprise: unlimited)',
+      'Per-branch display overrides for multi-branch operators (Enterprise)',
+    ],
+    imagePlaceholder: 'Customer Display',
   },
   {
     icon: Heart,

@@ -62,6 +62,13 @@ public sealed class Tenant : IAuditableEntity
     /// <summary>GCash MSISDN displayed on receipts. Format is free-form (not validated).</summary>
     public string? GCashNumber { get; set; }
 
+    /// <summary>
+    /// Primary brand color used as accent on the customer-facing display when
+    /// the "Brand" theme is selected. Stored as <c>#RRGGBB</c>; null falls back
+    /// to the default blue accent. Validated at the command/handler layer.
+    /// </summary>
+    public string? PrimaryColorHex { get; set; }
+
     // ── Logo (slice 3) ──────────────────────────────────────────────────────
     // Three resized PNG variants uploaded to Cloudflare R2 by UploadLogoCommand.
     // The API never stores image bytes — only the public URLs returned by the

@@ -1,5 +1,35 @@
 ## Changelog
 
+## [Customer Display — Slice 5: polish + plan gating] — 2026-04-30
+
+Final slice of the Customer Display feature. Plan gating (stations per branch, promo cap), live preview in admin settings, tenant primary brand color, and marketing site updates.
+
+Plan gating
+- `Domain/Subscription/PlanDefinition.cs`: new `MaxPosStationsPerBranch` and `MaxPromoMessages` fields.
+- `PlanCatalog.cs`: Starter 1/1, Growth 3/5, Enterprise ∞/20, Trial inherits Growth tier limits, Franchisor-on-Trial inherits Enterprise.
+- `IPlanEnforcementService.CheckPosStationLimitAsync(tenantId, branchId, ct)`: per-branch count (active + inactive — soft-deactivation can't bypass the cap).
+- `CreatePosStationCommandHandler`: enforces the per-branch limit before insert; surfaces a "Your {plan} plan allows N station(s) per branch" error.
+- `UpdateDisplaySettingCommandHandler`: rejects payloads exceeding `MaxPromoMessages`. The 20-cap validator stays as a backstop ceiling.
+- `PlanLimitsDto` (Billing): includes `maxPosStationsPerBranch` + `maxPromoMessages` so the admin UI can adapt at runtime.
+
+Admin UI
+- `/settings/display` Promo Messages section: shows the `{used}/{cap}` badge on the Add button, disables at cap, hint copy mentions the active plan.
+- `/settings/display` gains a sticky right-column live preview (`DisplayPreview`) with a tab switcher across Idle/Building/Complete states. Reflects every form toggle, theme, and font size in real time. Uses `useWatch({ control })` to render without leaking re-renders into the form sections.
+- `/settings/company` adds a Brand color card with native `<input type="color">` + `#RRGGBB` text mirror + Reset to default button.
+
+Tenant primary brand color
+- `Tenant.PrimaryColorHex` (nullable) + `AddTenantPrimaryColor` migration applied.
+- `UpdateCompanyProfileCommand` validates `^#[0-9A-Fa-f]{6}$` or null; handler normalizes to uppercase.
+- `CompanyProfileDto` + `UpdateCompanyProfilePayload` carry it.
+- `DisplayBrandingDto` exposes `PrimaryColorHex` to the display app.
+- `apps/pos/src/app/display/live/page.tsx`: when theme is Brand, sets `--display-accent` CSS variable on the root; the Brand theme's `accent` class is `text-[color:var(--display-accent,#60A5FA)]` so the customer-display accent reflects the tenant's brand instantly.
+
+Marketing site
+- `apps/marketing/src/app/features/page.tsx`: new "Customer-Facing Display" category with 8 bullets between Receipt Designer and Loyalty.
+- `apps/marketing/src/app/pricing/page.tsx`: each plan card mentions the customer display + station count; comparison table gains 4 new rows (Customer-Facing Display, POS Stations per Branch, Display Promo Messages, Branch Display Overrides).
+
+Build: `dotnet build` clean. Admin / POS / marketing all `tsc --noEmit` clean. Migration applied.
+
 ## [Customer Display — Slice 4: POS broadcasting goes live] — 2026-04-29
 
 The customer display starts showing real data. Slice 3 built the contract; this slice fills in the producer side. Cashiers now pick a station next to the branch picker; transactions created on that station broadcast lifecycle events to the paired display group. The display reconnect-syncs from REST so a momentary SignalR drop doesn't strand it on Idle while a transaction is mid-build.

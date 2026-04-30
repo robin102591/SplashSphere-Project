@@ -44,6 +44,9 @@ public static class PlanCatalog
         MaxBranches = 1,
         MaxEmployees = 5,
         SmsPerMonth = 10,
+        // Trial gets Growth-tier limits so prospects can fully evaluate the feature.
+        MaxPosStationsPerBranch = 3,
+        MaxPromoMessages = 5,
         Features = [..GrowthFeatures] // Trial gets Growth features for 14 days
     };
 
@@ -55,6 +58,8 @@ public static class PlanCatalog
         MaxBranches = 1,
         MaxEmployees = 5,
         SmsPerMonth = 0,
+        MaxPosStationsPerBranch = 1,
+        MaxPromoMessages = 1,
         Features = [..CoreFeatures]
     };
 
@@ -66,6 +71,8 @@ public static class PlanCatalog
         MaxBranches = 3,
         MaxEmployees = 15,
         SmsPerMonth = 50,
+        MaxPosStationsPerBranch = 3,
+        MaxPromoMessages = 5,
         Features = [..GrowthFeatures]
     };
 
@@ -77,6 +84,8 @@ public static class PlanCatalog
         MaxBranches = int.MaxValue,
         MaxEmployees = int.MaxValue,
         SmsPerMonth = 200,
+        MaxPosStationsPerBranch = int.MaxValue,
+        MaxPromoMessages = 20,
         Features = [..EnterpriseFeatures]
     };
 
@@ -105,6 +114,8 @@ public static class PlanCatalog
                 MaxBranches = Trial.MaxBranches,
                 MaxEmployees = Trial.MaxEmployees,
                 SmsPerMonth = Trial.SmsPerMonth,
+                MaxPosStationsPerBranch = Enterprise.MaxPosStationsPerBranch,
+                MaxPromoMessages = Enterprise.MaxPromoMessages,
                 Features = [..EnterpriseFeatures]
             };
 

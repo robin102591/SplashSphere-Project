@@ -61,6 +61,28 @@ public sealed class PlanEnforcementService(IApplicationDbContext db) : IPlanEnfo
         };
     }
 
+    public async Task<PlanLimitResult> CheckPosStationLimitAsync(
+        string tenantId, string branchId, CancellationToken ct)
+    {
+        var sub = await GetSubscriptionAsync(tenantId, ct);
+        if (sub is null) return new PlanLimitResult(true, 0, int.MaxValue, "");
+
+        var plan = PlanCatalog.GetPlan(sub.PlanTier);
+        var max = plan.MaxPosStationsPerBranch;
+
+        // No active filter — we count every station on the branch (active or
+        // not) so soft-deactivating doesn't let a tenant sneak past the cap.
+        var currentCount = await db.PosStations
+            .IgnoreQueryFilters()
+            .CountAsync(s => s.TenantId == tenantId && s.BranchId == branchId, ct);
+
+        return new PlanLimitResult(
+            currentCount < max, currentCount, max,
+            currentCount >= max
+                ? $"Your {plan.Name} plan allows {max} POS station(s) per branch. Upgrade to add more."
+                : "");
+    }
+
     public async Task<PlanDefinition> GetActivePlanAsync(string tenantId, CancellationToken ct)
     {
         var sub = await GetSubscriptionAsync(tenantId, ct);

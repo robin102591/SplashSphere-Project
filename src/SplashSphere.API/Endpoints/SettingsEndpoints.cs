@@ -105,7 +105,8 @@ public static class SettingsEndpoints
             body.IsVatRegistered,
             body.FacebookUrl,
             body.InstagramHandle,
-            body.GCashNumber), ct);
+            body.GCashNumber,
+            body.PrimaryColorHex), ct);
 
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblem();
     }
@@ -320,7 +321,8 @@ public static class SettingsEndpoints
         bool IsVatRegistered,
         string? FacebookUrl,
         string? InstagramHandle,
-        string? GCashNumber);
+        string? GCashNumber,
+        string? PrimaryColorHex);
 
     /// <summary>
     /// PUT body for <c>UpdateReceiptSetting</c>. The branchId comes from the

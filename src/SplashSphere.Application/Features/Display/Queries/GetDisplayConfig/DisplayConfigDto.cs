@@ -27,4 +27,5 @@ public sealed record DisplayBrandingDto(
     string? FacebookUrl,
     string? InstagramHandle,
     string? GCashNumber,
-    string? GCashQrUrl);        // QR image; null until slice 3 of company profile wires it
+    string? GCashQrUrl,        // QR image; null until slice 3 of company profile wires it
+    string? PrimaryColorHex);  // Accent color for the "Brand" theme. #RRGGBB or null.

@@ -8,7 +8,8 @@ namespace SplashSphere.Application.Features.PosStations.Commands.CreatePosStatio
 
 public sealed class CreatePosStationCommandHandler(
     IApplicationDbContext context,
-    ITenantContext tenantContext)
+    ITenantContext tenantContext,
+    IPlanEnforcementService planService)
     : IRequestHandler<CreatePosStationCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(
@@ -20,6 +21,16 @@ public sealed class CreatePosStationCommandHandler(
 
         if (!branchExists)
             return Result.Failure<string>(Error.NotFound("Branch", request.BranchId));
+
+        // ── Plan gate: per-branch station limit ─────────────────────────────
+        // Starter = 1, Growth = 3, Enterprise = unlimited. The check counts
+        // all stations (active + inactive) so soft-deactivation doesn't
+        // create a back door around the cap.
+        var limitCheck = await planService.CheckPosStationLimitAsync(
+            tenantContext.TenantId, request.BranchId, cancellationToken);
+
+        if (!limitCheck.Allowed)
+            return Result.Failure<string>(Error.Validation(limitCheck.Message));
 
         var nameTaken = await context.PosStations
             .AnyAsync(s => s.BranchId == request.BranchId && s.Name == request.Name, cancellationToken);

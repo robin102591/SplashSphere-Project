@@ -32,9 +32,10 @@ public sealed class GetDisplayConfigQueryHandler(
                 t.FacebookUrl,
                 t.InstagramHandle,
                 t.GCashNumber,
-                null))                  // QR upload not yet wired — slice 4+ of Company Profile
+                null,                   // QR upload not yet wired — slice 4+ of Company Profile
+                t.PrimaryColorHex))
             .FirstOrDefaultAsync(cancellationToken)
-            ?? new DisplayBrandingDto("SplashSphere", null, null, null, null, null, null);
+            ?? new DisplayBrandingDto("SplashSphere", null, null, null, null, null, null, null);
 
         return new DisplayConfigDto(settings, branding);
     }

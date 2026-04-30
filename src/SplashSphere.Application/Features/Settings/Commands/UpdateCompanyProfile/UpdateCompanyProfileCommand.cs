@@ -31,4 +31,7 @@ public sealed record UpdateCompanyProfileCommand(
     // Social & payment
     string? FacebookUrl,
     string? InstagramHandle,
-    string? GCashNumber) : ICommand;
+    string? GCashNumber,
+
+    // Brand color (accent for customer display "Brand" theme). #RRGGBB or null.
+    string? PrimaryColorHex) : ICommand;

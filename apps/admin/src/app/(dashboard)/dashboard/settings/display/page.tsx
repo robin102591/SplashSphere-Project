@@ -5,7 +5,8 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Lock, RotateCcw, Plus, Trash2 } from 'lucide-react'
+import { Lock, RotateCcw, Plus, Trash2, CheckCircle2, Star, Droplets } from 'lucide-react'
+import Image from 'next/image'
 
 import {
   DisplayFontSize,
@@ -32,7 +33,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useBranches } from '@/hooks/use-branches'
-import { useHasFeature } from '@/hooks/use-plan'
+import { useCompanyProfile } from '@/hooks/use-company-profile'
+import { useHasFeature, usePlan } from '@/hooks/use-plan'
+import { formatPeso } from '@splashsphere/format'
 import {
   useDisplaySetting,
   useUpdateDisplaySetting,
@@ -233,12 +236,20 @@ export default function DisplaySettingsPage() {
         </div>
       )}
 
-      <div className="space-y-6">
-        <IdleSection form={form} />
-        <PromoMessagesSection form={form} />
-        <BuildingSection form={form} />
-        <CompletionSection form={form} />
-        <AppearanceSection form={form} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+        {/* ── Form column ──────────────────────────────────────────── */}
+        <div className="space-y-6 min-w-0">
+          <IdleSection form={form} />
+          <PromoMessagesSection form={form} />
+          <BuildingSection form={form} />
+          <CompletionSection form={form} />
+          <AppearanceSection form={form} />
+        </div>
+
+        {/* ── Preview column ──────────────────────────────────────── */}
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <DisplayPreview form={form} />
+        </div>
       </div>
 
       <div className="flex justify-end pt-2">
@@ -280,13 +291,19 @@ function PromoMessagesSection({ form }: { form: FormApi }) {
     control: form.control,
     name: 'promoMessages',
   })
+  const { data: plan } = usePlan()
+  // Default conservatively to 1 (Starter) until the plan response lands so
+  // we don't briefly enable Add for users who can't actually save more.
+  const cap = plan?.limits.maxPromoMessages ?? 1
+  const atCap = fields.length >= cap
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Promo messages</CardTitle>
         <CardDescription>
-          Rotated on the idle screen. Up to 20 messages. Empty = no rotation.
+          Rotated on the idle screen. Your {plan?.planName ?? 'current'} plan
+          allows up to {cap} message{cap === 1 ? '' : 's'}.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -319,10 +336,11 @@ function PromoMessagesSection({ form }: { form: FormApi }) {
           variant="outline"
           size="sm"
           onClick={() => append({ value: '' })}
-          disabled={fields.length >= 20}
+          disabled={atCap}
+          title={atCap ? `Upgrade your plan to add more than ${cap} promo message${cap === 1 ? '' : 's'}.` : undefined}
         >
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Add message
+          Add message {fields.length > 0 && <span className="ml-1 text-muted-foreground">({fields.length}/{cap})</span>}
         </Button>
 
         <div className="grid gap-3 sm:grid-cols-2 pt-2">
@@ -495,6 +513,316 @@ function NumberField({
         {...form.register(name, { valueAsNumber: true })}
       />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  )
+}
+
+// ── Live preview ──────────────────────────────────────────────────────────────
+//
+// Scaled-down render of the customer display in a 16:9 frame, with a tab
+// switcher across the three states (Idle / Building / Complete). Reads the
+// form's current values via useWatch (no rerender of the form sections) and
+// pulls the tenant's branding from useCompanyProfile so the preview matches
+// what a customer would actually see at the counter.
+
+const SAMPLE_TX = {
+  vehicle: { plate: 'ABC-1234', makeModel: 'Toyota Vios', typeSize: 'Sedan / Medium' },
+  customer: { name: 'Maria Santos', tier: 'Gold' },
+  items: [
+    { name: 'Basic Wash',       qty: 1, total: 200 },
+    { name: 'Tire & Rim Shine', qty: 1, total: 120 },
+    { name: 'Air Freshener',    qty: 1, total:  85 },
+  ],
+  subtotal: 405, discount: 32, tax: 0, total: 373,
+  paid: 400, change: 27, pointsEarned: 37, pointsBalance: 1277,
+}
+
+function DisplayPreview({ form }: { form: FormApi }) {
+  const { data: company } = useCompanyProfile()
+  const [tab, setTab] = useState<'idle' | 'building' | 'complete'>('idle')
+
+  // Watch the whole form so the preview reflects every toggle. The receipt
+  // designer scoped useWatch per-control because the controls themselves are
+  // performance-sensitive; here, the preview is the consumer and re-rendering
+  // it on every change is the desired behaviour.
+  const v = useWatch({ control: form.control })
+
+  const theme = themeClasses(v.theme as DisplayTheme | undefined)
+  const businessName = company?.name ?? 'Your Business'
+  const tagline = company?.tagline ?? null
+  const logoUrl = company?.logoThumbnailUrl ?? null
+
+  return (
+    <Card>
+      <CardHeader className="space-y-2 pb-3">
+        <CardTitle className="text-base">Live preview</CardTitle>
+        <div className="flex gap-1">
+          {(['idle', 'building', 'complete'] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTab(k)}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors capitalize ${
+                tab === k
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              }`}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className={`aspect-video w-full overflow-hidden rounded-lg border ${theme.bg} ${theme.text} text-[10px]`}>
+          {tab === 'idle' && (
+            <PreviewIdle v={v} theme={theme} businessName={businessName} tagline={tagline} logoUrl={logoUrl} />
+          )}
+          {tab === 'building' && (
+            <PreviewBuilding v={v} theme={theme} businessName={businessName} logoUrl={logoUrl} />
+          )}
+          {tab === 'complete' && (
+            <PreviewComplete v={v} theme={theme} businessName={businessName} logoUrl={logoUrl} />
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+          Sample data — actual content (vehicle, customer, items) flows in live from the POS.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface PreviewTheme {
+  bg: string
+  text: string
+  textMuted: string
+  surface: string
+  border: string
+  accent: string
+}
+
+function themeClasses(t: DisplayTheme | undefined): PreviewTheme {
+  switch (t) {
+    case DisplayTheme.Light:
+      return {
+        bg: 'bg-white', text: 'text-slate-900', textMuted: 'text-slate-500',
+        surface: 'bg-slate-50', border: 'border-slate-200', accent: 'text-blue-600',
+      }
+    case DisplayTheme.Brand:
+      return {
+        bg: 'bg-gradient-to-br from-blue-950 to-slate-950', text: 'text-white',
+        textMuted: 'text-slate-400', surface: 'bg-blue-900/30',
+        border: 'border-blue-800/40', accent: 'text-blue-300',
+      }
+    case DisplayTheme.Dark:
+    default:
+      return {
+        bg: 'bg-slate-950', text: 'text-white', textMuted: 'text-slate-400',
+        surface: 'bg-slate-900', border: 'border-slate-800', accent: 'text-blue-400',
+      }
+  }
+}
+
+type PreviewValues = ReturnType<typeof useWatch<FormValues>>
+
+function PreviewIdle({
+  v, theme, businessName, tagline, logoUrl,
+}: {
+  v: PreviewValues
+  theme: PreviewTheme
+  businessName: string
+  tagline: string | null
+  logoUrl: string | null
+}) {
+  const promo = v.promoMessages?.[0]?.value
+  return (
+    <div className="h-full flex flex-col items-center justify-center px-4 py-3 gap-2 text-center">
+      {v.showLogo && (
+        logoUrl ? (
+          <Image src={logoUrl} alt="" width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/90">
+            <Droplets className="h-4 w-4 text-white" />
+          </div>
+        )
+      )}
+      {v.showBusinessName && <p className="text-sm font-bold tracking-tight">{businessName}</p>}
+      {v.showTagline && tagline && <p className={`text-[9px] ${theme.textMuted}`}>{tagline}</p>}
+      <div className={`h-px w-1/3 ${theme.border} border-t my-1`} />
+      <p className="text-[10px]">🚗 Welcome! Mabuhay! 🚗</p>
+      {promo && <p className={`text-[9px] ${theme.accent} px-2`}>&ldquo;{promo}&rdquo;</p>}
+      {v.showDateTime && (
+        <div className={`mt-auto ${theme.textMuted}`}>
+          <p className="text-[8px]">Saturday, April 30, 2026</p>
+          <p className="text-[10px] font-semibold tabular-nums">2:41 PM</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PreviewBuilding({
+  v, theme, businessName, logoUrl,
+}: {
+  v: PreviewValues
+  theme: PreviewTheme
+  businessName: string
+  logoUrl: string | null
+}) {
+  return (
+    <div className="h-full flex flex-col px-3 py-2 gap-1.5">
+      <header className="flex items-center gap-1.5">
+        {v.showLogo && (
+          logoUrl ? (
+            <Image src={logoUrl} alt="" width={20} height={20} className="h-4 w-4 object-contain" unoptimized />
+          ) : (
+            <div className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-500/90">
+              <Droplets className="h-2.5 w-2.5 text-white" />
+            </div>
+          )
+        )}
+        {v.showBusinessName && <p className="text-[10px] font-bold">{businessName}</p>}
+      </header>
+      {(v.showVehicleInfo || v.showCustomerName) && (
+        <div className={`rounded ${theme.surface} ${theme.border} border px-2 py-1 space-y-0.5 text-[8px]`}>
+          {v.showVehicleInfo && (
+            <p>
+              <span className={theme.textMuted}>Vehicle: </span>
+              <span className="font-semibold">{SAMPLE_TX.vehicle.makeModel} • {SAMPLE_TX.vehicle.plate} • {SAMPLE_TX.vehicle.typeSize}</span>
+            </p>
+          )}
+          {v.showCustomerName && (
+            <p className="flex items-center gap-1">
+              <span className={theme.textMuted}>Customer: </span>
+              <span className="font-semibold">{SAMPLE_TX.customer.name}</span>
+              {v.showLoyaltyTier && (
+                <span className={`inline-flex items-center gap-0.5 ${theme.accent} text-[7px] font-bold`}>
+                  <Star className="h-2 w-2 fill-current" />
+                  {SAMPLE_TX.customer.tier}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className={`text-[7px] uppercase tracking-wider ${theme.textMuted} flex items-center justify-between border-b ${theme.border} pb-0.5`}>
+          <span>Item</span>
+          <span>Amount</span>
+        </div>
+        {SAMPLE_TX.items.map((item, i) => (
+          <div key={i} className={`flex items-center justify-between text-[9px] py-0.5 border-b ${theme.border}`}>
+            <span>{item.name}</span>
+            <span className="tabular-nums font-semibold">{formatPeso(item.total)}</span>
+          </div>
+        ))}
+      </div>
+      <div className={`pt-1 border-t-2 ${theme.border} space-y-0.5 text-[8px]`}>
+        <Row label="Subtotal" value={formatPeso(SAMPLE_TX.subtotal)} muted={theme.textMuted} />
+        {v.showDiscountBreakdown && (
+          <Row label="Discount" value={`-${formatPeso(SAMPLE_TX.discount)}`} muted={theme.textMuted} accent={theme.accent} />
+        )}
+        {v.showTaxLine && (
+          <Row label="Tax" value={formatPeso(SAMPLE_TX.tax)} muted={theme.textMuted} />
+        )}
+        <div className={`pt-1 mt-0.5 border-t ${theme.border} flex items-baseline justify-between`}>
+          <span className="text-[9px] font-semibold uppercase tracking-wider">Total</span>
+          <span className="text-base font-bold tabular-nums">{formatPeso(SAMPLE_TX.total)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PreviewComplete({
+  v, theme, businessName, logoUrl,
+}: {
+  v: PreviewValues
+  theme: PreviewTheme
+  businessName: string
+  logoUrl: string | null
+}) {
+  return (
+    <div className="h-full flex flex-col px-3 py-2 gap-1.5">
+      <header className="flex items-center gap-1.5">
+        {v.showLogo && (
+          logoUrl ? (
+            <Image src={logoUrl} alt="" width={20} height={20} className="h-4 w-4 object-contain" unoptimized />
+          ) : (
+            <div className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-500/90">
+              <Droplets className="h-2.5 w-2.5 text-white" />
+            </div>
+          )
+        )}
+        {v.showBusinessName && <p className="text-[10px] font-bold">{businessName}</p>}
+      </header>
+      <div className="flex items-center justify-center gap-1.5 py-1">
+        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+        <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Payment Complete</p>
+      </div>
+      <div className={`pt-1 border-t ${theme.border} space-y-0.5 text-[8px]`}>
+        <Row label="Subtotal" value={formatPeso(SAMPLE_TX.subtotal)} muted={theme.textMuted} />
+        {v.showDiscountBreakdown && (
+          <Row label="Discount" value={`-${formatPeso(SAMPLE_TX.discount)}`} muted={theme.textMuted} accent={theme.accent} />
+        )}
+        <div className="flex items-baseline justify-between pt-0.5">
+          <span className="text-[9px] font-semibold">Total</span>
+          <span className="text-xs font-bold tabular-nums">{formatPeso(SAMPLE_TX.total)}</span>
+        </div>
+      </div>
+      <div className={`rounded ${theme.surface} ${theme.border} border px-2 py-1 space-y-0.5 text-[8px]`}>
+        {v.showPaymentMethod && (
+          <Row label="Paid: Cash" value={formatPeso(SAMPLE_TX.paid)} muted={theme.textMuted} />
+        )}
+        {v.showChangeAmount && (
+          <Row label="Change" value={formatPeso(SAMPLE_TX.change)} muted={theme.textMuted} />
+        )}
+      </div>
+      {(v.showPointsEarned || v.showPointsBalance) && (
+        <div className={`rounded ${theme.surface} ${theme.border} border px-2 py-1 space-y-0.5 text-[8px]`}>
+          {v.showPointsEarned && (
+            <p className="flex items-center justify-between">
+              <span className={`flex items-center gap-1 ${theme.accent}`}>
+                <Star className="h-2.5 w-2.5 fill-current" /> Points Earned
+              </span>
+              <span className="font-semibold tabular-nums">+{SAMPLE_TX.pointsEarned} pts</span>
+            </p>
+          )}
+          {v.showPointsBalance && (
+            <p className="flex items-center justify-between">
+              <span className={`flex items-center gap-1 ${theme.accent}`}>
+                <Star className="h-2.5 w-2.5 fill-current" /> New Balance
+              </span>
+              <span className="font-semibold tabular-nums">{SAMPLE_TX.pointsBalance.toLocaleString()} pts</span>
+            </p>
+          )}
+        </div>
+      )}
+      <div className="text-center mt-auto pt-1 space-y-0.5">
+        {v.showThankYouMessage && (
+          <p className="text-[9px] font-semibold">Thank you for your patronage!</p>
+        )}
+        {v.showPromoText && (
+          <p className={`text-[8px] ${theme.accent}`}>Next wash 10% off!</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Row({
+  label, value, muted, accent,
+}: {
+  label: string
+  value: string
+  muted: string
+  accent?: string
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className={accent ?? muted}>{label}</span>
+      <span className={`tabular-nums font-medium ${accent ?? ''}`}>{value}</span>
     </div>
   )
 }

@@ -942,6 +942,8 @@ export interface PlanLimits {
   currentEmployees: number;
   smsPerMonth: number;
   smsUsedThisMonth: number;
+  maxPosStationsPerBranch: number;
+  maxPromoMessages: number;
 }
 
 export interface TrialInfo {

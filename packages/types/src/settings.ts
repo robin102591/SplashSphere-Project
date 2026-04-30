@@ -43,6 +43,9 @@ export interface CompanyProfileDto {
   readonly instagramHandle: string | null;
   readonly gcashNumber: string | null;
 
+  // Brand color — accent for the customer display "Brand" theme. #RRGGBB or null.
+  readonly primaryColorHex: string | null;
+
   // Logo (slice 3) — managed by POST/DELETE /settings/company/logo, NOT
   // by PUT /settings/company. The three URLs are returned with
   // cache-busting query suffixes so the browser refetches after re-upload.
@@ -80,6 +83,7 @@ export interface UpdateCompanyProfilePayload {
   facebookUrl: string | null;
   instagramHandle: string | null;
   gcashNumber: string | null;
+  primaryColorHex: string | null;
 }
 
 // ── Receipt designer ──────────────────────────────────────────────────────────
@@ -266,6 +270,8 @@ export interface DisplayBrandingDto {
   readonly instagramHandle: string | null;
   readonly gCashNumber: string | null;
   readonly gCashQrUrl: string | null;
+  /** Accent color used by the "Brand" theme. `#RRGGBB` or null = default. */
+  readonly primaryColorHex: string | null;
 }
 
 /**
