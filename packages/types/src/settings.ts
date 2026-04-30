@@ -3,7 +3,15 @@
  * Mirrors `SplashSphere.Application.Features.Settings.*` on the backend.
  */
 
-import type { LogoPosition, LogoSize, ReceiptFontSize, ReceiptWidth } from './enums';
+import type {
+  DisplayFontSize,
+  DisplayOrientation,
+  DisplayTheme,
+  LogoPosition,
+  LogoSize,
+  ReceiptFontSize,
+  ReceiptWidth,
+} from './enums';
 
 // ── Company profile ───────────────────────────────────────────────────────────
 
@@ -34,6 +42,9 @@ export interface CompanyProfileDto {
   readonly facebookUrl: string | null;
   readonly instagramHandle: string | null;
   readonly gcashNumber: string | null;
+
+  // Brand color — accent for the customer display "Brand" theme. #RRGGBB or null.
+  readonly primaryColorHex: string | null;
 
   // Logo (slice 3) — managed by POST/DELETE /settings/company/logo, NOT
   // by PUT /settings/company. The three URLs are returned with
@@ -72,6 +83,7 @@ export interface UpdateCompanyProfilePayload {
   facebookUrl: string | null;
   instagramHandle: string | null;
   gcashNumber: string | null;
+  primaryColorHex: string | null;
 }
 
 // ── Receipt designer ──────────────────────────────────────────────────────────
@@ -169,4 +181,105 @@ export interface UpdateReceiptSettingPayload {
   receiptWidth: ReceiptWidth;
   fontSize: ReceiptFontSize;
   autoCutPaper: boolean;
+}
+
+// ── Customer display ──────────────────────────────────────────────────────────
+
+export interface DisplaySettingDto {
+  readonly branchId: string | null;
+
+  // Idle
+  readonly showLogo: boolean;
+  readonly showBusinessName: boolean;
+  readonly showTagline: boolean;
+  readonly showDateTime: boolean;
+  readonly showGCashQr: boolean;
+  readonly showSocialMedia: boolean;
+  readonly promoMessages: readonly string[];
+  readonly promoRotationSeconds: number;
+
+  // Building / transaction
+  readonly showVehicleInfo: boolean;
+  readonly showCustomerName: boolean;
+  readonly showLoyaltyTier: boolean;
+  readonly showDiscountBreakdown: boolean;
+  readonly showTaxLine: boolean;
+
+  // Completion
+  readonly showPaymentMethod: boolean;
+  readonly showChangeAmount: boolean;
+  readonly showPointsEarned: boolean;
+  readonly showPointsBalance: boolean;
+  readonly showThankYouMessage: boolean;
+  readonly showPromoText: boolean;
+  readonly completionHoldSeconds: number;
+
+  // Appearance
+  readonly theme: DisplayTheme;
+  readonly fontSize: DisplayFontSize;
+  readonly orientation: DisplayOrientation;
+}
+
+/**
+ * Mutable shape of {@link DisplaySettingDto} — drops `readonly` and `branchId`
+ * (branch comes from the query string on PUT, not the payload).
+ */
+export interface UpdateDisplaySettingPayload {
+  // Idle
+  showLogo: boolean;
+  showBusinessName: boolean;
+  showTagline: boolean;
+  showDateTime: boolean;
+  showGCashQr: boolean;
+  showSocialMedia: boolean;
+  promoMessages: string[];
+  promoRotationSeconds: number;
+
+  // Building / transaction
+  showVehicleInfo: boolean;
+  showCustomerName: boolean;
+  showLoyaltyTier: boolean;
+  showDiscountBreakdown: boolean;
+  showTaxLine: boolean;
+
+  // Completion
+  showPaymentMethod: boolean;
+  showChangeAmount: boolean;
+  showPointsEarned: boolean;
+  showPointsBalance: boolean;
+  showThankYouMessage: boolean;
+  showPromoText: boolean;
+  completionHoldSeconds: number;
+
+  // Appearance
+  theme: DisplayTheme;
+  fontSize: DisplayFontSize;
+  orientation: DisplayOrientation;
+}
+
+/**
+ * Customer-display-safe subset of the tenant's company profile. Includes
+ * only fields that are appropriate for a public, customer-facing screen —
+ * NOT tax IDs, business permits, or other compliance metadata.
+ */
+export interface DisplayBrandingDto {
+  readonly businessName: string;
+  readonly tagline: string | null;
+  readonly logoUrl: string | null;
+  readonly facebookUrl: string | null;
+  readonly instagramHandle: string | null;
+  readonly gCashNumber: string | null;
+  readonly gCashQrUrl: string | null;
+  /** Accent color used by the "Brand" theme. `#RRGGBB` or null = default. */
+  readonly primaryColorHex: string | null;
+}
+
+/**
+ * Combined render config for the customer-facing display device. Returned by
+ * `GET /api/v1/display/config?branchId={id}` so the device fetches once at
+ * boot and then listens for SignalR events.
+ */
+export interface DisplayConfigDto {
+  readonly settings: DisplaySettingDto;
+  readonly branding: DisplayBrandingDto;
 }

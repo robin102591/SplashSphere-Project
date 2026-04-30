@@ -42,6 +42,8 @@
 | `/franchise/accept` | **Public** -- franchise invitation acceptance (token validation + onboarding form) |
 | `/dashboard/settings/company` | Company Profile -- business identity, contact, structured address, tax/registration (TIN, DTI/SEC, VAT flag), social URLs, GCash number. Drives branding on receipts, reports, and Connect listing. |
 | `/dashboard/settings/receipt` | Receipt Designer -- per-section toggles (Header / Body / Customer / Footer / Format), custom header/footer text, thank-you message, paper width + font size. Live thermal-receipt preview that updates as toggles change. "Apply to" branch selector at the top: Tenant default (always available) or any specific branch (Enterprise-only via the `branch_receipt_overrides` feature). When viewing a branch with its own override row, a **Reset to default** button removes the override. Non-Enterprise tenants who pick a branch see a lock banner — they can browse the resolved settings but can't save. |
+| `/dashboard/settings/pos-stations` | POS Stations -- per-branch CRUD for cashier workstations. Each station pairs one POS device with one optional customer display (SignalR group `display:{branchId}:{stationId}`). Branch selector at the top, list of stations with rename/toggle-active/delete. |
+| `/dashboard/settings/display` | Customer Display Settings -- toggles for the customer-facing screen across its three states (Idle, Transaction, Completion) plus appearance (theme/font/orientation) and a promo messages editor (rotated on idle, max 20). Branch selector at the top: tenant default always, branch overrides require Enterprise (`branch_display_overrides` feature). Reset-to-default button removes a branch override. |
 | `/dashboard/settings/import` | Data Import Wizard -- 4-step CSV/Excel import (upload, column mapping, validation, execute) |
 | `/dashboard/settings/notifications` | Notification Preferences -- per-type SMS/email channel toggles with mandatory indicators |
 | `/dashboard/supplies` | Supply list with category/branch/stock filters, quick actions |
@@ -69,6 +71,8 @@
 | `/customers/lookup` | Plate/customer search |
 | `/attendance` | Clock in/out |
 | `/queue-display` | **PUBLIC (no auth)** full-screen queue for wall TV |
+| `/display` | Customer Display setup -- branch + station selector, "Start Display" button. Authed (Clerk). Saves picks to localStorage and requests fullscreen on click before navigating to `/display/live`. |
+| `/display/live` | Customer Display fullscreen runtime -- 3 states (Idle / Building / Complete) driven by SignalR events to `display:{branchId}:{stationId}`. Theme (Dark/Light/Brand), font size, orientation come from display settings. Auto-reconnects with exponential backoff. Subtle reconnecting banner — no internal data ever shown to the customer. |
 | `/shift/open` | Open Shift -- opening cash fund entry with quick presets |
 | `/shift` | Active Shift Panel -- stats, cash movements log, payment breakdown, actions |
 | `/shift/cash-movement` | Cash Movement Form -- Cash In / Cash Out with presets |

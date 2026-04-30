@@ -64,6 +64,7 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.FacebookUrl).HasMaxLength(256);
         builder.Property(t => t.InstagramHandle).HasMaxLength(64);
         builder.Property(t => t.GCashNumber).HasMaxLength(50);
+        builder.Property(t => t.PrimaryColorHex).HasMaxLength(7);
 
         // ── Logo URLs (Cloudflare R2) ────────────────────────────────────────
         builder.Property(t => t.LogoUrl).HasMaxLength(512);

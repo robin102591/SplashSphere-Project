@@ -40,7 +40,9 @@ public sealed class GetCurrentPlanQueryHandler(
             sub?.MaxEmployeesOverride ?? plan.MaxEmployees,
             employeeCount,
             sub?.SmsPerMonthOverride ?? plan.SmsPerMonth,
-            sub?.SmsUsedThisMonth ?? 0);
+            sub?.SmsUsedThisMonth ?? 0,
+            plan.MaxPosStationsPerBranch,
+            plan.MaxPromoMessages);
 
         TrialInfoDto? trial = null;
         if (sub is not null && sub.Status == SubscriptionStatus.Trial)

@@ -20,7 +20,9 @@ public sealed record PlanLimitsDto(
     int MaxEmployees,
     int CurrentEmployees,
     int SmsPerMonth,
-    int SmsUsedThisMonth);
+    int SmsUsedThisMonth,
+    int MaxPosStationsPerBranch,
+    int MaxPromoMessages);
 
 public sealed record TrialInfoDto(
     DateTime StartDate,

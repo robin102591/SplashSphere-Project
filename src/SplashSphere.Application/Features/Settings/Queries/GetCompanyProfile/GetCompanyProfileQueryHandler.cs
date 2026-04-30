@@ -36,6 +36,7 @@ public sealed class GetCompanyProfileQueryHandler(
                 t.FacebookUrl,
                 t.InstagramHandle,
                 t.GCashNumber,
+                t.PrimaryColorHex,
                 t.LogoUrl,
                 t.LogoThumbnailUrl,
                 t.LogoIconUrl))

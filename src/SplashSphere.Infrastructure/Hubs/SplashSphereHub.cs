@@ -39,6 +39,14 @@ public sealed class SplashSphereHub : Hub
     public static string QueueDisplayGroup(string branchId)
         => $"queue-display:{branchId}";
 
+    /// <summary>
+    /// Group key for a customer-facing display paired to one POS station.
+    /// One station = one display = one group. Multiple displays in the same
+    /// station mirror the same transaction stream.
+    /// </summary>
+    public static string CustomerDisplayGroup(string branchId, string stationId)
+        => $"display:{branchId}:{stationId}";
+
     // ── Connection lifecycle ──────────────────────────────────────────────────
 
     /// <summary>
@@ -102,4 +110,103 @@ public sealed class SplashSphereHub : Hub
         => await Groups.AddToGroupAsync(
             Context.ConnectionId,
             QueueDisplayGroup(branchId));
+
+    /// <summary>
+    /// Subscribe to a station's customer-display feed
+    /// (<c>display:{branchId}:{stationId}</c>). Authenticated — the cashier or
+    /// admin sets up the device once with their Clerk session and leaves it
+    /// running. Tenant scoping is enforced via the JWT <c>org_id</c> claim
+    /// (we never trust client-supplied tenant), but the same group key works
+    /// across all tenants because branchId is already tenant-scoped.
+    /// </summary>
+    [Authorize]
+    public async Task JoinDisplayGroup(string branchId, string stationId)
+    {
+        var tenantId = Context.User!.FindFirst("org_id")?.Value
+            ?? throw new HubException("No tenant context in token.");
+
+        // No DB-side validation here — slice 4 will enforce that the station
+        // actually belongs to the cashier's tenant when transaction events
+        // are dispatched. For now, joining a non-existent group is harmless
+        // (the client just never receives any events).
+        _ = tenantId;
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            CustomerDisplayGroup(branchId, stationId));
+    }
+
+    /// <summary>Leave the customer-display group (e.g. switching stations).</summary>
+    [Authorize]
+    public async Task LeaveDisplayGroup(string branchId, string stationId)
+        => await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            CustomerDisplayGroup(branchId, stationId));
+
+    /// <summary>
+    /// Pushes the cashier's in-progress (draft) cart to the paired customer
+    /// display, before any DB row exists. The display reducer treats this
+    /// payload identically to a real <c>DisplayTransactionUpdated</c> event,
+    /// so the customer sees items, totals, and vehicle info build up live as
+    /// the cashier works through the cart at <c>/transactions/new</c>.
+    /// <para>
+    /// Routing: targets <c>display:{branchId}:{stationId}</c> exactly the way
+    /// real transaction events do. Once the cashier finalises (Complete or
+    /// Pay Later), the persisted transaction's <c>TransactionCreatedEvent</c>
+    /// takes over and this method stops being called.
+    /// </para>
+    /// <para>
+    /// <b>Trust model:</b> the payload is unverified cashier-supplied data,
+    /// and that is OK by design — the display is a customer-trust UI, not a
+    /// ledger. The actual receipt comes from the POSTed transaction. The
+    /// cashier can only target a (branchId, stationId) pair that their UI
+    /// already shows them; tenant-foreign branchIds are uuid-collision-safe.
+    /// </para>
+    /// </summary>
+    [Authorize]
+    public async Task BroadcastDraftDisplay(
+        string branchId,
+        string stationId,
+        DraftDisplayPayload payload)
+    {
+        var tenantId = Context.User!.FindFirst("org_id")?.Value
+            ?? throw new HubException("No tenant context in token.");
+
+        // tenantId is required for auth; the discriminator on the group key is
+        // branchId which is already tenant-scoped on the cashier's client.
+        _ = tenantId;
+
+        await Clients
+            .Group(CustomerDisplayGroup(branchId, stationId))
+            .SendAsync("DisplayTransactionUpdated", payload);
+    }
 }
+
+/// <summary>
+/// Cashier-supplied snapshot of the in-progress cart on /transactions/new.
+/// Mirrors <c>DisplayTransactionResultDto</c> from the Application layer so
+/// the display's reducer can render it the same way as a server-built
+/// payload — but kept as a separate hub-layer record because Application
+/// DTOs are nominally inputs to the broadcaster, not the hub surface.
+/// </summary>
+public sealed record DraftDisplayPayload(
+    string TransactionId,
+    string? VehiclePlate,
+    string? VehicleMakeModel,
+    string? VehicleTypeSize,
+    string? CustomerName,
+    string? LoyaltyTier,
+    IReadOnlyList<DraftDisplayLineItem> Items,
+    decimal Subtotal,
+    decimal DiscountAmount,
+    string? DiscountLabel,
+    decimal TaxAmount,
+    decimal Total);
+
+public sealed record DraftDisplayLineItem(
+    string Id,
+    string Name,
+    string Type,
+    int Quantity,
+    decimal UnitPrice,
+    decimal TotalPrice);

@@ -97,3 +97,8 @@ public sealed record LowStockAlertPayload(
     string Sku,
     int CurrentStock,
     int LowStockThreshold);
+
+// Customer display payloads live in
+// SplashSphere.Application.Features.Display.DTOs.DisplayTransactionResultDto
+// (and DisplayCompletionResultDto) so the SignalR broadcaster and the
+// reconnect-sync REST endpoint share one canonical shape.

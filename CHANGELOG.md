@@ -1,5 +1,143 @@
 ## Changelog
 
+## [Customer Display — Slice 5: polish + plan gating] — 2026-04-30
+
+Final slice of the Customer Display feature. Plan gating (stations per branch, promo cap), live preview in admin settings, tenant primary brand color, and marketing site updates.
+
+Plan gating
+- `Domain/Subscription/PlanDefinition.cs`: new `MaxPosStationsPerBranch` and `MaxPromoMessages` fields.
+- `PlanCatalog.cs`: Starter 1/1, Growth 3/5, Enterprise ∞/20, Trial inherits Growth tier limits, Franchisor-on-Trial inherits Enterprise.
+- `IPlanEnforcementService.CheckPosStationLimitAsync(tenantId, branchId, ct)`: per-branch count (active + inactive — soft-deactivation can't bypass the cap).
+- `CreatePosStationCommandHandler`: enforces the per-branch limit before insert; surfaces a "Your {plan} plan allows N station(s) per branch" error.
+- `UpdateDisplaySettingCommandHandler`: rejects payloads exceeding `MaxPromoMessages`. The 20-cap validator stays as a backstop ceiling.
+- `PlanLimitsDto` (Billing): includes `maxPosStationsPerBranch` + `maxPromoMessages` so the admin UI can adapt at runtime.
+
+Admin UI
+- `/settings/display` Promo Messages section: shows the `{used}/{cap}` badge on the Add button, disables at cap, hint copy mentions the active plan.
+- `/settings/display` gains a sticky right-column live preview (`DisplayPreview`) with a tab switcher across Idle/Building/Complete states. Reflects every form toggle, theme, and font size in real time. Uses `useWatch({ control })` to render without leaking re-renders into the form sections.
+- `/settings/company` adds a Brand color card with native `<input type="color">` + `#RRGGBB` text mirror + Reset to default button.
+
+Tenant primary brand color
+- `Tenant.PrimaryColorHex` (nullable) + `AddTenantPrimaryColor` migration applied.
+- `UpdateCompanyProfileCommand` validates `^#[0-9A-Fa-f]{6}$` or null; handler normalizes to uppercase.
+- `CompanyProfileDto` + `UpdateCompanyProfilePayload` carry it.
+- `DisplayBrandingDto` exposes `PrimaryColorHex` to the display app.
+- `apps/pos/src/app/display/live/page.tsx`: when theme is Brand, sets `--display-accent` CSS variable on the root; the Brand theme's `accent` class is `text-[color:var(--display-accent,#60A5FA)]` so the customer-display accent reflects the tenant's brand instantly.
+
+Marketing site
+- `apps/marketing/src/app/features/page.tsx`: new "Customer-Facing Display" category with 8 bullets between Receipt Designer and Loyalty.
+- `apps/marketing/src/app/pricing/page.tsx`: each plan card mentions the customer display + station count; comparison table gains 4 new rows (Customer-Facing Display, POS Stations per Branch, Display Promo Messages, Branch Display Overrides).
+
+Build: `dotnet build` clean. Admin / POS / marketing all `tsc --noEmit` clean. Migration applied.
+
+## [Customer Display — Slice 4: POS broadcasting goes live] — 2026-04-29
+
+The customer display starts showing real data. Slice 3 built the contract; this slice fills in the producer side. Cashiers now pick a station next to the branch picker; transactions created on that station broadcast lifecycle events to the paired display group. The display reconnect-syncs from REST so a momentary SignalR drop doesn't strand it on Idle while a transaction is mid-build.
+
+Backend
+- `Domain/Entities/Transaction.cs`: nullable `PosStationId` + `PosStation` navigation. Constructor accepts the station ID. SetNull on station deletion (transaction history is sacred).
+- `Infrastructure/Persistence/Configurations/TransactionConfiguration.cs`: new FK + filtered `(PosStationId, Status)` index for the reconnect-sync lookup.
+- `Migrations/20260429082714_AddPosStationToTransaction.cs`: applied locally.
+- `Application/Common/Interfaces/IDisplayBroadcaster.cs`: 4-method abstraction — `BroadcastStarted/Updated/Completed/Cancelled`. All no-op when transaction has no station.
+- `Infrastructure/ExternalServices/SignalRDisplayBroadcaster.cs`: SignalR-backed impl using `IHubContext<SplashSphereHub>`. **Failures are swallowed and logged at warning** so a SignalR hiccup never tears down the rest of completion-pipeline (loyalty, SMS, payroll commission accumulation).
+- `Application/Features/Display/DTOs/DisplayTransactionLoader.cs`: shared materialiser used by **both** the SignalR broadcaster and the new reconnect-sync handler. Single code path → byte-identical payloads.
+- `Application/Features/Display/DTOs/DisplayTransactionResultDto.cs` + `DisplayCompletionResultDto`: canonical customer-safe DTOs (no employee names, commissions, costs, profit). Replace the Hub-layer payload records that lived in `HubPayloads.cs`.
+- `Infrastructure/Hubs/Handlers/TransactionCreatedDisplayHandler.cs` / `TransactionUpdatedDisplayHandler.cs` / `TransactionCompletedDisplayHandler.cs` / `TransactionCancelledDisplayHandler.cs`: 4 thin handlers that call `IDisplayBroadcaster` from the existing domain events. Cancellation listens on `TransactionStatusChangedEvent` filtered to `NewStatus == Cancelled`.
+- `Application/Features/Transactions/Commands/UpdateDiscountTip/UpdateDiscountTipCommandHandler.cs`: now raises `TransactionUpdatedEvent` so discount/tip edits flow to the customer display in real time (previously only line-item changes did).
+- `Application/Features/Display/Queries/GetCurrentDisplayTransaction/`: query + handler returning `DisplayCurrentResultDto { transaction: DisplayTransactionResultDto | null }`. Powers the reconnect-sync endpoint.
+- `API/Endpoints/DisplayEndpoints.cs`: new `GET /api/v1/display/current?branchId=…&stationId=…`.
+- `Application/Features/Transactions/Commands/CreateTransaction/`: optional `PosStationId` parameter threaded through to the `Transaction(...)` constructor.
+- `API/Endpoints/TransactionEndpoints.cs`: `CreateTransactionRequest` gains `PosStationId`.
+
+Frontend (POS app)
+- `apps/pos/src/lib/branch-context.tsx`: `BranchProvider` extended with `stationId / stationName / stations / setStationId`. Stations fetched per-branch via TanStack Query; branch switch clears station; auto-picks when there's exactly one active station.
+- `apps/pos/src/components/layout/pos-navbar.tsx`: new `StationSelector` (emerald accent to differentiate from the blue branch picker). Hidden when the branch has no active stations.
+- `apps/pos/src/app/(terminal)/transactions/new/page.tsx`: `buildCreateBody()` now sends `posStationId: contextStationId || null`.
+- `apps/pos/src/app/display/live/use-display-connection.ts`: rehydrates from `GET /display/current` on initial connect AND after each SignalR reconnect — covers the case where a transaction was already in progress before the device booted, and any events fired during a connection gap.
+
+Shared types
+- `packages/types/src/api.ts`: `DisplayCurrentResultDto`.
+
+Build: `dotnet build` clean. Admin + POS both `tsc --noEmit` clean. Migration applied.
+
+## [Customer Display — Slice 3: display frontend + SignalR contract] — 2026-04-29
+
+The customer-facing display goes live: a fullscreen Next.js page in the POS app that pairs to a station and renders three states (Idle / Building / Complete). This slice is built against the SignalR contract — POS doesn't broadcast events yet (slice 4 wires that up), so today the display sits at Idle and any test broadcast goes through cleanly. The plumbing is the work; the runtime data flow is verified by code inspection.
+
+Backend
+- `Hubs/SplashSphereHub.cs`: new `JoinDisplayGroup(branchId, stationId)` and `LeaveDisplayGroup` methods. Authenticated. Group key = `display:{branchId}:{stationId}` (helper exposed as `CustomerDisplayGroup`).
+- `Hubs/HubPayloads.cs`: new `DisplayLineItemPayload`, `DisplayTransactionPayload`, `DisplayCompletionPayload`. Payloads are deliberately customer-safe — no employee names, commissions, costs, profit, or payroll data.
+- `Application/Features/Display/Queries/GetDisplayConfig/`: combined render config (`DisplayConfigDto` = `DisplaySettingDto` + `DisplayBrandingDto`). Branding is a curated subset of company profile (no tax ID / permit). Resolver delegates to `GetDisplaySettingQuery` for the settings half.
+- `API/Endpoints/DisplayEndpoints.cs`: new `/api/v1/display/config?branchId={id}` GET endpoint. Wired in `Program.cs`.
+
+Frontend (POS app)
+- `apps/pos/src/app/display/layout.tsx`: Clerk auth (redirects to /sign-in). Deliberately omits the POS chrome (navbar, shift banner, lock guard) — this surface is customer-facing.
+- `apps/pos/src/app/display/page.tsx`: setup screen. Branch + station selectors. Saves picks to localStorage. Requests fullscreen on the user gesture before navigating to `/display/live?branchId=…&stationId=…`.
+- `apps/pos/src/app/display/live/page.tsx`: fullscreen runtime. Fetches `DisplayConfigDto`, applies theme + font + orientation classes, hosts the three state components, shows a subtle "Reconnecting…" banner on transient drops.
+- `apps/pos/src/app/display/live/use-display-connection.ts`: SignalR client + reducer. Subscribes to the four `Display*` events, dispatches into a 3-state union, auto-reconnects via the SDK's exponential backoff `[0, 2s, 5s, 10s, 30s]`. On reconnect re-joins the station group. Completion state auto-reverts to Idle after the configured `completionHoldSeconds`.
+- `apps/pos/src/app/display/live/idle-screen.tsx`: branding, rotating promos (configurable interval), live clock at minute precision, optional GCash/social footer.
+- `apps/pos/src/app/display/live/building-screen.tsx`: vehicle/customer band, item rows with slide-in animation, totals strip with the grand total as the visual anchor.
+- `apps/pos/src/app/display/live/complete-screen.tsx`: payment-complete banner, item summary, payment + change band, loyalty band, footer thank-you/promo lines.
+- `apps/pos/src/app/globals.css`: `animate-fade-in`, `animate-slide-in`, `animate-pulse-slow` keyframes for state transitions.
+
+Shared types
+- `packages/types/src/api.ts`: `DisplayLineItemPayload`, `DisplayTransactionPayload`, `DisplayCompletionPayload`. Four new event names under `HubEvents` (`DisplayTransactionStarted/Updated/Completed/Cancelled`) — distinct from the branch-scoped `TransactionUpdated` to prevent client-side handler ambiguity.
+- `packages/types/src/settings.ts`: `DisplayBrandingDto`, `DisplayConfigDto`.
+
+Docs: `docs/API_ENDPOINTS.md` (new sections for `/display/config` + Hub methods), `docs/PAGE_INVENTORY.md` (`/display` and `/display/live`).
+
+Build: `dotnet build` clean. POS + Admin both `tsc --noEmit` clean.
+
+## [Customer Display — Slice 2: Display Settings + admin UI] — 2026-04-29
+
+Adds `DisplaySetting` — the per-tenant configuration that drives what the customer-facing screen shows in each of its three states (Idle / Building / Complete) plus appearance (theme/font/orientation). Mirrors the `ReceiptSetting` pattern: one row per `(TenantId, BranchId)`, with `BranchId IS NULL` as the tenant default and per-branch rows as overrides. The same partial-filtered-index approach guarantees one row per slot. Resolution: branch row → tenant default → in-memory defaults.
+
+The admin page lives at `/dashboard/settings/display`. Promo messages use `useFieldArray` so admins can add up to 20 rotating idle-screen lines. Per-branch overrides are gated on the new Enterprise-only `branch_display_overrides` feature; non-Enterprise tenants who pick a branch see a lock banner — they can browse the resolved settings but can't save changes (same UX as receipt designer).
+
+- `src/SplashSphere.Domain/Entities/DisplaySetting.cs`: new entity (idle/building/completion/appearance toggles, `PromoMessages` as `List<string>`, `Theme/FontSize/Orientation` enums, audit timestamps), `IAuditableEntity + ITenantScoped`.
+- `src/SplashSphere.Domain/Enums/DisplayEnums.cs`: `DisplayTheme` (Dark/Light/Brand), `DisplayFontSize` (Normal/Large/ExtraLarge), `DisplayOrientation` (Landscape/Portrait).
+- `src/SplashSphere.Domain/Subscription/FeatureKeys.cs`: new `BranchDisplayOverrides` key (Enterprise only).
+- `src/SplashSphere.Domain/Subscription/PlanCatalog.cs`: added to `EnterpriseFeatures`.
+- `src/SplashSphere.Infrastructure/Persistence/Configurations/DisplaySettingConfiguration.cs`: JSONB column with `ValueConverter` + `ValueComparer` for the `List<string>` (so EF change-tracking notices in-place mutations), unique partial indexes on `(TenantId)` filtered by `BranchId IS NULL` and `(TenantId, BranchId)` filtered by `BranchId IS NOT NULL`.
+- `src/SplashSphere.Infrastructure/Persistence/Migrations/20260429074115_AddDisplaySettings.cs`: migration applied locally.
+- `src/SplashSphere.Application/Features/Settings/Queries/GetDisplaySetting/`: query + handler + DTO. Resolver: branch row → tenant default → in-memory defaults.
+- `src/SplashSphere.Application/Features/Settings/Commands/UpdateDisplaySetting/`: upsert command with validator (3-60s rotation, 3-30s hold, max 20 messages × 200 chars). Branch overrides gated inside the handler against `BranchDisplayOverrides`.
+- `src/SplashSphere.Application/Features/Settings/Commands/DeleteDisplaySetting/`: removes a branch override. Validator rejects empty `BranchId` (tenant default is permanent).
+- `src/SplashSphere.API/Endpoints/SettingsEndpoints.cs`: `/api/v1/settings/display` GET/PUT/DELETE wired in.
+- `apps/admin/src/hooks/use-display-settings.ts`: TanStack Query hooks (`useDisplaySetting`, `useUpdateDisplaySetting`, `useDeleteDisplayBranchOverride`).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/display/page.tsx`: new page — branch scope selector + 5 sectioned cards (Idle / Promos / Building / Completion / Appearance) using `react-hook-form` + `zod` + `useWatch` per-field subscriptions (avoids the same all-toggles-rerender perf trap the receipt designer hit).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: nav action added between POS Stations and Booking.
+- `packages/types/src/enums.ts`: `DisplayTheme`, `DisplayFontSize`, `DisplayOrientation`.
+- `packages/types/src/settings.ts`: `DisplaySettingDto` + `UpdateDisplaySettingPayload`.
+- `packages/types/src/entities.ts`: `BranchDisplayOverrides` added to `FeatureKeys` const.
+- `docs/API_ENDPOINTS.md` + `docs/PAGE_INVENTORY.md`: updated.
+
+Build: `dotnet build` clean, admin `tsc --noEmit` clean. Migration applied.
+
+## [Customer Display — Slice 1: POS Stations foundation] — 2026-04-29
+
+Kickoff of the Customer Display feature (`/.claude/CUSTOMER_DISPLAY.md`). Slice 1 builds the *station* primitive that the rest of the feature hangs off of — every customer-facing display pairs to one station, and the SignalR group key is `display:{branchId}:{stationId}`. Without stations, there's nowhere to route transaction events.
+
+Stations are tenant-scoped, branch-owned, and few in count (typical car wash runs 1–3 per branch). Names are unique within a branch but not across branches — "Counter A" can exist in Makati and BGC. The dialog accepts a name on create; edit also lets you flip `IsActive`.
+
+- `src/SplashSphere.Domain/Entities/PosStation.cs`: new entity (`Id`, `TenantId`, `BranchId`, `Name`, `IsActive`, audit timestamps), `IAuditableEntity + ITenantScoped`. Tenant filter auto-registers via the marker.
+- `src/SplashSphere.Domain/Entities/Branch.cs`: added `PosStations` navigation collection.
+- `src/SplashSphere.Infrastructure/Persistence/Configurations/PosStationConfiguration.cs`: table + cascade FK on `Branch` (and `Tenant`), unique `(BranchId, Name)`, `TenantId` lookup index.
+- `src/SplashSphere.Infrastructure/Persistence/Migrations/20260429061847_AddPosStations.cs`: migration applied locally.
+- `src/SplashSphere.Application/Features/PosStations/`:
+  - `PosStationDto`
+  - Commands: `CreatePosStation`, `UpdatePosStation`, `DeletePosStation` (+ validators on the first two)
+  - Queries: `GetPosStations` (per-branch list, no pagination), `GetPosStationById`
+  - All commands return `Result`/`Result<T>`; create/update guard against duplicate names within the same branch.
+- `src/SplashSphere.API/Endpoints/PosStationEndpoints.cs`: nested under `/api/v1/branches/{branchId}/stations` — list, get, create, update, delete. Wired in `Program.cs`.
+- `apps/admin/src/hooks/use-pos-stations.ts`: TanStack Query hooks (`usePosStations`, `useCreatePosStation`, `useUpdatePosStation`, `useDeletePosStation`).
+- `apps/admin/src/app/(dashboard)/dashboard/settings/pos-stations/page.tsx`: new page — branch selector card + station list with add/edit dialog and delete confirmation.
+- `apps/admin/src/app/(dashboard)/dashboard/settings/page.tsx`: nav action added next to Company Profile / Receipt Designer.
+- `packages/types/src/entities.ts`: `PosStation` interface for the admin app.
+- `docs/API_ENDPOINTS.md` + `docs/PAGE_INVENTORY.md`: updated.
+
+Build status: `dotnet build` clean, admin `tsc --noEmit` clean. Migration applied to local PostgreSQL.
+
 ## [Marketing — Sync /features and /pricing with shipped backend] — 2026-04-28
 
 The marketing site was advertising a stale subset of features — the receipt-designer feature (slices 1–5), the Customer Connect app, online booking, the referral program, pricing modifiers, and cost-per-wash reports were all shipped but invisible on the public site. Updated `/features` and `/pricing` to reflect what's actually in `PlanCatalog.cs` today.

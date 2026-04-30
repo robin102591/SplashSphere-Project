@@ -10,6 +10,13 @@ public interface IPlanEnforcementService
     /// <summary>Check if the tenant is within a resource limit (branches, employees, SMS).</summary>
     Task<PlanLimitResult> CheckLimitAsync(string tenantId, LimitType limitType, CancellationToken ct);
 
+    /// <summary>
+    /// Per-branch limit check for POS stations. Kept separate from
+    /// <see cref="CheckLimitAsync"/> because the count is scoped to a
+    /// specific branch rather than the tenant as a whole.
+    /// </summary>
+    Task<PlanLimitResult> CheckPosStationLimitAsync(string tenantId, string branchId, CancellationToken ct);
+
     /// <summary>Get the resolved plan definition for the tenant.</summary>
     Task<PlanDefinition> GetActivePlanAsync(string tenantId, CancellationToken ct);
 

@@ -38,6 +38,11 @@ public sealed class UpdateCompanyProfileCommandValidator : AbstractValidator<Upd
 
         RuleFor(c => c.InstagramHandle).MaximumLength(64);
         RuleFor(c => c.GCashNumber).MaximumLength(50);
+
+        // #RRGGBB or null. We store and validate as 7 chars including the hash.
+        RuleFor(c => c.PrimaryColorHex)
+            .MaximumLength(7)
+            .Must(BeAValidHexColorOrNull).WithMessage("Primary color must be a #RRGGBB hex value.");
     }
 
     private static bool BeAValidUrlOrNull(string? candidate)
@@ -45,5 +50,11 @@ public sealed class UpdateCompanyProfileCommandValidator : AbstractValidator<Upd
         if (string.IsNullOrWhiteSpace(candidate)) return true;
         return Uri.TryCreate(candidate, UriKind.Absolute, out var uri)
             && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    private static bool BeAValidHexColorOrNull(string? candidate)
+    {
+        if (string.IsNullOrWhiteSpace(candidate)) return true;
+        return System.Text.RegularExpressions.Regex.IsMatch(candidate, @"^#[0-9A-Fa-f]{6}$");
     }
 }

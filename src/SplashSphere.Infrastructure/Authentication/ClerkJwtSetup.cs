@@ -42,6 +42,27 @@ public static class ClerkJwtSetup
 
                 options.Events = new JwtBearerEvents
                 {
+                    // SignalR's WebSocket transport can't set the Authorization
+                    // header on the upgrade request (browser limitation), so it
+                    // appends the token as ?access_token=... when targeting the
+                    // hub path. The JwtBearer middleware only reads from the
+                    // Authorization header by default, so without this hook the
+                    // WebSocket connection is unauthenticated even though the
+                    // negotiate (HTTP POST) was authenticated. Hub methods
+                    // protected by [Authorize] then reject every invocation
+                    // with "user is unauthorized".
+                    OnMessageReceived = ctx =>
+                    {
+                        var token = ctx.Request.Query["access_token"];
+                        var path = ctx.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(token)
+                            && path.StartsWithSegments("/hubs"))
+                        {
+                            ctx.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    },
+
                     OnTokenValidated = ctx =>
                     {
                         var tenantCtx = ctx.HttpContext.RequestServices

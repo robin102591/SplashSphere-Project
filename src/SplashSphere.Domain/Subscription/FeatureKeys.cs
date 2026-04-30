@@ -46,4 +46,7 @@ public static class FeatureKeys
 
     /// <summary>Per-branch receipt-design overrides on top of the tenant default. Multi-branch operation only.</summary>
     public const string BranchReceiptOverrides = "branch_receipt_overrides";
+
+    /// <summary>Per-branch customer-display overrides on top of the tenant default. Multi-branch operation only.</summary>
+    public const string BranchDisplayOverrides = "branch_display_overrides";
 }

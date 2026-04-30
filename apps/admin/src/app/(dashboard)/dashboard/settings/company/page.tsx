@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -50,6 +50,10 @@ const formSchema = z.object({
   facebookUrl: optionalUrl,
   instagramHandle: z.string().trim().max(64).or(z.literal('')).nullable().optional(),
   gcashNumber: z.string().trim().max(50).or(z.literal('')).nullable().optional(),
+
+  // #RRGGBB or empty. The native <input type="color"> always emits a valid
+  // 7-char string; the empty case happens via the explicit "Reset" button.
+  primaryColorHex: z.string().regex(/^(#[0-9A-Fa-f]{6})?$/, 'Must be a #RRGGBB hex value.').or(z.literal('')).nullable().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -79,6 +83,7 @@ function toPayload(v: FormValues): UpdateCompanyProfilePayload {
     facebookUrl: toNullable(v.facebookUrl),
     instagramHandle: toNullable(v.instagramHandle),
     gcashNumber: toNullable(v.gcashNumber),
+    primaryColorHex: toNullable(v.primaryColorHex),
   }
 }
 
@@ -107,6 +112,7 @@ export default function CompanyProfilePage() {
       facebookUrl: '',
       instagramHandle: '',
       gcashNumber: '',
+      primaryColorHex: '',
     },
   })
 
@@ -131,6 +137,7 @@ export default function CompanyProfilePage() {
       facebookUrl: profile.facebookUrl ?? '',
       instagramHandle: profile.instagramHandle ?? '',
       gcashNumber: profile.gcashNumber ?? '',
+      primaryColorHex: profile.primaryColorHex ?? '',
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
@@ -307,6 +314,20 @@ export default function CompanyProfilePage() {
         </CardContent>
       </Card>
 
+      {/* ── Brand color (drives the customer-display "Brand" theme) ───────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Brand color</CardTitle>
+          <CardDescription>
+            Used as accent on the customer-facing display when the &ldquo;Brand&rdquo;
+            theme is selected. Leave blank to use the default blue.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BrandColorField form={form} />
+        </CardContent>
+      </Card>
+
       {/* Sticky-ish bottom save (also up top in the header) */}
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isPending || !form.formState.isDirty}>
@@ -343,6 +364,51 @@ function Field({
       </Label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+// ── BrandColorField ───────────────────────────────────────────────────────────
+// Native color picker + a #RRGGBB text mirror + a Reset button. The picker
+// always emits a valid 7-char hex; the text input is a convenience for
+// designers who want to paste in a known brand color.
+
+function BrandColorField({
+  form,
+}: {
+  form: ReturnType<typeof useForm<FormValues>>
+}) {
+  const value = useWatch({ control: form.control, name: 'primaryColorHex' }) ?? ''
+  const isSet = /^#[0-9A-Fa-f]{6}$/.test(value)
+  const swatch = isSet ? value : '#3B82F6' // default blue when unset
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        type="color"
+        aria-label="Pick brand color"
+        value={swatch}
+        onChange={(e) => form.setValue('primaryColorHex', e.target.value.toUpperCase(), { shouldDirty: true })}
+        className="h-10 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
+      />
+      <Input
+        {...form.register('primaryColorHex')}
+        placeholder="#3B82F6"
+        className="w-32 font-mono uppercase"
+        maxLength={7}
+      />
+      {!isSet && (
+        <span className="text-xs text-muted-foreground">Default — splash blue</span>
+      )}
+      {isSet && (
+        <button
+          type="button"
+          onClick={() => form.setValue('primaryColorHex', '', { shouldDirty: true })}
+          className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+        >
+          Reset to default
+        </button>
+      )}
     </div>
   )
 }

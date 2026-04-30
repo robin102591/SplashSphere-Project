@@ -37,6 +37,47 @@ All prefixed with `/api/v1`. All require auth except webhooks and queue display.
 | `GET/POST/PUT` | `/branches/{id}` | CRUD |
 | `PATCH` | `/branches/{id}/status` | Activate/deactivate |
 
+## POS Stations
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/branches/{branchId}/stations` | List stations for a branch |
+| `GET` | `/branches/{branchId}/stations/{id}` | Get station by ID |
+| `POST` | `/branches/{branchId}/stations` | Create station |
+| `PUT` | `/branches/{branchId}/stations/{id}` | Update station name + active flag |
+| `DELETE` | `/branches/{branchId}/stations/{id}` | Delete station |
+
+## Customer Display Settings
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/settings/display` | Tenant default (resolved-with-fallback) |
+| `GET` | `/settings/display?branchId={id}` | Branch override (falls back to default if none exists) |
+| `PUT` | `/settings/display` | Upsert tenant default |
+| `PUT` | `/settings/display?branchId={id}` | Upsert branch override (Enterprise only — `branch_display_overrides` feature) |
+| `DELETE` | `/settings/display?branchId={id}` | Remove a branch override (tenant default cannot be deleted) |
+
+## Customer Display (read-only render config)
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/display/config?branchId={id}` | Combined render config: settings (with branch fallback) + customer-safe tenant branding (no tax IDs, permits, etc). |
+| `GET` | `/display/current?branchId={id}&stationId={id}` | Reconnect-sync: returns the in-progress transaction for a station as a customer-safe DTO, or `{ transaction: null }` when nothing is active. |
+| `POST` | `/display/show/{transactionId}` | Pushes a transaction to its station's display. Used when the cashier opens an existing transaction page (mount of `/transactions/[id]`) so the display follows their focus even when no domain event fires. |
+| `POST` | `/display/clear` (body: `{ branchId, stationId }`) | Reverts a station's display to Idle. Used after Pay Later — customer is walking away, screen should be ready for the next person. |
+
+## SignalR — Customer Display
+
+| Method | Direction | Description |
+|---|---|---|
+| `JoinDisplayGroup(branchId, stationId)` | Client → Server | Subscribe to `display:{branchId}:{stationId}`. Authenticated. |
+| `LeaveDisplayGroup(branchId, stationId)` | Client → Server | Unsubscribe. |
+| `BroadcastDraftDisplay(branchId, stationId, payload)` | Client → Server | Cashier-pushed: relays the in-progress cart on `/transactions/new` to the station's display group as `DisplayTransactionUpdated`. Lets customers see items build live before the transaction is POSTed. Authenticated. |
+| `DisplayTransactionStarted` | Server → Client | Broadcast on transaction creation. Payload: `DisplayTransactionPayload`. |
+| `DisplayTransactionUpdated` | Server → Client | Broadcast on every line-item / discount / customer-link change. |
+| `DisplayTransactionCompleted` | Server → Client | Broadcast on payment. Payload: `DisplayCompletionPayload`. |
+| `DisplayTransactionCancelled` | Server → Client | Broadcast on void/cancel. Display reverts to Idle. |
+
 ## Services
 
 | Method | Route | Description |

@@ -340,3 +340,22 @@ export enum ReceiptFontSize {
   Normal = 1,
   Large  = 2,
 }
+
+// ── Customer display ──────────────────────────────────────────────────────────
+
+export enum DisplayTheme {
+  Dark  = 0,
+  Light = 1,
+  Brand = 2,
+}
+
+export enum DisplayFontSize {
+  Normal     = 0,
+  Large      = 1,
+  ExtraLarge = 2,
+}
+
+export enum DisplayOrientation {
+  Landscape = 0,
+  Portrait  = 1,
+}

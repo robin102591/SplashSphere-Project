@@ -26,6 +26,11 @@ namespace SplashSphere.Application.Features.Transactions.Commands.CreateTransact
 ///     When set, the handler links this transaction to the queue entry and transitions
 ///     the entry from CALLED → IN_SERVICE.
 /// </param>
+/// <param name="PosStationId">
+///     Optional. The POS station this transaction is being built on. When set,
+///     transaction lifecycle events broadcast to the paired customer display
+///     group <c>display:{branchId}:{stationId}</c>. Null = no display routing.
+/// </param>
 public sealed record CreateTransactionCommand(
     string BranchId,
     string? CarId,
@@ -40,7 +45,8 @@ public sealed record CreateTransactionCommand(
     decimal TaxAmount,
     decimal TipAmount,
     string? Notes,
-    string? QueueEntryId) : ICommand<string>;
+    string? QueueEntryId,
+    string? PosStationId = null) : ICommand<string>;
 
 /// <summary>One service requested in the transaction, with the employees who performed it.</summary>
 public sealed record TransactionServiceRequest(

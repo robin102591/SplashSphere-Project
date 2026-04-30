@@ -38,7 +38,8 @@ public sealed class Transaction : IAuditableEntity, ITenantScoped
         string branchId,
         string cashierId,
         string carId,
-        string? customerId = null)
+        string? customerId = null,
+        string? posStationId = null)
     {
         Id = id;
         TenantId = tenantId;
@@ -46,6 +47,7 @@ public sealed class Transaction : IAuditableEntity, ITenantScoped
         CashierId = cashierId;
         CarId = carId;
         CustomerId = customerId;
+        PosStationId = posStationId;
         Status = TransactionStatus.Pending;
     }
 
@@ -62,6 +64,15 @@ public sealed class Transaction : IAuditableEntity, ITenantScoped
 
     /// <summary>Nullable — walk-in vehicles may not have a registered customer.</summary>
     public string? CustomerId { get; set; }
+
+    /// <summary>
+    /// The POS workstation that built this transaction. Drives the customer
+    /// display routing — events are broadcast to <c>display:{branchId}:{stationId}</c>
+    /// so the paired display reflects this transaction in real time. Nullable
+    /// because legacy transactions (and transactions created from the admin
+    /// app) don't have a station context.
+    /// </summary>
+    public string? PosStationId { get; set; }
 
     /// <summary>
     /// Human-readable transaction identifier: <c>{BranchCode}-{YYYYMMDD}-{DailySequence}</c>
@@ -126,6 +137,12 @@ public sealed class Transaction : IAuditableEntity, ITenantScoped
 
     /// <summary>The cashier who processed this transaction.</summary>
     public User Cashier { get; set; } = null!;
+
+    /// <summary>
+    /// The station this transaction was built on (when set). Used to route
+    /// customer-display events back to the right paired screen.
+    /// </summary>
+    public PosStation? PosStation { get; set; }
 
     public Car Car { get; set; } = null!;
     public Customer? Customer { get; set; }

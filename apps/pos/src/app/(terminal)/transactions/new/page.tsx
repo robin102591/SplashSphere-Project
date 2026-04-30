@@ -25,6 +25,12 @@ import { apiClient } from '@/lib/api-client'
 import { useBranch } from '@/lib/branch-context'
 import { useCurrentShift, isShiftOpen } from '@/lib/use-shift'
 import { useCustomerLoyalty } from '@/lib/use-loyalty'
+import { useDisplayControl } from '@/hooks/use-display-control'
+import {
+  useDraftDisplayBroadcast,
+  type DraftDisplayLineItem,
+  type DraftDisplayPayload,
+} from '@/hooks/use-draft-display-broadcast'
 import {
   useTransactionStore,
   type ServiceLineItem,
@@ -372,7 +378,8 @@ function NewTransactionContent() {
   const editId = searchParams.get('editId')          // edit mode — tx already exists
   const prefillCarId = searchParams.get('carId')     // pre-fill from customer lookup
   const prefillPlate = searchParams.get('plate')     // pre-fill from customer lookup (no carId)
-  const { branchId: contextBranchId } = useBranch()
+  const { branchId: contextBranchId, stationId: contextStationId } = useBranch()
+  const { clear: clearDisplay } = useDisplayControl()
   const { data: currentShift, isLoading: shiftLoading } = useCurrentShift()
   const shiftOpen = isShiftOpen(currentShift)
 
@@ -917,6 +924,73 @@ function NewTransactionContent() {
   const balance          = Math.max(0, customerPayable - totalPaid)
   const change           = Math.max(0, totalPaid - customerPayable)
 
+  // ── Draft customer-display broadcast ───────────────────────────────────────
+  // Pushes the in-progress cart to the paired display via SignalR, so the
+  // customer sees items build live before the transaction is POSTed. Once
+  // editId is set (we're editing an existing tx) or the cashier submits, we
+  // switch off — the real TransactionUpdatedEvent pipeline takes over.
+  const draftPayload = useMemo<DraftDisplayPayload | null>(() => {
+    const items: DraftDisplayLineItem[] = [
+      ...services.map((s): DraftDisplayLineItem => ({
+        id: s.localId,
+        name: s.serviceName,
+        type: 'service',
+        quantity: 1,
+        unitPrice: s.unitPrice,
+        totalPrice: s.unitPrice,
+      })),
+      ...packages.map((p): DraftDisplayLineItem => ({
+        id: p.localId,
+        name: p.packageName,
+        type: 'package',
+        quantity: 1,
+        unitPrice: p.unitPrice,
+        totalPrice: p.unitPrice,
+      })),
+      ...merchandise.map((m): DraftDisplayLineItem => ({
+        id: m.localId,
+        name: m.merchandiseName,
+        type: 'merchandise',
+        quantity: m.quantity,
+        unitPrice: m.unitPrice,
+        totalPrice: m.unitPrice * m.quantity,
+      })),
+    ]
+
+    // Empty cart → don't broadcast. Display stays on whatever it had.
+    if (items.length === 0) return null
+
+    const vehicleTypeSize = vehicleTypeName && sizeName
+      ? `${vehicleTypeName} / ${sizeName}`
+      : null
+
+    return {
+      transactionId: 'draft',
+      vehiclePlate: plateNumber || null,
+      vehicleMakeModel: null, // make/model not in cart store
+      vehicleTypeSize,
+      customerName: null,     // not tracked in cart; surfaces once POSTed
+      loyaltyTier: loyaltySummary?.tierName ?? null,
+      items,
+      subtotal,
+      discountAmount: discount,
+      discountLabel: discount > 0 ? 'Discount' : null,
+      taxAmount: 0,
+      total: estimatedTotal,
+    }
+  }, [
+    services, packages, merchandise,
+    plateNumber, vehicleTypeName, sizeName,
+    loyaltySummary?.tierName,
+    subtotal, discount, estimatedTotal,
+  ])
+
+  useDraftDisplayBroadcast({
+    payload: draftPayload,
+    // Disable while editing an existing tx (real events fire) or mid-submit.
+    enabled: !editId && !isSubmitting,
+  })
+
   // ── Payment helpers ────────────────────────────────────────────────────────
 
   const handlePayMethodSelect = (method: PaymentMethod) => {
@@ -956,6 +1030,8 @@ function NewTransactionContent() {
     sizeId,
     plateNumber,
     queueEntryId,
+    // Drives customer-display routing — null when no station is paired.
+    posStationId: contextStationId || null,
     services: services.map((s) => ({ serviceId: s.serviceId, employeeIds: s.employeeIds, notes: null })),
     packages: packages.map((p) => ({ packageId: p.packageId, employeeIds: p.employeeIds, notes: null })),
     merchandise: merchandise.map((m) => ({ merchandiseId: m.merchandiseId, quantity: m.quantity })),
@@ -1033,8 +1109,13 @@ function NewTransactionContent() {
       const { transactionId } = await apiClient.post<{ transactionId: string }>(
         '/transactions', buildCreateBody(), token ?? undefined
       )
+      // Customer is walking away — release the display from Tx so the next
+      // customer at the counter sees Idle (branding + promos), not the
+      // parked bill. The ?parked=1 flag tells the detail page not to
+      // re-show on mount.
+      void clearDisplay()
       resetPage()
-      router.push(`/transactions/${transactionId}`)
+      router.push(`/transactions/${transactionId}?parked=1`)
     } catch (err) {
       const apiErr = err as ApiError
       setSubmitError(apiErr?.detail ?? apiErr?.title ?? 'Failed to create transaction.')

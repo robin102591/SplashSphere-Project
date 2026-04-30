@@ -67,7 +67,8 @@ public static class TransactionEndpoints
             body.TaxAmount,
             body.TipAmount,
             body.Notes,
-            body.QueueEntryId);
+            body.QueueEntryId,
+            body.PosStationId);
 
         var result = await sender.Send(command, ct);
 
@@ -266,7 +267,8 @@ public static class TransactionEndpoints
         decimal TaxAmount,
         decimal TipAmount,
         string? Notes,
-        string? QueueEntryId);
+        string? QueueEntryId,
+        string? PosStationId);
 
     private sealed record CreateTransactionResponse(string TransactionId);
 

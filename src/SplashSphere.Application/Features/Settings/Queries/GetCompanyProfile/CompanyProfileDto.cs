@@ -38,6 +38,10 @@ public sealed record CompanyProfileDto(
     string? InstagramHandle,
     string? GCashNumber,
 
+    // Brand color — accent for the customer display's "Brand" theme. #RRGGBB
+    // or null = use defaults.
+    string? PrimaryColorHex,
+
     // Logo (slice 3) — never modified by UpdateCompanyProfile; managed by
     // POST /settings/company/logo and DELETE /settings/company/logo.
     string? LogoUrl,

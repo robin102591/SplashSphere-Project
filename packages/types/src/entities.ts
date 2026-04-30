@@ -77,6 +77,17 @@ export interface Branch {
   updatedAt: string;
 }
 
+// ── POS Station ──────────────────────────────────────────────────────────────
+
+export interface PosStation {
+  id: string;
+  branchId: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Vehicle master data ───────────────────────────────────────────────────────
 
 export interface VehicleType {
@@ -931,6 +942,8 @@ export interface PlanLimits {
   currentEmployees: number;
   smsPerMonth: number;
   smsUsedThisMonth: number;
+  maxPosStationsPerBranch: number;
+  maxPromoMessages: number;
 }
 
 export interface TrialInfo {
@@ -1001,6 +1014,8 @@ export const FeatureKeys = {
   // Receipt designer (Growth+ for digital receipts; Enterprise-only for branch overrides)
   DigitalReceipts: 'digital_receipts',
   BranchReceiptOverrides: 'branch_receipt_overrides',
+  // Customer display (Enterprise-only for branch overrides)
+  BranchDisplayOverrides: 'branch_display_overrides',
 } as const;
 
 // ── Attendance Reports ────────────────────────────────────────────────────────

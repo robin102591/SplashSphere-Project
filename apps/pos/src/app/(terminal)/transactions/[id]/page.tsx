@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -15,6 +15,7 @@ import type { TransactionDetail } from '@splashsphere/types'
 import { TransactionStatus, PaymentMethod } from '@splashsphere/types'
 import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
+import { useDisplayControl } from '@/hooks/use-display-control'
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 
@@ -62,8 +63,14 @@ interface Props {
 export default function TransactionDetailPage({ params }: Props) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { getToken } = useAuth()
   const queryClient = useQueryClient()
+
+  // Set by handlePayLater on /transactions/new — when present, skip the
+  // auto-show on the customer display so it stays on Idle (the cashier just
+  // parked this transaction and the customer is walking away).
+  const arrivedFromPayLater = searchParams.get('parked') === '1'
 
   // ── Payment form state ─────────────────────────────────────────────────────
   const [showPayForm, setShowPayForm] = useState(false)
@@ -110,6 +117,19 @@ export default function TransactionDetailPage({ params }: Props) {
     }
     prevStatusRef.current = tx.status
   }, [tx?.status])
+
+  // ── Steer the customer display to follow this transaction ──────────────────
+  // No transaction-lifecycle event fires when the cashier just opens an
+  // existing transaction page (e.g. switching to a parked Pay-Later one), so
+  // the display would otherwise stay on whatever was last broadcast. We push
+  // an explicit "show this" once we have the transaction loaded — except
+  // when the cashier just parked it via Pay Later (?parked=1), where the
+  // display has already been cleared to Idle on purpose.
+  const { show: showOnDisplay } = useDisplayControl()
+  useEffect(() => {
+    if (!tx?.id || arrivedFromPayLater) return
+    void showOnDisplay(tx.id)
+  }, [tx?.id, showOnDisplay, arrivedFromPayLater])
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const cancelMutation = useMutation({

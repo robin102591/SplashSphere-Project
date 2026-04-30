@@ -16,6 +16,7 @@ public sealed class ApplicationDbContext(
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<PosStation> PosStations => Set<PosStation>();
 
     // ── Vehicle master data ───────────────────────────────────────────────────
     public DbSet<VehicleType> VehicleTypes => Set<VehicleType>();
@@ -101,6 +102,9 @@ public sealed class ApplicationDbContext(
 
     // ── Receipt settings ────────────────────────────────────────────────────
     public DbSet<ReceiptSetting> ReceiptSettings => Set<ReceiptSetting>();
+
+    // ── Display settings ────────────────────────────────────────────────────
+    public DbSet<DisplaySetting> DisplaySettings => Set<DisplaySetting>();
 
     // ── Loyalty ───────────────────────────────────────────────────────────
     public DbSet<LoyaltyProgramSettings> LoyaltyProgramSettings => Set<LoyaltyProgramSettings>();
